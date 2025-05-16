@@ -32,3 +32,4 @@ Some of the features were already implemented in other projects. Especially the 
 - https://github.com/tarvitz/dsfp (python) DS1 save file parser.
 - https://github.com/jtesta/souls_givifier (python) DSR, DS2, DS3, ER to change amount of souls.
 - https://github.com/tremwil/DS3SaveUnpacker (C#) DS3 save file decryption.
+- https://github.com/ClayAmore/ER-Save-Editor (Rust) Elden Ring save file editor -> better project that this but stale.
