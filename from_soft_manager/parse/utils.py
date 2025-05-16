@@ -1,5 +1,4 @@
 import struct
-from contextlib import contextmanager
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
@@ -7,6 +6,7 @@ from .structures import BND4Entry, BND4EntryHeader, BND4Header, SL2File, Game
 from .parse_dsr import DSR_KEY, parse_dsr_file
 from .parse_ds2 import DS2_KEY, parse_ds2_file
 from .parse_ds3 import DS3_KEY, parse_ds3_file
+from .parse_er import parse_er_file
 
 
 def bytes_to_int(in_bytes):
@@ -123,3 +123,6 @@ def parse_file(filepath: str):
 
     if sl2_file.game == Game.DS3:
         return parse_ds3_file(sl2_file)
+
+    if sl2_file.game == Game.ER:
+        return parse_er_file(sl2_file)
