@@ -9,35 +9,6 @@ from .parse_ds2 import DS2_KEY, parse_ds2_file
 from .parse_ds3 import DS3_KEY, parse_ds3_file
 
 
-class _FileReader:
-    def __init__(self, content):
-        self._content = content
-        self._offset = 0
-        self._content_size = len(content)
-
-    @classmethod
-    def from_path(cls, path):
-        with open(path, "rb") as stream:
-            content = stream.read()
-        return cls(content)
-
-    def take(self, size):
-        if self._offset + size > len(self._content):
-            raise ValueError("Not enough data to read")
-        data = self._content[self._offset:self._offset + size]
-        self._offset += size
-        return data
-
-    @contextmanager
-    def go_to(self, offset):
-        original_offset = self._offset
-        self._offset = offset
-        try:
-            yield
-        finally:
-            self._offset = original_offset
-
-
 def bytes_to_int(in_bytes):
     return int.from_bytes(in_bytes, "little")
 
@@ -49,63 +20,94 @@ def add_pkcs7_padding(data, block_size=16):
 
 def decrypt_sl2_file(input_sl2_file: str) -> SL2File:
     # TODO return whole file content to be able to unparse it back
-    reader = _FileReader.from_path(input_sl2_file)
-    bnd_vers = reader.take(4)
-    header_data = struct.unpack("<QIQQQQ?", reader.take(45))
+    with open(input_sl2_file, "rb") as stream:
+        content = stream.read()
+    bnd_vers = content[0:4]
+    header_data = struct.unpack("<QIQQQQ?", content[4:49])
     bnd4_header = BND4Header(
         bnd_vers,
         *header_data,
-        reader.take(15),
+        content[49:64],
     )
-    # TODO better decision to find out what game it this
+    # Determine game based on content
     game = None
     key = None
     if bnd4_header.files_count == 11:
+        # NOTE: DS1 does not use encryption but DS1 probably
+        #   won't be supported
         key = DSR_KEY
         game = Game.DSR
     elif bnd4_header.files_count == 23:
+        # NOTE: This is based on DS2 SOFT
         game = Game.DS2
         key = DS2_KEY
     elif bnd4_header.files_count == 12:
-        game = Game.DS3
-        key = DS3_KEY
+        # Elden Ring and Dark Souls 3 have the same number of files and same
+        #   header but Elden Ring does not encrypt the save file
+
+        # Look at length of the first save file
+        # - length of DS3 save file is 786480
+        hs = 64 + 32
+        entry_header = BND4EntryHeader(
+            *struct.unpack("<QQIIQ", content[hs:hs + 32])
+        )
+        # QUESTION is that true even if save is without DLCs?
+        if entry_header.entry_size not in (786480, 2621456):
+            print(
+                "WARNING: Save file size is not 786480 or 2621456"
+                " which is unknown case, expecting save file is Elden Ring."
+            )
+
+        # TODO Try to find out better approach to determine the game
+        if entry_header.entry_size == 786480:
+            game = Game.DS3
+            key = DS3_KEY
+        else:
+            game = Game.ER
+            key = None
 
     if game is None:
-        raise NotImplementedError("Game not supported")
+        raise NotImplementedError("It was not possible to detect the game")
 
-    padding_block_size = 16
-    if game == Game.DS2:
-        padding_block_size = 8
+    # Will be important for unparsing
+    # padding_block_size = 16
+    # if game == Game.DS2:
+    #     padding_block_size = 8
 
     decode_fmt = "utf-16" if bnd4_header.is_utf16 else "utf-8"
     entries = []
     for idx in range(bnd4_header.files_count):
+        hs = 64 + (idx * 32)
         entry_header = BND4EntryHeader(
-            *struct.unpack("<QQIIQ", reader.take(32))
+            *struct.unpack("<QQIIQ", content[hs:hs+32])
         )
-        with reader.go_to(entry_header.entry_name_offset):
-            entry_name_b = reader.take(26)
-            # entry_name = entry_name_b[24:].decode(decode_fmt)
 
-        with reader.go_to(entry_header.entry_data_offset):
-            entry_data = reader.take(entry_header.entry_size)
+        ns = entry_header.entry_name_offset
+        entry_name_b = content[ns:ns+26]
+        # entry_name = entry_name_b[24:].decode(decode_fmt)
+
+        ds = entry_header.entry_data_offset
+        de = ds + entry_header.entry_size
+        entry_data = content[ds:de]
         checksum = entry_data[0:16]
         iv = entry_data[16:32]
-        # NOTE: DS1 does not use encryption
-        # NOTE: Elden ring does not use encryption - how to find out it is ER?
-        decryptor = Cipher(algorithms.AES128(key), modes.CBC(iv)).decryptor()
-        decrypted_content = (
-            decryptor.update(entry_data[16:]) + decryptor.finalize()
-        )
-        _out_iv = decrypted_content[0:16]
-        decrypted_length = struct.unpack("<i", decrypted_content[16:20])[0]
-        decrypted_content = decrypted_content[20:]
-        _padding = decrypted_content[decrypted_length:]
+        file_content = entry_data[16:]
+        if key is not None:
+            decryptor = Cipher(algorithms.AES128(key), modes.CBC(iv)).decryptor()
+            decrypted_content = (
+                decryptor.update(file_content) + decryptor.finalize()
+            )
+            _out_iv = decrypted_content[0:16]
+            decrypted_length = struct.unpack("<i", decrypted_content[16:20])[0]
+            decrypted_content = decrypted_content[20:]
+            _padding = decrypted_content[decrypted_length:]
+            file_content = decrypted_content[:decrypted_length]
+
         entries.append(
             BND4Entry(
                 entry_header,
                 entry_name_b,
-                decrypted_content[:decrypted_length],
+                file_content,
             )
         )
     return SL2File(game, bnd4_header, entries)
