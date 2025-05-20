@@ -185,7 +185,9 @@ def parse_dsr_file(sl2_file: SL2File):
         # print(f"Vit {vitality} | Att {attunement} | End {endurance} | Str {strength} | Dex {dexterity} | Res {resistance} | Int {intelligence} | Fth {faith}")
         # print("HP:", hp_current, hp_max, hp_base)
         # print("Stamina:", stamina_current, stamina_max, stamina_base)        inventory_offset = 860
+
         inventory_offset = 860
+        attunement_slots_offset = 58208
         botomless_box_offset = 58504
 
         full_ffs = int.from_bytes(b"\xff\xff\xff\xff", "little")
@@ -224,6 +226,29 @@ def parse_dsr_file(sl2_file: SL2File):
                 order
             )
             inventory_items.append(item)
+
+        # No idea what is this (inbetween inventory and attunement slots)
+        # Values I've had set at this position
+        # - 303
+        # - 340
+        # - 463
+        # - 609
+        # entry.content[58204:58208]
+        # print(entry.content[58204:58208])
+
+        # Attunement slots
+        used_attunements = []
+        for idx in range(12):
+            start_idx = attunement_slots_offset + (idx * 8)
+            item_content = entry.content[start_idx:start_idx + 8]
+            (
+                item_id,
+                remaining_uses,
+            ) = struct.unpack("<II", item_content)
+            # For some reason remaining uses are stored as multiplied by 3
+            used_attunements.append(
+                AttunementSlot(item_id, remaining_uses)
+            )
 
         for idx in range(2048):
             start_idx = botomless_box_offset + (idx * 32)
