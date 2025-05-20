@@ -168,9 +168,15 @@ def parse_dsr_file(sl2_file: SL2File):
             earned, # Maybe it is 'used'
         ) = struct.unpack("<IIIIIQIII", entry.content[192:232])
         unknown_5 = entry.content[232:244]
-        b_name = entry.content[244:258]
-        while b_name.endswith(b"\x00\x00"):
-            b_name = b_name[:-2]
+        b_name = b""
+        name_idx = 244
+        while True:
+            v = entry.content[name_idx:name_idx + 2]
+            name_idx += 2
+            if v == b"\x00\x00":
+                break
+            b_name += v
+
         name = b_name.decode("utf-16")
         unknown_6 = entry.content[258:278]
         (
@@ -188,6 +194,21 @@ def parse_dsr_file(sl2_file: SL2File):
             hairs,
             color,
         ) = struct.unpack("<BBB", entry.content[352:355])
+        unknown_8 = entry.content[355:376]
+
+        b_name_2 = b""
+        name_idx = 376
+        while True:
+            v = entry.content[name_idx:name_idx + 2]
+            name_idx += 2
+            if v == b"\x00\x00":
+                break
+            b_name_2 += v
+        name_2 = b_name_2.decode("utf-16")
+        unknown_9 = entry.content[name_idx:420]
+        # App version used to create/save character
+        # app_version = entry.content[420:428].rstrip(b"\x00").decode("utf-8")
+        unknown_10 = entry.content[428:712]
 
         (
             l_ring_slot_item_type,
