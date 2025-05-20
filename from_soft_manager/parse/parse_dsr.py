@@ -1,6 +1,8 @@
 import struct
+from dataclasses import dataclass
 
 from .structures import SL2File
+from ._dsr_items import ITEMS_BY_IDS
 
 DSR_KEY = b"\x01\x23\x45\x67\x89\xab\xcd\xef\xfe\xdc\xba\x98\x76\x54\x32\x10"
 DSR_CLASSES = {
