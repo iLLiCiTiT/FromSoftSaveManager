@@ -18,6 +18,7 @@ DSR_CLASSES = {
     9: "Deprived"
 }
 
+# TODO it will be necessary to capture changes
 @dataclass
 class InventoryItem:
     item_id: int
@@ -31,6 +32,12 @@ class InventoryItem:
     idx: int
     content: bytes
     in_botomless_box: bool
+
+
+@dataclass
+class AttunementSlot:
+    item_id: int
+    remaining_uses: int
 
 
 def _get_item(
