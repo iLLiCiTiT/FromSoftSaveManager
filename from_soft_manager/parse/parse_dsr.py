@@ -188,6 +188,46 @@ def parse_dsr_file(sl2_file: SL2File):
             hairs,
             color,
         ) = struct.unpack("<BBB", entry.content[352:355])
+
+        (
+            l_ring_slot_item_type,
+            r_ring_slot_item_type,
+            q1_slot_item_type,
+            q2_slot_item_type,
+            q3_slot_item_type,
+            q4_slot_item_type,
+            q5_slot_item_type,
+            one_double_handling, # 3 if is dual wielding
+            l_hand_flag, # Maybe 1 if can cast magic or is empty
+            r_hand_flag, # Maybe 1 if can cast magic or is empty
+            unknown_17_flag, # Can be 0 or 1
+            unknown_18_flag, # Can be 0 or 1
+            unknown_19_flag, # Can be 0 or 1
+            unknown_20_flag, # Can be 0 or 1
+            l_hand_slot_1,
+            l_hand_slot_2,
+            r_hand_slot_1,
+            r_hand_slot_2,
+            l_arrows_slot,
+            l_bolts_slot,
+            r_arrows_slot,
+            r_bolts_slot,
+            head_slot,
+            body_slot,
+            arms_slot,
+            legs_slot,
+            unknown_21_flag,
+            l_ring_slot,
+            r_ring_slot,
+            q1_slot,
+            q2_slot,
+            q3_slot,
+            q4_slot,
+            q5_slot,
+            backpack_count, # Without key items
+            unknown_22_flag,
+            inventory_count, # Maybe? (it is set to 2048)
+        ) = struct.unpack(f"<{'I'*37}", entry.content[712:860])
         print(f"{name} ({male} {player_class}) | lvl {level} | hum {humanity} | souls {souls}/{earned}")
         # print(f"Vit {vitality} | Att {attunement} | End {endurance} | Str {strength} | Dex {dexterity} | Res {resistance} | Int {intelligence} | Fth {faith}")
         # print("HP:", hp_current, hp_max, hp_base)
