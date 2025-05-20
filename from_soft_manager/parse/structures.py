@@ -35,7 +35,7 @@ class BND4EntryHeader:
 class BND4Entry:
     header: BND4EntryHeader
     name: bytes
-    decrypted_data: bytes
+    content: bytes
 
 
 @dataclass

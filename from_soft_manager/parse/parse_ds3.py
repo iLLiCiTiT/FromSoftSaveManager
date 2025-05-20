@@ -7,13 +7,13 @@ def parse_ds3_file(sl2_file: SL2File):
     # Length of DS3 save file is 786432
     for idx, entry in enumerate(sl2_file.entries):
         # Empty slot
-        if entry.decrypted_data[0] != 98:
+        if entry.content[0] != 98:
             continue
 
         # TODO what is 0:108
         idx = 108
         while True:
-            v = entry.decrypted_data[idx:idx+8]
+            v = entry.content[idx:idx+8]
             if v != b"\x00\x00\x00\x00\xff\xff\xff\xff":
                 print(v)
                 break

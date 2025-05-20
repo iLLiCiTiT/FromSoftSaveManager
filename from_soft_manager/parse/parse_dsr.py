@@ -102,10 +102,10 @@ def parse_dsr_file(sl2_file: SL2File):
     # have = read_int_le(data, 4)
     # skip_bytes(8)
     for entry in sl2_file.entries[:-1]:
-        if entry.decrypted_data[0] == 0:
+        if entry.content[0] == 0:
             continue
 
-        unknown_1 = entry.decrypted_data[0:92]
+        unknown_1 = entry.content[0:92]
 
         # print(unknown_1[0:4] == b"G\x00\x00\x00")
         # print(unknown_1[4:8])
@@ -142,7 +142,7 @@ def parse_dsr_file(sl2_file: SL2File):
             _, faith,
         ) = struct.unpack(
             "<IIIIIIIIIIIIIIIIIIIIIIIII",
-            entry.decrypted_data[92:192]
+            entry.content[92:192]
         )
         if _hp != 0:
             print("!!! _hp not 0", _hp)
@@ -157,28 +157,28 @@ def parse_dsr_file(sl2_file: SL2File):
             level,
             souls,
             earned, # Maybe it is 'used'
-        ) = struct.unpack("<IIIIIQIII", entry.decrypted_data[192:232])
-        unknown_5 = entry.decrypted_data[232:244]
-        b_name = entry.decrypted_data[244:258]
+        ) = struct.unpack("<IIIIIQIII", entry.content[192:232])
+        unknown_5 = entry.content[232:244]
+        b_name = entry.content[244:258]
         while b_name.endswith(b"\x00\x00"):
             b_name = b_name[:-2]
         name = b_name.decode("utf-16")
-        unknown_6 = entry.decrypted_data[258:278]
+        unknown_6 = entry.content[258:278]
         (
             is_male,
             player_class_id,
             body,
             gift,
-        ) = struct.unpack("<IBBB", entry.decrypted_data[278:285])
+        ) = struct.unpack("<IBBB", entry.content[278:285])
         male = "male" if is_male == 1 else "female"
         player_class = DSR_CLASSES[player_class_id]
         # I guess this is all the possible modifications of shape of head
-        unknown_7 = entry.decrypted_data[285:352]
+        unknown_7 = entry.content[285:352]
         (
             face,
             hairs,
             color,
-        ) = struct.unpack("<BBB", entry.decrypted_data[352:355])
+        ) = struct.unpack("<BBB", entry.content[352:355])
         print(f"{name} ({male} {player_class}) | lvl {level} | hum {humanity} | souls {souls}/{earned}")
         # print(f"Vit {vitality} | Att {attunement} | End {endurance} | Str {strength} | Dex {dexterity} | Res {resistance} | Int {intelligence} | Fth {faith}")
         # print("HP:", hp_current, hp_max, hp_base)
@@ -191,7 +191,7 @@ def parse_dsr_file(sl2_file: SL2File):
         botomless_box_items = []
         for idx in range(2028):
             start_idx = inventory_offset + (idx * 28)
-            item_content = entry.decrypted_data[start_idx:start_idx + 28]
+            item_content = entry.content[start_idx:start_idx + 28]
             (
                 item_type, item_id, amount, order, _un1, durability, _un2
             ) = struct.unpack(
@@ -225,7 +225,7 @@ def parse_dsr_file(sl2_file: SL2File):
 
         for idx in range(2048):
             start_idx = botomless_box_offset + (idx * 32)
-            item_content = entry.decrypted_data[start_idx:start_idx + 32]
+            item_content = entry.content[start_idx:start_idx + 32]
             (
                 _ui1,
                 _ui2,
