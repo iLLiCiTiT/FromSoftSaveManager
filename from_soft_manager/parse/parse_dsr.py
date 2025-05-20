@@ -288,5 +288,5 @@ def parse_dsr_file(sl2_file: SL2File):
 
             botomless_box_items.append(item)
 
-        inventory_items.sort(key=lambda item: item["order"])
-        botomless_box_items.sort(key=lambda item: item["order"])
+        inventory_items.sort(key=lambda item: item.order)
+        botomless_box_items.sort(key=lambda item: item.order)
