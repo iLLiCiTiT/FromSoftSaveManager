@@ -2,21 +2,18 @@ import struct
 from dataclasses import dataclass
 
 from .structures import SL2File
-from ._dsr_items import ITEMS_BY_IDS
+from ._dsr_items import (
+    ITEMS_BY_IDS,
+    CLASSES,
+    FACE_TYPES,
+    HAIR_TYPES,
+    HAIR_COLORS,
+    GIFTS,
+    PHYSIQUE,
+)
 
 DSR_KEY = b"\x01\x23\x45\x67\x89\xab\xcd\xef\xfe\xdc\xba\x98\x76\x54\x32\x10"
-DSR_CLASSES = {
-    0: "Warrior",
-    1: "Knight",
-    2: "Wanderer",
-    3: "Thief",
-    4: "Bandit",
-    5: "Hunter",
-    6: "Sorcerer",
-    7: "Pyromancer",
-    8: "Cleric",
-    9: "Deprived"
-}
+
 
 # TODO it will be necessary to capture changes
 @dataclass
@@ -180,22 +177,38 @@ def parse_dsr_file(sl2_file: SL2File):
         name = b_name.decode("utf-16")
         unknown_6 = entry.content[258:278]
         (
-            is_male,
+            sex,
             player_class_id,
-            body,
-            gift,
+            physique_id,
+            gift_id,
         ) = struct.unpack("<IBBB", entry.content[278:285])
-        male = "male" if is_male == 1 else "female"
-        player_class = DSR_CLASSES[player_class_id]
-        # I guess this is all the possible modifications of shape of head
-        unknown_7 = entry.content[285:352]
+        male = "male" if sex == 1 else "female"
+        player_class = CLASSES[player_class_id]
+        physique = PHYSIQUE[physique_id]
+        gift = GIFTS[gift_id]
+        unknown_7 = entry.content[285:332]
+
         (
-            face,
-            hairs,
-            color,
+            _poison_res, # Duplicated poison?
+            bleed_res,
+            poison_res,
+            curse_res,
+        ) = struct.unpack("<IIII", entry.content[332:348])
+        (
+            face_id,
+            hairs_id,
+            hair_color_id,
         ) = struct.unpack("<BBB", entry.content[352:355])
+
+        # These are presets and don't mean anything
+        face = FACE_TYPES[face_id]
+        hair_style = HAIR_TYPES[hairs_id]
+        hair_color = HAIR_COLORS[hair_color_id]
+
+        # I guess this is all the possible modifications of shape of head
         unknown_8 = entry.content[355:376]
 
+        # 2nd name of the character in the game
         b_name_2 = b""
         name_idx = 376
         while True:
@@ -302,7 +315,6 @@ def parse_dsr_file(sl2_file: SL2File):
         # - 463
         # - 609
         # entry.content[58204:58208]
-        # print(entry.content[58204:58208])
 
         # Attunement slots
         used_attunements = []
@@ -358,3 +370,51 @@ def parse_dsr_file(sl2_file: SL2File):
 
         inventory_items.sort(key=lambda item: item.order)
         botomless_box_items.sort(key=lambda item: item.order)
+        # 124040
+        # 0, 0, ?, 3, 65541, 131079, 196617, 262155
+        # 327692/327693
+        # 393230/393231
+        # 458768/458769
+        # 524306/524307
+        # 589844/589845
+        # 655382/655383
+        # 720920/720921
+        # 786458/786459
+        # 851996/851997
+        # 917534/917535
+        # 4294967294 (b"\xfe\xff\xff\xff")
+        some_count, _zero = struct.unpack("<II", entry.content[124116:124124])
+        s_idx = 124124
+        e_idx = s_idx + (some_count * 4)
+        some_ids = struct.unpack(f"<{'I' * some_count}", entry.content[s_idx:e_idx])
+
+        s_idx = e_idx
+        e_idx = s_idx + (16 * 4)
+        _zeros = struct.unpack(f"<{'I' * 16}", entry.content[s_idx:e_idx])
+
+        s_idx = e_idx
+        e_idx = s_idx + 45
+        unknown_xxx = entry.content[s_idx:e_idx]
+
+        s_idx = e_idx
+        e_idx = s_idx + 32
+        unknown_xxx = entry.content[s_idx:e_idx]
+
+        s_idx = e_idx
+        e_idx = s_idx + 77
+        unknown_xxx = entry.content[s_idx:e_idx]
+
+        # b'\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00'
+        s_idx = e_idx
+        e_idx = s_idx + 12
+        unknown_xxx = entry.content[s_idx:e_idx]
+
+        # Repeating b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00'
+        s_idx = e_idx
+        e_idx = s_idx + (127 * 16)
+        unknown_xxx = entry.content[s_idx:e_idx]
+
+        # Repeating b'\xff\xff\xff\xff\x00\x00\x00\x00'
+        s_idx = e_idx
+        e_idx = s_idx + (121 * 8)
+        unknown_xxx = entry.content[s_idx:e_idx]
