@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from enum import Enum
 from dataclasses import dataclass
 
@@ -41,5 +42,15 @@ class BND4Entry:
 @dataclass
 class SL2File:
     game: Game
+    filepath: str
     header: BND4Header
     entries: list[BND4Entry]
+
+
+class ParsedFile(ABC):
+    def __init__(self, game: Game, sl2_file: SL2File):
+        self.game = game
+        self.sl2_file = sl2_file
+
+    def __repr__(self):
+        return f"{self.game} ParsedFile"

@@ -18,11 +18,16 @@ def add_pkcs7_padding(data, block_size=16):
     return data + bytearray([pl for i in range(pl)])
 
 
-def decrypt_sl2_file(input_sl2_file: str) -> SL2File:
+def parse_sl2_file(input_sl2_file: str) -> SL2File:
     # TODO return whole file content to be able to unparse it back
     with open(input_sl2_file, "rb") as stream:
         content = stream.read()
     bnd_vers = content[0:4]
+    if bnd_vers != b"BND4":
+        raise ValueError(
+            f"Expected header 'BND4', got {bnd_vers!r}."
+        )
+
     header_data = struct.unpack("<QIQQQQ?", content[4:49])
     bnd4_header = BND4Header(
         bnd_vers,
@@ -110,11 +115,11 @@ def decrypt_sl2_file(input_sl2_file: str) -> SL2File:
                 file_content,
             )
         )
-    return SL2File(game, bnd4_header, entries)
+    return SL2File(game, input_sl2_file, bnd4_header, entries)
 
 
-def parse_file(filepath: str):
-    sl2_file = decrypt_sl2_file(filepath)
+def parse_save_file(filepath: str):
+    sl2_file = parse_sl2_file(filepath)
     if sl2_file.game == Game.DSR:
         return parse_dsr_file(sl2_file)
 
