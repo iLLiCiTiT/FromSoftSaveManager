@@ -89,7 +89,9 @@ def parse_sl2_file(input_sl2_file: str) -> SL2File:
 
         ns = entry_header.entry_name_offset
         entry_name_b = content[ns:ns+26]
-        # entry_name = entry_name_b[24:].decode(decode_fmt)
+        while entry_name_b.endswith(b"\x00\x00"):
+            entry_name_b = entry_name_b[:-2]
+        entry_name = entry_name_b.decode(decode_fmt)
 
         ds = entry_header.entry_data_offset
         de = ds + entry_header.entry_size
@@ -112,6 +114,7 @@ def parse_sl2_file(input_sl2_file: str) -> SL2File:
             BND4Entry(
                 entry_header,
                 entry_name_b,
+                entry_name,
                 file_content,
             )
         )

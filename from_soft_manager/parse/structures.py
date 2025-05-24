@@ -35,7 +35,8 @@ class BND4EntryHeader:
 @dataclass
 class BND4Entry:
     header: BND4EntryHeader
-    name: bytes
+    name_b: bytes
+    name: str
     content: bytes
 
 
