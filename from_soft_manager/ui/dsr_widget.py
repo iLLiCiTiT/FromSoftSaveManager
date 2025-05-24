@@ -79,7 +79,7 @@ class CharacterStatusWidget(QtWidgets.QWidget):
             main_layout.addWidget(label_w, row, 0)
             main_layout.addWidget(value_w, row, 1)
 
-        main_layout.addWidget(covenant_label, 1, 0)
+        main_layout.setRowStretch(main_layout.rowCount(), 1)
 
         self._char = None
         self._name_label = name_value_w

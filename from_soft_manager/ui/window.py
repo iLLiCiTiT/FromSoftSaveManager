@@ -18,3 +18,5 @@ class MainWindow(QtWidgets.QDialog):
         main_layout.addWidget(dsr_widget)
 
         self._dsr_widget = dsr_widget
+
+        self.resize(620, 400)
