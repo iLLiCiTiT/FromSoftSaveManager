@@ -203,7 +203,7 @@ class CharsListModel(QtGui.QStandardItemModel):
             # hair_color = HAIR_COLORS[hair_color_id]
             if char is None:
                 index = idx
-                item.setData("Empty", QtCore.Qt.DisplayRole)
+                item.setData("< Empty >", QtCore.Qt.DisplayRole)
                 item.setData(None, CHAR_NAME_ROLE)
             else:
                 index = char.index
