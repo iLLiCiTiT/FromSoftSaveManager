@@ -726,6 +726,38 @@ USABLE_ITEMS = [
     {"id": 710, "type": 1073741824, "max_stack_count": 99, "name": "Soul of Artorias"},
     {"id": 711, "type": 1073741824, "max_stack_count": 99, "name": "Soul of Manus"},
 ]
+DSR_GESTURES = {
+    2: "Point forward",
+    4: "Point up",
+    6: "Point down",
+    8: "beckon",
+    10: "Wave",
+    12: "Bow",
+    14: "Proper bow",
+    16: "Hurrah!",
+    18: "Joy",
+    20: "Shrug",
+    22: "Look skyward",
+    24: "Well! What is it!",
+    26: "Prostration",
+    28: "Prayer",
+    30: "Praise the Sun",
+}
+DSR_COVENANTS = {
+    0: "None",
+    1: "Way of White",
+    2: "Princess's Guard",
+    3: "Warrior of Sunlight",
+    4: "Darkwraith",
+    5: "Path of the Dragon",
+    6: "Gravelord Servant",
+    7: "Forest Hunter",
+    8: "Darkmoon Blade",
+    9: "Chaos Servant",
+}
+SPECIALS = [
+    {"id": 1010000, "name": "Egg"},
+    {"id": 1020000, "name": "Big Egg"},
 ]
 CLASSES = {
     0: "Warrior",

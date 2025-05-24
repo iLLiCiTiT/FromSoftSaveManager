@@ -3,15 +3,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from .structures import Game, SL2File, BND4Entry
-from ._dsr_items import (
-    ITEMS_BY_IDS,
-    CLASSES,
-    FACE_TYPES,
-    HAIR_TYPES,
-    HAIR_COLORS,
-    GIFTS,
-    PHYSIQUE,
-)
+from ._dsr_items import ITEMS_BY_IDS
 
 DSR_KEY = b"\x01\x23\x45\x67\x89\xab\xcd\xef\xfe\xdc\xba\x98\x76\x54\x32\x10"
 
@@ -108,6 +100,11 @@ class DSRCharacter:
     name: str
     humanity: int
     souls: int
+    hollow_state: int
+    covenant_id: int
+    covenant_levels: tuple[int, int, int, int, int, int, int, int, int, int]
+
+    used_gestures: list[int]
 
     hp_current: int
     hp_max: int
@@ -221,8 +218,10 @@ def character_from_entry(
         level,
         souls,
         earned, # Maybe it is 'used'
-    ) = struct.unpack("<IIIIIQIII", entry.content[192:232])
-    unknown_5 = entry.content[232:244]
+        _unknown_5,  # Is always 0
+        hollow_state, # 0 human / 8 hollow
+    ) = struct.unpack("<IIIIIQIIQII", entry.content[192:244])
+
     b_name = b""
     name_idx = 244
     while True:
@@ -234,14 +233,16 @@ def character_from_entry(
 
     name = b_name.decode("utf-16")
     print(f"{name} | lvl {level} | hum {humanity} | souls {souls}/{earned}")
-    unknown_6 = entry.content[258:278]
+    unknown_5 = entry.content[258:278]
     (
         sex,
         player_class_id,
         physique_id,
         gift_id,
     ) = struct.unpack("<IBBB", entry.content[278:285])
-    unknown_7 = entry.content[285:332]
+    unknown_6 = struct.unpack("<BBBBBIIIII", entry.content[285:310])
+    covenant_lvls = struct.unpack("<BBBBBBBBBB", entry.content[310:320])
+    unknown_7 = struct.unpack("<III", entry.content[320:332]) # 3x '0'
 
     (
         _poison_res, # Duplicated poison?
@@ -249,6 +250,9 @@ def character_from_entry(
         poison_res,
         curse_res,
     ) = struct.unpack("<IIII", entry.content[332:348])
+    unknown_8 = struct.unpack("<BBB", entry.content[348:351])
+    covenant_id = entry.content[351]
+
     # These are presets and don't mean anything
     # - user can customize anything
     (
@@ -258,7 +262,7 @@ def character_from_entry(
     ) = struct.unpack("<BBB", entry.content[352:355])
 
     # I guess this is all the possible modifications of shape of head
-    unknown_8 = entry.content[355:376]
+    unknown_9 = entry.content[355:376]
 
     # 2nd name of the character in the game
     b_name_2 = b""
@@ -270,11 +274,15 @@ def character_from_entry(
             break
         b_name_2 += v
     name_2 = b_name_2.decode("utf-16")
-    unknown_9 = entry.content[name_idx:420]
+    unknown_10 = entry.content[name_idx:420]
     # App version used to create/save character
     # app_version = entry.content[420:428].rstrip(b"\x00").decode("utf-8")
-    unknown_10 = entry.content[428:712]
+    zeros = struct.unpack(f"<{20*'I'}", entry.content[428:508])
+    zeros_s = set(zeros)
+    if zeros_s != {0}:
+        print(f"!!! Expected only zeros got: {zeros}")
 
+    unknown_11 = struct.unpack(f"<{51*'I'}", entry.content[508:712])
     (
         l_ring_slot_item_type,
         r_ring_slot_item_type,
@@ -361,7 +369,7 @@ def character_from_entry(
     # - 340
     # - 463
     # - 609
-    # entry.content[58204:58208]
+    unknown_12 = entry.content[58204:58208]
 
     # Attunement slots
     attunement_slots = []
@@ -376,6 +384,13 @@ def character_from_entry(
         attunement_slots.append(
             AttunementSlot(item_id, remaining_uses)
         )
+
+    unknown_13 = struct.unpack("<IIIIIII", entry.content[58304:58332])
+
+    used_gestures = struct.unpack("<hhhhhhhhhhhhhhhhhh", entry.content[58332:58368])
+
+    # Progress in the game or bonfires or both
+    unknown_14 = entry.content[58368:58504]
 
     for idx in range(2048):
         start_idx = botomless_box_offset + (idx * 32)
@@ -471,6 +486,11 @@ def character_from_entry(
         name,
         humanity,
         souls,
+        hollow_state,
+        covenant_id,
+        covenant_lvls,
+
+        used_gestures,
 
         hp_current,
         hp_max,
@@ -493,12 +513,15 @@ def character_from_entry(
         player_class_id,
         physique_id,
         gift_id,
+
         bleed_res,
         poison_res,
         curse_res,
+
         face_id,
         hair_style_id,
         hair_color_id,
+
         l_hand_slot_1,
         l_hand_slot_2,
         r_hand_slot_1,
