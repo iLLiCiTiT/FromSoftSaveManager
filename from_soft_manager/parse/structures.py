@@ -4,10 +4,10 @@ from dataclasses import dataclass
 
 
 class Game(Enum):
-    DSR = 1
-    DS2 = 2
-    DS3 = 3
-    ER = 4
+    DSR = "DSR"
+    DS2 = "DS2"
+    DS3 = "DS3"
+    ER = "ER"
 
 
 @dataclass
