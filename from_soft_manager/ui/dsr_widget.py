@@ -8,10 +8,151 @@ CHAR_ID_ROLE = QtCore.Qt.UserRole + 1
 CHAR_NAME_ROLE = QtCore.Qt.UserRole + 2
 
 
-class CharacterInfoWidget(QtWidgets.QWidget):
-    def __init__(self):
-        super().__init__()
+class CharacterStatusWidget(QtWidgets.QWidget):
+    def __init__(self, parent):
+        super().__init__(parent)
 
+        name_value_w = QtWidgets.QLabel(self)
+        name_value_w.setAlignment(QtCore.Qt.AlignCenter)
+
+        covenant_label = QtWidgets.QLabel("Covenant", self)
+        covenant_value_w = QtWidgets.QLabel(self)
+
+        # Don't know how to get covenant yet
+        covenant_label.setVisible(False)
+        covenant_value_w.setVisible(False)
+
+        level_label = QtWidgets.QLabel("Level", self)
+        level_value_w = QtWidgets.QLabel(self)
+
+        souls_label = QtWidgets.QLabel("Souls", self)
+        souls_value_w = QtWidgets.QLabel(self)
+
+        vitality_label = QtWidgets.QLabel("Vitality", self)
+        vitality_value_w = QtWidgets.QLabel(self)
+
+        attunement_label = QtWidgets.QLabel("Attunement", self)
+        attunement_value_w = QtWidgets.QLabel(self)
+
+        endurance_label = QtWidgets.QLabel("Endurance", self)
+        endurance_value_w = QtWidgets.QLabel(self)
+
+        strength_label = QtWidgets.QLabel("Strength", self)
+        strength_value_w = QtWidgets.QLabel(self)
+
+        dexterity_label = QtWidgets.QLabel("Dexterity", self)
+        dexterity_value_w = QtWidgets.QLabel(self)
+
+        resistance_label = QtWidgets.QLabel("Resistance", self)
+        resistance_value_w = QtWidgets.QLabel(self)
+
+        intelligence_label = QtWidgets.QLabel("Intelligence", self)
+        intelligence_value_w = QtWidgets.QLabel(self)
+
+        faith_label = QtWidgets.QLabel("Faith", self)
+        faith_value_w = QtWidgets.QLabel(self)
+
+        humanity_label = QtWidgets.QLabel("Humanity", self)
+        humanity_value_w = QtWidgets.QLabel(self)
+
+        main_layout = QtWidgets.QGridLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(name_value_w, 0, 0, 1, 2)
+
+        for label_w, value_w in (
+            (covenant_label, covenant_value_w),
+            (level_label, level_value_w),
+            (souls_label, souls_value_w),
+            (vitality_label, vitality_value_w),
+            (attunement_label, attunement_value_w),
+            (endurance_label, endurance_value_w),
+            (strength_label, strength_value_w),
+            (dexterity_label, dexterity_value_w),
+            (resistance_label, resistance_value_w),
+            (intelligence_label, intelligence_value_w),
+            (faith_label, faith_value_w),
+            (humanity_label, humanity_value_w)
+        ):
+            row = main_layout.rowCount()
+            label_w.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+            value_w.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+            main_layout.addWidget(label_w, row, 0)
+            main_layout.addWidget(value_w, row, 1)
+
+        main_layout.addWidget(covenant_label, 1, 0)
+
+        self._char = None
+        self._name_label = name_value_w
+        self._covenant_value_w = covenant_value_w
+        self._level_value_w = level_value_w
+        self._souls_value_w= souls_value_w
+        self._vitality_value_w = vitality_value_w
+        self._attunement_value_w = attunement_value_w
+        self._endurance_value_w = endurance_value_w
+        self._strength_value_w = strength_value_w
+        self._dexterity_value_w = dexterity_value_w
+        self._resistance_value_w = resistance_value_w
+        self._intelligence_value_w = intelligence_value_w
+        self._faith_value_w = faith_value_w
+        self._humanity_value_w = humanity_value_w
+
+        self.set_char(None)
+
+    def set_char(self, char):
+        if char is None:
+            self._set_empty()
+            return
+
+        self._name_label.setText(char.name)
+        self._covenant_value_w.setText("N/A")
+        for widget, value in (
+            (self._level_value_w, char.level),
+            (self._souls_value_w, char.souls),
+            (self._vitality_value_w, char.vitality),
+            (self._attunement_value_w, char.attunement),
+            (self._endurance_value_w, char.endurance),
+            (self._strength_value_w, char.strength),
+            (self._dexterity_value_w, char.dexterity),
+            (self._resistance_value_w, char.resistance),
+            (self._intelligence_value_w, char.intelligence),
+            (self._faith_value_w, char.faith),
+            (self._humanity_value_w, char.humanity),
+        ):
+            widget.setText(str(value))
+
+    def _set_empty(self):
+        self._name_label.setText("< Empty >")
+        for value_w in (
+            self._covenant_value_w,
+            self._level_value_w,
+            self._souls_value_w,
+            self._vitality_value_w,
+            self._attunement_value_w,
+            self._endurance_value_w,
+            self._strength_value_w,
+            self._dexterity_value_w,
+            self._resistance_value_w,
+            self._intelligence_value_w,
+            self._faith_value_w,
+            self._humanity_value_w,
+        ):
+            value_w.setText("")
+
+
+class CharacterInfoWidget(QtWidgets.QWidget):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        status_widget = CharacterStatusWidget(self)
+
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(status_widget, 1)
+
+        self._status_widget = status_widget
+
+    def set_char(self, char):
+        self._status_widget.set_char(char)
 
 
 class CharsListModel(QtGui.QStandardItemModel):
@@ -45,7 +186,6 @@ class CharsListModel(QtGui.QStandardItemModel):
             idx: char
             for idx, char in enumerate(dsr_chars)
         }
-        print(len(dsr_chars))
         new_items = []
         for idx, char in enumerate(dsr_chars):
             item = root_item.child(idx)
@@ -110,12 +250,18 @@ class DSRWidget(QtWidgets.QWidget):
         self._widgets = []
 
     def _on_selection_change(self, selection, _old_selection):
-        if selection.count() == 0:
-            return
+        set_char = False
+        for index in selection.indexes():
+            item_id = index.data(CHAR_ID_ROLE)
+            char = self._model.get_char_by_id(item_id)
+            if char is not None:
+                self._char_info_widget.set_char(char)
+                set_char = True
+                break
 
-        # if not index.isValid():
-        #     return
-        # print(index)
+        if not set_char:
+            self._char_info_widget.set_char(None)
+
     #
     # def showEvent(self, event):
     #     super().showEvent(event)

@@ -122,6 +122,7 @@ class DSRCharacter:
     endurance: int
     strength: int
     dexterity: int
+    resistance: int
     intelligence: int
     faith: int
 
@@ -484,6 +485,7 @@ def character_from_entry(
         endurance,
         strength,
         dexterity,
+        resistance,
         intelligence,
         faith,
 
