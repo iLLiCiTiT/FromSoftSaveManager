@@ -124,7 +124,7 @@ class DSRCharacter:
     faith: int
 
     sex: int
-    player_class_id: int
+    class_id: int
     physique_id: int
     gift_id: int
 
@@ -235,8 +235,8 @@ def character_from_entry(
     print(f"{name} | lvl {level} | hum {humanity} | souls {souls}/{earned}")
     unknown_5 = entry.content[258:278]
     (
-        sex,
-        player_class_id,
+        sex,  # 0 female / 1 male
+        class_id,
         physique_id,
         gift_id,
     ) = struct.unpack("<IBBB", entry.content[278:285])
@@ -245,7 +245,7 @@ def character_from_entry(
     unknown_7 = struct.unpack("<III", entry.content[320:332]) # 3x '0'
 
     (
-        _poison_res, # Duplicated poison?
+        toxic_res, # Could be swapped with poison res (should have same value)
         bleed_res,
         poison_res,
         curse_res,
@@ -490,7 +490,7 @@ def character_from_entry(
         covenant_id,
         covenant_lvls,
 
-        used_gestures,
+        list(used_gestures),
 
         hp_current,
         hp_max,
@@ -510,7 +510,7 @@ def character_from_entry(
         faith,
 
         sex,
-        player_class_id,
+        class_id,
         physique_id,
         gift_id,
 

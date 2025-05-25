@@ -759,7 +759,7 @@ SPECIALS = [
     {"id": 1010000, "name": "Egg"},
     {"id": 1020000, "name": "Big Egg"},
 ]
-CLASSES = {
+DSR_CLASSES = {
     0: "Warrior",
     1: "Knight",
     2: "Wanderer",
@@ -771,7 +771,7 @@ CLASSES = {
     8: "Cleric",
     9: "Deprived"
 }
-FACE_TYPES = {
+DSR_FACE_TYPES = {
     0: "Commoner",
     1: "Delta Farmer",
     2: "Astora Noble",
@@ -783,7 +783,7 @@ FACE_TYPES = {
     8: "Eerie Great Swamp",
     9: "Far East Traveler",
 }
-HAIR_TYPES = {
+DSR_HAIR_TYPES = {
     0: "Shaved",
     1: "Receding",
     2: "Short",
@@ -795,7 +795,7 @@ HAIR_TYPES = {
     8: "Curly",
     9: "Bobbed",
 }
-HAIR_COLORS = {
+DSR_HAIR_COLORS = {
     0: "Black",
     1: "Dark Brown",
     2: "Light Brown",
@@ -807,7 +807,7 @@ HAIR_COLORS = {
     8: "Dark Purple",
     9: "Red",
 }
-GIFTS = {
+DSR_GIFTS = {
     0: "None",
     1: "Goddess's Blessing",
     2: "Black Firebomb",
@@ -818,7 +818,7 @@ GIFTS = {
     7: "Tiny Being's Ring",
     8: "Old Witch's Ring",
 }
-PHYSIQUE = {
+DSR_PHYSIQUE = {
     0: "Average",
     1: "Slim",
     2: "Very Slim",
