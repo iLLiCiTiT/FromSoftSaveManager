@@ -89,7 +89,7 @@ class CharacterStatusWidget(QtWidgets.QWidget):
 
         attributes_layout = QtWidgets.QGridLayout(attributes_widget)
         attributes_layout.setContentsMargins(0, 0, 0, 0)
-        attributes_layout.addWidget(name_value_w, 0, 0, 1, 2)
+        attributes_layout.addWidget(name_value_w, 0, 0, 1, 3)
 
         for icon_w, label_w, value_w in (
             (None, covenant_label, covenant_value_w),
