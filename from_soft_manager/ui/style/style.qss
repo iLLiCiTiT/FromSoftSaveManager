@@ -1,0 +1,35 @@
+* {
+    color: #ffffff;
+    background: #050505;
+    font-family: "Noto Sans";
+    font-size: 10pt;
+    font-weight: 450;
+    outline: none;
+    border-radius: 0px;
+}
+
+QPushButton {
+    background: rgb(34, 31, 34);
+    border-radius: 0px;
+}
+
+QAbstractItemView {
+    border: none;
+    border-radius: 0px;
+    background: transparent;
+    selection-background-color: transparent;
+}
+
+QAbstractItemView::item {
+    border: none;
+    background: transparent;
+}
+
+QAbstractItemView::item:hover {
+    background: rgba(181, 142, 41, 0.3);
+}
+
+QAbstractItemView::item:selected, QAbstractItemView::item:selected:!active, QAbstractItemView::item:selected:hover {
+    background: rgba(181, 142, 41, 0.5);
+}
+
