@@ -4,27 +4,35 @@ Simple tool to view and manage save files of FromSoftware games. The end goal is
 ## State
 This project is in early development. It is not yet ready for use.
 
+### Screenshot
+![Alt text](/example_01.png "Dark Souls: Remastered save file")
+
 ## Reason
 Bored developer who likes to play FromSoftware games.
 
 ## Planned features
 Order of features is not deterministic.
 
-### Parsing
-- [ ] Parse DS:R save files.
-- [ ] Parse save files.
-- [ ] Parse DS2 save files.
-- [ ] Parse DS3 save files.
-- [ ] Parse Elden Ring save files.
+- Parse save files.
+- [ ] DS:R
+- [ ] DS2
+- [ ] DS3
+- [ ] Elden Ring
 
 ### View
-- [ ] Create simple UI showing the parsed data.
-- [ ] Add images related to items.
+- Create simple UI showing the parsed data.
+- [ ] Dark DS:R
+- [ ] DS2
+- [ ] DS3
+- [ ] Elden Ring
 
 ### Backup save files
-- [ ] Create a backup of a character from save file.
-- [ ] Reapply the character to save file.
-- [ ] Reapply the character to different position.
+- Create a backup of a character from save file and reapply the character to save file.
+- [ ] DS:R
+- [ ] DS2
+- [ ] DS3
+- [ ] Elden Ring
+
 
 ## Sources
 Some of the features were already implemented in other projects. Especially the parsing will be something what I will be looking at. Please let me know if there are projects that already do allow to create a backup of individual characters.
