@@ -241,7 +241,7 @@ class CharacterStatusWidget(QtWidgets.QWidget):
             (self._humanity_value_w, char.humanity),
 
             (self._hollow_value_w, "Hollow" if char.hollow_state == 8 else "Human"),
-            (self._sex_value_w, "Female" if char.sex == 1 else "Male"),
+            (self._sex_value_w, "Male" if char.sex == 1 else "Female"),
             (self._hp_value_w, f"{char.hp_current}/{char.hp_max}"),
             (self._stamina_value_w, f"{char.stamina_current}/{char.stamina_max}"),
             (self._bleed_res_value_w, char.bleed_res),
