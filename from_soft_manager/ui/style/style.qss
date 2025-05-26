@@ -1,6 +1,6 @@
 * {
     color: #ffffff;
-    background: #050505;
+    background: transparent;
     font-family: "Noto Sans";
     font-size: 10pt;
     font-weight: 450;
@@ -33,3 +33,16 @@ QAbstractItemView::item:selected, QAbstractItemView::item:selected:!active, QAbs
     background: rgba(181, 142, 41, 0.5);
 }
 
+TabButton {
+    background: #050505;
+    border-radius: 0px;
+    padding: 2px 8px;
+}
+
+TabButton:hover {
+    background: rgba(34, 31, 34, 127);
+}
+
+TabButton[selected="1"] {
+    background: rgba(34, 31, 34, 255);
+}

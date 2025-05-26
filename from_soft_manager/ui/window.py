@@ -16,11 +16,12 @@ class MainWindow(QtWidgets.QDialog):
         dsr_widget = DSRWidget(controller, self)
 
         main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(dsr_widget)
 
         self._dsr_widget = dsr_widget
 
-        self.resize(620, 400)
+        self.resize(800, 400)
 
     def showEvent(self, event):
         super().showEvent(event)

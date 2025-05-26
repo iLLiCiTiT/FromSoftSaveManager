@@ -3,7 +3,9 @@ from typing import Optional
 from PySide6 import QtWidgets, QtCore, QtGui
 
 from from_soft_manager.parse import DSRCharacter
+from from_soft_manager.ui.utils import TabWidget
 
+from .resources import get_resource
 from .info import CharacterInfoWidget
 
 CHAR_ID_ROLE = QtCore.Qt.UserRole + 1
@@ -77,23 +79,33 @@ class DSRWidget(QtWidgets.QWidget):
     def __init__(self, controller, parent):
         super().__init__(parent)
 
-        view = QtWidgets.QTreeView(self)
+        view_wrap = QtWidgets.QWidget(self)
+
+        view = QtWidgets.QListView(view_wrap)
         view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         view.setTextElideMode(QtCore.Qt.ElideLeft)
-        view.setHeaderHidden(True)
         view.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
 
         model = CharsListModel(controller, view)
-        # TODO better refresh logic
-        model.refresh()
         view.setModel(model)
 
-        char_info_widget = CharacterInfoWidget(self)
+        view_wrap_layout = QtWidgets.QHBoxLayout(view_wrap)
+        view_wrap_layout.setContentsMargins(24, 24, 0, 0)
+        view_wrap_layout.addWidget(view)
+
+        char_tabs = TabWidget(self)
+
+        char_info_widget = CharacterInfoWidget(char_tabs)
+        char_equip_widget = QtWidgets.QWidget(char_tabs)
+
+        char_tabs.add_tab(
+            "Character Info",
+            char_info_widget,
 
         main_layout = QtWidgets.QHBoxLayout(self)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.addWidget(view, 0)
-        main_layout.addWidget(char_info_widget, 1)
+        main_layout.setContentsMargins(5, 5, 5, 5)
+        main_layout.addWidget(view_wrap, 0)
+        main_layout.addWidget(char_tabs, 1)
 
         view.selectionModel().selectionChanged.connect(
             self._on_selection_change
@@ -101,8 +113,25 @@ class DSRWidget(QtWidgets.QWidget):
 
         self._view = view
         self._model = model
+        self._char_tabs = char_tabs
         self._char_info_widget = char_info_widget
         self._widgets = []
+        self._bg_pix = None
+
+        # TODO better refresh logic
+        model.refresh()
+
+    def paintEvent(self, event):
+        painter = QtGui.QPainter(self)
+        pix = self._get_bg_pix()
+        painter.drawPixmap(self.rect(), pix)
+
+    def _get_bg_pix(self):
+        if self._bg_pix is None:
+            self._bg_pix = QtGui.QPixmap(
+                get_resource("bg.png")
+            )
+        return self._bg_pix
 
     def _on_selection_change(self, selection, _old_selection):
         set_char = False

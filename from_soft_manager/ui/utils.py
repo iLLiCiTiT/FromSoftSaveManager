@@ -1,4 +1,113 @@
+import uuid
+from typing import Optional
+
 from PySide6 import QtWidgets, QtCore, QtGui
+
+
+class TabButton(QtWidgets.QPushButton):
+    requested = QtCore.Signal(str)
+
+    def __init__(self, tab_id, tab_label, parent):
+        super().__init__(tab_label, parent)
+        self.clicked.connect(self._on_click)
+        self.setDefault(False)
+        self.setAutoDefault(False)
+
+        self.tab_id = tab_id
+
+        self._selected = False
+
+    def set_selected_tab(self, selected):
+        if self._selected == selected:
+            return
+        self._selected = selected
+        value = "1" if selected else ""
+        self.setProperty("selected", value)
+        self.style().polish(self)
+
+    def _on_click(self):
+        self.requested.emit(self.tab_id)
+
+
+class TabWidget(QtWidgets.QWidget):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        bar_widget = QtWidgets.QWidget(self)
+        bar_layout = QtWidgets.QHBoxLayout(bar_widget)
+        bar_layout.setContentsMargins(0, 0, 0, 0)
+        bar_layout.setSpacing(0)
+        bar_layout.addStretch(1)
+
+        empty_content_widget = QtWidgets.QWidget(bar_widget)
+
+        content_widget = QtWidgets.QWidget(self)
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.addWidget(empty_content_widget, 1)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addWidget(bar_widget, 0)
+        layout.addWidget(content_widget, 1)
+
+        self._empty_content_widget = empty_content_widget
+        self._bar_widget = bar_widget
+        self._bar_layout = bar_layout
+        self._content_widget = content_widget
+        self._content_layout = content_layout
+
+        self._current_tab = None
+        self._tab_btns = {}
+        self._tab_widgets = {}
+
+    def add_tab(
+        self,
+        tab_label: str,
+        tab_widget: QtWidgets.QWidget,
+        tab_id: Optional[str] = None,
+    ):
+        if tab_id is None:
+            tab_id = uuid.uuid1().hex
+        tab_button = TabButton(tab_id, tab_label, self._bar_widget)
+
+        tab_button.requested.connect(self._on_tab_request)
+
+        tab_widget.setVisible(False)
+
+        pos = self._bar_layout.count() - 1
+        self._bar_layout.insertWidget(pos, tab_button, 0)
+
+        self._tab_btns[tab_id] = tab_button
+        self._tab_widgets[tab_id] = tab_widget
+
+        if self._current_tab is None:
+            self._set_current_tab(tab_id)
+
+    def _set_current_tab(self, tab_id):
+        if self._current_tab == tab_id:
+            return
+
+        current_tab = self._tab_btns.get(self._current_tab)
+        if current_tab is not None:
+            current_tab.set_selected_tab(False)
+
+        self._current_tab = tab_id
+
+        tab_content = self._empty_content_widget
+        if tab_id is not None:
+            tab_content = self._tab_widgets[tab_id]
+            tab_button = self._tab_btns[tab_id]
+            tab_button.set_selected_tab(True)
+
+        item = self._content_layout.takeAt(0)
+        item.widget().setVisible(False)
+        tab_content.setVisible(True)
+        self._content_layout.addWidget(tab_content, 1)
+
+    def _on_tab_request(self, tab_id):
+        self._set_current_tab(tab_id)
 
 
 class PixmapLabel(QtWidgets.QLabel):
