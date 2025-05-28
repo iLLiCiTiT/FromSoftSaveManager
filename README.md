@@ -27,6 +27,13 @@ Order of features is not deterministic.
 - [ ] Elden Ring
 
 ### Backup save files
+- Create a backup of a save file using hotkeys.
+- [ ] DS:R
+- [ ] DS2
+- [ ] DS3
+- [ ] Elden Ring
+- 
+### Backup characters from save files
 - Create a backup of a character from save file and reapply the character to save file.
 - [ ] DS:R
 - [ ] DS2
