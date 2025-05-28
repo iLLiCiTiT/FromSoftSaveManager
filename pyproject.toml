@@ -7,5 +7,6 @@ requires-python = ">=3.11"
 dependencies = [
     "PySide6",
     "cryptography",
-    "platformdirs"
+    "platformdirs",
+    "pywin32"
 ]

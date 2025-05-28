@@ -150,6 +150,8 @@ class MainWindow(QtWidgets.QDialog):
             if widget.save_id not in used_ids:
                 self._content_layout.removeWidget(widget)
                 widget.deleteLater()
+            else:
+                self._controller.set_current_save_id(widget.save_id)
 
     def _on_settings_click(self):
         dialog = SettingsDialog(self._controller, self)

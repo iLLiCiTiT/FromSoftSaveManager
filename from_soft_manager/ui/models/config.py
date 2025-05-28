@@ -64,7 +64,7 @@ class ConfigModel(QtCore.QObject):
             self._app_dir, "config.json"
         )
         self._config_data = None
-        self._save_paths_by_id = {}
+        self._save_info_by_id = {}
         self._load_config()
 
     def get_config_info(self) -> ConfigInfo:
@@ -91,11 +91,17 @@ class ConfigModel(QtCore.QObject):
             if not dsr_info.get("save_id"):
                 dsr_info["save_id"] = uuid.uuid4().hex
             dsr_info["path"] = dsr_save_path
-            self._save_paths_by_id[dsr_info["save_id"]] = dsr_save_path
+            self._save_info_by_id[dsr_info["save_id"]] = {
+                "path": dsr_save_path,
+                "game": Game.DSR.value
+            }
 
         if changed:
             self._save_config()
             self.paths_changed.emit()
+
+    def get_backup_dir_path(self, *args) -> str:
+        return os.path.join(self._app_dir, "backups", *args)
 
     def get_save_items(self) -> list[SaveItem]:
         output = []
@@ -111,8 +117,17 @@ class ConfigModel(QtCore.QObject):
             )
         return output
 
+    def get_save_info_by_id(self, save_id: str) -> Optional[dict]:
+        info = self._save_info_by_id.get(save_id)
+        if info:
+            return info
+        return {
+            "path": None,
+            "game": None,
+        }
+
     def get_save_path_by_id(self, save_id: str) -> Optional[str]:
-        return self._save_paths_by_id.get(save_id)
+        return self.get_save_info_by_id(save_id)["path"]
 
     def get_default_dsr_save_path_hint(self) -> str:
         path, _success = self._get_default_dsr_save_path()
@@ -166,14 +181,14 @@ class ConfigModel(QtCore.QObject):
                     "save_id": uuid.uuid4().hex,
                 }
 
-        paths_by_id = {}
+        info_by_id = {}
         for key, info in game_save_files.items():
             save_id = info.get("save_id")
             path = info.get("path")
             if save_id:
-                paths_by_id[save_id] = path
+                info_by_id[save_id] = {"path": path, "game": key}
 
-        self._save_paths_by_id = paths_by_id
+        self._save_info_by_id = info_by_id
         self._config_data = config_data
 
     def _save_config(self):
