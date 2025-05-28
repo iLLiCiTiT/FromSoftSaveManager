@@ -1,62 +1,83 @@
 import os
 import logging
-from typing import Optional
+
+from PySide6 import QtCore
 
 from from_soft_manager.parse import (
     Game,
     parse_sl2_file,
     parse_dsr_file,
     DSRSaveFile,
+    SL2File,
 )
+from .structures import (
+    SaveItem,
+    CharactersInfo,
+    ConfigInfo,
+    ConfigConfirmData,
+)
+from .models import ConfigModel
 
 NOT_SET = object()
 
 
-class Controller:
+class Controller(QtCore.QObject):
+    paths_changed = QtCore.Signal()
+
     def __init__(self):
+        super().__init__()
         self._log = logging.getLogger("Controller")
 
-        self._dsr_file = NOT_SET
+        config_model = ConfigModel()
 
-        # Implement settings for paths
-        self._dsr_save_path = os.path.join(
-            os.path.join(os.environ["USERPROFILE"]),
-            "Documents",  # NOTE 'Documents' can vary by language settings
-            "NBGI", "DARK SOULS REMASTERED", "52882570", "DRAKS0005.sl2"
+        config_model.paths_changed.connect(self.paths_changed)
+
+        self._config_model = config_model
+
+    def get_config_info(self) -> ConfigInfo:
+        return self._config_model.get_config_info()
+
+    def save_config_info(self, config_data: ConfigConfirmData):
+        return self._config_model.save_config_info(config_data)
+
+    def get_save_items(self) -> list[SaveItem]:
+        return self._config_model.get_save_items()
+
+    def get_dsr_characters(self, save_id: str) -> CharactersInfo:
+        path = self._config_model.get_save_path_by_id(save_id)
+        info = CharactersInfo(
+            save_id,
+            [],
+            path,
         )
 
-    def get_dsr_chars(self):
-        parsed_file = self._get_dsr_file()
-        if parsed_file is None:
-            return []
-        return parsed_file.characters
+        self._fill_dsr_characters(info)
+        return info
 
-    def _get_dsr_file(self) -> Optional[DSRSaveFile]:
-        if self._dsr_file is not NOT_SET:
-            return self._dsr_file
+    def _fill_dsr_characters(self, info: CharactersInfo):
+        if info.path is None:
+            info.error = "Save file path is not set."
+            return
 
-        self._dsr_file = None
-        if not os.path.exists(self._dsr_save_path):
-            self._log.debug(
-                "DSR save file does not exist at path: %s",
-                self._dsr_save_path
-            )
-            return None
+        if not os.path.exists(info.path):
+            info.error = "Save file does not exist."
+            return
 
         try:
-            parsed_file = parse_sl2_file(self._dsr_save_path)
+            parsed_file: SL2File = parse_sl2_file(info.path)
         except Exception:
             self._log.warning(
                 "Failed to parse DSR save file", exc_info=True
             )
-            return None
+            info.error = "Failed to parse save file."
+            return
 
         if parsed_file.game != Game.DSR:
-            self._log.warning(
-                "Parsed file is not a DSR save file: %s",
-                parsed_file.game
+            info.error = (
+                "Not Dark Souls Remastered save"
+                f" file but '{parsed_file.game}'."
             )
-            return None
+            return
 
-        self._dsr_file = parse_dsr_file(parsed_file)
-        return self._dsr_file
+        dsr_file: DSRSaveFile = parse_dsr_file(parsed_file)
+        info.characters = dsr_file.characters

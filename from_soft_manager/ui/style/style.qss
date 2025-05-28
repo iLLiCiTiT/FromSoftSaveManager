@@ -8,9 +8,19 @@
     border-radius: 0px;
 }
 
+QLineEdit {
+    background: rgb(64, 61, 64);
+    padding: 2px;
+    border-radius: 0px;
+}
+
 QPushButton {
+    padding: 4px 8px;
     background: rgb(34, 31, 34);
     border-radius: 0px;
+}
+QPushButton:hover {
+    background: rgb(64, 61, 64);
 }
 
 QAbstractItemView {
@@ -45,4 +55,8 @@ TabButton:hover {
 
 TabButton[selected="1"] {
     background: rgba(34, 31, 34, 255);
+}
+
+SettingsDialog {
+    background: #050505;
 }
