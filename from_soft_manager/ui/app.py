@@ -7,7 +7,7 @@ from .window import MainWindow
 
 def main():
     app = QtWidgets.QApplication()
-    app.setApplicationName("FromSoftEditor")
+    app.setApplicationName("FromSoftSaveManager")
     app.setApplicationVersion(__version__)
     # TODO add icon
     # app.setWindowIcon(QtGui.QIcon("logo.ico"))

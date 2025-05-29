@@ -82,7 +82,7 @@ class SettingsDialog(QtWidgets.QDialog):
 class MainWindow(QtWidgets.QDialog):
     def __init__(self, controller: "Controller"):
         super().__init__()
-        self.setWindowTitle("FromSoftEditor")
+        self.setWindowTitle("FromSoft Save Manager")
 
         header_widget = QtWidgets.QWidget(self)
 
