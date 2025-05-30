@@ -1,9 +1,9 @@
-from abc import ABC, abstractmethod
-from enum import Enum
+from abc import ABC
+from enum import StrEnum
 from dataclasses import dataclass
 
 
-class Game(Enum):
+class Game(StrEnum):
     DSR = "DSR"
     DS2 = "DS2"
     DS3 = "DS3"

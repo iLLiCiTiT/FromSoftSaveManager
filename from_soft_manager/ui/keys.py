@@ -1,16 +1,18 @@
 import platform
 
 
-def get_pressed_keys():
-    return set()
+def keys_are_pressed(keys: set[int]):
+    return False
 
 
 if platform.system().lower() == "windows":
     import win32api
 
-    def get_pressed_keys():
-        return {
-            idx
-            for idx in range(3, 256)
-            if win32api.GetAsyncKeyState(idx)
-        }
+
+    def keys_are_pressed(keys: set[int]):
+        if not keys:
+            return False
+        return all(
+            win32api.GetAsyncKeyState(key)
+            for key in keys
+        )

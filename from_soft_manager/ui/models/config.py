@@ -69,7 +69,7 @@ class ConfigModel(QtCore.QObject):
 
     def get_config_info(self) -> ConfigInfo:
         game_save_files = self._config_data.get("game_save_files", {})
-        dsr_info = game_save_files.get(Game.DSR.value)
+        dsr_info = game_save_files.get(Game.DSR)
         path = None
         if dsr_info:
             path = dsr_info.get("path")
@@ -84,7 +84,7 @@ class ConfigModel(QtCore.QObject):
         dsr_save_path = config_data.dsr_save_path
 
         game_save_files = self._config_data.setdefault("game_save_files", {})
-        dsr_info = game_save_files.setdefault(Game.DSR.value, {})
+        dsr_info = game_save_files.setdefault(Game.DSR, {})
         changed = False
         if dsr_info.get("path") != dsr_save_path:
             changed = True
@@ -93,7 +93,7 @@ class ConfigModel(QtCore.QObject):
             dsr_info["path"] = dsr_save_path
             self._save_info_by_id[dsr_info["save_id"]] = {
                 "path": dsr_save_path,
-                "game": Game.DSR.value
+                "game": Game.DSR
             }
 
         if changed:
@@ -106,7 +106,7 @@ class ConfigModel(QtCore.QObject):
     def get_save_items(self) -> list[SaveItem]:
         output = []
         game_save_files = self._config_data.get("game_save_files", {})
-        dsr_info = game_save_files.get(Game.DSR.value)
+        dsr_info = game_save_files.get(Game.DSR)
         if dsr_info and dsr_info["path"]:
             output.append(
                 SaveItem(
@@ -161,11 +161,11 @@ class ConfigModel(QtCore.QObject):
                 pass
 
         game_save_files = config_data.setdefault("game_save_files", {})
-        if Game.DSR.value in game_save_files:
-            dsr_info = game_save_files[Game.DSR.value]
+        if Game.DSR in game_save_files:
+            dsr_info = game_save_files[Game.DSR]
             path = dsr_info.get("path")
             if path is None:
-                game_save_files.pop(Game.DSR.value)
+                game_save_files.pop(Game.DSR)
             else:
                 save_id = dsr_info.get("save_id")
                 if save_id is None:
@@ -173,10 +173,10 @@ class ConfigModel(QtCore.QObject):
                     dsr_info["save_id"] = save_id
                 dsr_info.setdefault("enabled", True)
 
-        if Game.DSR.value not in game_save_files:
+        if Game.DSR not in game_save_files:
             default_path, success = self._get_default_dsr_save_path()
             if success:
-                game_save_files[Game.DSR.value] = {
+                game_save_files[Game.DSR] = {
                     "path": default_path,
                     "save_id": uuid.uuid4().hex,
                 }
