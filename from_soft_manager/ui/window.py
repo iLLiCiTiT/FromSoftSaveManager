@@ -1,5 +1,5 @@
 import typing
-from PySide6 import QtWidgets
+from PySide6 import QtWidgets, QtCore, QtGui
 
 from from_soft_manager.parse import Game
 
@@ -7,8 +7,109 @@ if typing.TYPE_CHECKING:
     from from_soft_manager.ui.control import Controller
 
 from .style import load_stylesheet
-from .dsr_widget import DSRWidget
+from .icons import get_icon_path
 from .settings_dialog import SettingsDialog
+from .dsr_widget import DSRWidget
+from .ds2sotfs_widget import DS2SOTFSWidget
+from .ds3_widget import DS3Widget
+from .er_widget import ERWidget
+
+
+class GameSaveTabButton(QtWidgets.QPushButton):
+    requested = QtCore.Signal(str)
+    _icons_cache = {}
+
+    def __init__(self, game: Game, save_id: str, tab_label: str, parent: QtWidgets.QWidget):
+        super().__init__(parent)
+        icon = self.get_icon(game)
+        if icon:
+            self.setIcon(icon)
+        if tab_label:
+            self.setText(tab_label)
+        self.clicked.connect(self._on_click)
+        self.setDefault(False)
+        self.setAutoDefault(False)
+
+        self._save_id = save_id
+
+        self._selected = False
+
+    @classmethod
+    def get_icon(self, game: Game):
+        if game not in self._icons_cache:
+            filename = f"{game}_256x256.png"
+            icon_path = get_icon_path(filename)
+            if icon_path is None:
+                return None
+            self._icons_cache[game] = QtGui.QIcon(icon_path)
+        return self._icons_cache[game]
+
+    def set_selected_tab(self, selected):
+        if self._selected == selected:
+            return
+        self._selected = selected
+        value = "1" if selected else ""
+        self.setProperty("selected", value)
+        self.style().polish(self)
+
+    def _on_click(self):
+        self.requested.emit(self._save_id)
+
+
+class GameSavesBarWidget(QtWidgets.QFrame):
+    tab_changed = QtCore.Signal(str)
+
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addStretch(1)
+
+        self._layout = layout
+
+        self._current_tab_id = None
+        self._widgets_by_id = {}
+
+    def add_tab(self, game: Game, save_id: str, title: str | None = None):
+        if title is None:
+            if game == Game.DSR:
+                title = "DS: Remastered"
+            elif game == Game.DS2_SOTFS:
+                title = "DS II: SotFS"
+            elif game == Game.DS3:
+                title = "Dark Souls III"
+            elif game == Game.ER:
+                title = "Elden Ring"
+        tab_btn = GameSaveTabButton(game, save_id, title, self)
+        tab_btn.requested.connect(self.set_current_tab)
+        self._widgets_by_id[save_id] = tab_btn
+        self._layout.insertWidget(self._layout.count() - 1, tab_btn, 0)
+
+    def remove_tab(self, save_id: str):
+        if save_id == self._current_tab_id:
+            self.set_current_tab(None)
+        widget = self._widgets_by_id.pop(save_id, None)
+        if widget is None:
+            return
+        idx = self._layout.indexOf(widget)
+        if idx != -1:
+            self._layout.takeAt(idx)
+        widget.setVisible(False)
+        widget.deleteLater()
+
+    def set_current_tab(self, save_id: str | None):
+        current_tab = self._widgets_by_id.get(self._current_tab_id)
+        if current_tab is not None:
+            current_tab.set_selected_tab(False)
+
+        self._current_tab_id = save_id
+        widget = self._widgets_by_id.get(save_id)
+        if widget is not None:
+            widget.set_selected_tab(True)
+
+        self.tab_changed.emit(save_id or "")
 
 
 class MainWindow(QtWidgets.QDialog):
@@ -18,11 +119,13 @@ class MainWindow(QtWidgets.QDialog):
 
         header_widget = QtWidgets.QWidget(self)
 
+        games_bar_widget = GameSavesBarWidget(header_widget)
+
         settings_btn = QtWidgets.QPushButton("Settings", header_widget)
 
         header_layout = QtWidgets.QHBoxLayout(header_widget)
         header_layout.setContentsMargins(0, 0, 0, 0)
-        header_layout.addStretch(1)
+        header_layout.addWidget(games_bar_widget, 1)
         header_layout.addWidget(settings_btn, 0)
 
         content_widget = QtWidgets.QWidget(self)
@@ -36,9 +139,13 @@ class MainWindow(QtWidgets.QDialog):
 
         settings_btn.clicked.connect(self._on_settings_click)
         controller.paths_changed.connect(self.refresh)
+        games_bar_widget.tab_changed.connect(self._set_current_save_id)
 
         # TODO add tabs for different widgets (when supported)
-        self._widgets = []
+        self._current_save_id = None
+        self._widgets_by_id = {}
+
+        self._games_bar_widget = games_bar_widget
         self._controller = controller
         self._content_widget = content_widget
         self._content_layout = content_layout
@@ -51,39 +158,80 @@ class MainWindow(QtWidgets.QDialog):
         self.refresh()
 
     def refresh(self):
-        widgets_by_id = {
-            widget.save_id: widget
-            for widget in self._widgets
-        }
         save_items = self._controller.get_save_items()
         # TODO find out if current save is still available and change tab
         #    if not.
-        # TODO remove all widgets that are not in save_items
         used_ids = set()
         first_widget = None
         for save_item in save_items:
             used_ids.add(save_item.save_id)
-            widget = widgets_by_id.get(save_item.save_id)
+            widget = self._widgets_by_id.get(save_item.save_id)
             if widget is not None:
                 widget.refresh()
-            elif save_item.game == Game.DSR:
+                if first_widget is None:
+                    first_widget = widget
+                continue
+
+            if save_item.game == Game.DSR:
                 widget = DSRWidget(self._controller, save_item.save_id, self)
-                self._content_layout.addWidget(widget, 1)
-                self._widgets.append(widget)
+            elif save_item.game == Game.DS2_SOTFS:
+                widget = DS2SOTFSWidget(self._controller, save_item.save_id, self)
+            elif save_item.game == Game.DS3:
+                widget = DS3Widget(self._controller, save_item.save_id, self)
+            elif save_item.game == Game.ER:
+                widget = ERWidget(self._controller, save_item.save_id, self)
 
             if widget is None:
                 continue
+
             if first_widget is None:
                 first_widget = widget
-            else:
-                widget.setVisible(False)
 
-        for widget in tuple(self._widgets):
-            if widget.save_id not in used_ids:
-                self._content_layout.removeWidget(widget)
-                widget.deleteLater()
-            else:
-                self._controller.set_current_save_id(widget.save_id)
+            widget.setVisible(False)
+            self._widgets_by_id[save_item.save_id] = widget
+
+            self._games_bar_widget.add_tab(
+                save_item.game,
+                save_item.save_id,
+            )
+
+        current_widget = self._widgets_by_id.get(self._current_save_id)
+        if current_widget is None:
+            save_id = None
+            if first_widget is not None:
+                save_id = first_widget.save_id
+            self._games_bar_widget.set_current_tab(save_id)
+
+        for save_id in tuple(self._widgets_by_id.keys()):
+            if save_id in used_ids:
+                continue
+            widget = self._widgets_by_id.pop(save_id)
+            idx = self._content_layout.indexOf(widget)
+            if idx != -1:
+                self._content_layout.takeAt(idx)
+            widget.setVisible(False)
+            widget.deleteLater()
+            self._games_bar_widget.remove_tab(save_id)
+
+    def _set_current_save_id(self, save_id: str):
+        if self._current_save_id == save_id:
+            return
+
+        current_widget = self._widgets_by_id.get(self._current_save_id)
+        self._current_save_id = save_id
+
+        if current_widget is not None:
+            idx = self._content_layout.indexOf(current_widget)
+            if idx != -1:
+                self._content_layout.takeAt(idx)
+            current_widget.setVisible(False)
+
+        new_widget = self._widgets_by_id.get(save_id)
+        if new_widget is not None:
+            new_widget.setVisible(True)
+            self._content_layout.addWidget(new_widget, 1)
+
+        self._controller.set_current_save_id(self._current_save_id)
 
     def _on_settings_click(self):
         dialog = SettingsDialog(self._controller, self)
