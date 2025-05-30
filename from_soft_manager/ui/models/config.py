@@ -126,16 +126,13 @@ class ConfigModel(QtCore.QObject):
         return output
 
     def get_save_info_by_id(self, save_id: str) -> dict | None:
-        info = self._save_info_by_id.get(save_id)
-        if info:
-            return info
-        return {
-            "path": None,
-            "game": None,
-        }
+        return self._save_info_by_id.get(save_id)
 
     def get_save_path_by_id(self, save_id: str) -> str | None:
-        return self.get_save_info_by_id(save_id)["path"]
+        info = self.get_save_info_by_id(save_id)
+        if info is None:
+            return None
+        return info["path"]
 
     def _get_default_save_path(self, game: Game) -> tuple[str, bool]:
         if game == Game.DSR:
