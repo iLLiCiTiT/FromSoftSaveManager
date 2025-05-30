@@ -8,5 +8,7 @@ dependencies = [
     "PySide6",
     "cryptography",
     "platformdirs",
-    "pywin32"
+    "pywin32",
+    "arrow",
+    "semver"
 ]

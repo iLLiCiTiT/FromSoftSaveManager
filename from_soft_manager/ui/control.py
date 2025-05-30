@@ -2,8 +2,13 @@ import os
 import logging
 import platform
 import shutil
+import uuid
+import json
+import time
+from enum import StrEnum
 from datetime import datetime
 
+import arrow
 from PySide6 import QtCore
 
 from from_soft_manager.parse import (
@@ -23,6 +28,12 @@ from .models import ConfigModel
 from .keys import keys_are_pressed
 
 NOT_SET = object()
+
+
+class SaveType(StrEnum):
+    quicksave = "quicksave"
+    autosave = "autosave"
+    manualsave = "manualsave"
 
 
 class BackgroundThread(QtCore.QThread):
@@ -59,6 +70,23 @@ class BackgroundThread(QtCore.QThread):
                 continue
             quickload_pressed = False
             self.msleep(sleep_time)
+
+
+def create_backup_metadata(
+    game: Game,
+    save_type: SaveType,
+    filenames: list[str],
+    label: str | None = None,
+) -> dict:
+    return {
+        "id": uuid.uuid4().hex,
+        "game": game,
+        "save_type": save_type.value,
+        "label": label,
+        "filenames": filenames,
+        "datetime": arrow.utcnow().format(),
+        "epoch": time.time(),
+    }
 
 
 def index_existing_path(path: str) -> str:
@@ -123,6 +151,7 @@ class Controller(QtCore.QObject):
         self._current_save_id = save_id
 
     def _on_quicksave_request(self):
+        # TODO warn user if quicksave failed+++.
         if self._current_save_id is None:
             self._log.warning("No current save ID set for quicksave.")
             return
@@ -132,7 +161,8 @@ class Controller(QtCore.QObject):
         src_path = save_info["path"]
         if src_path is None:
             self._log.warning(
-                f"No save path found for current save ID: {self._current_save_id}"
+                f"No save path found for current save ID:"
+                f" {self._current_save_id}"
             )
             return
         if not os.path.exists(src_path):
@@ -147,7 +177,23 @@ class Controller(QtCore.QObject):
         backup_dir = index_existing_path(backup_dir)
 
         os.makedirs(backup_dir, exist_ok=True)
-        shutil.copy(src_path, backup_dir)
+        src_dir = os.path.dirname(src_path)
+        filenames = [
+            filename
+            for filename in os.listdir(src_dir)
+            if os.path.isfile(os.path.join(src_dir, filename))
+        ]
+        for filename in filenames:
+            shutil.copy2(os.path.join(src_dir, filename), backup_dir)
+
+        metadata_path = os.path.join(backup_dir, "metadata.json")
+        metadata = create_backup_metadata(
+            save_info["game"],
+            SaveType.quicksave,
+            filenames
+        )
+        with open(metadata_path, "w") as stream:
+            json.dump(metadata, stream)
 
     def _on_quickload_request(self):
         print("Quickload requested")
