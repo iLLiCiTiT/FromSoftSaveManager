@@ -1,9 +1,6 @@
 import os
 import json
 import uuid
-import ctypes
-from ctypes import windll, wintypes
-from typing import Optional
 
 import platformdirs
 from PySide6 import QtCore
@@ -12,6 +9,7 @@ from from_soft_manager.parse import Game
 from from_soft_manager.ui.structures import (
     SaveItem,
     ConfigInfo,
+    ConfigSavePathInfo,
     ConfigConfirmData,
 )
 
@@ -20,6 +18,9 @@ NOT_SET = object()
 
 
 def _get_windows_documents_dir() -> str:
+    import ctypes
+    from ctypes import windll, wintypes
+
     class GUID(ctypes.Structure):
         _fields_ = [
             ("Data1", wintypes.DWORD),
@@ -78,7 +79,16 @@ class ConfigModel(QtCore.QObject):
         if success:
             default_path = path_hint
 
-        return ConfigInfo(path, path_hint, default_path)
+        dsr_save_info = ConfigSavePathInfo(path, path_hint, default_path)
+        ds2_save_info = ConfigSavePathInfo("", "", None)
+        ds3_save_info = ConfigSavePathInfo("", "", None)
+        er_save_info = ConfigSavePathInfo("", "", None)
+        return ConfigInfo(
+            dsr_save_info,
+            ds2_save_info,
+            ds3_save_info,
+            er_save_info,
+        )
 
     def save_config_info(self, config_data: ConfigConfirmData):
         dsr_save_path = config_data.dsr_save_path
@@ -117,7 +127,7 @@ class ConfigModel(QtCore.QObject):
             )
         return output
 
-    def get_save_info_by_id(self, save_id: str) -> Optional[dict]:
+    def get_save_info_by_id(self, save_id: str) -> dict | None:
         info = self._save_info_by_id.get(save_id)
         if info:
             return info
@@ -126,7 +136,7 @@ class ConfigModel(QtCore.QObject):
             "game": None,
         }
 
-    def get_save_path_by_id(self, save_id: str) -> Optional[str]:
+    def get_save_path_by_id(self, save_id: str) -> str | None:
         return self.get_save_info_by_id(save_id)["path"]
 
     def get_default_dsr_save_path_hint(self) -> str:
