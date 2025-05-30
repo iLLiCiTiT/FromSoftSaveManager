@@ -70,25 +70,21 @@ class ConfigModel(QtCore.QObject):
 
     def get_config_info(self) -> ConfigInfo:
         game_save_files = self._config_data.get("game_save_files", {})
-        dsr_info = game_save_files.get(Game.DSR)
-        path = None
-        if dsr_info:
-            path = dsr_info.get("path")
-        path_hint, success = self._get_default_dsr_save_path()
-        default_path = None
-        if success:
-            default_path = path_hint
+        config_info = []
+        for game in (Game.DSR, Game.DS2_SOTFS, Game.DS3, Game.ER):
+            info = game_save_files.get(game)
+            path = None
+            if info:
+                path = info.get("path")
+            path_hint, success = self._get_default_save_path(game)
+            default_path = None
+            if success:
+                default_path = path_hint
+            config_info.append(
+                ConfigSavePathInfo(path, path_hint, default_path)
+            )
 
-        dsr_save_info = ConfigSavePathInfo(path, path_hint, default_path)
-        ds2_save_info = ConfigSavePathInfo("", "", None)
-        ds3_save_info = ConfigSavePathInfo("", "", None)
-        er_save_info = ConfigSavePathInfo("", "", None)
-        return ConfigInfo(
-            dsr_save_info,
-            ds2_save_info,
-            ds3_save_info,
-            er_save_info,
-        )
+        return ConfigInfo(*config_info)
 
     def save_config_info(self, config_data: ConfigConfirmData):
         dsr_save_path = config_data.dsr_save_path
@@ -116,15 +112,17 @@ class ConfigModel(QtCore.QObject):
     def get_save_items(self) -> list[SaveItem]:
         output = []
         game_save_files = self._config_data.get("game_save_files", {})
-        dsr_info = game_save_files.get(Game.DSR)
-        if dsr_info and dsr_info["path"]:
-            output.append(
-                SaveItem(
-                    game=Game.DSR,
-                    save_id=dsr_info["save_id"],
-                    save_path=dsr_info["path"],
+        for game in (Game.DSR, Game.DS2_SOTFS, Game.DS3, Game.ER):
+            info = game_save_files.get(game)
+            if info and info["path"]:
+                output.append(
+                    SaveItem(
+                        game=game,
+                        save_id=info["save_id"],
+                        save_path=info["path"],
+                    )
                 )
-            )
+
         return output
 
     def get_save_info_by_id(self, save_id: str) -> dict | None:
@@ -139,9 +137,16 @@ class ConfigModel(QtCore.QObject):
     def get_save_path_by_id(self, save_id: str) -> str | None:
         return self.get_save_info_by_id(save_id)["path"]
 
-    def get_default_dsr_save_path_hint(self) -> str:
-        path, _success = self._get_default_dsr_save_path()
-        return path
+    def _get_default_save_path(self, game: Game) -> tuple[str, bool]:
+        if game == Game.DSR:
+            return self._get_default_dsr_save_path()
+        elif game == Game.DS2_SOTFS:
+            return self._get_default_ds2_save_path()
+        elif game == Game.DS3:
+            return self._get_default_ds3_save_path()
+        elif game == Game.ER:
+            return self._get_default_er_save_path()
+        return "", False
 
     def _get_default_dsr_save_path(self) -> tuple[str, bool]:
         if self._default_dsr_save_info is not None:
@@ -158,6 +163,33 @@ class ConfigModel(QtCore.QObject):
                     break
         return self._default_dsr_save_info
 
+    def _get_default_ds2_save_path(self) -> tuple[str, bool]:
+        save_dir = os.path.join(os.getenv("APPDATA"), "DarkSoulsII")
+        if os.path.exists(save_dir):
+            for name in os.listdir(save_dir):
+                path = os.path.join(save_dir, name, "DS2SOFS0000.sl2")
+                if os.path.exists(path):
+                    return path, True
+        return save_dir, False
+
+    def _get_default_ds3_save_path(self) -> tuple[str, bool]:
+        save_dir = os.path.join(os.getenv("APPDATA"), "DarkSoulsIII")
+        if os.path.exists(save_dir):
+            for name in os.listdir(save_dir):
+                path = os.path.join(save_dir, name, "DS30000.sl2")
+                if os.path.exists(path):
+                    return path, True
+        return save_dir, False
+
+    def _get_default_er_save_path(self) -> tuple[str, bool]:
+        save_dir = os.path.join(os.getenv("APPDATA"), "EldenRing")
+        if os.path.exists(save_dir):
+            for name in os.listdir(save_dir):
+                path = os.path.join(save_dir, name, "ER0000.sl2")
+                if os.path.exists(path):
+                    return path, True
+        return save_dir, False
+
     def _load_config(self):
         if self._config_data is not None:
             return
@@ -171,22 +203,12 @@ class ConfigModel(QtCore.QObject):
                 pass
 
         game_save_files = config_data.setdefault("game_save_files", {})
-        if Game.DSR in game_save_files:
-            dsr_info = game_save_files[Game.DSR]
-            path = dsr_info.get("path")
-            if path is None:
-                game_save_files.pop(Game.DSR)
-            else:
-                save_id = dsr_info.get("save_id")
-                if save_id is None:
-                    save_id = uuid.uuid4().hex
-                    dsr_info["save_id"] = save_id
-                dsr_info.setdefault("enabled", True)
-
-        if Game.DSR not in game_save_files:
-            default_path, success = self._get_default_dsr_save_path()
+        for game in (Game.DSR, Game.DS2_SOTFS, Game.DS3, Game.ER):
+            if game in game_save_files:
+                continue
+            default_path, success = self._get_default_save_path(game)
             if success:
-                game_save_files[Game.DSR] = {
+                game_save_files[game] = {
                     "path": default_path,
                     "save_id": uuid.uuid4().hex,
                 }

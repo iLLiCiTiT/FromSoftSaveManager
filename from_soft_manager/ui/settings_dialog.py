@@ -22,19 +22,19 @@ class SettingsDialog(QtWidgets.QDialog):
 
         ds2_path_label = QtWidgets.QLabel("Dark Souls II: SOTFS", self)
         ds2_path_input = QtWidgets.QLineEdit(parent)
-        # ds2_path_input.setText()
+        ds2_path_input.setText(config_info.ds2_save_path.save_path)
         ds2_path_input.setPlaceholderText("< Path to save file >")
         ds2_open_btn = QtWidgets.QPushButton("Open", self)
 
         ds3_path_label = QtWidgets.QLabel("Dark Souls III", self)
         ds3_path_input = QtWidgets.QLineEdit(parent)
-        # ds3_path_input.setText()
+        ds3_path_input.setText(config_info.ds3_save_path.save_path)
         ds3_path_input.setPlaceholderText("< Path to save file >")
         ds3_open_btn = QtWidgets.QPushButton("Open", self)
 
         er_path_label = QtWidgets.QLabel("Elden Ring", self)
         er_path_input = QtWidgets.QLineEdit(parent)
-        # er_path_input.setText()
+        er_path_input.setText(config_info.er_save_path.save_path)
         er_path_input.setPlaceholderText("< Path to save file >")
         er_open_btn = QtWidgets.QPushButton("Open", self)
 
