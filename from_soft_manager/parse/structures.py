@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 class Game(StrEnum):
     DSR = "DSR"
-    DS2 = "DS2"
+    DS2_SOTFS = "DS2-SOTFS"
     DS3 = "DS3"
     ER = "ER"
 

@@ -44,7 +44,7 @@ def parse_sl2_file(input_sl2_file: str) -> SL2File:
         game = Game.DSR
     elif bnd4_header.files_count == 23:
         # NOTE: This is based on DS2 SOFT
-        game = Game.DS2
+        game = Game.DS2_SOTFS
         key = DS2_KEY
     elif bnd4_header.files_count == 12:
         # Elden Ring and Dark Souls 3 have the same number of files and same
@@ -76,7 +76,7 @@ def parse_sl2_file(input_sl2_file: str) -> SL2File:
 
     # Will be important for unparsing
     # padding_block_size = 16
-    # if game == Game.DS2:
+    # if game == Game.DS2_SOTFS:
     #     padding_block_size = 8
 
     decode_fmt = "utf-16" if bnd4_header.is_utf16 else "utf-8"
@@ -126,7 +126,7 @@ def parse_save_file(filepath: str):
     if sl2_file.game == Game.DSR:
         return parse_dsr_file(sl2_file)
 
-    if sl2_file.game == Game.DS2:
+    if sl2_file.game == Game.DS2_SOTFS:
         return parse_ds2_file(sl2_file)
 
     if sl2_file.game == Game.DS3:

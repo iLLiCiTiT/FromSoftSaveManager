@@ -1,6 +1,6 @@
 * {
-    color: #ffffff;
-    background: transparent;
+    color: {default-fg};
+    background: {default-bg};
     font-family: "Noto Sans";
     font-size: 10pt;
     font-weight: 450;
@@ -9,54 +9,77 @@
 }
 
 QLineEdit {
-    background: rgb(64, 61, 64);
+    background: {inputs-bg};
     padding: 2px;
-    border-radius: 0px;
+    border: 2px solid {tab-button-border};
 }
 
 QPushButton {
-    padding: 4px 8px;
-    background: rgb(34, 31, 34);
-    border-radius: 0px;
-}
-QPushButton:hover {
-    background: rgb(64, 61, 64);
+    padding: 4px 6px;
+    background: {button-bg};
+    color: {button-fg};
+    border: none;
 }
 
-QAbstractItemView {
+QPushButton:hover {
+    background: {button-bg-hover};
+}
+
+GameSaveTabButton {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid {tab-button-border};
+    color: {default-fg};
+    border-radius: 0px;
+}
+GameSaveTabButton:hover {
+    background: {tab-button-bg-hover};
+}
+
+GameSaveTabButton[selected="1"] {
+    border-bottom: 2px solid {tab-button-border-selected};
+}
+
+/*SettingsDialog {
+    background: #050505;
+}*/
+
+TabButton {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid {tab-button-border};
+    color: {default-fg};
+    border-radius: 0px;
+}
+
+TabButton:hover {
+    background: {tab-button-bg-hover};
+}
+
+TabButton[selected="1"] {
+    border-bottom: 2px solid {tab-button-border-selected};
+}
+
+DSRWidget QWidget {
+    background: transparent;
+}
+
+DSRWidget QAbstractItemView {
     border: none;
     border-radius: 0px;
     background: transparent;
     selection-background-color: transparent;
 }
 
-QAbstractItemView::item {
+DSRWidget QAbstractItemView::item {
     border: none;
     background: transparent;
 }
 
-QAbstractItemView::item:hover {
+DSRWidget QAbstractItemView::item:hover {
     background: rgba(181, 142, 41, 0.3);
 }
 
-QAbstractItemView::item:selected, QAbstractItemView::item:selected:!active, QAbstractItemView::item:selected:hover {
+DSRWidget QAbstractItemView::item:selected, QAbstractItemView::item:selected:!active, QAbstractItemView::item:selected:hover {
     background: rgba(181, 142, 41, 0.5);
-}
-
-TabButton {
-    background: #050505;
-    border-radius: 0px;
-    padding: 2px 8px;
-}
-
-TabButton:hover {
-    background: rgba(34, 31, 34, 127);
-}
-
-TabButton[selected="1"] {
-    background: rgba(34, 31, 34, 255);
-}
-
-SettingsDialog {
-    background: #050505;
 }

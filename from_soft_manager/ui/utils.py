@@ -1,5 +1,4 @@
 import uuid
-from typing import Optional
 
 from PySide6 import QtWidgets, QtCore, QtGui
 
@@ -66,7 +65,7 @@ class TabWidget(QtWidgets.QWidget):
         self,
         tab_label: str,
         tab_widget: QtWidgets.QWidget,
-        tab_id: Optional[str] = None,
+        tab_id: str | None = None,
     ):
         if tab_id is None:
             tab_id = uuid.uuid1().hex
