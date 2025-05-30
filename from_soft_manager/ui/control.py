@@ -20,7 +20,7 @@ from .structures import (
     ConfigConfirmData,
 )
 from .models import ConfigModel
-from .keys import get_pressed_keys
+from .keys import keys_are_pressed
 
 NOT_SET = object()
 
@@ -42,8 +42,7 @@ class BackgroundThread(QtCore.QThread):
         quickload_pressed = False
         sleep_time = 10
         while self.isRunning():
-            keys = get_pressed_keys()
-            if VK_F5 in keys:
+            if keys_are_pressed({VK_F5}):
                 if not quicksave_pressed:
                     quicksave_pressed = True
                     self.quicksave_requested.emit()
@@ -51,7 +50,7 @@ class BackgroundThread(QtCore.QThread):
                 continue
             quicksave_pressed = False
 
-            if VK_F8 in keys:
+            if keys_are_pressed({VK_F8}):
                 if not quickload_pressed:
                     quickload_pressed = True
                     self.quickload_requested.emit()
