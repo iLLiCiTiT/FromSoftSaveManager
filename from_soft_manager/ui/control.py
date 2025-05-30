@@ -61,6 +61,22 @@ class BackgroundThread(QtCore.QThread):
             self.msleep(sleep_time)
 
 
+def index_existing_path(path: str) -> str:
+    if not os.path.exists(path):
+        return path
+
+    base = path
+    ext = ""
+    if os.path.isfile(path):
+        base, ext = os.path.splitext(path)
+    idx = 1
+    while True:
+        new_path = f"{base}_{idx}{ext}"
+        if not os.path.exists(new_path):
+            return new_path
+        idx += 1
+
+
 class Controller(QtCore.QObject):
     paths_changed = QtCore.Signal()
 
@@ -128,6 +144,8 @@ class Controller(QtCore.QObject):
         backup_dir = self._config_model.get_backup_dir_path(
             save_info["game"], datetime.now().strftime("%Y%m%d_%H%M%S")
         )
+        backup_dir = index_existing_path(backup_dir)
+
         os.makedirs(backup_dir, exist_ok=True)
         shutil.copy(src_path, backup_dir)
 
