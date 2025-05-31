@@ -1,9 +1,7 @@
-from typing import Optional
-
 from PySide6 import QtWidgets, QtCore, QtGui
 
 from from_soft_manager.parse import DSRCharacter
-from from_soft_manager.ui.utils import TabWidget
+from from_soft_manager.ui.utils import TabWidget, ManageSavesWidget
 
 from .resources import get_resource
 from .info import CharacterInfoWidget
@@ -22,7 +20,7 @@ class CharsListModel(QtGui.QStandardItemModel):
         self._controller = controller
         self._save_id = save_id
 
-        self._chars_by_id: dict[int, Optional[DSRCharacter]] = {
+        self._chars_by_id: dict[int, DSRCharacter | None] = {
             idx : None
             for idx in range(10)
         }
@@ -80,7 +78,7 @@ class CharsListModel(QtGui.QStandardItemModel):
             root_item.appendRows(new_items)
         self.refreshed.emit()
 
-    def get_char_by_id(self, item_id: int) -> Optional[DSRCharacter]:
+    def get_char_by_id(self, item_id: int) -> DSRCharacter | None:
         return self._chars_by_id.get(item_id)
 
 
@@ -97,12 +95,15 @@ class DSRWidget(QtWidgets.QWidget):
         view.setTextElideMode(QtCore.Qt.ElideLeft)
         view.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
 
+        manage_saves_widget = ManageSavesWidget(controller, view_wrap)
+
         model = CharsListModel(controller, save_id, view)
         view.setModel(model)
 
-        view_wrap_layout = QtWidgets.QHBoxLayout(view_wrap)
+        view_wrap_layout = QtWidgets.QVBoxLayout(view_wrap)
         view_wrap_layout.setContentsMargins(24, 24, 0, 0)
-        view_wrap_layout.addWidget(view)
+        view_wrap_layout.addWidget(view, 4)
+        view_wrap_layout.addWidget(manage_saves_widget, 1)
 
         char_tabs = TabWidget(self)
 
@@ -119,7 +120,7 @@ class DSRWidget(QtWidgets.QWidget):
         # )
 
         main_layout = QtWidgets.QHBoxLayout(self)
-        main_layout.setContentsMargins(5, 5, 5, 5)
+        main_layout.setContentsMargins(5, 5, 29, 29)
         main_layout.addWidget(view_wrap, 0)
         main_layout.addWidget(char_tabs, 1)
 
