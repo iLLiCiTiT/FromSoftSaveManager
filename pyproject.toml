@@ -1,14 +1,24 @@
 [project]
 name = "fromsoftsavemanager"
 version = "0.1.0"
-description = "Add your description here"
+description = "Save file manager for FromSoftware games"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "PySide6",
     "cryptography",
     "platformdirs",
-    "pywin32",
+    "pywin32 ; platform_system == 'Windows'",
     "arrow",
-    "semver"
+    "semver",
+    "cx_freeze"
 ]
+
+[tool.cxfreeze]
+executables = [
+    {script = "main.py", base = "gui"}
+]
+
+[tool.cxfreeze.build_exe]
+excludes = ["tkinter", "unittest"]
+zip_include_packages = ["encodings", "PySide6", "shiboken6"]
