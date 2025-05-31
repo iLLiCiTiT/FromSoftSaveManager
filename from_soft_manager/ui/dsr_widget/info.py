@@ -1,5 +1,3 @@
-from typing import Optional
-
 from PySide6 import QtWidgets, QtCore, QtGui
 
 from from_soft_manager.parse import (
@@ -220,7 +218,7 @@ class CharacterStatusWidget(QtWidgets.QWidget):
 
         self.set_char(None)
 
-    def set_char(self, char: Optional[DSRCharacter]):
+    def set_char(self, char: DSRCharacter | None):
         if char is None:
             self._set_empty()
             return
