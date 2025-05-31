@@ -150,50 +150,16 @@ class Controller(QtCore.QObject):
     def set_current_save_id(self, save_id: str | None):
         self._current_save_id = save_id
 
+    def create_manual_backup(self, label: str):
+        # TODO warn user if save failed.
+        label = label.strip()
+        if not label:
+            label = datetime.now().strftime("%Y%m%d - %H%M%S")
+        self._backup_current_save(SaveType.manualsave, label)
+
     def _on_quicksave_request(self):
-        # TODO warn user if quicksave failed+++.
-        if self._current_save_id is None:
-            self._log.warning("No current save ID set for quicksave.")
-            return
-        save_info = self._config_model.get_save_info_by_id(
-            self._current_save_id
-        )
-        src_path = save_info["path"]
-        if src_path is None:
-            self._log.warning(
-                f"No save path found for current save ID:"
-                f" {self._current_save_id}"
-            )
-            return
-        if not os.path.exists(src_path):
-            self._log.warning(
-                f"Save file does not exist: {src_path}"
-            )
-            return
-
-        backup_dir = self._config_model.get_backup_dir_path(
-            save_info["game"], datetime.now().strftime("%Y%m%d_%H%M%S")
-        )
-        backup_dir = index_existing_path(backup_dir)
-
-        os.makedirs(backup_dir, exist_ok=True)
-        src_dir = os.path.dirname(src_path)
-        filenames = [
-            filename
-            for filename in os.listdir(src_dir)
-            if os.path.isfile(os.path.join(src_dir, filename))
-        ]
-        for filename in filenames:
-            shutil.copy2(os.path.join(src_dir, filename), backup_dir)
-
-        metadata_path = os.path.join(backup_dir, "metadata.json")
-        metadata = create_backup_metadata(
-            save_info["game"],
-            SaveType.quicksave,
-            filenames
-        )
-        with open(metadata_path, "w") as stream:
-            json.dump(metadata, stream)
+        # TODO warn user if quicksave failed.
+        self._backup_current_save(SaveType.quicksave)
 
     def _on_quickload_request(self):
         if self._current_save_id is None:
@@ -240,7 +206,6 @@ class Controller(QtCore.QObject):
             dsr_path = os.path.join(tmp_dir, filename)
             bckup_mapping.append((src_path, dsr_path))
 
-
         for src_path, dsr_path in bckup_mapping:
             os.rename(src_path, dsr_path)
 
@@ -275,6 +240,54 @@ class Controller(QtCore.QObject):
                     os.rename(dsr_path, src_path)
 
             shutil.rmtree(tmp_dir)
+
+    def _backup_current_save(
+        self, save_type: SaveType, label: str | None = None
+    ) -> dict | None:
+        # TODO warn user if quicksave failed.
+        if self._current_save_id is None:
+            self._log.warning("No current save ID set for quicksave.")
+            return
+        save_info = self._config_model.get_save_info_by_id(
+            self._current_save_id
+        )
+        src_path = save_info["path"]
+        if src_path is None:
+            self._log.warning(
+                f"No save path found for current save ID:"
+                f" {self._current_save_id}"
+            )
+            return
+        if not os.path.exists(src_path):
+            self._log.warning(
+                f"Save file does not exist: {src_path}"
+            )
+            return
+
+        backup_dir = self._config_model.get_backup_dir_path(
+            save_info["game"], datetime.now().strftime("%Y%m%d_%H%M%S")
+        )
+        backup_dir = index_existing_path(backup_dir)
+
+        os.makedirs(backup_dir, exist_ok=True)
+        src_dir = os.path.dirname(src_path)
+        filenames = [
+            filename
+            for filename in os.listdir(src_dir)
+            if os.path.isfile(os.path.join(src_dir, filename))
+        ]
+        for filename in filenames:
+            shutil.copy2(os.path.join(src_dir, filename), backup_dir)
+
+        metadata_path = os.path.join(backup_dir, "metadata.json")
+        metadata = create_backup_metadata(
+            save_info["game"],
+            save_type,
+            filenames,
+            label,
+        )
+        with open(metadata_path, "w") as stream:
+            json.dump(metadata, stream)
 
     def _collect_game_save_backups(self, game: Game) -> list[tuple[str, dict]]:
         all_metadata = []

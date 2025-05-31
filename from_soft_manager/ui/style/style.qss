@@ -40,10 +40,6 @@ GameSaveTabButton[selected="1"] {
     border-bottom: 2px solid {tab-button-border-selected};
 }
 
-/*SettingsDialog {
-    background: #050505;
-}*/
-
 TabButton {
     background: transparent;
     border: none;
@@ -60,6 +56,7 @@ TabButton[selected="1"] {
     border-bottom: 2px solid {tab-button-border-selected};
 }
 
+/* Dark Souls: Remastered specific styles */
 DSRWidget QWidget {
     background: transparent;
 }
@@ -82,4 +79,8 @@ DSRWidget QAbstractItemView::item:hover {
 
 DSRWidget QAbstractItemView::item:selected, QAbstractItemView::item:selected:!active, QAbstractItemView::item:selected:hover {
     background: rgba(181, 142, 41, 0.5);
+}
+
+ManageSavesWidget QPushButton {
+    background: {button-bg};
 }
