@@ -200,15 +200,30 @@ class ManageSavesWidget(QtWidgets.QFrame):
     def __init__(self, controller, parent):
         super().__init__(parent)
 
+        quicksave_label = QtWidgets.QLabel(self)
+        quicksave_label.setText(
+            "<i>Use F5 to quicksave and F8 to quickload</i>"
+        )
+        quicksave_label.setAlignment(QtCore.Qt.AlignCenter)
+
+        btns_widget = QtWidgets.QWidget(self)
+
         # TODO use icon instead
-        create_backup_btn = QtWidgets.QPushButton("Create Backup", self)
+        create_backup_btn = QtWidgets.QPushButton(
+            "Create Backup", btns_widget
+        )
         create_backup_btn.setToolTip("Create Backup")
 
-        main_layout = QtWidgets.QHBoxLayout(self)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
+        btns_layout = QtWidgets.QHBoxLayout(btns_widget)
+        btns_layout.setContentsMargins(0, 0, 0, 0)
+        btns_layout.addStretch(1)
+        btns_layout.addWidget(create_backup_btn, 0)
+        btns_layout.addStretch(1)
 
-        main_layout.addWidget(create_backup_btn, 0)
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(quicksave_label, 0)
+        main_layout.addWidget(btns_widget, 0)
         main_layout.addStretch(1)
 
         create_backup_btn.clicked.connect(self._on_create_backup)
