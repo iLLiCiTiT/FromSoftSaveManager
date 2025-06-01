@@ -16,7 +16,7 @@ dependencies = [
 
 [tool.cxfreeze]
 executables = [
-    {script = "main.py", base = "gui", icon="icon.ico"}
+    {script = "main.py", base = "gui", icon = "icon.ico", target_name = "FromSoftSaveManager"}
 ]
 
 [tool.cxfreeze.build_exe]
