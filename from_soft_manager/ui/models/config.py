@@ -57,6 +57,7 @@ def _get_windows_documents_dir() -> str:
 
 class ConfigModel(QtCore.QObject):
     paths_changed = QtCore.Signal()
+    hotkeys_changed = QtCore.Signal()
 
     def __init__(self):
         super().__init__()
@@ -99,11 +100,10 @@ class ConfigModel(QtCore.QObject):
         config_info.append(quicksave_hotkey)
         config_info.append(quickload_hotkey)
 
-        print(quicksave_hotkey, quickload_hotkey)
         return ConfigInfo(*config_info)
 
     def save_config_info(self, config_data: ConfigConfirmData):
-        changed = False
+        paths_changed = False
         game_save_files = self._config_data.setdefault("game_save_files", {})
         for game, filepath in (
             (Game.DSR, config_data.dsr_save_path),
@@ -115,7 +115,7 @@ class ConfigModel(QtCore.QObject):
                 continue
             info = game_save_files.setdefault(game, {})
             if info.get("path") != filepath:
-                changed = True
+                paths_changed = True
                 if not info.get("save_id"):
                     info["save_id"] = uuid.uuid4().hex
                 info["path"] = filepath
@@ -124,6 +124,7 @@ class ConfigModel(QtCore.QObject):
                     "game": Game.DSR
                 }
 
+        hotkeys_changed = False
         hotkeys = self._config_data.setdefault("hotkeys", {})
         for key, hotkey in (
             ("quicksave", config_data.quicksave_hotkey),
@@ -133,14 +134,20 @@ class ConfigModel(QtCore.QObject):
                 hotkey is not None
                 and hotkeys.get(key) != hotkey
             ):
-                changed = True
+                hotkeys_changed = True
                 hotkeys[key] = list(qt_combination_to_int(
                     hotkey
                 ))
 
-        if changed:
-            self._save_config()
+        changed = paths_changed or hotkeys_changed
+        if not changed:
+            return
+
+        self._save_config()
+        if paths_changed:
             self.paths_changed.emit()
+        if hotkeys_changed:
+            self.hotkeys_changed.emit()
 
     def get_backup_dir_path(self, *args) -> str:
         return os.path.join(self._app_dir, "backups", *args)
