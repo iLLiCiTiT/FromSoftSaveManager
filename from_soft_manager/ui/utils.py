@@ -2,6 +2,12 @@ import uuid
 
 from PySide6 import QtWidgets, QtCore, QtGui
 
+from from_soft_manager.ui.structures import BackupType, BackupInfo
+
+BACKUP_ID_ROLE = QtCore.Qt.UserRole + 1
+BACKUP_TYPE_ROLE = QtCore.Qt.UserRole + 2
+BACKUP_DATE_ROLE = QtCore.Qt.UserRole + 3
+
 
 class TabButton(QtWidgets.QPushButton):
     requested = QtCore.Signal(str)
@@ -196,6 +202,155 @@ class CreateBackupDialog(QtWidgets.QDialog):
         return self._label_input.text()
 
 
+class BackupsModel(QtGui.QStandardItemModel):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        self.setColumnCount(2)
+        self.setHorizontalHeaderLabels(["Title", "Date"])
+
+    def set_backups(self, backups: list[BackupInfo]):
+        root_item = self.invisibleRootItem()
+        root_item.removeRows(0, root_item.rowCount())
+
+        backups.sort(key=lambda b: b.datetime, reverse=True)
+        quicksave_count = 0
+        autosave_count = 0
+        new_items = []
+        for backup in backups:
+            label = backup.label
+            if not label:
+                if backup.backup_type == BackupType.quicksave:
+                    label = f"< Quick Save {quicksave_count} >"
+                    quicksave_count += 1
+                elif backup.backup_type == BackupType.autosave:
+                    label = f"< Auto Save {autosave_count} >"
+                    autosave_count += 1
+                else:
+                    label = backup.datetime
+            item = QtGui.QStandardItem(label)
+            item.setColumnCount(self.columnCount())
+            item.setFlags(
+                QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+            )
+            item.setData(backup.backup_id, BACKUP_ID_ROLE)
+            item.setData(backup.backup_type, BACKUP_TYPE_ROLE)
+            item.setData(backup.datetime.humanize(), BACKUP_DATE_ROLE)
+            new_items.append(item)
+
+        if not new_items:
+            item = QtGui.QStandardItem("No backups found")
+            item.setFlags(QtCore.Qt.NoItemFlags)
+            new_items.append(item)
+
+        root_item.appendRows(new_items)
+
+    def flags(self, index):
+        if index.column() != 0:
+            index = self.index(index.row(), 0, index.parent())
+        return super().flags(index)
+
+    def data(self, index, role=QtCore.Qt.DisplayRole):
+        if not index.isValid():
+            return None
+
+        col = index.column()
+        if col == 1 and role == QtCore.Qt.DisplayRole:
+            role = BACKUP_DATE_ROLE
+
+        if col != 0:
+            index = self.index(index.row(), 0, index.parent())
+        return super().data(index, role)
+
+
+class BackupsListWidget(QtWidgets.QWidget):
+    def __init__(self, controller, parent):
+        super().__init__(parent)
+        self.setWindowFlags(QtCore.Qt.Popup | QtCore.Qt.FramelessWindowHint)
+
+        load_label = QtWidgets.QLabel("Backups", self)
+
+        delete_btn = QtWidgets.QPushButton("Delete", self)
+
+        backups_view = QtWidgets.QTreeView(self)
+        backups_view.setSortingEnabled(True)
+        backups_view.setIndentation(0)
+        backups_view.setTextElideMode(QtCore.Qt.ElideLeft)
+        backups_view.setEditTriggers(
+            QtWidgets.QAbstractItemView.NoEditTriggers
+        )
+        backups_view.setSelectionMode(
+            QtWidgets.QAbstractItemView.ExtendedSelection
+        )
+        backups_view.setAllColumnsShowFocus(True)
+        backups_view.setVerticalScrollMode(
+            QtWidgets.QAbstractItemView.ScrollPerPixel
+        )
+        backups_view.sortByColumn(1, QtCore.Qt.AscendingOrder)
+        backups_view.setAlternatingRowColors(True)
+        backups_view.setMinimumHeight(100)
+
+        backups_view.stackUnder(delete_btn)
+
+        model = BackupsModel(backups_view)
+        backups_view.setModel(model)
+
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setContentsMargins(5, 5, 5, 5)
+        main_layout.addWidget(load_label, 0)
+        main_layout.addWidget(backups_view, 1)
+
+        delete_btn.clicked.connect(self._on_delete_click)
+        backups_view.doubleClicked.connect(self._on_double_click)
+
+        self.resize(300, 260)
+
+        self._controller = controller
+        self._backups_view = backups_view
+        self._model = model
+        self._delete_btn = delete_btn
+
+    def refresh(self):
+        backups = self._controller.get_backup_items()
+        self._model.set_backups(backups)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._backups_view.resizeColumnToContents(0)
+        self._update_delete_btn_geo()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._update_delete_btn_geo()
+
+    def _update_delete_btn_geo(self):
+        geo = self.geometry()
+        sh = self._delete_btn.sizeHint()
+        pos_x = (geo.x() + geo.width()) - (1 + sh.width())
+        pos_y = (geo.y() + geo.height()) - (1 + sh.height())
+
+        self._delete_btn.setGeometry(pos_x, pos_y, sh.width(), sh.height())
+
+    def _on_double_click(self, index):
+        if not index.isValid():
+            return
+
+        backup_id = index.data(BACKUP_ID_ROLE)
+        if not backup_id:
+            return
+        self._controller.restore_by_backup_id(backup_id)
+
+    def _on_delete_click(self):
+        sel_model = self._backups_view.selectionModel()
+        save_ids = set()
+        for index in sel_model.selectedIndexes():
+            save_id = index.data(BACKUP_ID_ROLE)
+            if save_id:
+                save_ids.add(save_id)
+        self._controller.delete_backups(save_ids)
+        self.refresh()
+
+
 class ManageSavesWidget(QtWidgets.QFrame):
     def __init__(self, controller, parent):
         super().__init__(parent)
@@ -211,10 +366,22 @@ class ManageSavesWidget(QtWidgets.QFrame):
         )
         create_backup_btn.setToolTip("Create Backup")
 
+        load_backup_btn = QtWidgets.QPushButton(
+            "Load Backup", btns_widget
+        )
+        load_backup_btn.setToolTip("Load Backup")
+
+        open_backup_dir_btn = QtWidgets.QPushButton(
+            "Open Backup dir", btns_widget
+        )
+        open_backup_dir_btn.setToolTip("Open Backup directory")
+
         btns_layout = QtWidgets.QHBoxLayout(btns_widget)
         btns_layout.setContentsMargins(0, 0, 0, 0)
         btns_layout.addStretch(1)
         btns_layout.addWidget(create_backup_btn, 0)
+        btns_layout.addWidget(load_backup_btn, 0)
+        btns_layout.addWidget(open_backup_dir_btn, 0)
         btns_layout.addStretch(1)
 
         main_layout = QtWidgets.QVBoxLayout(self)
@@ -223,10 +390,19 @@ class ManageSavesWidget(QtWidgets.QFrame):
         main_layout.addWidget(btns_widget, 0)
         main_layout.addStretch(1)
 
+        backup_list_widget = BackupsListWidget(controller, self)
+        backup_list_widget.setVisible(False)
+
         create_backup_btn.clicked.connect(self._on_create_backup)
+        load_backup_btn.clicked.connect(self._on_load_backup)
+        open_backup_dir_btn.clicked.connect(self._on_open_backup_dir)
         controller.hotkeys_changed.connect(self._update_hotkeys)
 
         self._quicksave_label = quicksave_label
+
+        self._load_backup_btn = load_backup_btn
+
+        self._backup_list_widget = backup_list_widget
 
         self._controller = controller
         self._update_hotkeys()
@@ -236,6 +412,16 @@ class ManageSavesWidget(QtWidgets.QFrame):
         if dialog.exec_() == QtWidgets.QDialog.Accepted:
             label = dialog.get_label_input()
             self._controller.create_manual_backup(label)
+
+    def _on_load_backup(self):
+        self._backup_list_widget.refresh()
+        self._backup_list_widget.show()
+
+        global_pos = self.mapToGlobal(self._load_backup_btn.pos())
+        self._backup_list_widget.move(global_pos)
+
+    def _on_open_backup_dir(self):
+        self._controller.open_backup_dir()
 
     def _update_hotkeys(self):
         info = self._controller.get_config_info()

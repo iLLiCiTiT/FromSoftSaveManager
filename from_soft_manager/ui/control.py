@@ -2,11 +2,12 @@ import os
 import logging
 import platform
 import shutil
+import subprocess
 import uuid
 import json
 import time
-from enum import StrEnum
 from datetime import datetime
+from typing import Any
 
 import arrow
 from PySide6 import QtCore, QtWidgets
@@ -20,6 +21,8 @@ from from_soft_manager.parse import (
 )
 from .structures import (
     SaveItem,
+    BackupType,
+    BackupInfo,
     CharactersInfo,
     ConfigInfo,
     ConfigConfirmData,
@@ -28,12 +31,6 @@ from .models import ConfigModel
 from .keys import keys_are_pressed, qt_combination_to_int
 
 NOT_SET = object()
-
-
-class SaveType(StrEnum):
-    quicksave = "quicksave"
-    autosave = "autosave"
-    manualsave = "manualsave"
 
 
 class BackgroundThread(QtCore.QThread):
@@ -103,14 +100,14 @@ class BackgroundThread(QtCore.QThread):
 
 def create_backup_metadata(
     game: Game,
-    save_type: SaveType,
+    backup_type: BackupType,
     filenames: list[str],
     label: str | None = None,
 ) -> dict:
     return {
         "id": uuid.uuid4().hex,
         "game": game,
-        "save_type": save_type.value,
+        "backup_type": backup_type,
         "label": label,
         "filenames": filenames,
         "datetime": arrow.utcnow().format(),
@@ -136,6 +133,7 @@ def index_existing_path(path: str) -> str:
 
 class Controller(QtCore.QObject):
     paths_changed = QtCore.Signal()
+    save_id_changed = QtCore.Signal(str)
     hotkeys_changed = QtCore.Signal()
 
     def __init__(self):
@@ -194,7 +192,79 @@ class Controller(QtCore.QObject):
         label = label.strip()
         if not label:
             label = datetime.now().strftime("%Y%m%d - %H%M%S")
-        self._backup_current_save(SaveType.manualsave, label)
+        self._backup_current_save(BackupType.manualsave, label)
+
+    def get_backup_items(self) -> list[BackupInfo]:
+        if not self._current_save_id:
+            return []
+        save_info = self._config_model.get_save_info_by_id(
+            self._current_save_id
+        )
+        return self._get_backups_by_game(save_info["game"])
+
+    def open_backup_dir(self):
+        if platform.system().lower() != "windows":
+            self._log.warning(
+                "Open backup directory is only supported on Windows."
+            )
+            return
+
+        if not self._current_save_id:
+            return
+
+        save_info = self._config_model.get_save_info_by_id(
+            self._current_save_id
+        )
+
+        game_backup_dir = self._config_model.get_backup_dir_path(
+            save_info["game"]
+        )
+        if not os.path.exists(game_backup_dir):
+            # Nothing happens? Should be created? Or return reason why?
+            self._log.info("Backup directory does not exist yet.")
+            return
+        os.system(subprocess.list2cmdline(["start", game_backup_dir]))
+
+    def restore_by_backup_id(self, backup_id: str):
+        save_id = self._current_save_id
+        save_info = self._config_model.get_save_info_by_id(save_id)
+        game = save_info["game"]
+
+        backup_info = None
+        for backup_dir, metadata in self._collect_game_save_backups(game):
+            if metadata["id"] == backup_id:
+                backup_info = backup_dir, metadata
+                break
+
+        # TODO handle failure
+        if backup_info is None:
+            return
+        backup_dir, metadata = backup_info
+        self._restore_backup_save(backup_dir, metadata, save_id, save_info)
+
+    def delete_backups(self, backup_ids: set[str]):
+        if not backup_ids:
+            return
+
+        save_id = self._current_save_id
+        save_info = self._config_model.get_save_info_by_id(save_id)
+        game = save_info["game"]
+
+        for backup_dir, metadata in self._collect_game_save_backups(game):
+            if metadata["id"] in backup_ids:
+                shutil.rmtree(backup_dir)
+
+    def _get_backups_by_game(self, game: Game) -> list[BackupInfo]:
+        backups = []
+        for backup_dir, metadata in self._collect_game_save_backups(game):
+            backup_info = BackupInfo(
+                metadata["id"],
+                metadata["backup_type"],
+                arrow.get(metadata["datetime"]),
+                metadata.get("label"),
+            )
+            backups.append(backup_info)
+        return backups
 
     def _on_hotkeys_change(self):
         self._background_thread.update_hotkeys()
@@ -202,15 +272,14 @@ class Controller(QtCore.QObject):
 
     def _on_quicksave_request(self):
         # TODO warn user if quicksave failed.
-        self._backup_current_save(SaveType.quicksave)
+        self._backup_current_save(BackupType.quicksave)
 
     def _on_quickload_request(self):
         if self._current_save_id is None:
             self._log.warning("No current save ID set for quicksave.")
             return
-        save_info = self._config_model.get_save_info_by_id(
-            self._current_save_id
-        )
+        save_id = self._current_save_id
+        save_info = self._config_model.get_save_info_by_id(save_id)
         dst_path = save_info["path"]
         if not dst_path:
             self._log.warning(
@@ -226,6 +295,16 @@ class Controller(QtCore.QObject):
             )
             return
 
+        self._restore_backup_save(backup_dir, metadata, save_id, save_info)
+
+    def _restore_backup_save(
+        self,
+        backup_dir: str,
+        metadata: dict[str, Any],
+        save_id: str,
+        save_info: dict[str, Any],
+    ):
+        dst_path = save_info["path"]
         filenames = metadata.get("filenames")
         if not filenames:
             self._log.warning(
@@ -284,8 +363,10 @@ class Controller(QtCore.QObject):
 
             shutil.rmtree(tmp_dir)
 
+        self.save_id_changed.emit(save_id)
+
     def _backup_current_save(
-        self, save_type: SaveType, label: str | None = None
+        self, backup_type: BackupType, label: str | None = None
     ) -> dict | None:
         # TODO warn user if quicksave failed.
         if self._current_save_id is None:
@@ -325,7 +406,7 @@ class Controller(QtCore.QObject):
         metadata_path = os.path.join(backup_dir, "metadata.json")
         metadata = create_backup_metadata(
             save_info["game"],
-            save_type,
+            backup_type,
             filenames,
             label,
         )
@@ -353,6 +434,9 @@ class Controller(QtCore.QObject):
                 )
                 continue
 
+            if "save_type" in metadata:
+                metadata["backup_type"] = metadata.pop("save_type")
+
             all_metadata.append((backup_dir, metadata))
         return all_metadata
 
@@ -363,7 +447,7 @@ class Controller(QtCore.QObject):
             if not metadata.get("epoch", 0):
                 continue
 
-            if metadata.get("save_type") == SaveType.quicksave:
+            if metadata.get("backup_type") == BackupType.quicksave:
                 filtered_metadata.append(item)
 
         if not filtered_metadata:

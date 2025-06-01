@@ -142,6 +142,7 @@ class MainWindow(QtWidgets.QDialog):
 
         settings_btn.clicked.connect(self._on_settings_click)
         controller.paths_changed.connect(self.refresh)
+        controller.save_id_changed.connect(self._on_save_id_change)
         games_bar_widget.tab_changed.connect(self._set_current_save_id)
 
         # TODO add tabs for different widgets (when supported)
@@ -178,7 +179,9 @@ class MainWindow(QtWidgets.QDialog):
             if save_item.game == Game.DSR:
                 widget = DSRWidget(self._controller, save_item.save_id, self)
             elif save_item.game == Game.DS2_SOTFS:
-                widget = DS2SOTFSWidget(self._controller, save_item.save_id, self)
+                widget = DS2SOTFSWidget(
+                    self._controller, save_item.save_id, self
+                )
             elif save_item.game == Game.DS3:
                 widget = DS3Widget(self._controller, save_item.save_id, self)
             elif save_item.game == Game.ER:
@@ -216,6 +219,11 @@ class MainWindow(QtWidgets.QDialog):
             widget.setVisible(False)
             widget.deleteLater()
             self._games_bar_widget.remove_tab(save_id)
+
+    def _on_save_id_change(self, save_id: str):
+        widget = self._widgets_by_id.get(save_id)
+        if widget is not None:
+            widget.refresh()
 
     def _set_current_save_id(self, save_id: str):
         if self._current_save_id == save_id:
