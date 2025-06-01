@@ -30,3 +30,6 @@ class ERWidget(QtWidgets.QWidget):
 
         self.save_id = save_id
         self._controller = controller
+
+    def refresh(self):
+        pass
