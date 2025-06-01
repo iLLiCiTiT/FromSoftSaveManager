@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from PySide6 import QtCore
+
 from from_soft_manager.parse import Game
 
 
@@ -32,6 +34,9 @@ class ConfigInfo:
     ds3_save_path: ConfigSavePathInfo
     er_save_path: ConfigSavePathInfo
 
+    quicksave_hotkey: QtCore.QKeyCombination | None = None
+    quickload_hotkey: QtCore.QKeyCombination | None = None
+
 
 @dataclass
 class ConfigConfirmData:
@@ -39,3 +44,6 @@ class ConfigConfirmData:
     ds2_save_path: str | None = None
     ds3_save_path: str | None = None
     er_save_path: str | None = None
+
+    quicksave_hotkey: QtCore.QKeyCombination | None = None
+    quickload_hotkey: QtCore.QKeyCombination | None = None

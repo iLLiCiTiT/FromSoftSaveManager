@@ -9,7 +9,7 @@ from enum import StrEnum
 from datetime import datetime
 
 import arrow
-from PySide6 import QtCore
+from PySide6 import QtCore, QtWidgets
 
 from from_soft_manager.parse import (
     Game,
@@ -25,7 +25,7 @@ from .structures import (
     ConfigConfirmData,
 )
 from .models import ConfigModel
-from .keys import keys_are_pressed
+from .keys import keys_are_pressed, qt_combination_to_int
 
 NOT_SET = object()
 
@@ -43,33 +43,62 @@ class BackgroundThread(QtCore.QThread):
     def __init__(self, controller):
         super().__init__(controller)
         self._controller = controller
+        self._is_running = False
+        self._hotkeys_changed = False
+        self._quicksave_hotkey = None
+        self._quickload_hotkey = None
+
+    def update_hotkeys(self):
+        config: ConfigInfo = self._controller.get_config_info()
+        self._quicksave_hotkey = qt_combination_to_int(
+            config.quicksave_hotkey
+        )
+        self._quickload_hotkey = qt_combination_to_int(
+            config.quickload_hotkey
+        )
+        self._hotkeys_changed = True
 
     def run(self):
         if platform.system().lower() != "windows":
             return
-        VK_F5 = 0x74  # F5 key
-        VK_F8 = 0x77  # F8 key
+        self.update_hotkeys()
+        self._is_running = True
         quicksave_pressed = False
         quickload_pressed = False
-        sleep_time = 10
-        while self.isRunning():
-            if keys_are_pressed({VK_F5}):
-                if not quicksave_pressed:
-                    quicksave_pressed = True
-                    self.quicksave_requested.emit()
-                self.msleep(sleep_time)
-                continue
-            quicksave_pressed = False
+        while self._is_running:
+            trigger_save = False
+            trigger_load = False
+            if (
+                not self._quicksave_hotkey
+                or not keys_are_pressed(self._quicksave_hotkey)
+            ):
+                quicksave_pressed = False
+            elif not quicksave_pressed:
+                quicksave_pressed = True
+                trigger_save = True
 
-            if keys_are_pressed({VK_F8}):
-                if not quickload_pressed:
-                    quickload_pressed = True
-                    self.quickload_requested.emit()
+            if (
+                not self._quickload_hotkey
+                or not keys_are_pressed(self._quickload_hotkey)
+            ):
+                quickload_pressed = False
+            elif not quickload_pressed:
+                quickload_pressed = True
+                trigger_load = True
 
-                self.msleep(sleep_time)
-                continue
-            quickload_pressed = False
-            self.msleep(sleep_time)
+            if self._hotkeys_changed:
+                # For some reason first loop after hotkeys change always
+                #   thinks that hotkeys are pressed.
+                self._hotkeys_changed = False
+            elif trigger_save:
+                self.quicksave_requested.emit()
+            elif trigger_load:
+                self.quickload_requested.emit()
+
+            self.msleep(10)
+
+    def stop(self):
+        self._is_running = False
 
 
 def create_backup_metadata(
@@ -107,6 +136,7 @@ def index_existing_path(path: str) -> str:
 
 class Controller(QtCore.QObject):
     paths_changed = QtCore.Signal()
+    hotkeys_changed = QtCore.Signal()
 
     def __init__(self):
         super().__init__()
@@ -116,6 +146,7 @@ class Controller(QtCore.QObject):
         background_thread = BackgroundThread(self)
 
         config_model.paths_changed.connect(self.paths_changed)
+        config_model.hotkeys_changed.connect(self._on_hotkeys_change)
         background_thread.quicksave_requested.connect(
             self._on_quicksave_request
         )
@@ -124,9 +155,17 @@ class Controller(QtCore.QObject):
         )
         background_thread.start()
 
+        app = QtWidgets.QApplication.instance()
+        app.aboutToQuit.connect(self._on_exit)
+
         self._config_model = config_model
         self._background_thread = background_thread
         self._current_save_id: str | None = None
+
+    def _on_exit(self):
+        if self._background_thread.isRunning():
+            self._background_thread.stop()
+            self._background_thread.wait()
 
     def get_config_info(self) -> ConfigInfo:
         return self._config_model.get_config_info()
@@ -156,6 +195,10 @@ class Controller(QtCore.QObject):
         if not label:
             label = datetime.now().strftime("%Y%m%d - %H%M%S")
         self._backup_current_save(SaveType.manualsave, label)
+
+    def _on_hotkeys_change(self):
+        self._background_thread.update_hotkeys()
+        self.hotkeys_changed.emit()
 
     def _on_quicksave_request(self):
         # TODO warn user if quicksave failed.

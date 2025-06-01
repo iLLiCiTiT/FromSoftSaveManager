@@ -12,6 +12,10 @@ from from_soft_manager.ui.structures import (
     ConfigSavePathInfo,
     ConfigConfirmData,
 )
+from from_soft_manager.ui.keys import (
+    qt_combination_to_int,
+    int_combination_to_qt,
+)
 
 DOCUMENTS_ID = uuid.UUID("{F42EE2D3-909F-4907-8871-4C22FC0BF756}")
 NOT_SET = object()
@@ -53,6 +57,7 @@ def _get_windows_documents_dir() -> str:
 
 class ConfigModel(QtCore.QObject):
     paths_changed = QtCore.Signal()
+    hotkeys_changed = QtCore.Signal()
 
     def __init__(self):
         super().__init__()
@@ -84,27 +89,65 @@ class ConfigModel(QtCore.QObject):
                 ConfigSavePathInfo(path, path_hint, default_path)
             )
 
+        hotkeys = self._config_data["hotkeys"]
+        quicksave_hotkey = hotkeys["quicksave"]
+        if quicksave_hotkey is not None:
+            quicksave_hotkey = int_combination_to_qt(set(quicksave_hotkey))
+
+        quickload_hotkey = hotkeys["quickload"]
+        if quickload_hotkey is not None:
+            quickload_hotkey = int_combination_to_qt(set(quickload_hotkey))
+        config_info.append(quicksave_hotkey)
+        config_info.append(quickload_hotkey)
+
         return ConfigInfo(*config_info)
 
     def save_config_info(self, config_data: ConfigConfirmData):
-        dsr_save_path = config_data.dsr_save_path
-
+        paths_changed = False
         game_save_files = self._config_data.setdefault("game_save_files", {})
-        dsr_info = game_save_files.setdefault(Game.DSR, {})
-        changed = False
-        if dsr_info.get("path") != dsr_save_path:
-            changed = True
-            if not dsr_info.get("save_id"):
-                dsr_info["save_id"] = uuid.uuid4().hex
-            dsr_info["path"] = dsr_save_path
-            self._save_info_by_id[dsr_info["save_id"]] = {
-                "path": dsr_save_path,
-                "game": Game.DSR
-            }
+        for game, filepath in (
+            (Game.DSR, config_data.dsr_save_path),
+            (Game.DS2_SOTFS, config_data.ds2_save_path),
+            (Game.DS3, config_data.ds3_save_path),
+            (Game.ER, config_data.er_save_path),
+        ):
+            if filepath is None:
+                continue
+            info = game_save_files.setdefault(game, {})
+            if info.get("path") != filepath:
+                paths_changed = True
+                if not info.get("save_id"):
+                    info["save_id"] = uuid.uuid4().hex
+                info["path"] = filepath
+                self._save_info_by_id[info["save_id"]] = {
+                    "path": filepath,
+                    "game": Game.DSR
+                }
 
-        if changed:
-            self._save_config()
+        hotkeys_changed = False
+        hotkeys = self._config_data.setdefault("hotkeys", {})
+        for key, hotkey in (
+            ("quicksave", config_data.quicksave_hotkey),
+            ("quickload", config_data.quickload_hotkey),
+        ):
+            if (
+                hotkey is not None
+                and hotkeys.get(key) != hotkey
+            ):
+                hotkeys_changed = True
+                hotkeys[key] = list(qt_combination_to_int(
+                    hotkey
+                ))
+
+        changed = paths_changed or hotkeys_changed
+        if not changed:
+            return
+
+        self._save_config()
+        if paths_changed:
             self.paths_changed.emit()
+        if hotkeys_changed:
+            self.hotkeys_changed.emit()
 
     def get_backup_dir_path(self, *args) -> str:
         return os.path.join(self._app_dir, "backups", *args)
@@ -217,11 +260,30 @@ class ConfigModel(QtCore.QObject):
             if save_id:
                 info_by_id[save_id] = {"path": path, "game": key}
 
+        hotkeys = config_data.setdefault("hotkeys", {})
+        if "quicksave" not in hotkeys:
+            hotkeys["quicksave"] = list(qt_combination_to_int(
+                QtCore.QKeyCombination(QtCore.Qt.Key_F5)
+            ))
+
+        if "quickload" not in hotkeys:
+            hotkeys["quickload"] = list(qt_combination_to_int(
+                QtCore.QKeyCombination(QtCore.Qt.Key_F8)
+            ))
+
         self._save_info_by_id = info_by_id
         self._config_data = config_data
+
+    def _get_mapped_key(self, key: QtCore.Qt.Key) -> int | None:
+        # for key, value in KEYS_MAPPING.items():
+        #     if value == key:
+        #         return key
+        return None
 
     def _save_config(self):
         config_dir = os.path.dirname(self._config_path)
         os.makedirs(config_dir, exist_ok=True)
+        # Create json string before writing to file
+        json_string = json.dumps(self._config_data, indent=4)
         with open(self._config_path, "w") as stream:
-            json.dump(self._config_data, stream, indent=4)
+            stream.write(json_string)

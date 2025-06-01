@@ -201,9 +201,6 @@ class ManageSavesWidget(QtWidgets.QFrame):
         super().__init__(parent)
 
         quicksave_label = QtWidgets.QLabel(self)
-        quicksave_label.setText(
-            "<i>Use F5 to quicksave and F8 to quickload</i>"
-        )
         quicksave_label.setAlignment(QtCore.Qt.AlignCenter)
 
         btns_widget = QtWidgets.QWidget(self)
@@ -227,11 +224,37 @@ class ManageSavesWidget(QtWidgets.QFrame):
         main_layout.addStretch(1)
 
         create_backup_btn.clicked.connect(self._on_create_backup)
+        controller.hotkeys_changed.connect(self._update_hotkeys)
+
+        self._quicksave_label = quicksave_label
 
         self._controller = controller
+        self._update_hotkeys()
 
     def _on_create_backup(self):
         dialog = CreateBackupDialog(self)
         if dialog.exec_() == QtWidgets.QDialog.Accepted:
             label = dialog.get_label_input()
             self._controller.create_manual_backup(label)
+
+    def _update_hotkeys(self):
+        info = self._controller.get_config_info()
+        quicksave_hotkey = info.quicksave_hotkey
+        quickload_hotkey = info.quickload_hotkey
+
+        parts = []
+        if quicksave_hotkey is not None:
+            keys = QtGui.QKeySequence(quicksave_hotkey).toString()
+            parts.append(f"{keys} to quicksave")
+
+        if quickload_hotkey is not None:
+            keys = QtGui.QKeySequence(quickload_hotkey).toString()
+            parts.append(f"{keys} to quickload")
+
+        if not parts:
+            self._quicksave_label.setVisible(False)
+            return
+
+        self._quicksave_label.setVisible(True)
+        msg = " and ".join(parts)
+        self._quicksave_label.setText(f"<i>Use {msg}</i>")

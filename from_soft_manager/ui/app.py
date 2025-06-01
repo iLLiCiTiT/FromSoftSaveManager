@@ -1,3 +1,5 @@
+import sys
+
 from PySide6 import QtCore, QtWidgets
 
 from from_soft_manager import __version__
@@ -18,4 +20,4 @@ def main():
     window = MainWindow(controller)
     window.show()
 
-    app.exec_()
+    sys.exit(app.exec_())
