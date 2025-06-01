@@ -1,6 +1,7 @@
 import typing
 from PySide6 import QtWidgets, QtCore, QtGui
 
+from from_soft_manager import __version__
 from from_soft_manager.parse import Game
 
 if typing.TYPE_CHECKING:
@@ -117,7 +118,7 @@ class MainWindow(QtWidgets.QDialog):
         super().__init__()
 
         icon = QtGui.QIcon(get_icon_path("icon.png"))
-        self.setWindowTitle("FromSoft Save Manager")
+        self.setWindowTitle(f"FromSoft Save Manager - {__version__}")
         self.setWindowIcon(icon)
 
         header_widget = QtWidgets.QWidget(self)
