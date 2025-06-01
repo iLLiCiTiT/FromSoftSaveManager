@@ -8,12 +8,27 @@ Simple tool to view and manage save files of FromSoftware games. The first goal 
 Some of the features will be available only on Windows, for example quicksave and quickload.
 
 ## State
-This project is in early development. It is not yet ready for use.
+This project is in early development, please be nice. The UI is made to do what has to do so is not as nice as should be.
+
+### Available features
+- Backup save files using hotkeys (Quicksave/Quickload).
+- Backup save files using UI.
+- Load/Delete save files using UI.
+- Open directory with backups.
+- Settings for paths to save -> should be preset for each game is possible.
+- Dark Souls: Remastered has some save file parsing and some UI showing parsed information.
 
 ### Screenshot
 ![Alt text](/example_01.png "Dark Souls: Remastered save file")
 
-## How to run
+### How to use
+1. Download zip file from release.
+2. Unzip the file to a directory of your choice.
+3. Run 'FromSoftSaveManager.exe'.
+4. You can create backups manually or using shortcuts:
+5. To restore a backup one must close the game, or in menu when seeing "PRESS ANY BUTTON".
+
+### How to run from code
 I'm personally using [UV](https://docs.astral.sh/uv/getting-started/installation/) to manage python environments, but you can use any other tool you like.
 1. Clone the repository `git clone https://github.com/iLLiCiTiT/FromSoftSaveManager.git`.
 2. Change directory to the cloned repository `cd FromSoftSaveManager`.
@@ -21,7 +36,7 @@ I'm personally using [UV](https://docs.astral.sh/uv/getting-started/installation
 4. Run the application `uv run main.py`.
 
 ## Planned features
-These are overal goals of the project. I will use `Issues` tab to track progress.
+These are overall goals of the project. I will use `Issues` tab to track progress.
 
 ### Backup save files
 Create a backup of a save file using hotkeys, or automated backup each n-seconds. Main focus of the project at this moment.
