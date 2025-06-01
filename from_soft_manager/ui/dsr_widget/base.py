@@ -138,10 +138,6 @@ class DSRWidget(QtWidgets.QWidget):
     def refresh(self):
         self._model.refresh()
 
-    def showEvent(self, event):
-        super().showEvent(event)
-        self._model.refresh()
-
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
         pix = self._get_bg_pix()

@@ -187,6 +187,7 @@ class MainWindow(QtWidgets.QDialog):
             if widget is None:
                 continue
 
+            widget.refresh()
             if first_widget is None:
                 first_widget = widget
 
