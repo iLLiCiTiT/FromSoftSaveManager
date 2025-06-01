@@ -1,5 +1,7 @@
+from enum import StrEnum
 from dataclasses import dataclass
 
+import arrow
 from PySide6 import QtCore
 
 from from_soft_manager.parse import Game
@@ -10,6 +12,20 @@ class SaveItem:
     game: Game
     save_id: str
     save_path: str
+
+
+class BackupType(StrEnum):
+    quicksave = "quicksave"
+    autosave = "autosave"
+    manualsave = "manualsave"
+
+
+@dataclass
+class BackupInfo:
+    backup_id: str
+    backup_type: BackupType
+    datetime: arrow.Arrow
+    label: str | None
 
 
 @dataclass
