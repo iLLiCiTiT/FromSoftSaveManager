@@ -235,5 +235,8 @@ class MainWindow(QtWidgets.QDialog):
 
     def _on_settings_click(self):
         dialog = SettingsDialog(self._controller, self)
+
+        self._controller.set_current_save_id(None)
         if dialog.exec_() == QtWidgets.QDialog.Accepted:
             self._controller.save_config_info(dialog.get_values())
+        self._controller.set_current_save_id(self._current_save_id)

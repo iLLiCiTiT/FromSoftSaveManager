@@ -84,3 +84,10 @@ DSRWidget QAbstractItemView::item:selected, QAbstractItemView::item:selected:!ac
 ManageSavesWidget QPushButton {
     background: {button-bg};
 }
+
+HotkeyInput {
+    background: {inputs-bg};
+    padding: 2px;
+    border: 1px solid {tab-button-border};
+    color: {default-fg};
+}
