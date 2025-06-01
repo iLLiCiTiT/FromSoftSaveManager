@@ -312,9 +312,11 @@ MAP_QT_TO_KEY = {
 }
 
 
-def qt_combination_to_int(keys: QtCore.QKeyCombination) -> set[int]:
+def qt_combination_to_int(keys: QtCore.QKeyCombination | None) -> set[int]:
     """Map Qt keys to Windows virtual key codes."""
     output = set()
+    if keys is None:
+        return output
     if keys.keyboardModifiers() & QtCore.Qt.ShiftModifier:
         output.add(VK_SHIFT)
     if keys.keyboardModifiers() & QtCore.Qt.ControlModifier:

@@ -253,8 +253,16 @@ class SettingsDialog(QtWidgets.QDialog):
         if er_path != self._config_info.er_save_path.save_path:
             data.er_save_path = er_path
         if quicksave_hotkey != self._config_info.quicksave_hotkey:
+            if quicksave_hotkey is None:
+                quicksave_hotkey = QtCore.QKeyCombination(
+                    QtCore.Qt.Key_unknown
+                )
             data.quicksave_hotkey = quicksave_hotkey
         if quickload_hotkey != self._config_info.quickload_hotkey:
+            if quickload_hotkey is None:
+                quickload_hotkey = QtCore.QKeyCombination(
+                    QtCore.Qt.Key_unknown
+                )
             data.quickload_hotkey = quickload_hotkey
         return data
 

@@ -10,7 +10,7 @@ if platform.system().lower() == "windows":
         int_combination_to_qt,
     )
 else:
-    def qt_combination_to_int(keys: QtCore.QKeyCombination) -> set[int]:
+    def qt_combination_to_int(keys: QtCore.QKeyCombination | None) -> set[int]:
         """
         Convert a set of Qt key codes to an integer representation.
         """
