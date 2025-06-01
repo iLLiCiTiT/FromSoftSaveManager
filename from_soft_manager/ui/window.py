@@ -115,7 +115,10 @@ class GameSavesBarWidget(QtWidgets.QFrame):
 class MainWindow(QtWidgets.QDialog):
     def __init__(self, controller: "Controller"):
         super().__init__()
+
+        icon = QtGui.QIcon(get_icon_path("icon.png"))
         self.setWindowTitle("FromSoft Save Manager")
+        self.setWindowIcon(icon)
 
         header_widget = QtWidgets.QWidget(self)
 
