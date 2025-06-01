@@ -232,7 +232,6 @@ def character_from_entry(
         b_name += v
 
     name = b_name.decode("utf-16")
-    print(f"{name} | lvl {level} | hum {humanity} | souls {souls}/{earned}")
     unknown_5 = entry.content[258:278]
     (
         sex,  # 0 female / 1 male
