@@ -16,7 +16,7 @@ dependencies = [
 
 [tool.cxfreeze]
 executables = [
-    {script = "main.py", base = "gui"}
+    {script = "main.py", base = "gui", icon="icon.ico"}
 ]
 
 [tool.cxfreeze.build_exe]
