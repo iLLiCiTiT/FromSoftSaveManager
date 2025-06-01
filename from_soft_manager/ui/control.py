@@ -44,6 +44,7 @@ class BackgroundThread(QtCore.QThread):
         super().__init__(controller)
         self._controller = controller
         self._is_running = False
+        self._hotkeys_changed = False
         self._quicksave_hotkey = None
         self._quickload_hotkey = None
 
@@ -55,6 +56,7 @@ class BackgroundThread(QtCore.QThread):
         self._quickload_hotkey = qt_combination_to_int(
             config.quickload_hotkey
         )
+        self._hotkeys_changed = True
 
     def run(self):
         if platform.system().lower() != "windows":
@@ -63,37 +65,37 @@ class BackgroundThread(QtCore.QThread):
         self._is_running = True
         quicksave_pressed = False
         quickload_pressed = False
-        sleep_time = 10
         while self._is_running:
             trigger_save = False
             trigger_load = False
             if (
-                self._quicksave_hotkey
-                and keys_are_pressed(self._quicksave_hotkey)
+                not self._quicksave_hotkey
+                or not keys_are_pressed(self._quicksave_hotkey)
             ):
-                if not quicksave_pressed:
-                    quicksave_pressed = True
-                    trigger_save = True
-
-            else:
                 quicksave_pressed = False
+            elif not quicksave_pressed:
+                quicksave_pressed = True
+                trigger_save = True
 
             if (
-                self._quickload_hotkey
-                and keys_are_pressed(self._quickload_hotkey)
+                not self._quickload_hotkey
+                or not keys_are_pressed(self._quickload_hotkey)
             ):
-                if not quickload_pressed:
-                    quickload_pressed = True
-                    trigger_load = True
-            else:
                 quickload_pressed = False
+            elif not quickload_pressed:
+                quickload_pressed = True
+                trigger_load = True
 
-            if trigger_save:
+            if self._hotkeys_changed:
+                # For some reason first loop after hotkeys change always
+                #   thinks that hotkeys are pressed.
+                self._hotkeys_changed = False
+            elif trigger_save:
                 self.quicksave_requested.emit()
             elif trigger_load:
                 self.quickload_requested.emit()
 
-            self.msleep(sleep_time)
+            self.msleep(10)
 
     def stop(self):
         self._is_running = False
