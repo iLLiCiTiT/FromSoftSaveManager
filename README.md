@@ -22,11 +22,18 @@ This project is in early development, please be nice. The UI is made to do what 
 ![Alt text](/example_01.png "Dark Souls: Remastered save file")
 
 ### How to use
-1. Download zip file from release.
+1. Download zip file from [releases](https://github.com/iLLiCiTiT/FromSoftSaveManager/releases/tag/0.1.0).
 2. Unzip the file to a directory of your choice.
-3. Run 'FromSoftSaveManager.exe'.
-4. You can create backups manually or using shortcuts:
-5. To restore a backup one must close the game, or in menu when seeing "PRESS ANY BUTTON".
+3. Run `FromSoftSaveManager.exe`.
+4. Make sure that path/ss are set correctly in settings.
+5. Select game you'd like to manage -> you should see only games that have set paths to save files.
+6. You can create backups using shortcuts or manually.
+7. To restore a backup one must close the game, or in menu when seeing "PRESS ANY BUTTON".
+
+### Notes
+- Changing game in tabs changes which game is saved and restored using shortcuts.
+- In current state the UI does not report errors.
+- At this moment backups are not deleted automatically, so you might want to clean them up sometimes.
 
 ### How to run from code
 I'm personally using [UV](https://docs.astral.sh/uv/getting-started/installation/) to manage python environments, but you can use any other tool you like.
