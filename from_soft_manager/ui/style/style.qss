@@ -45,7 +45,7 @@ SideBarWidget {
     color: rgba(255, 255, 255, 0.85);
 }
 
-GameSaveTabButton, #settings_btn {
+TabIconButton {
     background: transparent;
     border: none;
     color: #ffffff;
@@ -54,11 +54,24 @@ GameSaveTabButton, #settings_btn {
     icon-size: 28px;
 }
 
-GameSaveTabButton:hover, #settings_btn:hover {
+TabIconButton:hover {
     background: #3D3F42;
 }
 
-GameSaveTabButton[selected="1"], #settings_btn[selected="1"] {
+TabIconButton[selected="1"] {
+    background: #4B4C4F;
+}
+
+TabButtonHint QLabel {
+    background: #3D3F42;
+    color: #ffffff;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+}
+
+TabButtonHint QLabel[selected="1"] {
     background: #4B4C4F;
 }
 

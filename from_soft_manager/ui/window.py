@@ -17,14 +17,71 @@ from .er_widget import ERWidget
 from .utils import SquareButton
 
 
-def set_btn_selected(btn: QtWidgets.QPushButton, selected: bool):
-    btn._selected = selected
+def set_widget_selected(widget: QtWidgets.QWidget, selected: bool):
     value = "1" if selected else ""
-    btn.setProperty("selected", value)
-    btn.style().polish(btn)
+    widget.setProperty("selected", value)
+    widget.style().polish(widget)
 
 
-class GameSaveTabButton(SquareButton):
+class TabIconButton(SquareButton):
+    def __init__(
+        self, icon: QtGui.QIcon, label: str, parent: QtWidgets.QWidget
+    ):
+        super().__init__(parent)
+        self.setIcon(icon)
+        self.setDefault(False)
+        self.setAutoDefault(False)
+
+        hint_widget = TabButtonHint(label, self)
+        hint_widget.setVisible(False)
+
+        self._selected = False
+        self._hint_widget = hint_widget
+
+    def set_selected(self, selected: bool):
+        if self._selected == selected:
+            return
+        self._selected = selected
+        set_widget_selected(self, selected)
+        self._hint_widget.set_selected(selected)
+
+    def enterEvent(self, event: QtCore.QEvent):
+        super().enterEvent(event)
+        self._hint_widget.setVisible(True)
+        y_offset = (self.height() - self._hint_widget.height()) * 0.5
+        pos = self.mapToGlobal(QtCore.QPoint(self.width(), int(y_offset) - 1))
+        self._hint_widget.move(pos)
+
+    def leaveEvent(self, event: QtCore.QEvent):
+        super().leaveEvent(event)
+        self._hint_widget.setVisible(False)
+
+
+class SettingsIconButton(TabIconButton):
+    def __init__(self, parent: QtWidgets.QWidget):
+        icon = QtGui.QIcon(get_icon_path("settings_256x256.png"))
+        super().__init__(icon, "Settings", parent)
+
+
+class TabButtonHint(QtWidgets.QWidget):
+    def __init__(self, label, parent):
+        super().__init__(parent)
+        self.setWindowFlags(QtCore.Qt.Tool | QtCore.Qt.FramelessWindowHint)
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        label_w = QtWidgets.QLabel(label, self)
+
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(label_w)
+
+        self._label_w = label_w
+
+    def set_selected(self, selected: bool):
+        set_widget_selected(self._label_w, selected)
+
+
+class GameSaveTabButton(TabIconButton):
     requested = QtCore.Signal(str)
     _icons_cache = {}
 
@@ -35,17 +92,13 @@ class GameSaveTabButton(SquareButton):
         tab_label: str,
         parent: QtWidgets.QWidget,
     ):
-        super().__init__(parent)
         icon = self.get_icon(game)
+        super().__init__(icon, tab_label, parent)
         if icon:
             self.setIcon(icon)
         self.clicked.connect(self._on_click)
-        self.setDefault(False)
-        self.setAutoDefault(False)
 
         self._save_id = save_id
-
-        self._selected = False
 
     @classmethod
     def get_icon(self, game: Game):
@@ -68,10 +121,7 @@ class SideBarWidget(QtWidgets.QFrame):
     def __init__(self, parent):
         super().__init__(parent)
 
-        settings_icon = QtGui.QIcon(get_icon_path("settings_256x256.png"))
-        settings_btn = SquareButton(self)
-        settings_btn.setObjectName("settings_btn")
-        settings_btn.setIcon(settings_icon)
+        settings_btn = SettingsIconButton(self)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(4, 4, 4, 4)
@@ -121,7 +171,7 @@ class SideBarWidget(QtWidgets.QFrame):
             current_tab = self._widgets_by_id.get(self._current_tab_id)
 
         if current_tab is not None:
-            set_btn_selected(current_tab, False)
+            current_tab.set_selected(False)
 
         self._current_tab_id = save_id
         if save_id is None:
@@ -129,7 +179,7 @@ class SideBarWidget(QtWidgets.QFrame):
         else:
             btn = self._widgets_by_id.get(save_id)
         if btn is not None:
-            set_btn_selected(btn, True)
+            btn.set_selected(True)
 
         self.tab_changed.emit(save_id or "")
 
