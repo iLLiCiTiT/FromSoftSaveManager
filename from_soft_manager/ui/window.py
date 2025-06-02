@@ -9,7 +9,7 @@ if typing.TYPE_CHECKING:
 
 from .style import load_stylesheet
 from .icons import get_icon_path
-from .settings_dialog import SettingsWidget
+from .settings import SettingsWidget
 from .dsr_widget import DSRWidget
 from .ds2sotfs_widget import DS2SOTFSWidget
 from .ds3_widget import DS3Widget
