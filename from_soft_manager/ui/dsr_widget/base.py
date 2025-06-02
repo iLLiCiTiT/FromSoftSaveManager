@@ -101,7 +101,8 @@ class DSRWidget(QtWidgets.QWidget):
         view.setModel(model)
 
         view_wrap_layout = QtWidgets.QVBoxLayout(view_wrap)
-        view_wrap_layout.setContentsMargins(24, 24, 0, 0)
+        view_wrap_layout.setContentsMargins(0, 0, 0, 0)
+        view_wrap_layout.addSpacing(28)
         view_wrap_layout.addWidget(view, 4)
         view_wrap_layout.addWidget(manage_saves_widget, 1)
 
@@ -120,7 +121,7 @@ class DSRWidget(QtWidgets.QWidget):
         # )
 
         main_layout = QtWidgets.QHBoxLayout(self)
-        main_layout.setContentsMargins(5, 5, 29, 29)
+        main_layout.setContentsMargins(20, 20, 20, 20)
         main_layout.addWidget(view_wrap, 0)
         main_layout.addWidget(char_tabs, 1)
 
@@ -140,6 +141,9 @@ class DSRWidget(QtWidgets.QWidget):
 
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
+        painter.setPen(QtCore.Qt.NoPen)
+        painter.setBrush(QtGui.QColor("#060507"))
+        painter.drawRect(event.rect())
         pix = self._get_bg_pix()
         painter.drawPixmap(self.rect(), pix)
 

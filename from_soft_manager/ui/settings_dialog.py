@@ -6,13 +6,15 @@ from from_soft_manager.ui.structures import ConfigInfo, ConfigConfirmData
 class HotkeyInput(QtWidgets.QFrame):
     def __init__(self, parent):
         super().__init__(parent)
+        self.setToolTip("Click to set/change hotkey")
         # TODO need to handle clearing of hotkey
 
         hotkey_label = QtWidgets.QLabel(self)
         hotkey_label.setText("< Not set >")
+        hotkey_label.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
 
         main_layout = QtWidgets.QHBoxLayout(self)
-        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setContentsMargins(5, 0, 0, 0)
         main_layout.addWidget(hotkey_label, 1)
 
         self._hotkey_label = hotkey_label
@@ -126,17 +128,18 @@ class HotkeyInput(QtWidgets.QFrame):
         self._update_label()
 
 
-class SettingsDialog(QtWidgets.QDialog):
+class SettingsWidget(QtWidgets.QWidget):
     def __init__(self, controller, parent):
         super().__init__(parent)
-        self.setWindowTitle("Settings")
-        self.setModal(True)
 
         config_info: ConfigInfo = controller.get_config_info()
 
         # TODO add option to reset to default
         # TODO use icons
         paths_widget = QtWidgets.QWidget(self)
+
+        paths_label = QtWidgets.QLabel("Paths", paths_widget)
+        paths_label.setObjectName("settings_header")
 
         dsr_path_label = QtWidgets.QLabel(
             "Dark Souls: Remastered", paths_widget
@@ -166,18 +169,18 @@ class SettingsDialog(QtWidgets.QDialog):
 
         paths_layout = QtWidgets.QGridLayout(paths_widget)
         paths_layout.setContentsMargins(0, 0, 0, 0)
-        paths_layout.addWidget(dsr_path_label, 0, 0)
-        paths_layout.addWidget(dsr_path_input, 0, 1)
-        paths_layout.addWidget(dsr_open_btn, 0, 2)
-        paths_layout.addWidget(ds2_path_label, 1, 0)
-        paths_layout.addWidget(ds2_path_input, 1, 1)
-        paths_layout.addWidget(ds2_open_btn, 1, 2)
-        paths_layout.addWidget(ds3_path_label, 2, 0)
-        paths_layout.addWidget(ds3_path_input, 2, 1)
-        paths_layout.addWidget(ds3_open_btn, 2, 2)
-        paths_layout.addWidget(er_path_label, 3, 0)
-        paths_layout.addWidget(er_path_input, 3, 1)
-        paths_layout.addWidget(er_open_btn, 3, 2)
+        paths_layout.addWidget(paths_label, 0, 0, 1, 3)
+        row = 1
+        for label_w, input_w, btn_w in (
+            (dsr_path_label, dsr_path_input, dsr_open_btn),
+            (ds2_path_label, ds2_path_input, ds2_open_btn),
+            (ds3_path_label, ds3_path_input, ds3_open_btn),
+            (er_path_label, er_path_input, er_open_btn),
+        ):
+            paths_layout.addWidget(label_w, row, 0)
+            paths_layout.addWidget(input_w, row, 1)
+            paths_layout.addWidget(btn_w, row, 2)
+            row += 1
 
         paths_layout.setColumnStretch(0, 0)
         paths_layout.setColumnStretch(1, 1)
@@ -185,11 +188,12 @@ class SettingsDialog(QtWidgets.QDialog):
 
         hotkeys_widget = QtWidgets.QWidget(self)
 
-        hotkeys_label = QtWidgets.QLabel("Hotkeys:", hotkeys_widget)
-        qs_label = QtWidgets.QLabel("QuickSave:", hotkeys_widget)
+        hotkeys_label = QtWidgets.QLabel("Hotkeys", hotkeys_widget)
+        hotkeys_label.setObjectName("settings_header")
+        qs_label = QtWidgets.QLabel("QuickSave", hotkeys_widget)
         quicksave_input = HotkeyInput(hotkeys_widget)
         quicksave_input.set_combination(config_info.quicksave_hotkey)
-        ql_label = QtWidgets.QLabel("QuickLoad:", hotkeys_widget)
+        ql_label = QtWidgets.QLabel("QuickLoad", hotkeys_widget)
         quickload_input = HotkeyInput(hotkeys_widget)
         quickload_input.set_combination(config_info.quickload_hotkey)
 
@@ -204,16 +208,18 @@ class SettingsDialog(QtWidgets.QDialog):
         btns_widget = QtWidgets.QWidget(self)
 
         save_btn = QtWidgets.QPushButton("Save", btns_widget)
-        cancel_btn = QtWidgets.QPushButton("Cancel", btns_widget)
+        save_btn.setObjectName("save_btn")
+        discard_btn = QtWidgets.QPushButton("Discard changes", btns_widget)
 
         btns_layout = QtWidgets.QHBoxLayout(btns_widget)
         btns_layout.setContentsMargins(0, 0, 0, 0)
         btns_layout.addStretch(1)
         btns_layout.addWidget(save_btn, 0)
-        btns_layout.addWidget(cancel_btn, 0)
+        btns_layout.addWidget(discard_btn, 0)
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setSpacing(10)
         main_layout.addWidget(paths_widget, 0)
         main_layout.addWidget(hotkeys_widget, 0)
         main_layout.addStretch(1)
@@ -223,9 +229,10 @@ class SettingsDialog(QtWidgets.QDialog):
         ds2_open_btn.clicked.connect(self._on_ds2_open_click)
         ds3_open_btn.clicked.connect(self._on_ds3_open_click)
         er_open_btn.clicked.connect(self._on_er_open_click)
-        save_btn.clicked.connect(self.accept)
-        cancel_btn.clicked.connect(self.reject)
+        save_btn.clicked.connect(self._on_save)
+        discard_btn.clicked.connect(self._discard_changes)
 
+        self._controller = controller
         self._config_info = config_info
         self._dsr_path_input = dsr_path_input
         self._ds2_path_input = ds2_path_input
@@ -236,7 +243,20 @@ class SettingsDialog(QtWidgets.QDialog):
 
         self.resize(600, 200)
 
-    def get_values(self) -> ConfigConfirmData:
+    def _on_save(self):
+        self._controller.save_config_info(self._get_values())
+
+    def _discard_changes(self):
+        config_info: ConfigInfo = self._controller.get_config_info()
+        self._dsr_path_input.setText(config_info.dsr_save_path.save_path)
+        self._ds2_path_input.setText(config_info.ds2_save_path.save_path)
+        self._ds3_path_input.setText(config_info.ds3_save_path.save_path)
+        self._er_path_input.setText(config_info.er_save_path.save_path)
+        self._quicksave_input.set_combination(config_info.quicksave_hotkey)
+        self._quickload_input.set_combination(config_info.quickload_hotkey)
+        self._config_info = config_info
+
+    def _get_values(self) -> ConfigConfirmData:
         dsr_path = self._dsr_path_input.text()
         ds2_path = self._ds2_path_input.text()
         ds3_path = self._ds3_path_input.text()

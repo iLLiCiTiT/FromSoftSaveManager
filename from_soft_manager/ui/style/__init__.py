@@ -4,21 +4,6 @@ from PySide6 import QtGui
 
 RESOURCES_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Define colors used in the stylesheet
-# - used for faster testing of stylesheets
-_COLORS = {
-    "default-bg": "#060507",
-    "default-fg": "#FFFFFF",
-    "inputs-bg": "#0B0D0D",
-    "inputs-border": "#5B4229",
-    "button-bg": "#232629",
-    "button-bg-hover": "#4F5B62",
-    "button-fg": "#ffffff",
-    "tab-button-bg-hover": "#232629",
-    "tab-button-border": "#232629",
-    "tab-button-border-selected": "#5B4229",
-}
-
 
 class _Cache:
     stylesheet = None
@@ -34,8 +19,6 @@ def load_stylesheet() -> str:
         stylesheet_path = get_resource("style.qss")
         with open(stylesheet_path, "r") as file:
             content = file.read()
-        for key, value in _COLORS.items():
-            content = content.replace(f"{{{key}}}", value)
         _Cache.stylesheet = content
         _load_font()
     return _Cache.stylesheet
