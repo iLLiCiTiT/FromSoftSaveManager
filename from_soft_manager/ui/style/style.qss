@@ -1,59 +1,97 @@
 * {
-    color: {default-fg};
-    background: {default-bg};
+    color: #FFFFFF;
+    background: #2B2D30;
     font-family: "Noto Sans";
     font-size: 10pt;
     font-weight: 450;
     outline: none;
-    border-radius: 0px;
+    border-radius: 4px;
 }
 
 QLineEdit {
-    background: {inputs-bg};
+    background: #1E1F22;
     padding: 2px;
-    border: 1px solid {tab-button-border};
+    border: none;
 }
 
 QPushButton {
     padding: 4px 6px;
-    background: {button-bg};
-    color: {button-fg};
+    background: #3D3F42;
+    color: #FFFFFF;
     border: none;
 }
 
 QPushButton:hover {
-    background: {button-bg-hover};
+    background: #4B4C4F;
 }
 
-GameSaveTabButton {
+SideBarWidget {
+    border-right: 1px solid #1E1F22;
+}
+
+#settings_header {
+    border-bottom: 1px solid #ffffff;
+    border-radius: 0px;
+    font-size: 12pt;
+}
+
+#save_btn {
+    background: #3574F0;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+#save_btn:hover {
+    background: #2A5BBD;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+TabIconButton {
     background: transparent;
     border: none;
-    border-bottom: 2px solid {tab-button-border};
-    color: {default-fg};
-    border-radius: 0px;
-}
-GameSaveTabButton:hover {
-    background: {tab-button-bg-hover};
+    color: #ffffff;
+    padding: 8px 8px;
+    border-radius: 4px;
+    icon-size: 28px;
 }
 
-GameSaveTabButton[selected="1"] {
-    border-bottom: 2px solid {tab-button-border-selected};
+TabIconButton:hover {
+    background: #3D3F42;
 }
 
-TabButton {
-    background: transparent;
+TabIconButton[selected="1"] {
+    background: #4B4C4F;
+}
+
+TabButtonHint QLabel {
+    background: #3D3F42;
+    color: #ffffff;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+}
+
+TabButtonHint QLabel[selected="1"] {
+    background: #4B4C4F;
+}
+
+SavePathInput {
+    background: #1E1F22;
     border: none;
-    border-bottom: 2px solid {tab-button-border};
-    color: {default-fg};
-    border-radius: 0px;
 }
 
-TabButton:hover {
-    background: {tab-button-bg-hover};
+SavePathInput QPushButton {
+    padding: 0px;
+    background: transparent;
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
 }
 
-TabButton[selected="1"] {
-    border-bottom: 2px solid {tab-button-border-selected};
+HotkeyInput {
+    background: #3D3F42;
+    padding: 4px;
+    border: none;
+    color: #ffffff;
 }
 
 /* Dark Souls: Remastered specific styles */
@@ -81,13 +119,25 @@ DSRWidget QAbstractItemView::item:selected, QAbstractItemView::item:selected:!ac
     background: rgba(181, 142, 41, 0.5);
 }
 
-ManageSavesWidget QPushButton {
-    background: {button-bg};
+DSRWidget TabButton {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid #232629;
+    color: #ffffff;
+    border-radius: 0px;
 }
 
-HotkeyInput {
-    background: {inputs-bg};
-    padding: 2px;
-    border: 1px solid {tab-button-border};
-    color: {default-fg};
+DSRWidget TabButton:hover {
+    background: #232629;
+}
+
+DSRWidget TabButton[selected="1"] {
+    border-bottom: 2px solid #5B4229;
+}
+
+ManageSavesWidget QPushButton {
+    background: #3D3F42;
+}
+ManageSavesWidget QPushButton:hover {
+    background: #4B4C4F;
 }
