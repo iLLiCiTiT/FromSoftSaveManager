@@ -254,6 +254,10 @@ class MainWindow(QtWidgets.QDialog):
 
         self._current_save_id = save_id
 
+        current_widget = self._content_layout.currentWidget()
+        if current_widget is self._settings_widget:
+            self._settings_widget.discard_changes()
+
         new_widget = self._widgets_by_id.get(save_id)
         if new_widget is not None:
             self._content_layout.setCurrentWidget(new_widget)

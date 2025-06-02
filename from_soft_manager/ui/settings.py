@@ -278,7 +278,7 @@ class SettingsWidget(QtWidgets.QWidget):
         main_layout.addStretch(1)
         main_layout.addWidget(btns_widget, 0)
         save_btn.clicked.connect(self._on_save)
-        discard_btn.clicked.connect(self._discard_changes)
+        discard_btn.clicked.connect(self.discard_changes)
 
         self._controller = controller
         self._config_info = config_info
@@ -294,7 +294,7 @@ class SettingsWidget(QtWidgets.QWidget):
     def _on_save(self):
         self._controller.save_config_info(self._get_values())
 
-    def _discard_changes(self):
+    def discard_changes(self):
         config_info: ConfigInfo = self._controller.get_config_info()
         self._config_info = config_info
         self._dsr_path_input.update_path(
