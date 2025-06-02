@@ -1,6 +1,8 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 
+from from_soft_manager.ui.icons import get_icon_path
 from from_soft_manager.ui.structures import ConfigInfo, ConfigConfirmData
+from from_soft_manager.ui.utils import SquareButton
 
 
 class HotkeyInput(QtWidgets.QFrame):
@@ -128,6 +130,55 @@ class HotkeyInput(QtWidgets.QFrame):
         self._update_label()
 
 
+class SavePathInput(QtWidgets.QFrame):
+    def __init__(
+        self,
+        game_title: str,
+        parent: QtWidgets.QWidget
+    ):
+        super().__init__(parent)
+
+        path_input = QtWidgets.QLineEdit(self)
+        path_input.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
+        path_input.setPlaceholderText("< Path to save file >")
+
+        open_icon = QtGui.QIcon(get_icon_path("folder_256x256.png"))
+        open_btn = SquareButton(self)
+        open_btn.setIcon(open_icon)
+        open_btn.setToolTip("Select save file..")
+        open_btn.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
+
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+        main_layout.addWidget(path_input, 1)
+        main_layout.addWidget(open_btn, 0)
+
+        open_btn.clicked.connect(self._select_file)
+
+        self._game_title = game_title
+        self._hint = ""
+
+        self._path_input = path_input
+        self._open_btn = open_btn
+
+    def get_path(self) -> str:
+        return self._path_input.text()
+
+    def update_path(self, path: str, hint: str):
+        self._path_input.setText(path)
+        self._hint = hint
+
+    def _select_file(self):
+        path, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self,
+            f"Select '{self._game_title} Save File",
+            self._hint,
+            "SL2 files (*.sl2);;All Files (*)")
+        if path:
+            self._path_input.setText(path)
+
+
 class SettingsWidget(QtWidgets.QWidget):
     def __init__(self, controller, parent):
         super().__init__(parent)
@@ -135,7 +186,6 @@ class SettingsWidget(QtWidgets.QWidget):
         config_info: ConfigInfo = controller.get_config_info()
 
         # TODO add option to reset to default
-        # TODO use icons
         paths_widget = QtWidgets.QWidget(self)
 
         paths_label = QtWidgets.QLabel("Paths", paths_widget)
@@ -144,47 +194,50 @@ class SettingsWidget(QtWidgets.QWidget):
         dsr_path_label = QtWidgets.QLabel(
             "Dark Souls: Remastered", paths_widget
         )
-        dsr_path_input = QtWidgets.QLineEdit(parent)
-        dsr_path_input.setText(config_info.dsr_save_path.save_path)
-        dsr_path_input.setPlaceholderText("< Path to save file >")
-        dsr_open_btn = QtWidgets.QPushButton("Open", paths_widget)
+        dsr_path_input = SavePathInput("Dark Souls: Remastered", paths_widget)
+        dsr_path_input.update_path(
+            config_info.dsr_save_path.save_path,
+            config_info.dsr_save_path.save_path_hint
+        )
 
         ds2_path_label = QtWidgets.QLabel("Dark Souls II: SOTFS", paths_widget)
-        ds2_path_input = QtWidgets.QLineEdit(parent)
-        ds2_path_input.setText(config_info.ds2_save_path.save_path)
-        ds2_path_input.setPlaceholderText("< Path to save file >")
-        ds2_open_btn = QtWidgets.QPushButton("Open", paths_widget)
-
+        ds2_path_input = SavePathInput(
+            "Dark Souls II: Scholar of the First Sin", paths_widget
+        )
+        ds2_path_input.update_path(
+            config_info.ds2_save_path.save_path,
+            config_info.ds2_save_path.save_path_hint
+        )
         ds3_path_label = QtWidgets.QLabel("Dark Souls III", paths_widget)
-        ds3_path_input = QtWidgets.QLineEdit(parent)
-        ds3_path_input.setText(config_info.ds3_save_path.save_path)
-        ds3_path_input.setPlaceholderText("< Path to save file >")
-        ds3_open_btn = QtWidgets.QPushButton("Open", paths_widget)
+        ds3_path_input = SavePathInput("Dark Souls III", paths_widget)
+        ds3_path_input.update_path(
+            config_info.ds3_save_path.save_path,
+            config_info.ds3_save_path.save_path_hint
+        )
 
         er_path_label = QtWidgets.QLabel("Elden Ring", paths_widget)
-        er_path_input = QtWidgets.QLineEdit(parent)
-        er_path_input.setText(config_info.er_save_path.save_path)
-        er_path_input.setPlaceholderText("< Path to save file >")
-        er_open_btn = QtWidgets.QPushButton("Open", paths_widget)
+        er_path_input = SavePathInput("Elden Ring", paths_widget)
+        er_path_input.update_path(
+            config_info.er_save_path.save_path,
+            config_info.er_save_path.save_path_hint
+        )
 
         paths_layout = QtWidgets.QGridLayout(paths_widget)
         paths_layout.setContentsMargins(0, 0, 0, 0)
         paths_layout.addWidget(paths_label, 0, 0, 1, 3)
         row = 1
-        for label_w, input_w, btn_w in (
-            (dsr_path_label, dsr_path_input, dsr_open_btn),
-            (ds2_path_label, ds2_path_input, ds2_open_btn),
-            (ds3_path_label, ds3_path_input, ds3_open_btn),
-            (er_path_label, er_path_input, er_open_btn),
+        for label_w, input_w in (
+            (dsr_path_label, dsr_path_input),
+            (ds2_path_label, ds2_path_input),
+            (ds3_path_label, ds3_path_input),
+            (er_path_label, er_path_input),
         ):
             paths_layout.addWidget(label_w, row, 0)
             paths_layout.addWidget(input_w, row, 1)
-            paths_layout.addWidget(btn_w, row, 2)
             row += 1
 
         paths_layout.setColumnStretch(0, 0)
         paths_layout.setColumnStretch(1, 1)
-        paths_layout.setColumnStretch(2, 0)
 
         hotkeys_widget = QtWidgets.QWidget(self)
 
@@ -224,11 +277,6 @@ class SettingsWidget(QtWidgets.QWidget):
         main_layout.addWidget(hotkeys_widget, 0)
         main_layout.addStretch(1)
         main_layout.addWidget(btns_widget, 0)
-
-        dsr_open_btn.clicked.connect(self._on_dsr_open_click)
-        ds2_open_btn.clicked.connect(self._on_ds2_open_click)
-        ds3_open_btn.clicked.connect(self._on_ds3_open_click)
-        er_open_btn.clicked.connect(self._on_er_open_click)
         save_btn.clicked.connect(self._on_save)
         discard_btn.clicked.connect(self._discard_changes)
 
@@ -248,19 +296,31 @@ class SettingsWidget(QtWidgets.QWidget):
 
     def _discard_changes(self):
         config_info: ConfigInfo = self._controller.get_config_info()
-        self._dsr_path_input.setText(config_info.dsr_save_path.save_path)
-        self._ds2_path_input.setText(config_info.ds2_save_path.save_path)
-        self._ds3_path_input.setText(config_info.ds3_save_path.save_path)
-        self._er_path_input.setText(config_info.er_save_path.save_path)
+        self._config_info = config_info
+        self._dsr_path_input.update_path(
+            config_info.dsr_save_path.save_path,
+            config_info.dsr_save_path.save_path_hint
+        )
+        self._ds2_path_input.update_path(
+            config_info.ds2_save_path.save_path,
+            config_info.ds2_save_path.save_path_hint
+        )
+        self._ds3_path_input.update_path(
+            config_info.ds3_save_path.save_path,
+            config_info.ds3_save_path.save_path_hint
+        )
+        self._er_path_input.update_path(
+            config_info.er_save_path.save_path,
+            config_info.er_save_path.save_path_hint
+        )
         self._quicksave_input.set_combination(config_info.quicksave_hotkey)
         self._quickload_input.set_combination(config_info.quickload_hotkey)
-        self._config_info = config_info
 
     def _get_values(self) -> ConfigConfirmData:
-        dsr_path = self._dsr_path_input.text()
-        ds2_path = self._ds2_path_input.text()
-        ds3_path = self._ds3_path_input.text()
-        er_path = self._er_path_input.text()
+        dsr_path = self._dsr_path_input.get_path()
+        ds2_path = self._ds2_path_input.get_path()
+        ds3_path = self._ds3_path_input.get_path()
+        er_path = self._er_path_input.get_path()
         quicksave_hotkey = self._quicksave_input.get_key_combination()
         quickload_hotkey = self._quickload_input.get_key_combination()
         data = ConfigConfirmData(dsr_path)
@@ -285,45 +345,3 @@ class SettingsWidget(QtWidgets.QWidget):
                 )
             data.quickload_hotkey = quickload_hotkey
         return data
-
-    def _select_file(
-        self,
-        game_title: str,
-        path_hint: str,
-        targe_input: QtWidgets.QLineEdit
-    ):
-        path, _ = QtWidgets.QFileDialog.getOpenFileName(
-            self,
-            f"Select '{game_title} Save File",
-            path_hint,
-            "SL2 files (*.sl2);;All Files (*)")
-        if path:
-            targe_input.setText(path)
-
-    def _on_dsr_open_click(self):
-        self._select_file(
-            "Dark Souls: Remastered",
-            self._config_info.dsr_save_path.save_path_hint,
-            self._dsr_path_input
-        )
-
-    def _on_ds2_open_click(self):
-        self._select_file(
-            "Dark Souls II: Scholar of the First Sin",
-            self._config_info.ds2_save_path.save_path_hint,
-            self._ds2_path_input
-        )
-
-    def _on_ds3_open_click(self):
-        self._select_file(
-            "Dark Souls III",
-            self._config_info.ds3_save_path.save_path_hint,
-            self._ds3_path_input
-        )
-
-    def _on_er_open_click(self):
-        self._select_file(
-            "Elden Ring",
-            self._config_info.er_save_path.save_path_hint,
-            self._er_path_input
-        )

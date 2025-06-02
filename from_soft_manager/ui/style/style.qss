@@ -62,6 +62,18 @@ GameSaveTabButton[selected="1"], #settings_btn[selected="1"] {
     background: #4B4C4F;
 }
 
+SavePathInput {
+    background: #1E1F22;
+    border: none;
+}
+
+SavePathInput QPushButton {
+    padding: 0px;
+    background: transparent;
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+}
+
 HotkeyInput {
     background: #3D3F42;
     padding: 4px;
