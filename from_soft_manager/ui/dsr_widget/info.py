@@ -303,3 +303,90 @@ class CharacterInfoWidget(QtWidgets.QWidget):
 
     def set_char(self, char):
         self._status_widget.set_char(char)
+
+
+class CovenantsWidget(QtWidgets.QWidget):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        covenants_wrapper =  QtWidgets.QWidget(self)
+
+        header_label = QtWidgets.QLabel("Covenant levels", covenants_wrapper)
+        header_label.setAlignment(QtCore.Qt.AlignCenter)
+
+        # TODO add icon of items that are given to level up covenants
+        wol_label = QtWidgets.QLabel("Way of White", covenants_wrapper)
+        wol_value_w = QtWidgets.QLabel("0", covenants_wrapper)
+        pg_label = QtWidgets.QLabel("Princess's Guard", covenants_wrapper)
+        pg_value_w = QtWidgets.QLabel("0", covenants_wrapper)
+        wos_label = QtWidgets.QLabel("Warrior of Sunlight", covenants_wrapper)
+        wos_value_w = QtWidgets.QLabel("0", covenants_wrapper)
+        dw_label = QtWidgets.QLabel("Darkwraith", covenants_wrapper)
+        dw_value_w = QtWidgets.QLabel("0", covenants_wrapper)
+        potd_label = QtWidgets.QLabel("Path of the Dragon", covenants_wrapper)
+        potd_value_w = QtWidgets.QLabel("0", covenants_wrapper)
+        gls_label = QtWidgets.QLabel("Gravelord Servant", covenants_wrapper)
+        gls_value_w = QtWidgets.QLabel("0", covenants_wrapper)
+        fh_label = QtWidgets.QLabel("Forest Hunter", covenants_wrapper)
+        fh_value_w = QtWidgets.QLabel("0", covenants_wrapper)
+        dmb_label = QtWidgets.QLabel("Darkmoon Blade", covenants_wrapper)
+        dmb_value_w = QtWidgets.QLabel("0", covenants_wrapper)
+        cs_label = QtWidgets.QLabel("Chaos Servant", covenants_wrapper)
+        cs_value_w = QtWidgets.QLabel("0", covenants_wrapper)
+
+        covenants_layout = QtWidgets.QGridLayout(covenants_wrapper)
+        covenants_layout.setContentsMargins(0, 0, 0, 0)
+
+        covenants_layout.addWidget(header_label, 0, 0, 1, 2)
+
+        for label_w, value_w in (
+            (wol_label, wol_value_w),
+            (pg_label, pg_value_w),
+            (wos_label, wos_value_w),
+            (dw_label, dw_value_w),
+            (potd_label, potd_value_w),
+            (gls_label, gls_value_w),
+            (fh_label, fh_value_w),
+            (dmb_label, dmb_value_w),
+            (cs_label, cs_value_w),
+        ):
+            row = covenants_layout.rowCount()
+            label_w.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+            value_w.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+            covenants_layout.addWidget(label_w, row, 0)
+            covenants_layout.addWidget(value_w, row, 1)
+
+        row = covenants_layout.rowCount()
+        covenants_layout.setRowStretch(row, 1)
+
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(covenants_wrapper, 1)
+        main_layout.addStretch(1)
+
+        self._wol_value_w = wol_value_w
+        self._pg_value_w = pg_value_w
+        self._wos_value_w = wos_value_w
+        self._dw_value_w = dw_value_w
+        self._potd_value_w = potd_value_w
+        self._gls_value_w = gls_value_w
+        self._fh_value_w = fh_value_w
+        self._dmb_value_w = dmb_value_w
+        self._cs_value_w = cs_value_w
+
+    def set_char(self, char):
+        for idx, value_widget in enumerate([
+            self._wol_value_w,
+            self._pg_value_w,
+            self._wos_value_w,
+            self._dw_value_w,
+            self._potd_value_w,
+            self._gls_value_w,
+            self._fh_value_w,
+            self._dmb_value_w,
+            self._cs_value_w,
+        ]):
+            value = "0"
+            if char is not None:
+                value = str(char.covenant_levels[idx + 1])
+            value_widget.setText(value)
