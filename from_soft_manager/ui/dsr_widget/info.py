@@ -314,11 +314,13 @@ class CovenantsWidget(QtWidgets.QWidget):
         header_label = QtWidgets.QLabel("Covenant levels", covenants_wrapper)
         header_label.setAlignment(QtCore.Qt.AlignCenter)
 
+        # Covenants Way of White and Princess's Guard don't have ranking
+        # wol_label = QtWidgets.QLabel("Way of White", covenants_wrapper)
+        # wol_value_w = QtWidgets.QLabel("0", covenants_wrapper)
+        # pg_label = QtWidgets.QLabel("Princess's Guard", covenants_wrapper)
+        # pg_value_w = QtWidgets.QLabel("0", covenants_wrapper)
+
         # TODO add icon of items that are given to level up covenants
-        wol_label = QtWidgets.QLabel("Way of White", covenants_wrapper)
-        wol_value_w = QtWidgets.QLabel("0", covenants_wrapper)
-        pg_label = QtWidgets.QLabel("Princess's Guard", covenants_wrapper)
-        pg_value_w = QtWidgets.QLabel("0", covenants_wrapper)
         wos_label = QtWidgets.QLabel("Warrior of Sunlight", covenants_wrapper)
         wos_value_w = QtWidgets.QLabel("0", covenants_wrapper)
         dw_label = QtWidgets.QLabel("Darkwraith", covenants_wrapper)
@@ -340,8 +342,8 @@ class CovenantsWidget(QtWidgets.QWidget):
         covenants_layout.addWidget(header_label, 0, 0, 1, 2)
 
         for label_w, value_w in (
-            (wol_label, wol_value_w),
-            (pg_label, pg_value_w),
+            # (wol_label, wol_value_w),
+            # (pg_label, pg_value_w),
             (wos_label, wos_value_w),
             (dw_label, dw_value_w),
             (potd_label, potd_value_w),
@@ -364,8 +366,8 @@ class CovenantsWidget(QtWidgets.QWidget):
         main_layout.addWidget(covenants_wrapper, 1)
         main_layout.addStretch(1)
 
-        self._wol_value_w = wol_value_w
-        self._pg_value_w = pg_value_w
+        # self._wol_value_w = wol_value_w
+        # self._pg_value_w = pg_value_w
         self._wos_value_w = wos_value_w
         self._dw_value_w = dw_value_w
         self._potd_value_w = potd_value_w
@@ -376,8 +378,8 @@ class CovenantsWidget(QtWidgets.QWidget):
 
     def set_char(self, char):
         for idx, value_widget in enumerate([
-            self._wol_value_w,
-            self._pg_value_w,
+            # self._wol_value_w,
+            # self._pg_value_w,
             self._wos_value_w,
             self._dw_value_w,
             self._potd_value_w,
@@ -388,5 +390,5 @@ class CovenantsWidget(QtWidgets.QWidget):
         ]):
             value = "0"
             if char is not None:
-                value = str(char.covenant_levels[idx + 1])
+                value = str(char.covenant_levels[idx + 3])
             value_widget.setText(value)
