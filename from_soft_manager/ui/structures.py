@@ -48,6 +48,7 @@ class ConfigInfo:
     dsr_save_path: ConfigSavePathInfo
     ds2_save_path: ConfigSavePathInfo
     ds3_save_path: ConfigSavePathInfo
+    sekiro_save_path: ConfigSavePathInfo
     er_save_path: ConfigSavePathInfo
 
     quicksave_hotkey: QtCore.QKeyCombination | None = None
@@ -59,6 +60,7 @@ class ConfigConfirmData:
     dsr_save_path: str | None = None
     ds2_save_path: str | None = None
     ds3_save_path: str | None = None
+    sekiro_save_path: str | None = None
     er_save_path: str | None = None
 
     quicksave_hotkey: QtCore.QKeyCombination | None = None

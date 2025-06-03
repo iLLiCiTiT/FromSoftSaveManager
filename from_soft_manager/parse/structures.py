@@ -8,6 +8,7 @@ class Game(StrEnum):
     DS2_SOTFS = "DS2-SOTFS"
     DS3 = "DS3"
     ER = "ER"
+    Sekiro = "Sekiro"
 
 
 @dataclass
