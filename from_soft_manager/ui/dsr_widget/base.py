@@ -4,7 +4,7 @@ from from_soft_manager.parse import DSRCharacter
 from from_soft_manager.ui.utils import TabWidget, ManageSavesWidget
 
 from .resources import get_resource
-from .info import CharacterInfoWidget
+from .info import CharacterInfoWidget, CovenantsWidget
 
 CHAR_ID_ROLE = QtCore.Qt.UserRole + 1
 CHAR_NAME_ROLE = QtCore.Qt.UserRole + 2
@@ -109,11 +109,16 @@ class DSRWidget(QtWidgets.QWidget):
         char_tabs = TabWidget(self)
 
         char_info_widget = CharacterInfoWidget(char_tabs)
+        covenants_widget = CovenantsWidget(char_tabs)
         # char_equip_widget = QtWidgets.QWidget(char_tabs)
 
         char_tabs.add_tab(
             "Character Info",
             char_info_widget,
+        )
+        char_tabs.add_tab(
+            "Covenants",
+            covenants_widget,
         )
         # char_tabs.add_tab(
         #     "Equipment",
@@ -135,6 +140,7 @@ class DSRWidget(QtWidgets.QWidget):
         self._model = model
         self._char_tabs = char_tabs
         self._char_info_widget = char_info_widget
+        self._covenants_widget = covenants_widget
 
     def refresh(self):
         self._model.refresh()
@@ -162,6 +168,7 @@ class DSRWidget(QtWidgets.QWidget):
             char_id = index.data(CHAR_ID_ROLE)
             character = self._model.get_char_by_id(char_id)
             self._char_info_widget.set_char(character)
+            self._covenants_widget.set_char(character)
             return
 
         index = self._model.index(0, 0)
@@ -181,8 +188,10 @@ class DSRWidget(QtWidgets.QWidget):
             char = self._model.get_char_by_id(item_id)
             if char is not None:
                 self._char_info_widget.set_char(char)
+                self._covenants_widget.set_char(char)
                 set_char = True
                 break
 
         if not set_char:
             self._char_info_widget.set_char(None)
+            self._covenants_widget.set_char(None)
