@@ -7,6 +7,7 @@ from .parse_dsr import DSR_KEY, parse_dsr_file
 from .parse_ds2 import DS2_KEY, parse_ds2_file
 from .parse_ds3 import DS3_KEY, parse_ds3_file
 from .parse_er import parse_er_file
+from .parse_sekiro import parse_sekiro_file
 
 
 def bytes_to_int(in_bytes):
@@ -57,16 +58,20 @@ def parse_sl2_file(input_sl2_file: str) -> SL2File:
             *struct.unpack("<QQIIQ", content[hs:hs + 32])
         )
         # QUESTION is that true even if save is without DLCs?
-        if entry_header.entry_size not in (786480, 2621456):
+        if entry_header.entry_size not in (786480, 2621456, 1048592):
             print(
                 "WARNING: Save file size is not 786480 or 2621456"
-                " which is unknown case, expecting save file is Elden Ring."
+                f" but {entry_header.entry_size} which is unknown case,"
+                f" expecting save file is Elden Ring."
             )
 
         # TODO Try to find out better approach to determine the game
         if entry_header.entry_size == 786480:
             game = Game.DS3
             key = DS3_KEY
+        elif entry_header.entry_size == 1048592:
+            game = Game.Sekiro
+            key = None
         else:
             game = Game.ER
             key = None
@@ -134,3 +139,6 @@ def parse_save_file(filepath: str):
 
     if sl2_file.game == Game.ER:
         return parse_er_file(sl2_file)
+
+    if sl2_file.game == Game.Sekiro:
+        return parse_sekiro_file(sl2_file)

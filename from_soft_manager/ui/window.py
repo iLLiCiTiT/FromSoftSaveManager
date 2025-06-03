@@ -14,6 +14,7 @@ from .dsr_widget import DSRWidget
 from .ds2sotfs_widget import DS2SOTFSWidget
 from .ds3_widget import DS3Widget
 from .er_widget import ERWidget
+from .sekiro_widget import SekiroWidget
 from .utils import SquareButton
 
 
@@ -145,6 +146,8 @@ class SideBarWidget(QtWidgets.QFrame):
                 title = "DS II: SotFS"
             elif game == Game.DS3:
                 title = "Dark Souls III"
+            elif game == Game.Sekiro:
+                title = "Sekiro: Shadows Die Twice"
             elif game == Game.ER:
                 title = "Elden Ring"
         tab_btn = GameSaveTabButton(game, save_id, title, self)
@@ -257,6 +260,10 @@ class MainWindow(QtWidgets.QDialog):
                 )
             elif save_item.game == Game.DS3:
                 widget = DS3Widget(self._controller, save_item.save_id, self)
+            elif save_item.game == Game.Sekiro:
+                widget = SekiroWidget(
+                    self._controller, save_item.save_id, self
+                )
             elif save_item.game == Game.ER:
                 widget = ERWidget(self._controller, save_item.save_id, self)
 

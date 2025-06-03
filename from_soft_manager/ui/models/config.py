@@ -75,8 +75,14 @@ class ConfigModel(QtCore.QObject):
 
     def get_config_info(self) -> ConfigInfo:
         game_save_files = self._config_data.get("game_save_files", {})
-        config_info = []
-        for game in (Game.DSR, Game.DS2_SOTFS, Game.DS3, Game.ER):
+        config_info = {}
+        for game, config_key in (
+            (Game.DSR, "dsr_save_path"),
+            (Game.DS2_SOTFS, "ds2_save_path"),
+            (Game.DS3, "ds3_save_path"),
+            (Game.Sekiro, "sekiro_save_path"),
+            (Game.ER, "er_save_path"),
+        ):
             info = game_save_files.get(game)
             path = None
             if info:
@@ -85,7 +91,7 @@ class ConfigModel(QtCore.QObject):
             default_path = None
             if success:
                 default_path = path_hint
-            config_info.append(
+            config_info[config_key] = (
                 ConfigSavePathInfo(path, path_hint, default_path)
             )
 
@@ -97,10 +103,10 @@ class ConfigModel(QtCore.QObject):
         quickload_hotkey = hotkeys["quickload"]
         if quickload_hotkey is not None:
             quickload_hotkey = int_combination_to_qt(set(quickload_hotkey))
-        config_info.append(quicksave_hotkey)
-        config_info.append(quickload_hotkey)
+        config_info["quicksave_hotkey"] = quicksave_hotkey
+        config_info["quickload_hotkey"] = quickload_hotkey
 
-        return ConfigInfo(*config_info)
+        return ConfigInfo(**config_info)
 
     def save_config_info(self, config_data: ConfigConfirmData):
         paths_changed = False
@@ -109,6 +115,7 @@ class ConfigModel(QtCore.QObject):
             (Game.DSR, config_data.dsr_save_path),
             (Game.DS2_SOTFS, config_data.ds2_save_path),
             (Game.DS3, config_data.ds3_save_path),
+            (Game.Sekiro, config_data.sekiro_save_path),
             (Game.ER, config_data.er_save_path),
         ):
             if filepath is None:
@@ -121,7 +128,7 @@ class ConfigModel(QtCore.QObject):
                 info["path"] = filepath
                 self._save_info_by_id[info["save_id"]] = {
                     "path": filepath,
-                    "game": Game.DSR
+                    "game": game
                 }
 
         hotkeys_changed = False
@@ -155,7 +162,9 @@ class ConfigModel(QtCore.QObject):
     def get_save_items(self) -> list[SaveItem]:
         output = []
         game_save_files = self._config_data.get("game_save_files", {})
-        for game in (Game.DSR, Game.DS2_SOTFS, Game.DS3, Game.ER):
+        for game in (
+            Game.DSR, Game.DS2_SOTFS, Game.DS3, Game.Sekiro, Game.ER
+        ):
             info = game_save_files.get(game)
             if info and info["path"]:
                 output.append(
@@ -184,6 +193,8 @@ class ConfigModel(QtCore.QObject):
             return self._get_default_ds2_save_path()
         elif game == Game.DS3:
             return self._get_default_ds3_save_path()
+        elif game == Game.Sekiro:
+            return self._get_default_sekiro_save_path()
         elif game == Game.ER:
             return self._get_default_er_save_path()
         return "", False
@@ -230,6 +241,15 @@ class ConfigModel(QtCore.QObject):
                     return path, True
         return save_dir, False
 
+    def _get_default_sekiro_save_path(self) -> tuple[str, bool]:
+        save_dir = os.path.join(os.getenv("APPDATA"), "Sekiro")
+        if os.path.exists(save_dir):
+            for name in os.listdir(save_dir):
+                path = os.path.join(save_dir, name, "S0000.sl2")
+                if os.path.exists(path):
+                    return path, True
+        return save_dir, False
+
     def _load_config(self):
         if self._config_data is not None:
             return
@@ -243,7 +263,9 @@ class ConfigModel(QtCore.QObject):
                 pass
 
         game_save_files = config_data.setdefault("game_save_files", {})
-        for game in (Game.DSR, Game.DS2_SOTFS, Game.DS3, Game.ER):
+        for game in (
+            Game.DSR, Game.DS2_SOTFS, Game.DS3, Game.Sekiro, Game.ER
+        ):
             if game in game_save_files:
                 continue
             default_path, success = self._get_default_save_path(game)

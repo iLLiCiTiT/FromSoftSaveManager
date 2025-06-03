@@ -208,11 +208,23 @@ class SettingsWidget(QtWidgets.QWidget):
             config_info.ds2_save_path.save_path,
             config_info.ds2_save_path.save_path_hint
         )
+
         ds3_path_label = QtWidgets.QLabel("Dark Souls III", paths_widget)
         ds3_path_input = SavePathInput("Dark Souls III", paths_widget)
         ds3_path_input.update_path(
             config_info.ds3_save_path.save_path,
             config_info.ds3_save_path.save_path_hint
+        )
+
+        sekiro_path_label = QtWidgets.QLabel(
+            "Sekiro: Shadows Die Twice", paths_widget
+        )
+        sekiro_path_input = SavePathInput(
+            "Sekiro: Shadows Die Twice", paths_widget
+        )
+        sekiro_path_input.update_path(
+            config_info.sekiro_save_path.save_path,
+            config_info.sekiro_save_path.save_path_hint
         )
 
         er_path_label = QtWidgets.QLabel("Elden Ring", paths_widget)
@@ -230,6 +242,7 @@ class SettingsWidget(QtWidgets.QWidget):
             (dsr_path_label, dsr_path_input),
             (ds2_path_label, ds2_path_input),
             (ds3_path_label, ds3_path_input),
+            (sekiro_path_label, sekiro_path_input),
             (er_path_label, er_path_input),
         ):
             paths_layout.addWidget(label_w, row, 0)
@@ -285,6 +298,7 @@ class SettingsWidget(QtWidgets.QWidget):
         self._dsr_path_input = dsr_path_input
         self._ds2_path_input = ds2_path_input
         self._ds3_path_input = ds3_path_input
+        self._sekiro_path_input = sekiro_path_input
         self._er_path_input = er_path_input
         self._quicksave_input = quicksave_input
         self._quickload_input = quickload_input
@@ -309,6 +323,10 @@ class SettingsWidget(QtWidgets.QWidget):
             config_info.ds3_save_path.save_path,
             config_info.ds3_save_path.save_path_hint
         )
+        self._sekiro_path_input.update_path(
+            config_info.sekiro_save_path.save_path,
+            config_info.sekiro_save_path.save_path_hint
+        )
         self._er_path_input.update_path(
             config_info.er_save_path.save_path,
             config_info.er_save_path.save_path_hint
@@ -320,6 +338,7 @@ class SettingsWidget(QtWidgets.QWidget):
         dsr_path = self._dsr_path_input.get_path()
         ds2_path = self._ds2_path_input.get_path()
         ds3_path = self._ds3_path_input.get_path()
+        sekiro_path = self._sekiro_path_input.get_path()
         er_path = self._er_path_input.get_path()
         quicksave_hotkey = self._quicksave_input.get_key_combination()
         quickload_hotkey = self._quickload_input.get_key_combination()
@@ -330,6 +349,8 @@ class SettingsWidget(QtWidgets.QWidget):
             data.ds2_save_path = ds2_path
         if ds3_path != self._config_info.ds3_save_path.save_path:
             data.ds3_save_path = ds3_path
+        if sekiro_path != self._config_info.sekiro_save_path.save_path:
+            data.sekiro_save_path = sekiro_path
         if er_path != self._config_info.er_save_path.save_path:
             data.er_save_path = er_path
         if quicksave_hotkey != self._config_info.quicksave_hotkey:
