@@ -33,7 +33,58 @@ from .keys import keys_are_pressed, qt_combination_to_int
 NOT_SET = object()
 
 
-class BackgroundThread(QtCore.QThread):
+class SaveChangesThread(QtCore.QThread):
+    save_file_changed = QtCore.Signal(str)
+
+    def __init__(self, controller):
+        super().__init__()
+        self._controller = controller
+        self._save_paths_by_game = {}
+
+    def update_save_paths(self):
+        config: ConfigInfo = self._controller.get_config_info()
+        save_paths_by_game = {}
+        for game, path in (
+            (Game.DSR, config.dsr_save_path.save_path),
+            (Game.DS2_SOTFS, config.ds2_save_path.save_path),
+            (Game.DS3, config.ds3_save_path.save_path),
+            (Game.Sekiro, config.sekiro_save_path.save_path),
+            (Game.ER, config.er_save_path.save_path),
+        ):
+            if path:
+                save_paths_by_game[game] = path
+
+        self._save_paths_by_game = save_paths_by_game
+
+    def run(self):
+        self.update_save_paths()
+        self._is_running = True
+        last_changed_by_game = {}
+        for game, filepath in self._save_paths_by_game.items():
+            last_changed_by_game[game] = None
+            if os.path.exists(filepath):
+                last_changed_by_game[game] = os.stat(filepath).st_mtime
+
+        while self._is_running:
+            for game, save_path in self._save_paths_by_game.items():
+                last_change = last_changed_by_game[game]
+                changed = None
+                if os.path.exists(save_path):
+                    changed = os.stat(save_path).st_mtime
+                if changed == last_change:
+                    continue
+
+                last_changed_by_game[game] = changed
+
+                self.save_file_changed.emit(game)
+
+            self.msleep(1000)
+
+    def stop(self):
+        self._is_running = False
+
+
+class HotkeysThread(QtCore.QThread):
     quicksave_requested = QtCore.Signal()
     quickload_requested = QtCore.Signal()
 
@@ -141,7 +192,8 @@ class Controller(QtCore.QObject):
         self._log = logging.getLogger("Controller")
 
         config_model = ConfigModel()
-        background_thread = BackgroundThread(self)
+        background_thread = HotkeysThread(self)
+        save_changes_thred = SaveChangesThread(self)
 
         config_model.paths_changed.connect(self.paths_changed)
         config_model.hotkeys_changed.connect(self._on_hotkeys_change)
@@ -153,17 +205,27 @@ class Controller(QtCore.QObject):
         )
         background_thread.start()
 
+        save_changes_thred.save_file_changed.connect(
+            self._game_save_changed
+        )
+        save_changes_thred.start()
+
         app = QtWidgets.QApplication.instance()
         app.aboutToQuit.connect(self._on_exit)
 
         self._config_model = config_model
         self._background_thread = background_thread
+        self._save_changes_thred = save_changes_thred
         self._current_save_id: str | None = None
 
     def _on_exit(self):
         if self._background_thread.isRunning():
             self._background_thread.stop()
             self._background_thread.wait()
+
+        if self._save_changes_thred.isRunning():
+            self._save_changes_thred.stop()
+            self._save_changes_thred.wait()
 
     def get_config_info(self) -> ConfigInfo:
         return self._config_model.get_config_info()
@@ -482,3 +544,8 @@ class Controller(QtCore.QObject):
 
         dsr_file: DSRSaveFile = parse_dsr_file(parsed_file)
         info.characters = dsr_file.characters
+
+    def _game_save_changed(self, game: Game):
+        save_id = self._config_model.get_save_id_by_game(game)
+        if save_id is not None:
+            self.save_id_changed.emit(save_id)
