@@ -2,7 +2,7 @@ from PySide6 import QtWidgets, QtGui, QtCore
 
 from from_soft_manager.ui.icons import get_icon_path
 from from_soft_manager.ui.structures import ConfigInfo, ConfigConfirmData
-from from_soft_manager.ui.utils import SquareButton
+from from_soft_manager.ui.utils import SquareButton, FocusSpinBox
 
 
 class HotkeyInput(QtWidgets.QFrame):
@@ -335,6 +335,69 @@ class HotkeysWidget(QtWidgets.QWidget):
             data.quickload_hotkey = quickload_hotkey
 
 
+class AutoBackupWidget(QtWidgets.QWidget):
+    def __init__(self, config_info: ConfigInfo, parent: QtWidgets.QWidget):
+        super().__init__(parent)
+
+        enabled_label = QtWidgets.QLabel("Enabled", self)
+        enabled_input = QtWidgets.QCheckBox(self)
+        enabled_input.setChecked(config_info.autobackup_enabled)
+
+        frequency_label = QtWidgets.QLabel("Frequency", self)
+
+        frequency_input = FocusSpinBox(self)
+        frequency_input.setButtonSymbols(
+            QtWidgets.QAbstractSpinBox.NoButtons
+        )
+        frequency_input.setRange(1, 3600)
+        frequency_input.setValue(config_info.autobackup_frequency)
+
+        frequence_input_label = QtWidgets.QLabel("seconds", self)
+
+        tooltip = "Maximum number of autobackups to keep.\n0 means unlimited."
+        max_autobackup_label = QtWidgets.QLabel(
+            "Max autobackups", self
+        )
+        max_autobackup_label.setToolTip(tooltip)
+        max_autobackup_input = FocusSpinBox(self)
+        max_autobackup_input.setButtonSymbols(
+            QtWidgets.QAbstractSpinBox.NoButtons
+        )
+        max_autobackup_input.setRange(0, 100)
+        max_autobackup_input.setToolTip(tooltip)
+        max_autobackup_input.setValue(config_info.max_autobackups)
+
+        main_layout = QtWidgets.QGridLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(enabled_label, 1, 0)
+        main_layout.addWidget(enabled_input, 1, 1)
+        main_layout.addWidget(frequency_label, 2, 0)
+        main_layout.addWidget(frequency_input, 2, 1)
+        main_layout.addWidget(frequence_input_label, 2, 2)
+        main_layout.addWidget(max_autobackup_label, 3, 0)
+        main_layout.addWidget(max_autobackup_input, 3, 1)
+        main_layout.setColumnStretch(0, 0)
+        main_layout.setColumnStretch(1, 0)
+        main_layout.setColumnStretch(2, 1)
+
+        self._enabled_input = enabled_input
+        self._frequency_input = frequency_input
+        self._max_autobackup_input = max_autobackup_input
+
+    def update_config_info(self, config_info: ConfigInfo):
+        self._enabled_input.setChecked(config_info.autobackup_enabled)
+        self._frequency_input.setValue(config_info.autobackup_frequency)
+        self._max_autobackup_input.setValue(config_info.max_autobackups)
+
+    def apply_changes(self, config_info: ConfigInfo, data: ConfigConfirmData):
+        if self._enabled_input.isChecked() != config_info.autobackup_enabled:
+            data.autobackup_enabled = self._enabled_input.isChecked()
+        if self._frequency_input.value() != config_info.autobackup_frequency:
+            data.autobackup_frequency = self._frequency_input.value()
+        if self._max_autobackup_input.value() != config_info.max_autobackups:
+            data.max_autobackups = self._max_autobackup_input.value()
+
+
 class SettingsWidget(QtWidgets.QWidget):
     def __init__(self, controller, parent):
         super().__init__(parent)
@@ -349,6 +412,10 @@ class SettingsWidget(QtWidgets.QWidget):
         hotkeys_label = QtWidgets.QLabel("Hotkeys", self)
         hotkeys_label.setObjectName("settings_header")
         hotkeys_widget = HotkeysWidget(config_info, self)
+
+        autobackup_label = QtWidgets.QLabel("Autobackup", self)
+        autobackup_label.setObjectName("settings_header")
+        autobackup_widget = AutoBackupWidget(config_info, self)
 
         btns_widget = QtWidgets.QWidget(self)
 
@@ -370,6 +437,9 @@ class SettingsWidget(QtWidgets.QWidget):
         main_layout.addSpacing(10)
         main_layout.addWidget(hotkeys_label, 0)
         main_layout.addWidget(hotkeys_widget, 0)
+        main_layout.addSpacing(10)
+        main_layout.addWidget(autobackup_label, 0)
+        main_layout.addWidget(autobackup_widget, 0)
         main_layout.addStretch(1)
         main_layout.addWidget(btns_widget, 0)
         save_btn.clicked.connect(self._on_save)
@@ -379,6 +449,7 @@ class SettingsWidget(QtWidgets.QWidget):
         self._config_info = config_info
         self._paths_widget = paths_widget
         self._hotkeys_widget = hotkeys_widget
+        self._autobackup_widget = autobackup_widget
 
     def _on_save(self):
         self._controller.save_config_info(self._get_values())
@@ -388,9 +459,11 @@ class SettingsWidget(QtWidgets.QWidget):
         self._config_info = config_info
         self._paths_widget.update_config_info(config_info)
         self._hotkeys_widget.update_config_info(config_info)
+        self._autobackup_widget.update_config_info(config_info)
 
     def _get_values(self) -> ConfigConfirmData:
         data = ConfigConfirmData()
         self._paths_widget.apply_changes(self._config_info, data)
         self._hotkeys_widget.apply_changes(self._config_info, data)
+        self._autobackup_widget.apply_changes(self._config_info, data)
         return data
