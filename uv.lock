@@ -218,7 +218,7 @@ wheels = [
 
 [[package]]
 name = "fromsoftsavemanager"
-version = "0.2.0"
+version = "0.2.1-dev"
 source = { virtual = "." }
 dependencies = [
     { name = "arrow" },
