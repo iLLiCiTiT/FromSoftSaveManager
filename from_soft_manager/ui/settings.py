@@ -179,64 +179,57 @@ class SavePathInput(QtWidgets.QFrame):
             self._path_input.setText(path)
 
 
-class SettingsWidget(QtWidgets.QWidget):
-    def __init__(self, controller, parent):
+class SavePathInputsWidget(QtWidgets.QWidget):
+    def __init__(self, config_info: ConfigInfo, parent: QtWidgets.QWidget):
         super().__init__(parent)
 
-        config_info: ConfigInfo = controller.get_config_info()
-
-        # TODO add option to reset to default
-        paths_widget = QtWidgets.QWidget(self)
-
-        paths_label = QtWidgets.QLabel("Paths", paths_widget)
-        paths_label.setObjectName("settings_header")
-
         dsr_path_label = QtWidgets.QLabel(
-            "Dark Souls: Remastered", paths_widget
+            "Dark Souls: Remastered", self
         )
-        dsr_path_input = SavePathInput("Dark Souls: Remastered", paths_widget)
+        dsr_path_input = SavePathInput(
+            "Dark Souls: Remastered", self
+        )
         dsr_path_input.update_path(
             config_info.dsr_save_path.save_path,
             config_info.dsr_save_path.save_path_hint
         )
 
-        ds2_path_label = QtWidgets.QLabel("Dark Souls II: SOTFS", paths_widget)
+        ds2_path_label = QtWidgets.QLabel("Dark Souls II: SOTFS", self)
         ds2_path_input = SavePathInput(
-            "Dark Souls II: Scholar of the First Sin", paths_widget
+            "Dark Souls II: Scholar of the First Sin", self
         )
         ds2_path_input.update_path(
             config_info.ds2_save_path.save_path,
             config_info.ds2_save_path.save_path_hint
         )
 
-        ds3_path_label = QtWidgets.QLabel("Dark Souls III", paths_widget)
-        ds3_path_input = SavePathInput("Dark Souls III", paths_widget)
+        ds3_path_label = QtWidgets.QLabel("Dark Souls III", self)
+        ds3_path_input = SavePathInput("Dark Souls III", self)
         ds3_path_input.update_path(
             config_info.ds3_save_path.save_path,
             config_info.ds3_save_path.save_path_hint
         )
 
         sekiro_path_label = QtWidgets.QLabel(
-            "Sekiro: Shadows Die Twice", paths_widget
+            "Sekiro: Shadows Die Twice", self
         )
         sekiro_path_input = SavePathInput(
-            "Sekiro: Shadows Die Twice", paths_widget
+            "Sekiro: Shadows Die Twice", self
         )
         sekiro_path_input.update_path(
             config_info.sekiro_save_path.save_path,
             config_info.sekiro_save_path.save_path_hint
         )
 
-        er_path_label = QtWidgets.QLabel("Elden Ring", paths_widget)
-        er_path_input = SavePathInput("Elden Ring", paths_widget)
+        er_path_label = QtWidgets.QLabel("Elden Ring", self)
+        er_path_input = SavePathInput("Elden Ring", self)
         er_path_input.update_path(
             config_info.er_save_path.save_path,
             config_info.er_save_path.save_path_hint
         )
 
-        paths_layout = QtWidgets.QGridLayout(paths_widget)
-        paths_layout.setContentsMargins(0, 0, 0, 0)
-        paths_layout.addWidget(paths_label, 0, 0, 1, 3)
+        main_layout = QtWidgets.QGridLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
         row = 1
         for label_w, input_w in (
             (dsr_path_label, dsr_path_input),
@@ -245,72 +238,20 @@ class SettingsWidget(QtWidgets.QWidget):
             (sekiro_path_label, sekiro_path_input),
             (er_path_label, er_path_input),
         ):
-            paths_layout.addWidget(label_w, row, 0)
-            paths_layout.addWidget(input_w, row, 1)
+            main_layout.addWidget(label_w, row, 0)
+            main_layout.addWidget(input_w, row, 1)
             row += 1
 
-        paths_layout.setColumnStretch(0, 0)
-        paths_layout.setColumnStretch(1, 1)
+        main_layout.setColumnStretch(0, 0)
+        main_layout.setColumnStretch(1, 1)
 
-        hotkeys_widget = QtWidgets.QWidget(self)
-
-        hotkeys_label = QtWidgets.QLabel("Hotkeys", hotkeys_widget)
-        hotkeys_label.setObjectName("settings_header")
-        qs_label = QtWidgets.QLabel("QuickSave", hotkeys_widget)
-        quicksave_input = HotkeyInput(hotkeys_widget)
-        quicksave_input.set_combination(config_info.quicksave_hotkey)
-        ql_label = QtWidgets.QLabel("QuickLoad", hotkeys_widget)
-        quickload_input = HotkeyInput(hotkeys_widget)
-        quickload_input.set_combination(config_info.quickload_hotkey)
-
-        hotkeys_layout = QtWidgets.QGridLayout(hotkeys_widget)
-        hotkeys_layout.setContentsMargins(0, 0, 0, 0)
-        hotkeys_layout.addWidget(hotkeys_label, 0, 0, 1, 2)
-        hotkeys_layout.addWidget(qs_label, 1, 0)
-        hotkeys_layout.addWidget(quicksave_input, 1, 1)
-        hotkeys_layout.addWidget(ql_label, 2, 0)
-        hotkeys_layout.addWidget(quickload_input, 2, 1)
-
-        btns_widget = QtWidgets.QWidget(self)
-
-        save_btn = QtWidgets.QPushButton("Save", btns_widget)
-        save_btn.setObjectName("save_btn")
-        discard_btn = QtWidgets.QPushButton("Discard changes", btns_widget)
-
-        btns_layout = QtWidgets.QHBoxLayout(btns_widget)
-        btns_layout.setContentsMargins(0, 0, 0, 0)
-        btns_layout.addStretch(1)
-        btns_layout.addWidget(save_btn, 0)
-        btns_layout.addWidget(discard_btn, 0)
-
-        main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.setContentsMargins(10, 10, 10, 10)
-        main_layout.setSpacing(10)
-        main_layout.addWidget(paths_widget, 0)
-        main_layout.addWidget(hotkeys_widget, 0)
-        main_layout.addStretch(1)
-        main_layout.addWidget(btns_widget, 0)
-        save_btn.clicked.connect(self._on_save)
-        discard_btn.clicked.connect(self.discard_changes)
-
-        self._controller = controller
-        self._config_info = config_info
         self._dsr_path_input = dsr_path_input
         self._ds2_path_input = ds2_path_input
         self._ds3_path_input = ds3_path_input
         self._sekiro_path_input = sekiro_path_input
         self._er_path_input = er_path_input
-        self._quicksave_input = quicksave_input
-        self._quickload_input = quickload_input
 
-        self.resize(600, 200)
-
-    def _on_save(self):
-        self._controller.save_config_info(self._get_values())
-
-    def discard_changes(self):
-        config_info: ConfigInfo = self._controller.get_config_info()
-        self._config_info = config_info
+    def update_config_info(self, config_info: ConfigInfo):
         self._dsr_path_input.update_path(
             config_info.dsr_save_path.save_path,
             config_info.dsr_save_path.save_path_hint
@@ -331,38 +272,125 @@ class SettingsWidget(QtWidgets.QWidget):
             config_info.er_save_path.save_path,
             config_info.er_save_path.save_path_hint
         )
-        self._quicksave_input.set_combination(config_info.quicksave_hotkey)
-        self._quickload_input.set_combination(config_info.quickload_hotkey)
 
-    def _get_values(self) -> ConfigConfirmData:
+    def apply_changes(self, config_info: ConfigInfo, data: ConfigConfirmData):
         dsr_path = self._dsr_path_input.get_path()
         ds2_path = self._ds2_path_input.get_path()
         ds3_path = self._ds3_path_input.get_path()
         sekiro_path = self._sekiro_path_input.get_path()
         er_path = self._er_path_input.get_path()
+
+        if dsr_path != config_info.dsr_save_path.save_path:
+            data.dsr_save_path = dsr_path
+        if ds2_path != config_info.ds2_save_path.save_path:
+            data.ds2_save_path = ds2_path
+        if ds3_path != config_info.ds3_save_path.save_path:
+            data.ds3_save_path = ds3_path
+        if sekiro_path != config_info.sekiro_save_path.save_path:
+            data.sekiro_save_path = sekiro_path
+        if er_path != config_info.er_save_path.save_path:
+            data.er_save_path = er_path
+
+
+class HotkeysWidget(QtWidgets.QWidget):
+    def __init__(self, config_info: ConfigInfo, parent: QtWidgets.QWidget):
+        super().__init__(parent)
+
+        qs_label = QtWidgets.QLabel("QuickSave", self)
+        quicksave_input = HotkeyInput(self)
+        quicksave_input.set_combination(config_info.quicksave_hotkey)
+        ql_label = QtWidgets.QLabel("QuickLoad", self)
+        quickload_input = HotkeyInput(self)
+        quickload_input.set_combination(config_info.quickload_hotkey)
+
+        hotkeys_layout = QtWidgets.QGridLayout(self)
+        hotkeys_layout.setContentsMargins(0, 0, 0, 0)
+        hotkeys_layout.addWidget(qs_label, 1, 0)
+        hotkeys_layout.addWidget(quicksave_input, 1, 1)
+        hotkeys_layout.addWidget(ql_label, 2, 0)
+        hotkeys_layout.addWidget(quickload_input, 2, 1)
+
+        self._quicksave_input = quicksave_input
+        self._quickload_input = quickload_input
+
+    def update_config_info(self, config_info: ConfigInfo):
+        self._quicksave_input.set_combination(config_info.quicksave_hotkey)
+        self._quickload_input.set_combination(config_info.quickload_hotkey)
+
+    def apply_changes(self, config_info: ConfigInfo, data: ConfigConfirmData):
         quicksave_hotkey = self._quicksave_input.get_key_combination()
         quickload_hotkey = self._quickload_input.get_key_combination()
-        data = ConfigConfirmData(dsr_path)
-        if dsr_path != self._config_info.dsr_save_path.save_path:
-            data.dsr_save_path = dsr_path
-        if ds2_path != self._config_info.ds2_save_path.save_path:
-            data.ds2_save_path = ds2_path
-        if ds3_path != self._config_info.ds3_save_path.save_path:
-            data.ds3_save_path = ds3_path
-        if sekiro_path != self._config_info.sekiro_save_path.save_path:
-            data.sekiro_save_path = sekiro_path
-        if er_path != self._config_info.er_save_path.save_path:
-            data.er_save_path = er_path
-        if quicksave_hotkey != self._config_info.quicksave_hotkey:
+
+        if quicksave_hotkey != config_info.quicksave_hotkey:
             if quicksave_hotkey is None:
                 quicksave_hotkey = QtCore.QKeyCombination(
                     QtCore.Qt.Key_unknown
                 )
             data.quicksave_hotkey = quicksave_hotkey
-        if quickload_hotkey != self._config_info.quickload_hotkey:
+        if quickload_hotkey != config_info.quickload_hotkey:
             if quickload_hotkey is None:
                 quickload_hotkey = QtCore.QKeyCombination(
                     QtCore.Qt.Key_unknown
                 )
             data.quickload_hotkey = quickload_hotkey
+
+
+class SettingsWidget(QtWidgets.QWidget):
+    def __init__(self, controller, parent):
+        super().__init__(parent)
+
+        config_info: ConfigInfo = controller.get_config_info()
+
+        # TODO add option to reset to default
+        paths_label = QtWidgets.QLabel("Paths", self)
+        paths_label.setObjectName("settings_header")
+        paths_widget = SavePathInputsWidget(config_info, self)
+
+        hotkeys_label = QtWidgets.QLabel("Hotkeys", self)
+        hotkeys_label.setObjectName("settings_header")
+        hotkeys_widget = HotkeysWidget(config_info, self)
+
+        btns_widget = QtWidgets.QWidget(self)
+
+        save_btn = QtWidgets.QPushButton("Save", btns_widget)
+        save_btn.setObjectName("save_btn")
+        discard_btn = QtWidgets.QPushButton("Discard changes", btns_widget)
+
+        btns_layout = QtWidgets.QHBoxLayout(btns_widget)
+        btns_layout.setContentsMargins(0, 0, 0, 0)
+        btns_layout.addStretch(1)
+        btns_layout.addWidget(save_btn, 0)
+        btns_layout.addWidget(discard_btn, 0)
+
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setSpacing(5)
+        main_layout.addWidget(paths_label, 0)
+        main_layout.addWidget(paths_widget, 0)
+        main_layout.addSpacing(10)
+        main_layout.addWidget(hotkeys_label, 0)
+        main_layout.addWidget(hotkeys_widget, 0)
+        main_layout.addStretch(1)
+        main_layout.addWidget(btns_widget, 0)
+        save_btn.clicked.connect(self._on_save)
+        discard_btn.clicked.connect(self.discard_changes)
+
+        self._controller = controller
+        self._config_info = config_info
+        self._paths_widget = paths_widget
+        self._hotkeys_widget = hotkeys_widget
+
+    def _on_save(self):
+        self._controller.save_config_info(self._get_values())
+
+    def discard_changes(self):
+        config_info: ConfigInfo = self._controller.get_config_info()
+        self._config_info = config_info
+        self._paths_widget.update_config_info(config_info)
+        self._hotkeys_widget.update_config_info(config_info)
+
+    def _get_values(self) -> ConfigConfirmData:
+        data = ConfigConfirmData()
+        self._paths_widget.apply_changes(self._config_info, data)
+        self._hotkeys_widget.apply_changes(self._config_info, data)
         return data
