@@ -8,7 +8,7 @@
     border-radius: 4px;
 }
 
-QLineEdit {
+QLineEdit, QSpinBox {
     background: #1E1F22;
     padding: 2px;
     border: none;
