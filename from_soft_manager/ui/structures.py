@@ -22,6 +22,7 @@ class BackupType(StrEnum):
 
 @dataclass
 class BackupInfo:
+    backup_dir: str
     backup_id: str
     backup_type: BackupType
     datetime: arrow.Arrow
@@ -51,8 +52,12 @@ class ConfigInfo:
     sekiro_save_path: ConfigSavePathInfo
     er_save_path: ConfigSavePathInfo
 
-    quicksave_hotkey: QtCore.QKeyCombination | None = None
-    quickload_hotkey: QtCore.QKeyCombination | None = None
+    quicksave_hotkey: QtCore.QKeyCombination | None
+    quickload_hotkey: QtCore.QKeyCombination | None
+
+    autobackup_enabled: bool
+    autobackup_frequency: int
+    max_autobackups: int
 
 
 @dataclass
@@ -65,3 +70,7 @@ class ConfigConfirmData:
 
     quicksave_hotkey: QtCore.QKeyCombination | None = None
     quickload_hotkey: QtCore.QKeyCombination | None = None
+
+    autobackup_enabled: bool = None
+    autobackup_frequency: int = None
+    max_autobackups: int = None

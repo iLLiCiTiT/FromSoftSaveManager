@@ -58,6 +58,8 @@ def _get_windows_documents_dir() -> str:
 class ConfigModel(QtCore.QObject):
     paths_changed = QtCore.Signal()
     hotkeys_changed = QtCore.Signal()
+    autobackup_changed = QtCore.Signal()
+    config_changed = QtCore.Signal()
 
     def __init__(self):
         super().__init__()
@@ -106,6 +108,11 @@ class ConfigModel(QtCore.QObject):
         config_info["quicksave_hotkey"] = quicksave_hotkey
         config_info["quickload_hotkey"] = quickload_hotkey
 
+        autobackup = self._config_data["autobackup"]
+        config_info["autobackup_enabled"] = autobackup["enabled"]
+        config_info["autobackup_frequency"] = autobackup["frequency"]
+        config_info["max_autobackups"] = autobackup["max_autobackups"]
+
         return ConfigInfo(**config_info)
 
     def save_config_info(self, config_data: ConfigConfirmData):
@@ -146,7 +153,21 @@ class ConfigModel(QtCore.QObject):
                     hotkey
                 ))
 
-        changed = paths_changed or hotkeys_changed
+        autobackup_changed = False
+        autobackup = self._config_data.setdefault("autobackup", {})
+        for key, value in (
+            ("enabled", config_data.autobackup_enabled),
+            ("frequency", config_data.autobackup_frequency),
+            ("max_autobackups", config_data.max_autobackups),
+        ):
+            if (
+                value is not None
+                and autobackup.get(key) != value
+            ):
+                autobackup_changed = True
+                autobackup[key] = value
+
+        changed = paths_changed or hotkeys_changed or autobackup_changed
         if not changed:
             return
 
@@ -155,6 +176,9 @@ class ConfigModel(QtCore.QObject):
             self.paths_changed.emit()
         if hotkeys_changed:
             self.hotkeys_changed.emit()
+        if autobackup_changed:
+            self.autobackup_changed.emit()
+        self.config_changed.emit()
 
     def get_backup_dir_path(self, *args) -> str:
         return os.path.join(self._app_dir, "backups", *args)
@@ -299,14 +323,13 @@ class ConfigModel(QtCore.QObject):
                 QtCore.QKeyCombination(QtCore.Qt.Key_F8)
             ))
 
+        autobackup = config_data.setdefault("autobackup", {})
+        autobackup.setdefault("enabled", False)
+        autobackup.setdefault("frequency", 60)
+        autobackup.setdefault("max_autobackups", 10)
+
         self._save_info_by_id = info_by_id
         self._config_data = config_data
-
-    def _get_mapped_key(self, key: QtCore.Qt.Key) -> int | None:
-        # for key, value in KEYS_MAPPING.items():
-        #     if value == key:
-        #         return key
-        return None
 
     def _save_config(self):
         config_dir = os.path.dirname(self._config_path)

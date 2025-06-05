@@ -162,6 +162,20 @@ class PixmapLabel(QtWidgets.QLabel):
         super().resizeEvent(event)
 
 
+class FocusSpinBox(QtWidgets.QSpinBox):
+    """QSpinBox which allow scroll wheel changes only in active state."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+    def wheelEvent(self, event):
+        if self.hasFocus():
+            super().wheelEvent(event)
+        else:
+            event.ignore()
+
+
 class SquareButton(QtWidgets.QPushButton):
     """Make button square shape.
 
