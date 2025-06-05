@@ -59,6 +59,7 @@ class ConfigModel(QtCore.QObject):
     paths_changed = QtCore.Signal()
     hotkeys_changed = QtCore.Signal()
     autobackup_changed = QtCore.Signal()
+    config_changed = QtCore.Signal()
 
     def __init__(self):
         super().__init__()
@@ -177,6 +178,7 @@ class ConfigModel(QtCore.QObject):
             self.hotkeys_changed.emit()
         if autobackup_changed:
             self.autobackup_changed.emit()
+        self.config_changed.emit()
 
     def get_backup_dir_path(self, *args) -> str:
         return os.path.join(self._app_dir, "backups", *args)

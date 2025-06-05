@@ -22,6 +22,7 @@ class BackupType(StrEnum):
 
 @dataclass
 class BackupInfo:
+    backup_dir: str
     backup_id: str
     backup_type: BackupType
     datetime: arrow.Arrow

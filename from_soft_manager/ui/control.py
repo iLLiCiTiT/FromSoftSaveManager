@@ -182,21 +182,108 @@ def index_existing_path(path: str) -> str:
         idx += 1
 
 
+class AutoBackuphandler(QtCore.QObject):
+    def __init__(self, controller):
+        super().__init__(controller)
+
+        autobackup_timer = QtCore.QTimer(self)
+        autobackup_timer.setSingleShot(False)
+        autobackup_timer.setInterval(1000)
+
+        autobackup_timer.timeout.connect(self._on_timer)
+        controller.game_save_changed.connect(self._on_game_save_changed)
+        controller.paths_changed.connect(self._on_paths_changed)
+        controller.autobackup_config_changed.connect(
+            self._on_autobackup_config_changed
+        )
+
+        autobackup_timer.start()
+
+        self._controller = controller
+        self._autobackup_timer = autobackup_timer
+        self._enabled = None
+        self._frequency = None
+        self._max_backups = None
+        self._changed_games = set()
+        self._paths_by_game = {}
+
+    def _on_timer(self):
+        if self._enabled is None:
+            self._init_config_info()
+
+        if not self._enabled:
+            self._autobackup_timer.stop()
+            return
+
+        if not self._changed_games:
+            return
+
+        for game in set(self._changed_games):
+            filepath = self._paths_by_game[game]
+            if not filepath or not os.path.exists(filepath):
+                continue
+            self._controller.create_autobackup(game, filepath)
+            self._controller.cleanup_autobackups(game, self._max_backups)
+            self._changed_games.discard(game)
+
+    def _on_game_save_changed(self, game: Game):
+        self._changed_games.add(game)
+
+    def _on_paths_changed(self):
+        config_info: ConfigInfo = self._controller.get_config_info()
+        self._fill_paths(config_info)
+
+    def _on_autobackup_config_changed(self):
+        config_info: ConfigInfo = self._controller.get_config_info()
+        self._fill_autobackup(config_info)
+
+    def _init_config_info(self):
+        config_info: ConfigInfo = self._controller.get_config_info()
+        self._fill_autobackup(config_info)
+        self._fill_paths(config_info)
+
+    def _fill_autobackup(self, config_info):
+        self._enabled = config_info.autobackup_enabled
+        self._frequency = config_info.autobackup_frequency
+        self._max_backups = config_info.max_autobackups
+
+        self._autobackup_timer.setInterval(self._frequency * 1000)
+        if self._enabled:
+            self._autobackup_timer.start()
+
+    def _fill_paths(self, config_info: ConfigInfo):
+        self._paths_by_game = {
+            Game.DSR: config_info.dsr_save_path.save_path,
+            Game.DS2_SOTFS: config_info.ds2_save_path.save_path,
+            Game.DS3: config_info.ds3_save_path.save_path,
+            Game.Sekiro: config_info.sekiro_save_path.save_path,
+            Game.ER: config_info.er_save_path.save_path,
+        }
+        self._changed_games = set()
+
+
 class Controller(QtCore.QObject):
     paths_changed = QtCore.Signal()
+    game_save_changed = QtCore.Signal(str)
     save_id_changed = QtCore.Signal(str)
     hotkeys_changed = QtCore.Signal()
+    autobackup_config_changed = QtCore.Signal()
 
     def __init__(self):
         super().__init__()
         self._log = logging.getLogger("Controller")
 
         config_model = ConfigModel()
+
         background_thread = HotkeysThread(self)
-        save_changes_thred = SaveChangesThread(self)
+        save_changes_thread = SaveChangesThread(self)
+        autobackup_handler = AutoBackuphandler(self)
 
         config_model.paths_changed.connect(self.paths_changed)
         config_model.hotkeys_changed.connect(self._on_hotkeys_change)
+        config_model.autobackup_changed.connect(
+            self.autobackup_config_changed
+        )
         background_thread.quicksave_requested.connect(
             self._on_quicksave_request
         )
@@ -205,17 +292,18 @@ class Controller(QtCore.QObject):
         )
         background_thread.start()
 
-        save_changes_thred.save_file_changed.connect(
+        save_changes_thread.save_file_changed.connect(
             self._game_save_changed
         )
-        save_changes_thred.start()
+        save_changes_thread.start()
 
         app = QtWidgets.QApplication.instance()
         app.aboutToQuit.connect(self._on_exit)
 
         self._config_model = config_model
         self._background_thread = background_thread
-        self._save_changes_thred = save_changes_thred
+        self._save_changes_thread = save_changes_thread
+        self._autobackup_handler = autobackup_handler
         self._current_save_id: str | None = None
 
     def _on_exit(self):
@@ -223,9 +311,9 @@ class Controller(QtCore.QObject):
             self._background_thread.stop()
             self._background_thread.wait()
 
-        if self._save_changes_thred.isRunning():
-            self._save_changes_thred.stop()
-            self._save_changes_thred.wait()
+        if self._save_changes_thread.isRunning():
+            self._save_changes_thread.stop()
+            self._save_changes_thread.wait()
 
     def get_config_info(self) -> ConfigInfo:
         return self._config_model.get_config_info()
@@ -267,7 +355,7 @@ class Controller(QtCore.QObject):
     def open_backup_dir(self):
         if platform.system().lower() != "windows":
             self._log.warning(
-                "Open backup directory is only supported on Windows."
+                "Open backup directory is supported only on Windows."
             )
             return
 
@@ -316,10 +404,37 @@ class Controller(QtCore.QObject):
             if metadata["id"] in backup_ids:
                 shutil.rmtree(backup_dir)
 
+    def create_autobackup(self, game: Game, filepath: str):
+        save_id = self._config_model.get_save_id_by_game(game)
+        if save_id is None:
+            self._log.warning(
+                f"No save ID found for game: {game}."
+                f" Failed to create autobackup."
+            )
+            return
+
+        self._backup_save(save_id, BackupType.autosave)
+
+    def cleanup_autobackups(self, game: Game, max_backups: int):
+        if max_backups < 1:
+            return
+
+        backups = self._get_backups_by_game(game)
+        filtered_backups = [
+            backup
+            for backup in backups
+            if backup.backup_type == BackupType.autosave
+        ]
+        filtered_backups.sort(key=lambda backup: backup.datetime)
+        while len(filtered_backups) > max_backups:
+            backup = filtered_backups.pop(0)
+            shutil.rmtree(backup.backup_dir)
+
     def _get_backups_by_game(self, game: Game) -> list[BackupInfo]:
         backups = []
         for backup_dir, metadata in self._collect_game_save_backups(game):
             backup_info = BackupInfo(
+                backup_dir,
                 metadata["id"],
                 metadata["backup_type"],
                 arrow.get(metadata["datetime"]),
@@ -434,14 +549,16 @@ class Controller(QtCore.QObject):
         if self._current_save_id is None:
             self._log.warning("No current save ID set for quicksave.")
             return
-        save_info = self._config_model.get_save_info_by_id(
-            self._current_save_id
-        )
+        self._backup_save(self._current_save_id, backup_type, label)
+
+    def _backup_save(
+        self, save_id: str, backup_type: BackupType, label: str | None = None
+    ):
+        save_info = self._config_model.get_save_info_by_id(save_id)
         src_path = save_info["path"]
         if src_path is None:
             self._log.warning(
-                f"No save path found for current save ID:"
-                f" {self._current_save_id}"
+                f"No save path found for save ID: {save_id}"
             )
             return
         if not os.path.exists(src_path):
@@ -548,4 +665,5 @@ class Controller(QtCore.QObject):
     def _game_save_changed(self, game: Game):
         save_id = self._config_model.get_save_id_by_game(game)
         if save_id is not None:
+            self.game_save_changed.emit(game)
             self.save_id_changed.emit(save_id)
