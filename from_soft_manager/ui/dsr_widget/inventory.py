@@ -7,7 +7,7 @@ from from_soft_manager.parse import DSRCharacter, ITEMS_BY_IDS, InventoryItem
 from .resources import get_resource
 
 ITEM_LEVEL_ROLE = QtCore.Qt.UserRole + 1
-ITEM_INFUSION_ROLE = QtCore.Qt.UserRole + 2
+ITEM_INFUSION_ICON_ROLE = QtCore.Qt.UserRole + 2
 ITEM_ORDER_ROLE = QtCore.Qt.UserRole + 3
 ITEM_AMOUNT_ROLE = QtCore.Qt.UserRole + 4
 ITEM_DURABILITY_ROLE = QtCore.Qt.UserRole + 5
@@ -30,7 +30,6 @@ class InventoryModel(QtGui.QStandardItemModel):
         item_name = f"NA {inventory_item.item_type} {inventory_item.item_id}"
         new_item = QtGui.QStandardItem(item_name)
         new_item.setData(inventory_item.upgrade_level, ITEM_LEVEL_ROLE)
-        new_item.setData(inventory_item.infusion, ITEM_INFUSION_ROLE)
         new_item.setData(inventory_item.in_botomless_box, IS_IN_BOTOMLESS_ROLE)
         new_item.setData(inventory_item.order, ITEM_ORDER_ROLE)
         new_item.setData(inventory_item.amount, ITEM_AMOUNT_ROLE)
@@ -68,6 +67,41 @@ class InventoryModel(QtGui.QStandardItemModel):
             ):
                 continue
 
+            upgrade_level = inventory_item.upgrade_level
+
+            infusion_name = None
+            if inventory_item.infusion == 0:
+                pass
+            elif inventory_item.infusion == 100:
+                infusion_name = "crystal"
+            elif inventory_item.infusion == 200:
+                infusion_name = "lightning"
+            elif inventory_item.infusion == 300:
+                infusion_name = "raw"
+            elif inventory_item.infusion == 400:
+                infusion_name = "magic"
+                if upgrade_level >= 5:
+                    infusion_name += "_2"
+            elif inventory_item.infusion == 500:
+                infusion_name = "enchanted"
+            elif inventory_item.infusion == 600:
+                infusion_name = "divine"
+                if upgrade_level >= 5:
+                    infusion_name += "_2"
+            elif inventory_item.infusion == 700:
+                infusion_name = "occult"
+            elif inventory_item.infusion == 800:
+                infusion_name = "fire"
+                if upgrade_level >= 5:
+                    infusion_name += "_2"
+            elif inventory_item.infusion == 900:
+                infusion_name = "chaos"
+
+            infusion_icon = None
+            if infusion_name:
+                infusion_icon = QtGui.QPixmap(
+                    get_resource("infusions", f"{infusion_name}.png")
+                )
             name = item["name"]
             category = item["category"]
             image_name = item["image"]
@@ -76,8 +110,8 @@ class InventoryModel(QtGui.QStandardItemModel):
             new_item.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled
             )
-            new_item.setData(inventory_item.upgrade_level, ITEM_LEVEL_ROLE)
-            new_item.setData(inventory_item.infusion, ITEM_INFUSION_ROLE)
+            new_item.setData(upgrade_level, ITEM_LEVEL_ROLE)
+            new_item.setData(infusion_icon, ITEM_INFUSION_ICON_ROLE)
             new_item.setData(inventory_item.order, ITEM_ORDER_ROLE)
             new_item.setData(inventory_item.in_botomless_box, IS_IN_BOTOMLESS_ROLE)
             new_item.setData(inventory_item.order, ITEM_ORDER_ROLE)
@@ -93,7 +127,7 @@ class InventoryModel(QtGui.QStandardItemModel):
 class InventoryDelegate(QtWidgets.QStyledItemDelegate):
     def sizeHint(self, option, index):
         # You can customize the size of each item here
-        return QtCore.QSize(400, 100)
+        return QtCore.QSize(260, 80)
 
     def paint(self, painter, option, index):
         item_label = index.data(QtCore.Qt.DisplayRole)
@@ -108,27 +142,44 @@ class InventoryDelegate(QtWidgets.QStyledItemDelegate):
         pixmap = index.data(ITEM_IMAGE_ROLE)
         text_offset = 0
         if pixmap:
+            size = option.rect.height() - 20
             pixmap = pixmap.scaled(
-                option.rect.height(), option.rect.height(),
+                size, size,
                 QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation
             )
 
             icon_rect = QtCore.QRect(option.rect)
             icon_rect.setWidth(pixmap.width())
-            text_offset = pixmap.width() + 10
+            icon_rect.adjust(10, 10, 10, -10)
+            text_offset = pixmap.width() + 20
             painter.drawPixmap(icon_rect, pixmap)
 
         level = index.data(ITEM_LEVEL_ROLE)
         if level:
             item_label = f"{item_label}+{level}"
-        infusion = index.data(ITEM_INFUSION_ROLE)
-        if infusion:
-            item_label = f"{item_label} ({infusion})"
-        # Draw the text
+        infusion_icon = index.data(ITEM_INFUSION_ICON_ROLE)
         text_rect = option.rect.adjusted(text_offset, 0, 0, 0)
+        text_size_pt = 12
+        if infusion_icon:
+            icon_size = text_size_pt * 2
+            infusion_icon = infusion_icon.scaled(
+                icon_size, icon_size,
+                QtCore.Qt.KeepAspectRatio,
+                QtCore.Qt.SmoothTransformation
+            )
+            icon_rect = QtCore.QRect(text_rect)
+            icon_rect.setWidth(icon_size)
+            icon_rect.setHeight(icon_size)
+            painter.drawPixmap(icon_rect, infusion_icon)
+            text_rect.adjust(icon_size + 2, 0, 0, 0)
+
+        # Draw the text
+        font = painter.font()
+        font.setPointSize(text_size_pt)
+        painter.setFont(font)
         painter.drawText(
             text_rect,
-            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter,
+            QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop,
             item_label
         )
 
