@@ -124,6 +124,20 @@ class InventoryModel(QtGui.QStandardItemModel):
             root_item.appendRows(new_items)
 
 
+class InventoryProxyModel(QtCore.QSortFilterProxyModel):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        self.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
+
+    def lessThan(self, left, right):
+        left_order = left.data(ITEM_ORDER_ROLE)
+        right_order = right.data(ITEM_ORDER_ROLE)
+        if left_order != right_order:
+            return left_order < right_order
+        return super().lessThan(left, right)
+
+
 class InventoryDelegate(QtWidgets.QStyledItemDelegate):
     def sizeHint(self, option, index):
         # You can customize the size of each item here
@@ -189,10 +203,13 @@ class InventoryWidget(QtWidgets.QWidget):
         super().__init__(parent)
         view = QtWidgets.QListView(self)
 
-        model = InventoryModel(parent)
         delegate = InventoryDelegate(parent)
 
-        view.setModel(model)
+        model = InventoryModel(parent)
+        proxy = InventoryProxyModel()
+        proxy.setSourceModel(model)
+
+        view.setModel(proxy)
         view.setItemDelegate(delegate)
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -201,7 +218,9 @@ class InventoryWidget(QtWidgets.QWidget):
 
         self._view = view
         self._model = model
+        self._proxy = proxy
         self._delegate = delegate
 
     def set_char(self, char: DSRCharacter | None):
         self._model.set_char(char)
+        self._proxy.sort(0, QtCore.Qt.AscendingOrder)
