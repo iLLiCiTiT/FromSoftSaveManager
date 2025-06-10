@@ -53,7 +53,7 @@ class InventoryModel(QtGui.QStandardItemModel):
             items_by_id = ITEMS_BY_IDS.get(item_type, {})
             item = items_by_id.get(item_id)
             if not item:
-                model_item = self._create_unknown_item(item_type, item_id)
+                model_item = self._create_unknown_item(inventory_item)
                 new_items.append(model_item)
                 continue
 
