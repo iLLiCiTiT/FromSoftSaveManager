@@ -20,7 +20,6 @@ class InventoryItem:
     amount: int
     durability: int
     order: int
-    name: str
     idx: int
     content: bytes
     in_botomless_box: bool
@@ -68,11 +67,6 @@ def _get_item(
             if item:
                 item_id = new_id
 
-    if item:
-        name = item["name"]
-    else:
-        name = f"NA {item_type} {item_id}"
-
     return InventoryItem(
         item_id,
         item_type,
@@ -81,7 +75,6 @@ def _get_item(
         amount,
         durability,
         order,
-        name,
         idx,
         content,
         in_botomless_box,
@@ -182,7 +175,7 @@ def character_from_entry(
     # if unknown_1[32:40] != b"@\x00\x00\x00H\xe6\x01\x00":
     #     print(unknown_1[32:40])
     (
-        _hp, # always 0
+        unknown_2, # always 0
         hp_current,
         hp_max,
         hp_base,
@@ -190,7 +183,7 @@ def character_from_entry(
         something_current,
         something_max,
         something_base,
-        _st,  # always 0
+        unknown_3,  # always 0
         stamina_current,
         stamina_max,
         stamina_base,
@@ -205,23 +198,22 @@ def character_from_entry(
         "<IIIIIIIIIIIIIIIIIIIIIIIII",
         entry.content[92:192]
     )
-    if _hp != 0:
-        print("!!! _hp not 0", _hp)
-    if _st != 0:
-        print("!!! _st not 0", _st)
+    if unknown_2 != 0:
+        print("!!! unknown_2 not 0", unknown_2)
+    if unknown_3 != 0:
+        print("!!! unknown_3 not 0", unknown_3)
 
     (
-        _, unknown_3,  # Is always 10
-        _, unknown_4,
+        _, unknown_4,  # Is always 10
+        _, unknown_5,
         humanity,
         resistance,
         level,
         souls,
         earned, # Maybe it is 'used'
-        _unknown_5,  # Is always 0
+        unknown_6,  # Is always 0
         hollow_state, # 0 human / 8 hollow
     ) = struct.unpack("<IIIIIQIIQII", entry.content[192:244])
-
     b_name = b""
     name_idx = 244
     while True:
@@ -232,16 +224,16 @@ def character_from_entry(
         b_name += v
 
     name = b_name.decode("utf-16")
-    unknown_5 = entry.content[258:278]
+    unknown_7 = entry.content[258:278]
     (
         sex,  # 0 female / 1 male
         class_id,
         physique_id,
         gift_id,
     ) = struct.unpack("<IBBB", entry.content[278:285])
-    unknown_6 = struct.unpack("<BBBBBIIIII", entry.content[285:310])
+    unknown_8 = struct.unpack("<BBBBBIIIII", entry.content[285:310])
     covenant_lvls = struct.unpack("<BBBBBBBBBB", entry.content[310:320])
-    unknown_7 = struct.unpack("<III", entry.content[320:332]) # 3x '0'
+    unknown_9 = struct.unpack("<III", entry.content[320:332]) # 3x '0'
 
     (
         toxic_res, # Could be swapped with poison res (should have same value)
@@ -249,7 +241,7 @@ def character_from_entry(
         poison_res,
         curse_res,
     ) = struct.unpack("<IIII", entry.content[332:348])
-    unknown_8 = struct.unpack("<BBB", entry.content[348:351])
+    unknown_10 = struct.unpack("<BBB", entry.content[348:351])
     covenant_id = entry.content[351]
 
     # These are presets and don't mean anything
@@ -261,7 +253,7 @@ def character_from_entry(
     ) = struct.unpack("<BBB", entry.content[352:355])
 
     # I guess this is all the possible modifications of shape of head
-    unknown_9 = entry.content[355:376]
+    unknown_11 = entry.content[355:376]
 
     # 2nd name of the character in the game
     b_name_2 = b""
@@ -273,15 +265,15 @@ def character_from_entry(
             break
         b_name_2 += v
     name_2 = b_name_2.decode("utf-16")
-    unknown_10 = entry.content[name_idx:420]
+    unknown_12 = entry.content[name_idx:420]
     # App version used to create/save character
     # app_version = entry.content[420:428].rstrip(b"\x00").decode("utf-8")
-    zeros = struct.unpack(f"<{20*'I'}", entry.content[428:508])
-    zeros_s = set(zeros)
-    if zeros_s != {0}:
-        print(f"!!! Expected only zeros got: {zeros}")
 
-    unknown_11 = struct.unpack(f"<{51*'I'}", entry.content[508:712])
+    unknown_14 = struct.unpack(f"<{20*'I'}", entry.content[428:508])
+    if set(unknown_14) != {0}:
+        print(f"!!! Expected only zeros got: {unknown_14}")
+
+    unknown_15 = struct.unpack(f"<{51*'I'}", entry.content[508:712])
     (
         l_ring_slot_item_type,
         r_ring_slot_item_type,
@@ -429,8 +421,6 @@ def character_from_entry(
 
         botomless_box_items.append(item)
 
-    inventory_items.sort(key=lambda item: item.order)
-    botomless_box_items.sort(key=lambda item: item.order)
     # 124040
     # 0, 0, ?, 3, 65541, 131079, 196617, 262155
     # 327692/327693
