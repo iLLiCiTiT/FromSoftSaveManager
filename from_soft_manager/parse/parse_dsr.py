@@ -52,20 +52,28 @@ def _get_item(
         # - 7 - occult
         # - 8 - fire
         # - 9 - chaos
-        # NOTE: Pyromancy Flame have different number
-        #   increment on level up
 
-        upgrade_level = item_id % 100
-        new_id = item_id - upgrade_level
-        item = items_by_id.get(new_id)
-        if item:
-            item_id = new_id
+        # Pyromancy Flame has different upgrade levels
+        if 1330000 <= item_id < 1332000:
+            upgrade_level = int((item_id - 1330000) / 100)
+            item_id = 1330000
+
+        elif 1332000 <= item_id <= 1332500:
+            upgrade_level = int((item_id - 1332000) / 100)
+            item_id = 1332000
+
         else:
-            infusion = item_id % 1000
-            new_id = new_id - infusion
+            upgrade_level = item_id % 100
+            new_id = item_id - upgrade_level
             item = items_by_id.get(new_id)
             if item:
                 item_id = new_id
+            else:
+                infusion = item_id % 1000
+                new_id = new_id - infusion
+                item = items_by_id.get(new_id)
+                if item:
+                    item_id = new_id
 
     return InventoryItem(
         item_id,
