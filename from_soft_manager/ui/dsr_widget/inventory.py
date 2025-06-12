@@ -258,6 +258,7 @@ class InventoryDelegate(QtWidgets.QStyledItemDelegate):
 
         icon_rect = QtCore.QRect(option.rect)
         icon_rect.setWidth(pixmap.width())
+        text_offset = icon_rect.right() + 20
         icon_rect.adjust(10, 10, 10, -10)
 
         stand_rect = QtCore.QRect(
@@ -268,31 +269,32 @@ class InventoryDelegate(QtWidgets.QStyledItemDelegate):
         )
 
         painter.drawPixmap(stand_rect, stand_pix)
-        text_offset = pixmap.width() + 20
         painter.drawPixmap(icon_rect, pixmap)
+
+        infusion_icon = index.data(ITEM_INFUSION_ICON_ROLE)
+        if infusion_icon:
+            infusion_size = int(option.rect.height() * 0.3)
+            infusion_icon = infusion_icon.scaled(
+                infusion_size, infusion_size,
+                QtCore.Qt.KeepAspectRatio,
+                QtCore.Qt.SmoothTransformation
+            )
+            infusion_rect = QtCore.QRect(
+                (icon_rect.right() - infusion_icon.width()) + 4,
+                (icon_rect.bottom() - infusion_icon.height()) + 4,
+                infusion_icon.width(),
+                infusion_icon.height()
+            )
+            painter.drawPixmap(infusion_rect, infusion_icon)
 
         level = index.data(ITEM_LEVEL_ROLE)
         if level:
             item_label = f"{item_label}+{level}"
-        infusion_icon = index.data(ITEM_INFUSION_ICON_ROLE)
         text_rect = option.rect.adjusted(text_offset, 0, 0, 0)
-        text_size_pt = 12
-        if infusion_icon:
-            icon_size = text_size_pt * 2
-            infusion_icon = infusion_icon.scaled(
-                icon_size, icon_size,
-                QtCore.Qt.KeepAspectRatio,
-                QtCore.Qt.SmoothTransformation
-            )
-            icon_rect = QtCore.QRect(text_rect)
-            icon_rect.setWidth(icon_size)
-            icon_rect.setHeight(icon_size)
-            painter.drawPixmap(icon_rect, infusion_icon)
-            text_rect.adjust(icon_size + 2, 0, 0, 0)
 
         # Draw the text
         font = painter.font()
-        font.setPointSize(text_size_pt)
+        font.setPointSize(12)
         painter.setFont(font)
         painter.drawText(
             text_rect,
