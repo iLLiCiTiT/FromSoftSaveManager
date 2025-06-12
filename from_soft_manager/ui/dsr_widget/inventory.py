@@ -3,6 +3,7 @@ import os
 from PySide6 import QtCore, QtGui, QtWidgets
 
 from from_soft_manager.parse import DSRCharacter, ITEMS_BY_IDS, InventoryItem
+from from_soft_manager.ui.utils import BaseClickableFrame, PixmapLabel
 
 from .resources import get_resource
 
@@ -13,6 +14,7 @@ ITEM_AMOUNT_ROLE = QtCore.Qt.UserRole + 4
 ITEM_DURABILITY_ROLE = QtCore.Qt.UserRole + 5
 IS_IN_BOTOMLESS_ROLE = QtCore.Qt.UserRole + 6
 ITEM_IMAGE_ROLE = QtCore.Qt.UserRole + 7
+ITEM_CATEGORY_ROLE = QtCore.Qt.UserRole + 8
 
 
 def get_item_pixmap(category: str, image_name: str) -> QtGui.QPixmap | None:
@@ -20,6 +22,74 @@ def get_item_pixmap(category: str, image_name: str) -> QtGui.QPixmap | None:
     if not os.path.exists(path):
         path = get_resource("unknown.png")
     return QtGui.QPixmap(path)
+
+
+class DSRInventoryCategoryButton(BaseClickableFrame):
+    clicked = QtCore.Signal(str)
+
+    def __init__(self, category, parent):
+        super().__init__(parent)
+
+        image_path = get_resource(
+            "menu_icons", f"inventory_{category}.png"
+        )
+        image_hover_path = get_resource(
+            "menu_icons", f"inventory_{category}_hover.png"
+        )
+        pix = QtGui.QPixmap(image_path)
+        src_hover_pix = QtGui.QPixmap(image_hover_path)
+        image_label = PixmapLabel(pix, self)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(image_label, 1)
+
+        self._image_label = image_label
+        self._category = category
+        self._pix = pix
+        self._src_hover_pix = src_hover_pix
+        self._hover_pix = None
+        self._selected = False
+        self._hovering = False
+
+    def set_selected(self, selected: bool):
+        if self._selected == selected:
+            return
+        self._selected = selected
+        pix = self._pix
+        if selected or self._hovering:
+            pix = self._get_hover_pixmap()
+        self._image_label.set_source_pixmap(pix)
+
+    def enterEvent(self, event):
+        super().enterEvent(event)
+        self._hovering = True
+        if not self._selected:
+            self._image_label.set_source_pixmap(self._get_hover_pixmap())
+
+    def leaveEvent(self, event):
+        super().leaveEvent(event)
+        self._hovering = False
+        if not self._selected:
+            self._image_label.set_source_pixmap(self._pix)
+
+    def _mouse_release_callback(self):
+        self.clicked.emit(self._category)
+
+    def _get_hover_pixmap(self):
+        if self._hover_pix is not None:
+            return self._hover_pix
+
+        pix = QtGui.QPixmap(self._pix.width(), self._pix.height())
+        pix.fill(QtCore.Qt.transparent)
+        painter = QtGui.QPainter(pix)
+        painter.setPen(QtCore.Qt.NoPen)
+        painter.drawPixmap(0, 0, self._pix)
+        painter.drawPixmap(0, 0, self._src_hover_pix)
+        painter.end()
+
+        self._hover_pix = pix
+        return pix
 
 
 class InventoryModel(QtGui.QStandardItemModel):
@@ -117,6 +187,7 @@ class InventoryModel(QtGui.QStandardItemModel):
             new_item.setData(inventory_item.order, ITEM_ORDER_ROLE)
             new_item.setData(inventory_item.amount, ITEM_AMOUNT_ROLE)
             new_item.setData(inventory_item.durability, ITEM_DURABILITY_ROLE)
+            new_item.setData(category, ITEM_CATEGORY_ROLE)
             new_item.setData(pix, ITEM_IMAGE_ROLE)
             new_items.append(new_item)
 
@@ -129,6 +200,13 @@ class InventoryProxyModel(QtCore.QSortFilterProxyModel):
         super().__init__(parent)
         self.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
         self.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        self._category = None
+
+    def set_category(self, category: str):
+        if self._category == category:
+            return
+        self._category = category
+        self.invalidateFilter()
 
     def lessThan(self, left, right):
         left_order = left.data(ITEM_ORDER_ROLE)
@@ -136,6 +214,13 @@ class InventoryProxyModel(QtCore.QSortFilterProxyModel):
         if left_order != right_order:
             return left_order < right_order
         return super().lessThan(left, right)
+
+    def filterAcceptsRow(self, source_row, source_parent):
+        if self._category is None:
+            return True
+
+        index = self.sourceModel().index(source_row, 0, source_parent)
+        return index.data(ITEM_CATEGORY_ROLE) == self._category
 
 
 class InventoryDelegate(QtWidgets.QStyledItemDelegate):
@@ -198,10 +283,68 @@ class InventoryDelegate(QtWidgets.QStyledItemDelegate):
         )
 
 
+class CategoryButtons(QtWidgets.QWidget):
+    category_changed = QtCore.Signal(str)
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        # self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        btns_by_category = {}
+        first_category = None
+        # Example buttons for categories
+        for category in (
+            "consumables",
+            "materials",
+            "key_items",
+            "spells",
+            "weapons_shields",
+            "ammunition",
+            "armor",
+            "rings",
+        ):
+            btn = DSRInventoryCategoryButton(category, self)
+            if first_category is None:
+                first_category = category
+
+            btns_by_category[category] = btn
+            btn.clicked.connect(self.set_category)
+            layout.addWidget(btn, 0)
+        layout.addStretch(1)
+
+        btns_by_category[first_category].set_selected(True)
+        self._btns_by_category = btns_by_category
+        self._current_category = first_category
+
+    def get_category(self):
+        return self._current_category
+
+    def set_category(self, category: str):
+        if category not in self._btns_by_category:
+            return
+        if self._current_category == category:
+            return
+
+        self._btns_by_category[self._current_category].set_selected(False)
+        self._btns_by_category[category].set_selected(True)
+        self._current_category = category
+        self.category_changed.emit(category)
+
+
 class InventoryWidget(QtWidgets.QWidget):
     def __init__(self, parent: QtWidgets.QWidget):
         super().__init__(parent)
+
+        category_btns = CategoryButtons(self)
         view = QtWidgets.QListView(self)
+        view.setVerticalScrollMode(
+            QtWidgets.QAbstractItemView.ScrollMode.ScrollPerPixel
+        )
+        vsb = view.verticalScrollBar()
+        vsb.setSingleStep(15)
 
         delegate = InventoryDelegate(parent)
 
@@ -214,7 +357,11 @@ class InventoryWidget(QtWidgets.QWidget):
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(category_btns, 0)
         layout.addWidget(view, 1)
+
+        category_btns.category_changed.connect(self._on_category_change)
+        proxy.set_category(category_btns.get_category())
 
         self._view = view
         self._model = model
@@ -224,3 +371,6 @@ class InventoryWidget(QtWidgets.QWidget):
     def set_char(self, char: DSRCharacter | None):
         self._model.set_char(char)
         self._proxy.sort(0, QtCore.Qt.AscendingOrder)
+
+    def _on_category_change(self, category: str):
+        self._proxy.set_category(category)

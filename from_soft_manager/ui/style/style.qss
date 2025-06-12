@@ -134,6 +134,11 @@ DSRWidget TabButton:hover {
 DSRWidget TabButton[selected="1"] {
     border-bottom: 2px solid #5B4229;
 }
+DSRInventoryCategoryButton PixmapLabel {
+    font-size: 26pt;
+}
+DSRInventoryCategoryButton:hover {
+}
 
 ManageSavesWidget QPushButton {
     background: #3D3F42;

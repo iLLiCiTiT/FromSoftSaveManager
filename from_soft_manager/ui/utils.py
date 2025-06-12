@@ -250,6 +250,35 @@ class CreateBackupDialog(QtWidgets.QDialog):
         return self._label_input.text()
 
 
+class BaseClickableFrame(QtWidgets.QFrame):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        self._mouse_pressed = False
+
+    def _mouse_release_callback(self):
+        pass
+
+    def mousePressEvent(self, event):
+        super().mousePressEvent(event)
+        if event.isAccepted():
+            return
+        if event.button() == QtCore.Qt.LeftButton:
+            self._mouse_pressed = True
+            event.accept()
+
+    def mouseReleaseEvent(self, event):
+        pressed, self._mouse_pressed = self._mouse_pressed, False
+        super().mouseReleaseEvent(event)
+        if event.isAccepted():
+            return
+
+        accepted = pressed and self.rect().contains(event.pos())
+        if accepted:
+            event.accept()
+            self._mouse_release_callback()
+
+
 class BackupsModel(QtGui.QStandardItemModel):
     def __init__(self, parent):
         super().__init__(parent)
