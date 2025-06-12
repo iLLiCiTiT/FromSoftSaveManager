@@ -224,6 +224,13 @@ class InventoryProxyModel(QtCore.QSortFilterProxyModel):
 
 
 class InventoryDelegate(QtWidgets.QStyledItemDelegate):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        stand_path = get_resource(
+            "menu_icons", f"inventory_stand.png"
+        )
+        self._stand_pixmap = QtGui.QPixmap(stand_path)
+
     def sizeHint(self, option, index):
         # You can customize the size of each item here
         return QtCore.QSize(260, 80)
@@ -239,19 +246,30 @@ class InventoryDelegate(QtWidgets.QStyledItemDelegate):
         )
 
         pixmap = index.data(ITEM_IMAGE_ROLE)
-        text_offset = 0
-        if pixmap:
-            size = option.rect.height() - 20
-            pixmap = pixmap.scaled(
-                size, size,
-                QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation
-            )
+        size = option.rect.height() - 20
+        pixmap = pixmap.scaled(
+            size, size,
+            QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation,
+        )
+        stand_pix = self._stand_pixmap.scaled(
+            pixmap.width(), pixmap.width(),
+            QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation,
+        )
 
-            icon_rect = QtCore.QRect(option.rect)
-            icon_rect.setWidth(pixmap.width())
-            icon_rect.adjust(10, 10, 10, -10)
-            text_offset = pixmap.width() + 20
-            painter.drawPixmap(icon_rect, pixmap)
+        icon_rect = QtCore.QRect(option.rect)
+        icon_rect.setWidth(pixmap.width())
+        icon_rect.adjust(10, 10, 10, -10)
+
+        stand_rect = QtCore.QRect(
+            icon_rect.left(),
+            (icon_rect.bottom() - stand_pix.height()) + 10,
+            stand_pix.width(),
+            stand_pix.height()
+        )
+
+        painter.drawPixmap(stand_rect, stand_pix)
+        text_offset = pixmap.width() + 20
+        painter.drawPixmap(icon_rect, pixmap)
 
         level = index.data(ITEM_LEVEL_ROLE)
         if level:
