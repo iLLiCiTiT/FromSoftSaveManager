@@ -25,6 +25,61 @@ QPushButton:hover {
     background: #4B4C4F;
 }
 
+QAbstractScrollArea::corner {
+    border: none;
+    background: transparent;
+}
+
+QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
+    background: #2B2D30;
+}
+
+QScrollBar::handle:vertical:hover, QScrollBar::handle:horizontal:hover {
+    background: #3D3F42;
+}
+
+QScrollBar:vertical {
+    background: #1E1F22;
+    width: 10px;
+    margin: 0px;
+}
+
+QScrollBar::handle:vertical {
+    min-height: 5px;
+    border-radius: 5px;
+    margin: 0px 0px;
+}
+
+QScrollBar::sub-line:vertical {
+    height: 0px;
+    width: 10px;
+    subcontrol-position: top;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::add-line:vertical {
+    height: 0px;
+    width: 10px;
+    subcontrol-position: bottom;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::sub-line:vertical:hover, QScrollBar::sub-line:vertical:on {
+    border-image: none;
+}
+
+QScrollBar::add-line:vertical:hover, QScrollBar::add-line:vertical:on {
+    border-image: none;
+}
+
+QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical {
+    background-color: none;
+}
+
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+    background-color: transparent;
+}
+
 SideBarWidget {
     border-right: 1px solid #1E1F22;
 }
@@ -138,6 +193,19 @@ DSRInventoryCategoryButton PixmapLabel {
     font-size: 26pt;
 }
 DSRInventoryCategoryButton:hover {
+}
+DSRWidget QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
+    background: #6B2E0E;
+    border-radius: 0px;
+}
+
+DSRWidget QScrollBar::handle:vertical:hover, QScrollBar::handle:horizontal:hover {
+    background: #803711;
+}
+DSRWidget QScrollBar:vertical {
+    background: transparent;
+    border: 1px solid #5D432D;
+    border-radius: 0px;
 }
 
 ManageSavesWidget QPushButton {
