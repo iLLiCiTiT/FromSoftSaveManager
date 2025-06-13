@@ -112,7 +112,9 @@ class InventoryModel(QtGui.QStandardItemModel):
     def __init__(self, parent):
         super().__init__(parent)
 
-    def _create_unknown_item(self, inventory_item: InventoryItem) -> QtGui.QStandardItem:
+    def _create_unknown_item(
+        self, inventory_item: InventoryItem
+    ) -> QtGui.QStandardItem:
         item_name = f"NA {inventory_item.item_type} {inventory_item.item_id}"
         new_item = QtGui.QStandardItem(item_name)
         new_item.setData(inventory_item.upgrade_level, ITEM_LEVEL_ROLE)
@@ -307,9 +309,17 @@ class InventoryDelegate(QtWidgets.QStyledItemDelegate):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         stand_path = get_resource(
-            "menu_icons", f"inventory_stand.png"
+            "menu_icons", "inventory_stand.png"
+        )
+        inventory_bag_path = get_resource(
+            "menu_icons", "inventory_bag.png"
+        )
+        bottomless_box_path = get_resource(
+            "menu_icons", "bottomless_box.png"
         )
         self._stand_pixmap = QtGui.QPixmap(stand_path)
+        self._inventory_bag_pix = QtGui.QPixmap(inventory_bag_path)
+        self._bottomless_box_pix = QtGui.QPixmap(bottomless_box_path)
 
     def sizeHint(self, option, index):
         # You can customize the size of each item here
@@ -370,17 +380,61 @@ class InventoryDelegate(QtWidgets.QStyledItemDelegate):
         level = index.data(ITEM_LEVEL_ROLE)
         if level:
             item_label = f"{item_label}+{level}"
-        text_rect = option.rect.adjusted(text_offset, 0, 0, 0)
 
         # Draw the text
         font = painter.font()
         font.setPointSize(12)
         painter.setFont(font)
+        font_metrics = painter.fontMetrics()
+        text_height = font_metrics.height()
+        half_height = option.rect.height() // 2
+        text_rect = option.rect.adjusted(
+            text_offset,
+            half_height - text_height,
+            0, 0
+        )
+        text_rect.setHeight(text_height)
         painter.drawText(
             text_rect,
-            QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop,
+            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter,
             item_label
         )
+
+        inv_bag_pix = self._inventory_bag_pix.scaled(
+            text_height, text_height,
+            QtCore.Qt.KeepAspectRatio,
+            QtCore.Qt.SmoothTransformation
+        )
+        btb_pix = self._bottomless_box_pix.scaled(
+            text_height, text_height,
+            QtCore.Qt.KeepAspectRatio,
+            QtCore.Qt.SmoothTransformation
+        )
+        amount = index.data(ITEM_AMOUNT_ROLE)
+        btm_amount = index.data(ITEM_BOTOMLESS_BOX_AMOUNT_ROLE)
+
+        pos = QtCore.QPoint(
+            text_rect.x(),
+            option.rect.top() + half_height + 10
+        )
+        amount_rect = font_metrics.boundingRect("9999")
+        amount_rect.moveTopLeft(pos)
+        painter.drawText(
+            amount_rect,
+            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter,
+            str(amount)
+        )
+        pos.setX(pos.x() + amount_rect.width() + 5)
+        painter.drawPixmap(pos, inv_bag_pix)
+        pos.setX(pos.x() + inv_bag_pix.width() + 5)
+        amount_rect.moveLeft(pos.x())
+        painter.drawText(
+            amount_rect,
+            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter,
+            str(btm_amount)
+        )
+        pos.setX(pos.x() + amount_rect.width() + 5)
+        painter.drawPixmap(pos, btb_pix)
 
 
 class CategoryButtonOverlay(QtWidgets.QWidget):
@@ -389,7 +443,7 @@ class CategoryButtonOverlay(QtWidgets.QWidget):
         self.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents)
 
         image_path = get_resource(
-            "menu_icons", f"inventory_overlay.png"
+            "menu_icons", "inventory_overlay.png"
         )
         self._bg_pixmap = QtGui.QPixmap(image_path)
 
