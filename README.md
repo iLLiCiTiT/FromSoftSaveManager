@@ -16,7 +16,7 @@ This project is in early development, please be nice. The UI is made to do what 
 - Load/Delete save files using UI.
 - Open directory with backups.
 - Settings for paths to save -> should be preset for each game is possible.
-- Dark Souls: Remastered has some save file parsing and some UI showing parsed information.
+- Dark Souls: Remastered has some save file parsing and UI showing parsed information.
 
 ### Screenshot
 ![Alt text](/example_01.png "Dark Souls: Remastered save file")
@@ -39,8 +39,7 @@ This project is in early development, please be nice. The UI is made to do what 
 I'm personally using [UV](https://docs.astral.sh/uv/getting-started/installation/) to manage python environments, but you can use any other tool you like.
 1. Clone the repository `git clone https://github.com/iLLiCiTiT/FromSoftSaveManager.git`.
 2. Change directory to the cloned repository `cd FromSoftSaveManager`.
-3. Create and install virtual environment `uv sync`.
-4. Run the application `uv run main.py`.
+3. Run the application `uv run main.py`.
 
 ## Planned features
 These are overall goals of the project. I will use `Issues` tab to track progress.
