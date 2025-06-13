@@ -417,24 +417,27 @@ class InventoryDelegate(QtWidgets.QStyledItemDelegate):
             text_rect.x(),
             option.rect.top() + half_height + 10
         )
+        painter.drawPixmap(pos, inv_bag_pix)
+        pos.setX(pos.x() + inv_bag_pix.width() + 2)
+
         amount_rect = font_metrics.boundingRect("9999")
         amount_rect.moveTopLeft(pos)
         painter.drawText(
             amount_rect,
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter,
+            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter,
             str(amount)
         )
         pos.setX(pos.x() + amount_rect.width() + 5)
-        painter.drawPixmap(pos, inv_bag_pix)
-        pos.setX(pos.x() + inv_bag_pix.width() + 5)
+
+        painter.drawPixmap(pos, btb_pix)
+        pos.setX(pos.x() + btb_pix.width() + 2)
+
         amount_rect.moveLeft(pos.x())
         painter.drawText(
             amount_rect,
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter,
+            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter,
             str(btm_amount)
         )
-        pos.setX(pos.x() + amount_rect.width() + 5)
-        painter.drawPixmap(pos, btb_pix)
 
 
 class CategoryButtonOverlay(QtWidgets.QWidget):
@@ -542,6 +545,7 @@ class InventoryWidget(QtWidgets.QWidget):
         view.setVerticalScrollMode(
             QtWidgets.QAbstractItemView.ScrollMode.ScrollPerPixel
         )
+        view.setLayoutDirection(QtCore.Qt.RightToLeft)
         vsb = view.verticalScrollBar()
         vsb.setSingleStep(15)
 
