@@ -55,25 +55,33 @@ def _get_item(
 
         # Pyromancy Flame has different upgrade levels
         if 1330000 <= item_id < 1332000:
+            # Pyromancy Flame
             upgrade_level = int((item_id - 1330000) / 100)
             item_id = 1330000
+            item = items_by_id[item_id]
 
         elif 1332000 <= item_id <= 1332500:
+            # Ascended Pyromancy Flame
             upgrade_level = int((item_id - 1332000) / 100)
             item_id = 1332000
+            item = items_by_id[item_id]
+
+        elif 311000 <= item_id <= 312705:
+            # Sword of Artorias cursed variations
+            upgrade_level = item_id % 100
+            item_id = 311000
 
         else:
             upgrade_level = item_id % 100
             new_id = item_id - upgrade_level
             item = items_by_id.get(new_id)
+            if not item:
+                infusion = new_id % 1000
+                new_id -= infusion
+                item = items_by_id.get(new_id)
+
             if item:
                 item_id = new_id
-            else:
-                infusion = item_id % 1000
-                new_id = new_id - infusion
-                item = items_by_id.get(new_id)
-                if item:
-                    item_id = new_id
 
     return InventoryItem(
         item_id,
