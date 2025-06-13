@@ -22,13 +22,12 @@ class InventoryItem:
     order: int
     idx: int
     content: bytes
-    in_botomless_box: bool
+    category: Optional[str]
 
 
 def _get_item(
     idx,
     content,
-    in_botomless_box,
     item_type,
     item_id,
     amount,
@@ -83,6 +82,26 @@ def _get_item(
             if item:
                 item_id = new_id
 
+    if item:
+        category = item["category"]
+    elif item_type == 0:
+        category = "weapons_shields"
+    elif item_type == 268435456:
+        category = "armor"
+    elif item_type == 536870912:
+        category = "rings"
+    elif item_type == 1073741824:
+        if item_id < 800:
+            category = "consumables"
+        elif 1000 <= item_id < 2000:
+            category = "materials"
+        elif item_id > 3000:
+            category = "spells"
+        else:
+            category = "key_items"
+    else:
+        category = "consumables"
+
     return InventoryItem(
         item_id,
         item_type,
@@ -93,7 +112,7 @@ def _get_item(
         order,
         idx,
         content,
-        in_botomless_box,
+        category,
     )
 
 
@@ -361,7 +380,6 @@ def character_from_entry(
         item = _get_item(
             idx,
             item_content,
-            False,
             item_type,
             item_id,
             amount,
@@ -427,7 +445,6 @@ def character_from_entry(
         item = _get_item(
             idx,
             item_content,
-            True,
             item_type,
             item_id,
             amount,

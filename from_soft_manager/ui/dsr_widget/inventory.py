@@ -12,9 +12,25 @@ ITEM_INFUSION_ICON_ROLE = QtCore.Qt.UserRole + 2
 ITEM_ORDER_ROLE = QtCore.Qt.UserRole + 3
 ITEM_AMOUNT_ROLE = QtCore.Qt.UserRole + 4
 ITEM_DURABILITY_ROLE = QtCore.Qt.UserRole + 5
-IS_IN_BOTOMLESS_ROLE = QtCore.Qt.UserRole + 6
+ITEM_BOTOMLESS_BOX_AMOUNT_ROLE = QtCore.Qt.UserRole + 6
 ITEM_IMAGE_ROLE = QtCore.Qt.UserRole + 7
 ITEM_CATEGORY_ROLE = QtCore.Qt.UserRole + 8
+
+CATEGORIES = [
+    "consumables",
+    "materials",
+    "key_items",
+    "spells",
+    "weapons_shields",
+    "ammunition",
+    "armor",
+    "rings",
+]
+MERGABLE_CATEGORIES = {
+    "consumables",
+    "materials",
+    "ammunition",
+}
 
 
 def get_item_pixmap(category: str, image_name: str) -> QtGui.QPixmap | None:
@@ -100,10 +116,11 @@ class InventoryModel(QtGui.QStandardItemModel):
         item_name = f"NA {inventory_item.item_type} {inventory_item.item_id}"
         new_item = QtGui.QStandardItem(item_name)
         new_item.setData(inventory_item.upgrade_level, ITEM_LEVEL_ROLE)
-        new_item.setData(inventory_item.in_botomless_box, IS_IN_BOTOMLESS_ROLE)
+        new_item.setData(0, ITEM_BOTOMLESS_BOX_AMOUNT_ROLE)
         new_item.setData(inventory_item.order, ITEM_ORDER_ROLE)
         new_item.setData(inventory_item.amount, ITEM_AMOUNT_ROLE)
         new_item.setData(inventory_item.durability, ITEM_DURABILITY_ROLE)
+        new_item.setData(inventory_item.category, ITEM_CATEGORY_ROLE)
         new_item.setData(
             get_item_pixmap("unknown", "unknown"),
             ITEM_IMAGE_ROLE
@@ -116,83 +133,146 @@ class InventoryModel(QtGui.QStandardItemModel):
         if char is None:
             return
 
+        inventory_items = []
+        items_by_category = {
+            category: []
+            for category in MERGABLE_CATEGORIES
+        }
+        for item in char.inventory_items:
+            if item.category in items_by_category:
+                items_by_category[item.category].append(item)
+            else:
+                inventory_items.append(item)
+
+        blb_items = []
+        blb_items_by_category = {
+            category: []
+            for category in MERGABLE_CATEGORIES
+        }
+        for item in char.botomless_box_items:
+            if item.category in blb_items_by_category:
+                blb_items_by_category[item.category].append(item)
+            else:
+                blb_items.append(item)
+
         new_items = []
-        for inventory_item in char.inventory_items:
-            item_type = inventory_item.item_type
-            item_id = inventory_item.item_id
-            items_by_id = ITEMS_BY_IDS.get(item_type, {})
-            item = items_by_id.get(item_id)
-            if not item:
-                model_item = self._create_unknown_item(inventory_item)
+        for category in MERGABLE_CATEGORIES:
+            inventory_item_by_id = {
+                item.item_id: item
+                for item in items_by_category[category]
+            }
+            blb_items_by_id = {
+                item.item_id: item
+                for item in  blb_items_by_category[category]
+            }
+            if not inventory_item_by_id and not blb_items_by_id:
+                continue
+
+            all_ids = set(inventory_item_by_id) | set(blb_items_by_id)
+            for item_id in all_ids:
+                inventory_item = inventory_item_by_id.get(item_id)
+                blb_item = blb_items_by_id.get(item_id)
+                if inventory_item is None:
+                    model_item = self._create_model_item(blb_item, True)
+                else:
+                    model_item = self._create_model_item(inventory_item, False)
+                    if blb_item is not None:
+                        model_item.setData(
+                            blb_item.amount, ITEM_BOTOMLESS_BOX_AMOUNT_ROLE
+                        )
+
+                if model_item is not None:
+                    new_items.append(model_item)
+
+        for inventory_item in inventory_items:
+            model_item = self._create_model_item(inventory_item, False)
+            if model_item is not None:
                 new_items.append(model_item)
-                continue
 
-            # Skip fists
-            if item["type"] == 0 and item["id"] == 900000:
-                continue
-
-            # Skip "no armor"
-            if item["type"] == 268435456 and item["id"] in (
-                900000, 901000, 902000, 903000
-            ):
-                continue
-
-            upgrade_level = inventory_item.upgrade_level
-
-            infusion_name = None
-            if inventory_item.infusion == 0:
-                pass
-            elif inventory_item.infusion == 100:
-                infusion_name = "crystal"
-            elif inventory_item.infusion == 200:
-                infusion_name = "lightning"
-            elif inventory_item.infusion == 300:
-                infusion_name = "raw"
-            elif inventory_item.infusion == 400:
-                infusion_name = "magic"
-                if upgrade_level >= 5:
-                    infusion_name += "_2"
-            elif inventory_item.infusion == 500:
-                infusion_name = "enchanted"
-            elif inventory_item.infusion == 600:
-                infusion_name = "divine"
-                if upgrade_level >= 5:
-                    infusion_name += "_2"
-            elif inventory_item.infusion == 700:
-                infusion_name = "occult"
-            elif inventory_item.infusion == 800:
-                infusion_name = "fire"
-                if upgrade_level >= 5:
-                    infusion_name += "_2"
-            elif inventory_item.infusion == 900:
-                infusion_name = "chaos"
-
-            infusion_icon = None
-            if infusion_name:
-                infusion_icon = QtGui.QPixmap(
-                    get_resource("infusions", f"{infusion_name}.png")
-                )
-            name = item["name"]
-            category = item["category"]
-            image_name = item["image"]
-            pix = get_item_pixmap(category, image_name)
-            new_item = QtGui.QStandardItem(name)
-            new_item.setFlags(
-                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled
-            )
-            new_item.setData(upgrade_level, ITEM_LEVEL_ROLE)
-            new_item.setData(infusion_icon, ITEM_INFUSION_ICON_ROLE)
-            new_item.setData(inventory_item.order, ITEM_ORDER_ROLE)
-            new_item.setData(inventory_item.in_botomless_box, IS_IN_BOTOMLESS_ROLE)
-            new_item.setData(inventory_item.order, ITEM_ORDER_ROLE)
-            new_item.setData(inventory_item.amount, ITEM_AMOUNT_ROLE)
-            new_item.setData(inventory_item.durability, ITEM_DURABILITY_ROLE)
-            new_item.setData(category, ITEM_CATEGORY_ROLE)
-            new_item.setData(pix, ITEM_IMAGE_ROLE)
-            new_items.append(new_item)
+        for inventory_item in blb_items:
+            model_item = self._create_model_item(inventory_item, True)
+            if model_item is not None:
+                new_items.append(model_item)
 
         if new_items:
             root_item.appendRows(new_items)
+
+    def _create_model_item(self, inventory_item, in_bottomless_box):
+        item_type = inventory_item.item_type
+        item_id = inventory_item.item_id
+        item = ITEMS_BY_IDS.get(item_type, {}).get(item_id)
+        if item is None:
+            return self._create_unknown_item(inventory_item)
+
+        # Skip fists
+        if item["type"] == 0 and item["id"] == 900000:
+            return None
+
+        # Skip "no armor"
+        if item["type"] == 268435456 and item["id"] in (
+            900000, 901000, 902000, 903000
+        ):
+            return None
+
+        upgrade_level = inventory_item.upgrade_level
+
+        infusion_name = None
+        if inventory_item.infusion == 0:
+            pass
+        elif inventory_item.infusion == 100:
+            infusion_name = "crystal"
+        elif inventory_item.infusion == 200:
+            infusion_name = "lightning"
+        elif inventory_item.infusion == 300:
+            infusion_name = "raw"
+        elif inventory_item.infusion == 400:
+            infusion_name = "magic"
+            if upgrade_level >= 5:
+                infusion_name += "_2"
+        elif inventory_item.infusion == 500:
+            infusion_name = "enchanted"
+        elif inventory_item.infusion == 600:
+            infusion_name = "divine"
+            if upgrade_level >= 5:
+                infusion_name += "_2"
+        elif inventory_item.infusion == 700:
+            infusion_name = "occult"
+        elif inventory_item.infusion == 800:
+            infusion_name = "fire"
+            if upgrade_level >= 5:
+                infusion_name += "_2"
+        elif inventory_item.infusion == 900:
+            infusion_name = "chaos"
+
+        infusion_icon = None
+        if infusion_name:
+            infusion_icon = QtGui.QPixmap(
+                get_resource("infusions", f"{infusion_name}.png")
+            )
+        name = item["name"]
+        category = item["category"]
+        image_name = item["image"]
+        pix = get_item_pixmap(category, image_name)
+        inventory_amount = bottomless_amount = 0
+        if in_bottomless_box:
+            bottomless_amount = inventory_item.amount
+        else:
+            inventory_amount = inventory_item.amount
+
+        new_item = QtGui.QStandardItem(name)
+        new_item.setFlags(
+            QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled
+        )
+        new_item.setData(upgrade_level, ITEM_LEVEL_ROLE)
+        new_item.setData(infusion_icon, ITEM_INFUSION_ICON_ROLE)
+        new_item.setData(inventory_item.order, ITEM_ORDER_ROLE)
+        new_item.setData(inventory_item.order, ITEM_ORDER_ROLE)
+        new_item.setData(inventory_amount, ITEM_AMOUNT_ROLE)
+        new_item.setData(bottomless_amount, ITEM_BOTOMLESS_BOX_AMOUNT_ROLE)
+        new_item.setData(inventory_item.durability, ITEM_DURABILITY_ROLE)
+        new_item.setData(category, ITEM_CATEGORY_ROLE)
+        new_item.setData(pix, ITEM_IMAGE_ROLE)
+        return new_item
 
 
 class InventoryProxyModel(QtCore.QSortFilterProxyModel):
@@ -340,16 +420,7 @@ class CategoryButtons(QtWidgets.QWidget):
         btns_by_category = {}
         first_category = None
         # Example buttons for categories
-        for category in (
-            "consumables",
-            "materials",
-            "key_items",
-            "spells",
-            "weapons_shields",
-            "ammunition",
-            "armor",
-            "rings",
-        ):
+        for category in CATEGORIES:
             btn = DSRInventoryCategoryButton(category, self)
             btn.stackUnder(overlay_widget)
             if first_category is None:
