@@ -121,6 +121,7 @@ class PixmapLabel(QtWidgets.QLabel):
         super().__init__(parent)
         self._empty_pixmap = QtGui.QPixmap(0, 0)
         self._source_pixmap = pixmap
+        self._aspect_ratio = pixmap.width() / pixmap.height()
 
         self._last_width = 0
         self._last_height = 0
@@ -128,12 +129,19 @@ class PixmapLabel(QtWidgets.QLabel):
     def set_source_pixmap(self, pixmap):
         """Change source image."""
         self._source_pixmap = pixmap
+        self._aspect_ratio = pixmap.width() / pixmap.height()
         self._set_resized_pix()
 
     def _get_pix_size(self):
-        size = self.fontMetrics().height()
-        size += size % 2
-        return size, size
+        height = self.fontMetrics().height()
+        height += height % 2
+        if self._aspect_ratio > 1.0:
+            width = height
+            height /= self._aspect_ratio
+        else:
+            width = height * self._aspect_ratio
+
+        return int(width), int(height)
 
     def minimumSizeHint(self):
         width, height = self._get_pix_size()

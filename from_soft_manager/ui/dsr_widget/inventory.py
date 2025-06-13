@@ -41,7 +41,7 @@ class DSRInventoryCategoryButton(BaseClickableFrame):
         image_label = PixmapLabel(pix, self)
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(5, 5, 5, 5)
         layout.addWidget(image_label, 1)
 
         self._image_label = image_label
@@ -303,15 +303,39 @@ class InventoryDelegate(QtWidgets.QStyledItemDelegate):
         )
 
 
+class CategoryButtonOverlay(QtWidgets.QWidget):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents)
+
+        image_path = get_resource(
+            "menu_icons", f"inventory_overlay.png"
+        )
+        self._bg_pixmap = QtGui.QPixmap(image_path)
+
+    def paintEvent(self, event):
+        painter = QtGui.QPainter(self)
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        painter.drawPixmap(0, 0, self._bg_pixmap.scaled(
+            self.width(), self.height(),
+            QtCore.Qt.AspectRatioMode.KeepAspectRatio,
+            QtCore.Qt.TransformationMode.SmoothTransformation
+        ))
+
+
 class CategoryButtons(QtWidgets.QWidget):
     category_changed = QtCore.Signal(str)
 
     def __init__(self, parent):
         super().__init__(parent)
-        # self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+        overlay_widget = CategoryButtonOverlay(self)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        overlay_anim = QtCore.QVariantAnimation(self)
+        overlay_anim.setDuration(100)
 
         btns_by_category = {}
         first_category = None
@@ -327,6 +351,7 @@ class CategoryButtons(QtWidgets.QWidget):
             "rings",
         ):
             btn = DSRInventoryCategoryButton(category, self)
+            btn.stackUnder(overlay_widget)
             if first_category is None:
                 first_category = category
 
@@ -335,9 +360,25 @@ class CategoryButtons(QtWidgets.QWidget):
             layout.addWidget(btn, 0)
         layout.addStretch(1)
 
+        overlay_anim.valueChanged.connect(self._on_anim_value_change)
+        overlay_anim.finished.connect(self._on_anim_finished)
+
         btns_by_category[first_category].set_selected(True)
+        self._overlay_widget = overlay_widget
         self._btns_by_category = btns_by_category
         self._current_category = first_category
+        self._overlay_anim = overlay_anim
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        btn = self._btns_by_category[self._current_category]
+        self._overlay_widget.setGeometry(btn.geometry())
+        self._overlay_widget.raise_()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        btn = self._btns_by_category[self._current_category]
+        self._overlay_widget.resize(btn.size())
 
     def get_category(self):
         return self._current_category
@@ -349,9 +390,22 @@ class CategoryButtons(QtWidgets.QWidget):
             return
 
         self._btns_by_category[self._current_category].set_selected(False)
-        self._btns_by_category[category].set_selected(True)
+        btn = self._btns_by_category[category]
+        btn.set_selected(True)
         self._current_category = category
         self.category_changed.emit(category)
+        if self._overlay_anim.state() == QtCore.QAbstractAnimation.State.Running:
+            self._overlay_anim.stop()
+        self._overlay_anim.setStartValue(self._overlay_widget.pos())
+        self._overlay_anim.setEndValue(btn.pos())
+        self._overlay_anim.start()
+
+    def _on_anim_value_change(self, pos: QtCore.QPoint):
+        self._overlay_widget.move(pos)
+
+    def _on_anim_finished(self):
+        pos = self._overlay_anim.endValue()
+        self._overlay_widget.move(pos)
 
 
 class InventoryWidget(QtWidgets.QWidget):
