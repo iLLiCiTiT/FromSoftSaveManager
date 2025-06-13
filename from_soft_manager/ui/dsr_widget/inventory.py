@@ -545,7 +545,8 @@ class InventoryWidget(QtWidgets.QWidget):
         view.setVerticalScrollMode(
             QtWidgets.QAbstractItemView.ScrollMode.ScrollPerPixel
         )
-        view.setLayoutDirection(QtCore.Qt.RightToLeft)
+        # Looks like in DSR inventory but is worse for mouse control
+        # view.setLayoutDirection(QtCore.Qt.RightToLeft)
         vsb = view.verticalScrollBar()
         vsb.setSingleStep(15)
 
