@@ -320,7 +320,7 @@ class BackupsModel(QtGui.QStandardItemModel):
             )
             item.setData(backup.backup_id, BACKUP_ID_ROLE)
             item.setData(backup.backup_type, BACKUP_TYPE_ROLE)
-            item.setData(backup.datetime.humanize(), BACKUP_DATE_ROLE)
+            item.setData(backup.datetime.format("YY MM.DD. HH:mm:ss"), BACKUP_DATE_ROLE)
             new_items.append(item)
 
         if not new_items:
@@ -424,6 +424,7 @@ class BackupsListWidget(QtWidgets.QWidget):
         if not backup_id:
             return
         self._controller.restore_by_backup_id(backup_id)
+        self.close()
 
     def _on_delete_click(self):
         sel_model = self._backups_view.selectionModel()
