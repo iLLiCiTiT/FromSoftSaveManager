@@ -320,7 +320,7 @@ class BackupsModel(QtGui.QStandardItemModel):
             )
             item.setData(backup.backup_id, BACKUP_ID_ROLE)
             item.setData(backup.backup_type, BACKUP_TYPE_ROLE)
-            item.setData(backup.datetime.humanize(), BACKUP_DATE_ROLE)
+            item.setData(backup.datetime.format("YY MM.DD. HH:mm:ss"), BACKUP_DATE_ROLE)
             new_items.append(item)
 
         if not new_items:
