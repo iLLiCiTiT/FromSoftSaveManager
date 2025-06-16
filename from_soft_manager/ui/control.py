@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Any
 
 import arrow
-from PySide6 import QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets, QtMultimedia
 
 from from_soft_manager.parse import (
     Game,
@@ -28,6 +28,7 @@ from .structures import (
     ConfigConfirmData,
 )
 from .models import ConfigModel
+from .resources import get_save_sound_path, get_load_sound_path
 from .keys import keys_are_pressed, qt_combination_to_int
 
 NOT_SET = object()
@@ -273,6 +274,14 @@ class Controller(QtCore.QObject):
         super().__init__()
         self._log = logging.getLogger("Controller")
 
+        save_sound = QtMultimedia.QSoundEffect()
+        save_sound.setSource(QtCore.QUrl.fromLocalFile(get_save_sound_path()))
+        save_sound.setVolume(0.5)
+
+        load_sound = QtMultimedia.QSoundEffect()
+        load_sound.setSource(QtCore.QUrl.fromLocalFile(get_load_sound_path()))
+        load_sound.setVolume(0.5)
+
         config_model = ConfigModel()
 
         background_thread = HotkeysThread(self)
@@ -300,6 +309,8 @@ class Controller(QtCore.QObject):
         app = QtWidgets.QApplication.instance()
         app.aboutToQuit.connect(self._on_exit)
 
+        self._save_sound = save_sound
+        self._load_sound = load_sound
         self._config_model = config_model
         self._background_thread = background_thread
         self._save_changes_thread = save_changes_thread
@@ -540,6 +551,8 @@ class Controller(QtCore.QObject):
 
             shutil.rmtree(tmp_dir)
 
+        self._load_sound.play()
+
         self.save_id_changed.emit(save_id)
 
     def _backup_current_save(
@@ -591,6 +604,9 @@ class Controller(QtCore.QObject):
         )
         with open(metadata_path, "w") as stream:
             json.dump(metadata, stream)
+
+        if backup_type != BackupType.autosave:
+            self._save_sound.play()
 
     def _collect_game_save_backups(self, game: Game) -> list[tuple[str, dict]]:
         all_metadata = []
