@@ -43,35 +43,34 @@ class DS3SaveFile:
 
 
 def character_from_entry(
-    idx: int, menu_entry: BND4Entry, entry: BND4Entry
+    char_idx: int, menu_entry: BND4Entry, entry: BND4Entry
 ) -> DS3Character:
-    # TODO proper parsing of the entry (failed attempt)
-    # TODO what is [0:108]
-    # idx = 108
-    # while True:
-    #     v = entry.content[idx:idx + 8]
-    #     if v != b"\x00\x00\x00\x00\xff\xff\xff\xff":
-    #         print(v)
-    #         break
-    #     idx += 8
-
     # Empty slot that was never used
     # - character slot keeps data of the last character
     # if entry.content[0] != 98:
-    #     continue
-    start_idx = 4254 + (554 * idx)
-    slot_data = menu_entry.content[start_idx:start_idx + 554]
-    orib_b_name = b_name = slot_data[:32]
+    #     return None
+
+    # Don't know what is [0:108] and don't know what is after
+    _SKIP_VALUE = b"\x00\x00\x00\x00\xff\xff\xff\xff"
+    idx = 108
+    for _ in range(6144):
+        if entry.content[idx:idx + 8] == _SKIP_VALUE:
+            idx += 8
+        else:
+            idx += 60
+    char_start_idx = idx + 8
+    menu_idx = 4254 + (554 * char_idx)
+    slot_data = menu_entry.content[menu_idx:menu_idx + 554]
+    b_name = slot_data[:32]
+
     while b_name.endswith(b"\x00\x00"):
         b_name = b_name[:-2]
     name = b_name.decode("utf-16")
     (
         level, playtime
     ) = struct.unpack("<II", slot_data[34:42])
-    name_idx = entry.content.index(orib_b_name)
-    char_start_idx = name_idx - 116
+
     (
-        _, # always 0
         hp_current,
         hp_max,
         hp_base,
@@ -98,12 +97,13 @@ def character_from_entry(
         current_souls,
         _collected_souls, # Maybe, not verified
     ) = struct.unpack(
-        "<IIIIIIIIIIIIIIIIIIIIIIIIII",
-        entry.content[char_start_idx:char_start_idx + 104]
+        "<IIIIIIIIIIIIIIIIIIIIIIIII",
+        entry.content[char_start_idx:char_start_idx + 100]
     )
+
     _ng_plus = entry.content[char_start_idx+214]  # Unverified
     return DS3Character(
-        index=idx,
+        index=char_idx,
         name=name,
         hp_current=hp_current,
         hp_max=hp_max,
@@ -142,7 +142,10 @@ def parse_ds3_file(sl2_file: SL2File):
     for idx in range(10):
         char = None
         if occupied_slots[idx] == 1:
-            char = character_from_entry(idx, menu_entry, sl2_file.entries[idx])
+            char = character_from_entry(
+                idx, menu_entry, sl2_file.entries[idx]
+            )
+
         characters.append(char)
 
     return DS3SaveFile(
