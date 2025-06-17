@@ -484,6 +484,16 @@ class ManageSavesWidget(QtWidgets.QFrame):
         open_backup_dir_btn.clicked.connect(self._on_open_backup_dir)
         controller.hotkeys_changed.connect(self._update_hotkeys)
 
+        for widget in (
+            self,
+            quicksave_label,
+            btns_widget,
+            create_backup_btn,
+            load_backup_btn,
+            open_backup_dir_btn,
+        ):
+            widget.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
+
         self._quicksave_label = quicksave_label
 
         self._load_backup_btn = load_backup_btn
