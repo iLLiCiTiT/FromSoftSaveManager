@@ -24,6 +24,7 @@ class DS3Character:
 
     level: int
     souls: int
+    collected_souls: int
     vigor: int
     attunement: int
     endurance: int
@@ -33,6 +34,11 @@ class DS3Character:
     faith: int
     luck: int
     vitality: int
+
+    bleed_res: int
+    poison_res: int
+    curse_res: int
+    frost_res: int
 
 
 @dataclass
@@ -59,7 +65,7 @@ def character_from_entry(
             idx += 8
         else:
             idx += 60
-    char_start_idx = idx + 8
+    idx = idx + 8
     menu_idx = 4254 + (554 * char_idx)
     slot_data = menu_entry.content[menu_idx:menu_idx + 554]
     b_name = slot_data[:32]
@@ -96,13 +102,28 @@ def character_from_entry(
         vitality,
         level_2,
         current_souls,
-        _collected_souls, # Maybe, not verified
+        collected_souls,
     ) = struct.unpack(
         "<IIIIIIIIIIIIIIIIIIIIIIIII",
-        entry.content[char_start_idx:char_start_idx + 100]
+        entry.content[idx:idx + 100]
     )
+    # Warrior of Sunlight attempts and success - maybe?
+    wos_attempts, wos_success = struct.unpack(
+        "<II", entry.content[idx + 156:idx + 164]
+    )
+    (
+        _toxic_res,
+        bleed_res,
+        poison_res,
+        curse_res,
+        frost_res,
+    ) = struct.unpack(
+        "<IIIII",
+        entry.content[idx + 200:idx + 220]
+    )
+    item_discovery = entry.content[idx + 122]  # Unverified
 
-    _ng_plus = entry.content[char_start_idx+214]  # Unverified
+    # _ng_plus = entry.content[idx + 214]  # Unverified
     return DS3Character(
         index=char_idx,
         name=name,
@@ -117,6 +138,7 @@ def character_from_entry(
         stamina_base=stamina_base,
         level=level,
         souls=current_souls,
+        collected_souls=collected_souls,
         vigor=vigor,
         attunement=attunement,
         endurance=endurance,
@@ -126,6 +148,10 @@ def character_from_entry(
         faith=faith,
         luck=luck,
         vitality=vitality,
+        bleed_res=bleed_res,
+        poison_res=poison_res,
+        curse_res=curse_res,
+        frost_res=frost_res,
     )
 
 

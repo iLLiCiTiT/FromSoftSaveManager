@@ -115,6 +115,22 @@ class CharacterStatusWidget(QtWidgets.QWidget):
         stamina_label = QtWidgets.QLabel("Stamina", stats_widget)
         stamina_value_w = QtWidgets.QLabel(stats_widget)
 
+        bleed_res_icon_w = StatusIconLabel("attr_bleed_res", stats_widget)
+        bleed_res_label = QtWidgets.QLabel("Bleed", stats_widget)
+        bleed_res_value_w = QtWidgets.QLabel(stats_widget)
+
+        poison_res_icon_w = StatusIconLabel("attr_poison_res", stats_widget)
+        poison_res_label = QtWidgets.QLabel("Poison", stats_widget)
+        poison_res_value_w = QtWidgets.QLabel(stats_widget)
+
+        frost_res_icon_w = StatusIconLabel("attr_frost_res", stats_widget)
+        frost_res_label = QtWidgets.QLabel("Frost", stats_widget)
+        frost_res_value_w = QtWidgets.QLabel(stats_widget)
+
+        curse_res_icon_w = StatusIconLabel("attr_curse_res", stats_widget)
+        curse_res_label = QtWidgets.QLabel("Curse", stats_widget)
+        curse_res_value_w = QtWidgets.QLabel(stats_widget)
+
         stats_layout = QtWidgets.QGridLayout(stats_widget)
         stats_layout.setContentsMargins(0, 0, 0, 0)
 
@@ -122,6 +138,10 @@ class CharacterStatusWidget(QtWidgets.QWidget):
             (hp_icon_w, hp_label, hp_value_w),
             (fp_icon_w, fp_label, fp_value_w),
             (stamina_icon_w, stamina_label, stamina_value_w),
+            (bleed_res_icon_w, bleed_res_label, bleed_res_value_w),
+            (poison_res_icon_w, poison_res_label, poison_res_value_w),
+            (frost_res_icon_w, frost_res_label, frost_res_value_w),
+            (curse_res_icon_w, curse_res_label, curse_res_value_w),
         ):
             row = stats_layout.rowCount()
             label_w.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
@@ -169,6 +189,10 @@ class CharacterStatusWidget(QtWidgets.QWidget):
         self._hp_value_w = hp_value_w
         self._fp_value_w = fp_value_w
         self._stamina_value_w = stamina_value_w
+        self._bleed_res_value_w = bleed_res_value_w
+        self._poison_res_value_w = poison_res_value_w
+        self._frost_res_value_w = frost_res_value_w
+        self._curse_res_value_w = curse_res_value_w
 
         self.set_char(None)
 
@@ -180,7 +204,7 @@ class CharacterStatusWidget(QtWidgets.QWidget):
         self._name_label.setText(char.name)
         for widget, value in (
             (self._level_value_w, char.level),
-            (self._souls_value_w, char.souls),
+            (self._souls_value_w, f"{char.souls} ({char.collected_souls})"),
             (self._vigor_value_w, char.vigor),
             (self._attunement_value_w, char.attunement),
             (self._endurance_value_w, char.endurance),
@@ -194,6 +218,10 @@ class CharacterStatusWidget(QtWidgets.QWidget):
             (self._hp_value_w, f"{char.hp_current}/{char.hp_max}"),
             (self._fp_value_w, f"{char.fp_current}/{char.fp_max}"),
             (self._stamina_value_w, f"{char.stamina_current}/{char.stamina_max}"),
+            (self._bleed_res_value_w, char.bleed_res),
+            (self._poison_res_value_w, char.poison_res),
+            (self._frost_res_value_w, char.frost_res),
+            (self._curse_res_value_w, char.curse_res),
         ):
             widget.setText(str(value))
 
@@ -215,6 +243,10 @@ class CharacterStatusWidget(QtWidgets.QWidget):
             self._hp_value_w,
             self._fp_value_w,
             self._stamina_value_w,
+            self._bleed_res_value_w,
+            self._poison_res_value_w,
+            self._frost_res_value_w,
+            self._curse_res_value_w,
         ):
             value_w.setText("")
 
