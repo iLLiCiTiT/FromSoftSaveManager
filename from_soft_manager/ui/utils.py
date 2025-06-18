@@ -57,6 +57,9 @@ class TabWidget(QtWidgets.QWidget):
         layout.addWidget(bar_widget, 0)
         layout.addWidget(content_widget, 1)
 
+        for widget in (self, bar_widget, empty_content_widget, content_widget):
+            widget.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
+
         self._empty_content_widget = empty_content_widget
         self._bar_widget = bar_widget
         self._bar_layout = bar_layout
@@ -483,6 +486,16 @@ class ManageSavesWidget(QtWidgets.QFrame):
         load_backup_btn.clicked.connect(self._on_load_backup)
         open_backup_dir_btn.clicked.connect(self._on_open_backup_dir)
         controller.hotkeys_changed.connect(self._update_hotkeys)
+
+        for widget in (
+            self,
+            quicksave_label,
+            btns_widget,
+            create_backup_btn,
+            load_backup_btn,
+            open_backup_dir_btn,
+        ):
+            widget.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
 
         self._quicksave_label = quicksave_label
 

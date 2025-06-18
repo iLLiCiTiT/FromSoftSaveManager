@@ -135,23 +135,23 @@ class CharacterStatusWidget(QtWidgets.QWidget):
         gift_label = QtWidgets.QLabel("Gift", stats_widget)
         gift_value_w = QtWidgets.QLabel(stats_widget)
 
-        hp_icon_w = StatusIconLabel("hp", attributes_widget)
+        hp_icon_w = StatusIconLabel("hp", stats_widget)
         hp_label = QtWidgets.QLabel("HP", stats_widget)
         hp_value_w = QtWidgets.QLabel(stats_widget)
 
-        stamina_icon_w = StatusIconLabel("stamina", attributes_widget)
+        stamina_icon_w = StatusIconLabel("stamina", stats_widget)
         stamina_label = QtWidgets.QLabel("Stamina", stats_widget)
         stamina_value_w = QtWidgets.QLabel(stats_widget)
 
-        bleed_res_icon_w = StatusIconLabel("res_bleed", attributes_widget)
+        bleed_res_icon_w = StatusIconLabel("res_bleed", stats_widget)
         bleed_res_label = QtWidgets.QLabel("Bleed Resistance", stats_widget)
         bleed_res_value_w = QtWidgets.QLabel(stats_widget)
 
-        poison_res_icon_w = StatusIconLabel("res_poison", attributes_widget)
+        poison_res_icon_w = StatusIconLabel("res_poison", stats_widget)
         poison_res_label = QtWidgets.QLabel("Poison Resistance", stats_widget)
         poison_res_value_w = QtWidgets.QLabel(stats_widget)
 
-        curse_res_icon_w = StatusIconLabel("res_curse", attributes_widget)
+        curse_res_icon_w = StatusIconLabel("res_curse", stats_widget)
         curse_res_label = QtWidgets.QLabel("Curse Resistance", stats_widget)
         curse_res_value_w = QtWidgets.QLabel(stats_widget)
 
