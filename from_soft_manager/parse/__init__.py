@@ -1,6 +1,16 @@
 from .structures import Game, SL2File
 from .utils import parse_sl2_file, parse_save_file
-from .parse_dsr import parse_dsr_file, DSRSaveFile, DSRCharacter, InventoryItem
+from .parse_dsr import (
+    parse_dsr_file,
+    DSRSaveFile,
+    DSRCharacter,
+    InventoryItem,
+)
+from .parse_ds3 import (
+    parse_ds3_file,
+    DS3SaveFile,
+    DS3Character,
+)
 from ._dsr_items import (
     DSR_COVENANTS,
     DSR_GESTURES,
@@ -22,6 +32,10 @@ __all__ = (
     "DSRSaveFile",
     "DSRCharacter",
     "InventoryItem",
+
+    "parse_ds3_file",
+    "DS3SaveFile",
+    "DS3Character",
 
     "DSR_COVENANTS",
     "DSR_GESTURES",

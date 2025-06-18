@@ -9,3 +9,7 @@ def get_resource(*args) -> str:
 
 def get_icon_path(subdir: str, filename: str) -> str:
     return get_resource(subdir, filename)
+
+
+def get_status_icon_path(status_name: str) -> str:
+    return get_icon_path("status_icons", status_name + ".png")

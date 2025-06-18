@@ -173,22 +173,6 @@ DSRWidget QAbstractItemView::item:hover {
 DSRWidget QAbstractItemView::item:selected, QAbstractItemView::item:selected:!active, QAbstractItemView::item:selected:hover {
     background: rgba(181, 142, 41, 0.5);
 }
-
-DSRWidget TabButton {
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid #232629;
-    color: #ffffff;
-    border-radius: 0px;
-}
-
-DSRWidget TabButton:hover {
-    background: #232629;
-}
-
-DSRWidget TabButton[selected="1"] {
-    border-bottom: 2px solid #5B4229;
-}
 DSRInventoryCategoryButton PixmapLabel {
     font-size: 26pt;
 }
@@ -206,6 +190,22 @@ DSRWidget QScrollBar:vertical {
     background: transparent;
     border: 1px solid #5D432D;
     border-radius: 0px;
+}
+
+TabButton {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid #232629;
+    color: #ffffff;
+    border-radius: 0px;
+}
+
+TabButton:hover {
+    background: #232629;
+}
+
+TabButton[selected="1"] {
+    border-bottom: 2px solid #5B4229;
 }
 
 ManageSavesWidget QPushButton {

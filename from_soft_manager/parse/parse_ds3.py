@@ -23,6 +23,7 @@ class DS3Character:
     stamina_base: int
 
     level: int
+    souls: int
     vigor: int
     attunement: int
     endurance: int
@@ -115,6 +116,7 @@ def character_from_entry(
         stamina_max=stamina_max,
         stamina_base=stamina_base,
         level=level,
+        souls=current_souls,
         vigor=vigor,
         attunement=attunement,
         endurance=endurance,

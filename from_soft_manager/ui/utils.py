@@ -57,6 +57,9 @@ class TabWidget(QtWidgets.QWidget):
         layout.addWidget(bar_widget, 0)
         layout.addWidget(content_widget, 1)
 
+        for widget in (self, bar_widget, empty_content_widget, content_widget):
+            widget.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
+
         self._empty_content_widget = empty_content_widget
         self._bar_widget = bar_widget
         self._bar_layout = bar_layout
