@@ -16,10 +16,11 @@ This project is in early development, please be nice. The UI is made to do what 
 - Load/Delete save files using UI.
 - Open directory with backups.
 - Settings for paths to save -> should be preset for each game is possible.
-- Dark Souls: Remastered has some save file parsing and UI showing parsed information.
+- Dark Souls: Remastered and Dark Souls III have some save file parsing and UI showing parsed information.
 
-### Screenshot
+### Screenshots
 ![Alt text](/example_01.png "Dark Souls: Remastered save file")
+![Alt text](/example_02.png "Dark Souls III save file")
 
 ### How to use
 1. Download zip file from [releases](https://github.com/iLLiCiTiT/FromSoftSaveManager/releases/tag/0.1.0).
