@@ -92,7 +92,7 @@ class DSRWidget(QtWidgets.QWidget):
         view_wrap = QtWidgets.QWidget(self)
 
         view = QtWidgets.QListView(view_wrap)
-        view.setObjectName("ds_characters_list")
+        view.setObjectName("ds_list_view")
         view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         view.setTextElideMode(QtCore.Qt.ElideLeft)
         view.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)

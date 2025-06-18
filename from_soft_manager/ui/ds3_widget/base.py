@@ -85,7 +85,7 @@ class DS3Widget(QtWidgets.QWidget):
         view_wrap.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
 
         view = QtWidgets.QListView(view_wrap)
-        view.setObjectName("ds_characters_list")
+        view.setObjectName("ds_list_view")
         view.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
         view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         view.setTextElideMode(QtCore.Qt.ElideLeft)

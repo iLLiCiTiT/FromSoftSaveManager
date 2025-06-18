@@ -542,6 +542,7 @@ class InventoryWidget(QtWidgets.QWidget):
 
         category_btns = CategoryButtons(self)
         view = QtWidgets.QListView(self)
+        view.setObjectName("ds_list_view")
         view.setVerticalScrollMode(
             QtWidgets.QAbstractItemView.ScrollMode.ScrollPerPixel
         )

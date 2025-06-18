@@ -171,22 +171,22 @@ DSRWidget QWidget {
     background: transparent;
 }
 
-#ds_characters_list {
+#ds_list_view {
     border: none;
     border-radius: 0px;
     background: transparent;
     selection-background-color: transparent;
 }
 
-#ds_characters_list::item {
+#ds_list_view::item {
     border: none;
     background: transparent;
 }
 
-#ds_characters_list::item:hover {
+#ds_list_view::item:hover {
     background: rgba(181, 142, 41, 0.3);
 }
-#ds_characters_list::item:selected, #ds_characters_list::item:selected:!active, #ds_characters_list::item:selected:hover {
+#ds_list_view::item:selected, #ds_list_view::item:selected:!active, #ds_list_view::item:selected:hover {
     background: rgba(181, 142, 41, 0.5);
 }
 DSRInventoryCategoryButton PixmapLabel {
