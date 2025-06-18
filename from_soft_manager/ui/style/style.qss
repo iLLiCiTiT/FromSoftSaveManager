@@ -80,6 +80,23 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background-color: transparent;
 }
 
+QAbstractItemView {
+    background: #1E1F22;
+    border: none;
+    selection-background-color: transparent;
+    border-radius: 0px;
+}
+QAbstractItemView::item {
+    background: transparent;
+    border: none;
+}
+QAbstractItemView::item:hover {
+    background: #3D3F42;
+}
+QAbstractItemView::item:selected, QAbstractItemView::item:selected:active, QAbstractItemView::item:selected:!active, QAbstractItemView::item:selected:hover {
+    background: #4B4C4F;
+}
+
 SideBarWidget {
     border-right: 1px solid #1E1F22;
 }
@@ -154,23 +171,22 @@ DSRWidget QWidget {
     background: transparent;
 }
 
-DSRWidget QAbstractItemView {
+#ds_characters_list {
     border: none;
     border-radius: 0px;
     background: transparent;
     selection-background-color: transparent;
 }
 
-DSRWidget QAbstractItemView::item {
+#ds_characters_list::item {
     border: none;
     background: transparent;
 }
 
-DSRWidget QAbstractItemView::item:hover {
+#ds_characters_list::item:hover {
     background: rgba(181, 142, 41, 0.3);
 }
-
-DSRWidget QAbstractItemView::item:selected, QAbstractItemView::item:selected:!active, QAbstractItemView::item:selected:hover {
+#ds_characters_list::item:selected, #ds_characters_list::item:selected:!active, #ds_characters_list::item:selected:hover {
     background: rgba(181, 142, 41, 0.5);
 }
 DSRInventoryCategoryButton PixmapLabel {
