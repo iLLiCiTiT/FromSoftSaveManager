@@ -3,8 +3,54 @@ from dataclasses import dataclass
 from typing import Optional
 
 from .structures import Game, SL2File, BND4Entry
+from ._ds3_items import ITEMS_BY_ID
 
 DS3_KEY = b"\xfd\x46\x4d\x69\x5e\x69\xa3\x9a\x10\xe3\x19\xa7\xac\xe8\xb7\xfa"
+
+
+@dataclass
+class InventoryItem:
+    item_id: int
+    infusion: int = 0
+    level: int = 0
+
+    @classmethod
+    def from_inventory_id(cls, item_id: int) -> Optional["InventoryItem"]:
+        if item_id in (
+            110000,  # Empty weapon slot
+            269335456,  # No head equipment
+            269336456,  # No armor equipment
+            269337456,  # No hands equipment
+            269338456,  # No legs equipment
+        ):
+            return None
+
+        level = infusion = 0
+        # Wrong level calculation, to make it work is must be known current
+        #   level of Estus flask (how many Estus shard upgrades happened).
+        # If 'item level - current estus level = -1' then it is empty flask.
+        # Estus flask
+        if 1073741975 < item_id <= 1073741990:
+            level = item_id - 1073741975
+            item_id -= level
+
+        # Ashen Estus flask
+        elif 1073742015 < item_id <= 1073742030:
+            level = item_id - 1073742015
+            item_id -= level
+
+        if 1000000 < item_id <= 23020000:
+            level = item_id % 100
+            item_id -= level
+            infusion = item_id % 10000
+            item_id -= infusion
+        return cls(item_id, infusion=infusion, level=level)
+
+    @classmethod
+    def from_inventory_ids(cls, *item_ids: int) -> list[Optional["InventoryItem"]]:
+        return [
+            cls.from_inventory_id(item_id) for item_id in item_ids
+        ]
 
 
 @dataclass
@@ -107,6 +153,8 @@ def character_from_entry(
         "<IIIIIIIIIIIIIIIIIIIIIIIII",
         entry.content[idx:idx + 100]
     )
+    b_name_2 = entry.content[idx + 112:idx + 144]
+
     # Warrior of Sunlight attempts and success - maybe?
     wos_attempts, wos_success = struct.unpack(
         "<II", entry.content[idx + 156:idx + 164]
@@ -121,9 +169,83 @@ def character_from_entry(
         "<IIIII",
         entry.content[idx + 200:idx + 220]
     )
-    item_discovery = entry.content[idx + 122]  # Unverified
 
-    # _ng_plus = entry.content[idx + 214]  # Unverified
+    unknown = entry.content[idx + 220:idx + 288]
+    # \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00
+    unknown = entry.content[idx + 288:idx + 300]
+    # \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\xff (11x)
+    unknown = entry.content[idx + 300:idx + 476]
+    # \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00
+    unknown = entry.content[idx + 476:idx + 488]
+    # 22x 4-bit integers (sometimes \xff\xff\xff\xff)
+    unknown = entry.content[idx + 488:idx + 576]
+
+    # one number and rest is '\x00\x00\x00\x00'
+    unknown = entry.content[idx + 576:idx + 604]
+
+    unknown = entry.content[idx + 604:idx + 35864]
+
+    used_gestures_b = entry.content[idx + 35864: idx + 35896]
+    used_gestures = []
+    for g_idx in range(7):
+        offset = g_idx * 4
+        gesture_id, _gesture_pos = struct.unpack(
+            "<hh", used_gestures_b[offset:offset+4]
+        )
+        used_gestures.append(gesture_id)
+    inv_idx = idx + 35896
+    count = int.from_bytes(
+        entry.content[inv_idx: inv_idx + 4],
+        "little"
+    )
+    maybe_tools = []
+    for i in range(count):
+        offset = inv_idx + 4 + (i * 8)
+        item_b = entry.content[offset:offset + 8]
+        item_id, item_unknown = struct.unpack("<II", item_b)
+        maybe_tools.append(InventoryItem.from_inventory_id(item_id))
+
+    equip_offset = inv_idx + 4 + (count * 8)
+    (
+        l_hand_1, r_hand_1,
+        l_hand_2, r_hand_2,
+        l_hand_3, r_hand_3,
+        arrows_1, bolts_1,
+        arrows_2, bolts_2,
+        _full_ff, _full_ff,
+        head, chest, hands, legs,
+        _full_ff,
+        ring_1, ring_2, ring_3, ring_4,
+        covenant,
+        quick_item_1, quick_item_2, quick_item_3, quick_item_4, quick_item_5,
+        quick_item_6, quick_item_7, quick_item_8, quick_item_9, quick_item_10,
+    ) = struct.unpack(
+        "<IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
+        entry.content[equip_offset:equip_offset + 128]
+    )
+    (
+        l_hand_1, r_hand_1,
+        l_hand_2, r_hand_2,
+        l_hand_3, r_hand_3,
+        arrows_1, bolts_1,
+        arrows_2, bolts_2,
+        head, chest, hands, legs,
+        ring_1, ring_2, ring_3, ring_4,
+        covenant,
+        quick_item_1, quick_item_2, quick_item_3, quick_item_4, quick_item_5,
+        quick_item_6, quick_item_7, quick_item_8, quick_item_9, quick_item_10,
+    ) = InventoryItem.from_inventory_ids(
+        l_hand_1, r_hand_1,
+        l_hand_2, r_hand_2,
+        l_hand_3, r_hand_3,
+        arrows_1, bolts_1,
+        arrows_2, bolts_2,
+        head, chest, hands, legs,
+        ring_1, ring_2, ring_3, ring_4,
+        covenant,
+        quick_item_1, quick_item_2, quick_item_3, quick_item_4, quick_item_5,
+        quick_item_6, quick_item_7, quick_item_8, quick_item_9, quick_item_10,
+    )
     return DS3Character(
         index=char_idx,
         name=name,
