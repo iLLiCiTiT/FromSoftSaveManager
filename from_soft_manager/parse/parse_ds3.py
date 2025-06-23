@@ -183,8 +183,28 @@ def character_from_entry(
     # one number and rest is '\x00\x00\x00\x00'
     unknown = entry.content[idx + 576:idx + 604]
 
-    unknown = entry.content[idx + 604:idx + 35864]
+    unknown = entry.content[idx + 604:idx + 784]
+    # Maybe count of items in tools?
+    count = struct.unpack("<I", entry.content[idx + 784:idx + 788])[0]
 
+    tool_items = []
+    for i in range(1920):
+        start = idx + 788 + (i * 16)
+        v = entry.content[start:start+16]
+        if v == b"\x00\x00\x00\x00\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00":
+            continue
+        _, item_id, item_count, _ = struct.unpack("<IIII", v)
+        inv_item = InventoryItem.from_inventory_id(item_id)
+        if inv_item is None:
+            print("Unknown item:", v)
+            continue
+        item = ITEMS_BY_ID.get(inv_item.item_id)
+        if item is None:
+            print("Unknown item id:", inv_item.item_id)
+
+        tool_items.append(inv_item)
+
+    unknown = entry.content[idx + 31508:idx + 35864]
     used_gestures_b = entry.content[idx + 35864: idx + 35896]
     used_gestures = []
     for g_idx in range(7):
@@ -193,6 +213,7 @@ def character_from_entry(
             "<hh", used_gestures_b[offset:offset+4]
         )
         used_gestures.append(gesture_id)
+
     inv_idx = idx + 35896
     count = int.from_bytes(
         entry.content[inv_idx: inv_idx + 4],

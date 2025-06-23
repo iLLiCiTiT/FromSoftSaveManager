@@ -1100,7 +1100,7 @@ TOOLS = [
     {"id": 1073743980, "bytes_id": b"l\x08\x00@", "label": "Small Envoy Banner"},
     {"id": 1073743981, "bytes_id": b"m\x08\x00@", "label": "Old Woman's Ashes"},
     {"id": 1073743982, "bytes_id": b"n\x08\x00@", "label": "Blood of the Dark souls"},
-    {"id": 1073743983, "bytes_id": b"o\x08\x00@", "label": "Young Grass Dew  (NOT Life Gem)"},
+    {"id": 1073743983, "bytes_id": b"o\x08\x00@", "label": "Young Grass Dew"},
     {"id": 1074941824, "bytes_id": b"\x80O\x12@", "label": "Farron Dart"},
     {"id": 1074951824, "bytes_id": b"\x90v\x12@", "label": "Great Farron Dart"},
     {"id": 1075041824, "bytes_id": b" \xd6\x13@", "label": "Soul Arrow"},
