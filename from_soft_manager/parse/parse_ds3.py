@@ -197,7 +197,6 @@ def character_from_entry(
             continue
         inv_item = InventoryItem.from_inventory_id(item_id)
         if inv_item is None:
-            print("Unknown item:", v)
             continue
         item = ITEMS_BY_ID.get(inv_item.item_id)
         if item is None:
@@ -217,7 +216,6 @@ def character_from_entry(
             continue
         inv_item = InventoryItem.from_inventory_id(item_id)
         if inv_item is None:
-            print("Unknown item:", v)
             continue
         item = ITEMS_BY_ID.get(inv_item.item_id)
         if item is None:
@@ -308,7 +306,6 @@ def character_from_entry(
             continue
         inv_item = InventoryItem.from_inventory_id(item_id)
         if inv_item is None:
-            print("Unknown item:", v)
             continue
         item = ITEMS_BY_ID.get(inv_item.item_id)
         if item is None:
