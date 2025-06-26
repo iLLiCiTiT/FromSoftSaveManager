@@ -385,7 +385,7 @@ WEAPONS = [
     {"id": 22120000, "bytes_id": b"@\x86Q\x01", "label": "Curse Ward Greatshield"},
     {"id": 22130000, "bytes_id": b"P\xadQ\x01", "label": "Bonewheel Shield"},
     {"id": 22140000, "bytes_id": b"`\xd4Q\x01", "label": "Stone Greatshield"},
-    {"id": 23000000, "bytes_id": b"\x90_\x01\x00", "label": "Torch"},
+    {"id": 23000000, "bytes_id": b"\xc0\xf3^\x01", "label": "Torch"},
     {"id": 23010000, "bytes_id": b"\xd0\x1a_\x01", "label": "Follower Torch"},
 ]
 
@@ -1214,9 +1214,9 @@ TOOLS = [
 COVENANT_ITEMS = [
     {"id": 536880952, "bytes_id": b"8'\x00 ", "label": "Warrior of Sunlight"},
     {"id": 536880972, "bytes_id": b"L'\x00 ", "label": "Warrior of Blue"},
-    {"id": 536880972, "bytes_id": b"V'\x00 ", "label": "Blue Sentinels"},
-    {"id": 536880972, "bytes_id": b"B'\x00 ", "label": "Mound-makers"},
-    {"id": 536880972, "bytes_id": b"$'\x00 ", "label": "Watchdogs of Farron"},
+    {"id": 536880982, "bytes_id": b"V'\x00 ", "label": "Blue Sentinels"},
+    {"id": 536880962, "bytes_id": b"B'\x00 ", "label": "Mound-makers"},
+    {"id": 536880932, "bytes_id": b"$'\x00 ", "label": "Watchdogs of Farron"},
 ]
 
 ITEMS_BY_ID = {
