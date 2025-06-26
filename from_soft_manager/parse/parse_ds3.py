@@ -309,6 +309,9 @@ def character_from_entry(
             continue
         item = ITEMS_BY_ID.get(inv_item.item_id)
         if item is None:
+            # 1073741918 - every char has it
+            # 1073743837 - some key item?
+            # 1073743947 - some key item?
             print("Unknown item id:", inv_item.item_id)
         storage_items.append(inv_item)
 
