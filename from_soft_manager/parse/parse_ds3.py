@@ -22,6 +22,7 @@ class InventoryItem:
             269336456,  # No armor equipment
             269337456,  # No hands equipment
             269338456,  # No legs equipment
+            4294967295, # Empty item slot
         ):
             return None
 
@@ -184,16 +185,16 @@ def character_from_entry(
     unknown = entry.content[idx + 576:idx + 604]
 
     unknown = entry.content[idx + 604:idx + 784]
-    # Maybe count of items in tools?
-    count = struct.unpack("<I", entry.content[idx + 784:idx + 788])[0]
 
-    tool_items = []
+    # Looks like count of items in inventory - 2
+    count, = struct.unpack("<I", entry.content[idx + 784:idx + 788])
+    inventory_items = []
     for i in range(1920):
         start = idx + 788 + (i * 16)
         v = entry.content[start:start+16]
-        if v == b"\x00\x00\x00\x00\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00":
+        _, item_id, item_count, order = struct.unpack("<IIII", v)
+        if item_count == 0:
             continue
-        _, item_id, item_count, _ = struct.unpack("<IIII", v)
         inv_item = InventoryItem.from_inventory_id(item_id)
         if inv_item is None:
             print("Unknown item:", v)
@@ -202,9 +203,32 @@ def character_from_entry(
         if item is None:
             print("Unknown item id:", inv_item.item_id)
 
-        tool_items.append(inv_item)
+        inventory_items.append(inv_item)
 
-    unknown = entry.content[idx + 31508:idx + 35864]
+    zeros = entry.content[idx + 31508:idx + 31512]
+
+    # Not sure why key items are again here, they are also in the inventory
+    key_items = []
+    for i in range(128):
+        start = idx + 31512 + (i * 16)
+        v = entry.content[start:start+16]
+        _, item_id, item_count, order = struct.unpack("<IIII", v)
+        if item_count == 0:
+            continue
+        inv_item = InventoryItem.from_inventory_id(item_id)
+        if inv_item is None:
+            print("Unknown item:", v)
+            continue
+        item = ITEMS_BY_ID.get(inv_item.item_id)
+        if item is None:
+            print("Unknown item id:", inv_item.item_id)
+        key_items.append(inv_item)
+
+    zeros = entry.content[idx + 33560:idx + 33564]
+    unknown = entry.content[idx + 33564:idx + 35732]
+    unknown = entry.content[idx + 35732:idx + 35812]
+    unknown = entry.content[idx + 35812:idx + 35864]
+
     used_gestures_b = entry.content[idx + 35864: idx + 35896]
     used_gestures = []
     for g_idx in range(7):
@@ -240,9 +264,10 @@ def character_from_entry(
         covenant,
         quick_item_1, quick_item_2, quick_item_3, quick_item_4, quick_item_5,
         quick_item_6, quick_item_7, quick_item_8, quick_item_9, quick_item_10,
+        toolbelt_1, toolbelt_2, toolbelt_3, toolbelt_4, toolbelt_5,
     ) = struct.unpack(
-        "<IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
-        entry.content[equip_offset:equip_offset + 128]
+        "<IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII",
+        entry.content[equip_offset:equip_offset + 148]
     )
     (
         l_hand_1, r_hand_1,
@@ -255,6 +280,7 @@ def character_from_entry(
         covenant,
         quick_item_1, quick_item_2, quick_item_3, quick_item_4, quick_item_5,
         quick_item_6, quick_item_7, quick_item_8, quick_item_9, quick_item_10,
+        toolbelt_1, toolbelt_2, toolbelt_3, toolbelt_4, toolbelt_5,
     ) = InventoryItem.from_inventory_ids(
         l_hand_1, r_hand_1,
         l_hand_2, r_hand_2,
@@ -266,7 +292,66 @@ def character_from_entry(
         covenant,
         quick_item_1, quick_item_2, quick_item_3, quick_item_4, quick_item_5,
         quick_item_6, quick_item_7, quick_item_8, quick_item_9, quick_item_10,
+        toolbelt_1, toolbelt_2, toolbelt_3, toolbelt_4, toolbelt_5,
     )
+
+    ffs = entry.content[equip_offset + 148:equip_offset + 152]
+    face_data = entry.content[equip_offset + 152:equip_offset + 400]
+
+    storage_items = []
+    storage_offset = equip_offset + 400
+    for i in range(1920):
+        start = storage_offset + (i * 16)
+        v = entry.content[start:start + 16]
+        _, item_id, item_count, order = struct.unpack("<IIII", v)
+        if item_count == 0:
+            continue
+        inv_item = InventoryItem.from_inventory_id(item_id)
+        if inv_item is None:
+            print("Unknown item:", v)
+            continue
+        item = ITEMS_BY_ID.get(inv_item.item_id)
+        if item is None:
+            print("Unknown item id:", inv_item.item_id)
+        storage_items.append(inv_item)
+
+    # s_idx = storage_offset + (1920 * 16)
+    # zeros = entry.content[s_idx:s_idx + 4]
+    # some_items_1 = []
+    # for i in range(128):
+    #     start = s_idx + 4 + (i * 16)
+    #     v = entry.content[start:start + 16]
+    #     _, item_id, item_count, order = struct.unpack("<IIII", v)
+    #     if item_count == 0:
+    #         continue
+    #     inv_item = InventoryItem.from_inventory_id(item_id)
+    #     if inv_item is None:
+    #         continue
+    #     item = ITEMS_BY_ID.get(inv_item.item_id)
+    #     if item is None:
+    #         continue
+    #     some_items_1.append(inv_item)
+    #
+    # s_idx += 4 + (128 * 16)
+    # zeros = entry.content[s_idx:s_idx + 4]
+    # some_items_2 = []
+    # for i in range(128):
+    #     start = s_idx + 4 + (i * 16)
+    #     v = entry.content[start:start + 16]
+    #     _, item_id, item_count, order = struct.unpack("<IIII", v)
+    #     if item_count == 0:
+    #         continue
+    #     inv_item = InventoryItem.from_inventory_id(item_id)
+    #     if inv_item is None:
+    #         continue
+    #     item = ITEMS_BY_ID.get(inv_item.item_id)
+    #     if item is None:
+    #         continue
+    #     some_items_2.append(inv_item)
+    #
+    # s_idx += 4 + (128 * 16)
+    # zeros = entry.content[s_idx:s_idx + 4]
+
     return DS3Character(
         index=char_idx,
         name=name,
