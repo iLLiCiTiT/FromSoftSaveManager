@@ -2,7 +2,11 @@ import os
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from from_soft_manager.parse import DSRCharacter, ITEMS_BY_IDS, InventoryItem
+from from_soft_manager.parse.parse_dsr import (
+    DSRCharacter,
+    ITEMS_BY_IDS,
+    InventoryItem,
+)
 from from_soft_manager.ui.utils import BaseClickableFrame, PixmapLabel
 
 from .resources import get_resource
