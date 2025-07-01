@@ -4,6 +4,7 @@ from from_soft_manager.parse import DS3Character
 from from_soft_manager.ui.utils import TabWidget, ManageSavesWidget
 
 from .info import CharacterInfoWidget
+from .inventory import InventoryWidget
 
 from .resources import get_resource
 
@@ -105,9 +106,14 @@ class DS3Widget(QtWidgets.QWidget):
         char_tabs = TabWidget(self)
 
         char_info_widget = CharacterInfoWidget(char_tabs)
+        inventory_widget = InventoryWidget(char_tabs)
         char_tabs.add_tab(
             "Character Info",
             char_info_widget,
+        )
+        char_tabs.add_tab(
+            "Inventory",
+            inventory_widget,
         )
 
         main_layout = QtWidgets.QHBoxLayout(self)
@@ -126,6 +132,7 @@ class DS3Widget(QtWidgets.QWidget):
         self._model = model
         self._char_tabs = char_tabs
         self._char_info_widget = char_info_widget
+        self._inventory_widget = inventory_widget
 
     def refresh(self):
         self._model.refresh()
@@ -159,6 +166,7 @@ class DS3Widget(QtWidgets.QWidget):
             char_id = index.data(CHAR_ID_ROLE)
             character = self._model.get_char_by_id(char_id)
             self._char_info_widget.set_char(character)
+            self._inventory_widget.set_char(character)
             return
 
         index = self._model.index(0, 0)
@@ -178,8 +186,10 @@ class DS3Widget(QtWidgets.QWidget):
             char = self._model.get_char_by_id(item_id)
             if char is not None:
                 self._char_info_widget.set_char(char)
+                self._inventory_widget.set_char(char)
                 set_char = True
                 break
 
         if not set_char:
             self._char_info_widget.set_char(None)
+            self._inventory_widget.set_char(None)
