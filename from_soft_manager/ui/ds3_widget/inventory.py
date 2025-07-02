@@ -175,7 +175,7 @@ class InventoryModel(QtGui.QStandardItemModel):
         new_item = QtGui.QStandardItem(item_name)
         new_item.setData(inventory_item.level, ITEM_LEVEL_ROLE)
         new_item.setData(0, ITEM_STORAGE_BOX_AMOUNT_ROLE)
-        # new_item.setData(inventory_item.order, ITEM_ORDER_ROLE)
+        new_item.setData(-1, ITEM_ORDER_ROLE)
         new_item.setData(inventory_item.amount, ITEM_AMOUNT_ROLE)
         new_item.setData(inventory_item.category, ITEM_CATEGORY_ROLE)
         new_item.setData(
@@ -195,7 +195,7 @@ class InventoryModel(QtGui.QStandardItemModel):
             category: []
             for category in MERGABLE_CATEGORIES
         }
-        for item in char.inventory_items:
+        for item in char.inventory_items + char.key_items:
             if item.category in items_by_category:
                 items_by_category[item.category].append(item)
             else:
@@ -308,6 +308,7 @@ class InventoryModel(QtGui.QStandardItemModel):
         label = item["label"]
         category = item["category"]
         image_name = item["image"]
+        order = item.get("order") or 0
         pix = get_item_pixmap(image_name)
         inventory_amount = bottomless_amount = 0
         if in_bottomless_box:
@@ -321,7 +322,7 @@ class InventoryModel(QtGui.QStandardItemModel):
         )
         new_item.setData(upgrade_level, ITEM_LEVEL_ROLE)
         new_item.setData(infusion_icon, ITEM_INFUSION_ICON_ROLE)
-        # new_item.setData(inventory_item.order, ITEM_ORDER_ROLE)
+        new_item.setData(order, ITEM_ORDER_ROLE)
         new_item.setData(inventory_amount, ITEM_AMOUNT_ROLE)
         new_item.setData(bottomless_amount, ITEM_STORAGE_BOX_AMOUNT_ROLE)
         new_item.setData(category, ITEM_CATEGORY_ROLE)

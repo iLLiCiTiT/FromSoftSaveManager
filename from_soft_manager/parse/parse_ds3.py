@@ -11,8 +11,10 @@ DS3_KEY = b"\xfd\x46\x4d\x69\x5e\x69\xa3\x9a\x10\xe3\x19\xa7\xac\xe8\xb7\xfa"
 @dataclass
 class InventoryItem:
     item_id: int
+    category: str
     infusion: int = 0
     level: int = 0
+    amount: int = 1
 
     @classmethod
     def from_inventory_id(cls, item_id: int) -> Optional["InventoryItem"]:
@@ -45,7 +47,11 @@ class InventoryItem:
             item_id -= level
             infusion = item_id % 10000
             item_id -= infusion
-        return cls(item_id, infusion=infusion, level=level)
+        item = ITEMS_BY_ID.get(item_id)
+        category = "tools"
+        if item is not None:
+            category = item["category"]
+        return cls(item_id, infusion=infusion, level=level, category=category)
 
     @classmethod
     def from_inventory_ids(cls, *item_ids: int) -> list[Optional["InventoryItem"]]:
@@ -86,6 +92,10 @@ class DS3Character:
     poison_res: int
     curse_res: int
     frost_res: int
+
+    inventory_items: list[InventoryItem]
+    key_items: list[InventoryItem]
+    storage_box_items: list[InventoryItem]
 
 
 @dataclass
@@ -192,31 +202,32 @@ def character_from_entry(
     for i in range(1920):
         start = idx + 788 + (i * 16)
         v = entry.content[start:start+16]
-        _, item_id, item_count, order = struct.unpack("<IIII", v)
+        # No idea where durability is stored
+        _, item_id, item_count, _ = struct.unpack("<IIII", v)
         if item_count == 0:
             continue
         inv_item = InventoryItem.from_inventory_id(item_id)
         if inv_item is None:
             continue
+        inv_item.amount = item_count
         item = ITEMS_BY_ID.get(inv_item.item_id)
         if item is None:
             print("Unknown item id:", inv_item.item_id)
-
         inventory_items.append(inv_item)
 
     zeros = entry.content[idx + 31508:idx + 31512]
 
-    # Not sure why key items are again here, they are also in the inventory
     key_items = []
     for i in range(128):
         start = idx + 31512 + (i * 16)
         v = entry.content[start:start+16]
-        _, item_id, item_count, order = struct.unpack("<IIII", v)
+        _, item_id, item_count, _ = struct.unpack("<IIII", v)
         if item_count == 0:
             continue
         inv_item = InventoryItem.from_inventory_id(item_id)
         if inv_item is None:
             continue
+        inv_item.amount = item_count
         item = ITEMS_BY_ID.get(inv_item.item_id)
         if item is None:
             print("Unknown item id:", inv_item.item_id)
@@ -296,24 +307,25 @@ def character_from_entry(
     ffs = entry.content[equip_offset + 148:equip_offset + 152]
     face_data = entry.content[equip_offset + 152:equip_offset + 400]
 
-    storage_items = []
+    storage_box_items = []
     storage_offset = equip_offset + 400
     for i in range(1920):
         start = storage_offset + (i * 16)
         v = entry.content[start:start + 16]
-        _, item_id, item_count, order = struct.unpack("<IIII", v)
+        _, item_id, item_count, _ = struct.unpack("<IIII", v)
         if item_count == 0:
             continue
         inv_item = InventoryItem.from_inventory_id(item_id)
         if inv_item is None:
             continue
+        inv_item.amount = item_count
         item = ITEMS_BY_ID.get(inv_item.item_id)
         if item is None:
             # 1073741918 - every char has it
             # 1073743837 - some key item?
             # 1073743947 - some key item?
             print("Unknown item id:", inv_item.item_id)
-        storage_items.append(inv_item)
+        storage_box_items.append(inv_item)
 
     # s_idx = storage_offset + (1920 * 16)
     # zeros = entry.content[s_idx:s_idx + 4]
@@ -380,6 +392,9 @@ def character_from_entry(
         poison_res=poison_res,
         curse_res=curse_res,
         frost_res=frost_res,
+        inventory_items=inventory_items,
+        key_items=key_items,
+        storage_box_items=storage_box_items,
     )
 
 
