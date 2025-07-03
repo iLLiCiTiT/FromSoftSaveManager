@@ -196,6 +196,9 @@ class InventoryModel(QtGui.QStandardItemModel):
             for category in MERGABLE_CATEGORIES
         }
         for item in char.inventory_items + char.key_items:
+            # Don't know what it is, but it is on every character
+            if item.item_id == 1073741918:
+                continue
             if item.category in items_by_category:
                 items_by_category[item.category].append(item)
             else:
