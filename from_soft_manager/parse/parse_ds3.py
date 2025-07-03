@@ -212,7 +212,10 @@ def character_from_entry(
         inv_item.amount = item_count
         item = ITEMS_BY_ID.get(inv_item.item_id)
         if item is None:
-            print("Unknown item id:", inv_item.item_id)
+            # 1073741918 - every char has it
+            # 1073743837 - some key item?
+            if inv_item.item_id != 1073741918:
+                print("Unknown item id:", inv_item.item_id)
         inventory_items.append(inv_item)
 
     zeros = entry.content[idx + 31508:idx + 31512]
@@ -321,10 +324,7 @@ def character_from_entry(
         inv_item.amount = item_count
         item = ITEMS_BY_ID.get(inv_item.item_id)
         if item is None:
-            # 1073741918 - every char has it
-            # 1073743837 - some key item?
-            # 1073743947 - some key item?
-            print("Unknown item id:", inv_item.item_id)
+            print("SB Unknown item id:", inv_item.item_id)
         storage_box_items.append(inv_item)
 
     # s_idx = storage_offset + (1920 * 16)
