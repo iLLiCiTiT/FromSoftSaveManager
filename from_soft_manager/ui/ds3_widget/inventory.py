@@ -443,7 +443,7 @@ class InventoryDelegate(QtWidgets.QStyledItemDelegate):
 
         level = index.data(ITEM_LEVEL_ROLE)
         if level:
-            item_label = f"{item_label}+{level}"
+            item_label = f"{item_label} + {level}"
 
         # Draw the text
         font = painter.font()
