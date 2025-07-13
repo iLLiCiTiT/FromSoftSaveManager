@@ -276,39 +276,51 @@ class InventoryModel(QtGui.QStandardItemModel):
         upgrade_level = inventory_item.level
 
         infusion_name = None
-        # if inventory_item.infusion == 0:
-        #     pass
-        # elif inventory_item.infusion == 100:
-        #     infusion_name = "crystal"
-        # elif inventory_item.infusion == 200:
-        #     infusion_name = "lightning"
-        # elif inventory_item.infusion == 300:
-        #     infusion_name = "raw"
-        # elif inventory_item.infusion == 400:
-        #     infusion_name = "magic"
-        #     if upgrade_level >= 5:
-        #         infusion_name += "_2"
-        # elif inventory_item.infusion == 500:
-        #     infusion_name = "enchanted"
-        # elif inventory_item.infusion == 600:
-        #     infusion_name = "divine"
-        #     if upgrade_level >= 5:
-        #         infusion_name += "_2"
-        # elif inventory_item.infusion == 700:
-        #     infusion_name = "occult"
-        # elif inventory_item.infusion == 800:
-        #     infusion_name = "fire"
-        #     if upgrade_level >= 5:
-        #         infusion_name += "_2"
-        # elif inventory_item.infusion == 900:
-        #     infusion_name = "chaos"
+        if inventory_item.infusion == 0:
+            pass
+        elif inventory_item.infusion == 100:
+            infusion_name = "heavy"
+        elif inventory_item.infusion == 200:
+            infusion_name = "sharp"
+        elif inventory_item.infusion == 300:
+            infusion_name = "refined"
+        elif inventory_item.infusion == 400:
+            infusion_name = "simple"
+        elif inventory_item.infusion == 500:
+            infusion_name = "crystal"
+        elif inventory_item.infusion == 600:
+            infusion_name = "fire"
+        elif inventory_item.infusion == 700:
+            infusion_name = "chaos"
+        elif inventory_item.infusion == 800:
+            infusion_name = "lighting"
+        elif inventory_item.infusion == 900:
+            infusion_name = "deep"
+        elif inventory_item.infusion == 1000:
+            infusion_name = "dark"
+        elif inventory_item.infusion == 1100:
+            infusion_name = "poison"
+        elif inventory_item.infusion == 1200:
+            infusion_name = "blood"
+        elif inventory_item.infusion == 1300:
+            infusion_name = "raw"
+        elif inventory_item.infusion == 1400:
+            infusion_name = "blessed"
+        elif inventory_item.infusion == 1500:
+            infusion_name = "hollow"
 
-        infusion_icon = None
-        # if infusion_name:
-        #     infusion_icon = QtGui.QPixmap(
-        #         get_resource("infusions", f"{infusion_name}.png")
-        #     )
         label = item["label"]
+        infusion_icon = None
+        if infusion_name:
+            infusion_icon = QtGui.QPixmap(
+                get_resource("infusion_icons", f"{infusion_name}.png")
+            )
+            inf_label = item.get("infusion_label")
+            if inf_label:
+                label = inf_label.format(infusion=infusion_name.capitalize())
+            else:
+                label = " ".join([infusion_name.capitalize(), label])
+
         category = item["category"]
         image_name = item["image"]
         order = item.get("order") or 0
@@ -392,29 +404,25 @@ class InventoryDelegate(QtWidgets.QStyledItemDelegate):
         )
 
         pixmap = index.data(ITEM_IMAGE_ROLE)
-        size = option.rect.height() - 20
+        size = option.rect.height()
         pixmap = pixmap.scaled(
             size, size,
-            QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation,
-        )
-        stand_pix = self._stand_pixmap.scaled(
-            pixmap.width(), pixmap.width(),
             QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation,
         )
 
         icon_rect = QtCore.QRect(option.rect)
         icon_rect.setWidth(pixmap.width())
         text_offset = icon_rect.right() + 20
-        icon_rect.adjust(10, 10, 10, -10)
 
+        stand_height = 21
         stand_rect = QtCore.QRect(
-            icon_rect.left(),
-            (icon_rect.bottom() - stand_pix.height()) + 10,
-            stand_pix.width(),
-            stand_pix.height()
+            icon_rect.left() + 10,
+            icon_rect.bottom() - stand_height,
+            icon_rect.width() - 20,
+            stand_height
         )
 
-        painter.drawPixmap(stand_rect, stand_pix)
+        painter.drawPixmap(stand_rect, self._stand_pixmap)
         painter.drawPixmap(icon_rect, pixmap)
 
         infusion_icon = index.data(ITEM_INFUSION_ICON_ROLE)
@@ -426,8 +434,8 @@ class InventoryDelegate(QtWidgets.QStyledItemDelegate):
                 QtCore.Qt.SmoothTransformation
             )
             infusion_rect = QtCore.QRect(
-                (icon_rect.right() - infusion_icon.width()) + 4,
-                (icon_rect.bottom() - infusion_icon.height()) + 4,
+                icon_rect.right() - infusion_icon.width(),
+                icon_rect.bottom() - (infusion_icon.height() - 5),
                 infusion_icon.width(),
                 infusion_icon.height()
             )
