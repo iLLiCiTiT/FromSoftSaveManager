@@ -1067,74 +1067,75 @@ MATERIALS = [
 
 KEY_ITEMS = [
     {"id": 1073742214, "order": 6, "category": "key_items", "max_storage": 600, "image": "fire_keeper_soul", "label": "Fire Keeper Soul", "max_inventory": 99},
-    {"id": 1073742314, "order": 64, "category": "key_items", "max_storage": 600, "image": "dark_sigil", "label": "Dark Sigil", "max_inventory": 99},
+    {"id": 1073742314, "order": 66, "category": "key_items", "max_storage": 600, "image": "dark_sigil", "label": "Dark Sigil", "max_inventory": 99},
     {"id": 1073743825, "order": 8, "category": "key_items", "max_storage": 600, "image": "lift_chamber_key", "label": "Lift Chamber Key", "max_inventory": 99},
     {"id": 1073743827, "order": -1, "category": "key_items", "max_storage": 600, "image": "bridge_key", "label": "Bridge Key", "max_inventory": 99},
     {"id": 1073743828, "order": -1, "category": "key_items", "max_storage": 600, "image": "iron_seal_of_the_wolf", "label": "Iron Seal of the Wolf", "max_inventory": 99},
-    {"id": 1073743829, "order": 19, "category": "key_items", "max_storage": 600, "image": "small_doll", "label": "Small Doll", "max_inventory": 99},
+    {"id": 1073743829, "order": 21, "category": "key_items", "max_storage": 600, "image": "small_doll", "label": "Small Doll", "max_inventory": 99},
     {"id": 1073743831, "order": 11, "category": "key_items", "max_storage": 600, "image": "jailbreakers_key", "label": "Jailbreaker's Key", "max_inventory": 99},
     {"id": 1073743832, "order": 10, "category": "key_items", "max_storage": 600, "image": "jailers_key_ring", "label": "Jailer's Key Ring", "max_inventory": 99},
     {"id": 1073743833, "order": 9, "category": "key_items", "max_storage": 600, "image": "grave_key", "label": "Grave Key", "max_inventory": 99},
     {"id": 1073743834, "order": 7, "category": "key_items", "max_storage": 600, "image": "cell_key", "label": "Cell Key", "max_inventory": 99},
-    {"id": 1073743835, "order": 15, "category": "key_items", "max_storage": 600, "image": "dungeon_ground_floor_key", "label": "Dungeon Ground Floor Key", "max_inventory": 99},
+    {"id": 1073743835, "order": 17, "category": "key_items", "max_storage": 600, "image": "dungeon_ground_floor_key", "label": "Dungeon Ground Floor Key", "max_inventory": 99},
     {"id": 1073743836, "order": 12, "category": "key_items", "max_storage": 600, "image": "old_cell_key", "label": "Old Cell Key", "max_inventory": 99},
+    {"id": 1073743837, "order": 14, "category": "key_items", "max_storage": 600, "image": "tower_key", "label": "Tower Key", "max_inventory": 99},
     {"id": 1073743838, "order": 13, "category": "key_items", "max_storage": 600, "image": "grand_archives_key", "label": "Grand Archives Key", "max_inventory": 99},
-    {"id": 1073743839, "order": 14, "category": "key_items", "max_storage": 600, "image": "tower_key", "label": "Tower Key", "max_inventory": 99},
+    {"id": 1073743839, "order": 16, "category": "key_items", "max_storage": 600, "image": "tower_key", "label": "Tower Key", "max_inventory": 99},
     {"id": 1073743925, "order": -1, "category": "key_items", "max_storage": 600, "image": "holy_remains", "label": "Holy Remains", "max_inventory": 99},
-    {"id": 1073743926, "order": 17, "category": "key_items", "max_storage": 600, "image": "small_lothric_banner", "label": "Small Lothric Banner", "max_inventory": 99},
-    {"id": 1073743927, "order": 26, "category": "key_items", "max_storage": 600, "image": "farron_coal", "label": "Farron Coal", "max_inventory": 99},
-    {"id": 1073743928, "order": 27, "category": "key_items", "max_storage": 600, "image": "sages_coal", "label": "Sage's Coal", "max_inventory": 99},
-    {"id": 1073743929, "order": 28, "category": "key_items", "max_storage": 600, "image": "giants_coal", "label": "Giant's Coal", "max_inventory": 99},
-    {"id": 1073743930, "order": 29, "category": "key_items", "max_storage": 600, "image": "profaned_coal", "label": "Profaned Coal", "max_inventory": 99},
-    {"id": 1073743931, "order": 44, "category": "key_items", "max_storage": 600, "image": "morticians_ashes", "label": "Mortician's Ashes", "max_inventory": 99},
-    {"id": 1073743932, "order": 46, "category": "key_items", "max_storage": 600, "image": "dreamchasers_ashes", "label": "Dreamchaser's Ashes", "max_inventory": 99},
-    {"id": 1073743933, "order": 45, "category": "key_items", "max_storage": 600, "image": "paladins_ashes", "label": "Paladin's Ashes", "max_inventory": 99},
-    {"id": 1073743934, "order": 47, "category": "key_items", "max_storage": 600, "image": "grave_wardens_ashes", "label": "Grave Warden's Ashes", "max_inventory": 99},
-    {"id": 1073743935, "order": 55, "category": "key_items", "max_storage": 600, "image": "greirats_ashes", "label": "Greirat's Ashes", "max_inventory": 99},
-    {"id": 1073743936, "order": 56, "category": "key_items", "max_storage": 600, "image": "orbecks_ashes", "label": "Orbeck's Ashes", "max_inventory": 99},
-    {"id": 1073743937, "order": 57, "category": "key_items", "max_storage": 600, "image": "cornyxs_ashes", "label": "Cornyx's Ashes", "max_inventory": 99},
-    {"id": 1073743938, "order": 59, "category": "key_items", "max_storage": 600, "image": "karlas_ashes", "label": "Karla's Ashes", "max_inventory": 99},
-    {"id": 1073743939, "order": 58, "category": "key_items", "max_storage": 600, "image": "irinas_ashes", "label": "Irina's Ashes", "max_inventory": 99},
-    {"id": 1073743940, "order": 61, "category": "key_items", "max_storage": 600, "image": "yurias_ashes", "label": "Yuria's Ashes", "max_inventory": 99},
-    {"id": 1073743941, "order": 20, "category": "key_items", "max_storage": 600, "image": "basin_of_vows", "label": "Basin of Vows", "max_inventory": 99},
-    {"id": 1073743943, "order": 39, "category": "key_items", "max_storage": 600, "image": "braille_divine_tome_of_carim", "label": "Braille Divine Tome of Carim", "max_inventory": 99},
-    {"id": 1073743944, "order": 40, "category": "key_items", "max_storage": 600, "image": "braille_divine_tome_of_lothric", "label": "Braille Divine Tome of Lothric", "max_inventory": 99},
-    {"id": 1073743945, "order": 41, "category": "key_items", "max_storage": 600, "image": "braille_divine_sunlight_tome", "label": "Braille Divine Sunlight Tome", "max_inventory": 99},
+    {"id": 1073743926, "order": 19, "category": "key_items", "max_storage": 600, "image": "small_lothric_banner", "label": "Small Lothric Banner", "max_inventory": 99},
+    {"id": 1073743927, "order": 28, "category": "key_items", "max_storage": 600, "image": "farron_coal", "label": "Farron Coal", "max_inventory": 99},
+    {"id": 1073743928, "order": 29, "category": "key_items", "max_storage": 600, "image": "sages_coal", "label": "Sage's Coal", "max_inventory": 99},
+    {"id": 1073743929, "order": 30, "category": "key_items", "max_storage": 600, "image": "giants_coal", "label": "Giant's Coal", "max_inventory": 99},
+    {"id": 1073743930, "order": 31, "category": "key_items", "max_storage": 600, "image": "profaned_coal", "label": "Profaned Coal", "max_inventory": 99},
+    {"id": 1073743931, "order": 46, "category": "key_items", "max_storage": 600, "image": "morticians_ashes", "label": "Mortician's Ashes", "max_inventory": 99},
+    {"id": 1073743932, "order": 48, "category": "key_items", "max_storage": 600, "image": "dreamchasers_ashes", "label": "Dreamchaser's Ashes", "max_inventory": 99},
+    {"id": 1073743933, "order": 47, "category": "key_items", "max_storage": 600, "image": "paladins_ashes", "label": "Paladin's Ashes", "max_inventory": 99},
+    {"id": 1073743934, "order": 49, "category": "key_items", "max_storage": 600, "image": "grave_wardens_ashes", "label": "Grave Warden's Ashes", "max_inventory": 99},
+    {"id": 1073743935, "order": 57, "category": "key_items", "max_storage": 600, "image": "greirats_ashes", "label": "Greirat's Ashes", "max_inventory": 99},
+    {"id": 1073743936, "order": 58, "category": "key_items", "max_storage": 600, "image": "orbecks_ashes", "label": "Orbeck's Ashes", "max_inventory": 99},
+    {"id": 1073743937, "order": 59, "category": "key_items", "max_storage": 600, "image": "cornyxs_ashes", "label": "Cornyx's Ashes", "max_inventory": 99},
+    {"id": 1073743938, "order": 61, "category": "key_items", "max_storage": 600, "image": "karlas_ashes", "label": "Karla's Ashes", "max_inventory": 99},
+    {"id": 1073743939, "order": 60, "category": "key_items", "max_storage": 600, "image": "irinas_ashes", "label": "Irina's Ashes", "max_inventory": 99},
+    {"id": 1073743940, "order": 63, "category": "key_items", "max_storage": 600, "image": "yurias_ashes", "label": "Yuria's Ashes", "max_inventory": 99},
+    {"id": 1073743941, "order": 22, "category": "key_items", "max_storage": 600, "image": "basin_of_vows", "label": "Basin of Vows", "max_inventory": 99},
+    {"id": 1073743943, "order": 41, "category": "key_items", "max_storage": 600, "image": "braille_divine_tome_of_carim", "label": "Braille Divine Tome of Carim", "max_inventory": 99},
+    {"id": 1073743944, "order": 42, "category": "key_items", "max_storage": 600, "image": "braille_divine_tome_of_lothric", "label": "Braille Divine Tome of Lothric", "max_inventory": 99},
+    {"id": 1073743945, "order": 43, "category": "key_items", "max_storage": 600, "image": "braille_divine_sunlight_tome", "label": "Braille Divine Sunlight Tome", "max_inventory": 99},
     {"id": 1073743947, "order": 0, "category": "key_items", "max_storage": 600, "image": "cinders_of_a_lord_abyss_watchers", "label": "Cinders of a Lord", "max_inventory": 0},
     {"id": 1073743948, "order": 1, "category": "key_items", "max_storage": 600, "image": "cinders_of_a_lord_yhorm", "label": "Cinders of a Lord", "max_inventory": 0},
     {"id": 1073743949, "order": 2, "category": "key_items", "max_storage": 600, "image": "cinders_of_a_lord_aldrich", "label": "Cinders of a Lord", "max_inventory": 0},
     {"id": 1073743950, "order": 3, "category": "key_items", "max_storage": 600, "image": "cinders_of_a_lord_prince_lothric", "label": "Cinders of a Lord", "max_inventory": 0},
-    {"id": 1073743951, "order": 34, "category": "key_items", "max_storage": 600, "image": "great_swamp_pyromancy_tome", "label": "Great Swamp Pyromancy Tome", "max_inventory": 99},
-    {"id": 1073743952, "order": 35, "category": "key_items", "max_storage": 600, "image": "carthus_pyromancy_tome", "label": "Carthus Pyromancy Tome", "max_inventory": 99},
-    {"id": 1073743953, "order": 36, "category": "key_items", "max_storage": 600, "image": "izalith_pyromancy_tome", "label": "Izalith Pyromancy Tome", "max_inventory": 99},
-    {"id": 1073743954, "order": 37, "category": "key_items", "max_storage": 600, "image": "quelana_pyromancy_tome", "label": "Quelana Pyromancy Tome", "max_inventory": 99},
-    {"id": 1073743955, "order": 38, "category": "key_items", "max_storage": 600, "image": "grave_warden_pyromancy_tome", "label": "Grave Warden Pyromancy Tome", "max_inventory": 99},
-    {"id": 1073743956, "order": 30, "category": "key_items", "max_storage": 600, "image": "sages_scroll", "label": "Sage's Scroll", "max_inventory": 99},
-    {"id": 1073743957, "order": 31, "category": "key_items", "max_storage": 600, "image": "logans_scroll", "label": "Logan's Scroll", "max_inventory": 99},
-    {"id": 1073743958, "order": 32, "category": "key_items", "max_storage": 600, "image": "crystal_scroll", "label": "Crystal Scroll", "max_inventory": 99},
+    {"id": 1073743951, "order": 36, "category": "key_items", "max_storage": 600, "image": "great_swamp_pyromancy_tome", "label": "Great Swamp Pyromancy Tome", "max_inventory": 99},
+    {"id": 1073743952, "order": 37, "category": "key_items", "max_storage": 600, "image": "carthus_pyromancy_tome", "label": "Carthus Pyromancy Tome", "max_inventory": 99},
+    {"id": 1073743953, "order": 38, "category": "key_items", "max_storage": 600, "image": "izalith_pyromancy_tome", "label": "Izalith Pyromancy Tome", "max_inventory": 99},
+    {"id": 1073743954, "order": 39, "category": "key_items", "max_storage": 600, "image": "quelana_pyromancy_tome", "label": "Quelana Pyromancy Tome", "max_inventory": 99},
+    {"id": 1073743955, "order": 40, "category": "key_items", "max_storage": 600, "image": "grave_warden_pyromancy_tome", "label": "Grave Warden Pyromancy Tome", "max_inventory": 99},
+    {"id": 1073743956, "order": 32, "category": "key_items", "max_storage": 600, "image": "sages_scroll", "label": "Sage's Scroll", "max_inventory": 99},
+    {"id": 1073743957, "order": 33, "category": "key_items", "max_storage": 600, "image": "logans_scroll", "label": "Logan's Scroll", "max_inventory": 99},
+    {"id": 1073743958, "order": 34, "category": "key_items", "max_storage": 600, "image": "crystal_scroll", "label": "Crystal Scroll", "max_inventory": 99},
     {"id": 1073743959, "order": 4, "category": "key_items", "max_storage": 600, "image": "transposing_kiln", "label": "Transposing Kiln", "max_inventory": 99},
     {"id": 1073743960, "order": -1, "category": "key_items", "max_storage": 600, "image": "gwyndolins_finger", "label": "Gwyndolin's Finger", "max_inventory": 99},
-    {"id": 1073743961, "order": 22, "category": "key_items", "max_storage": 600, "image": "coiled_sword", "label": "Coiled Sword", "max_inventory": 99},
+    {"id": 1073743961, "order": 24, "category": "key_items", "max_storage": 600, "image": "coiled_sword", "label": "Coiled Sword", "max_inventory": 99},
     {"id": 1073743962, "order": 5, "category": "key_items", "max_storage": 600, "image": "eyes_of_a_fire_keeper", "label": "Eyes of a Fire Keeper", "max_inventory": 99},
-    {"id": 1073743963, "order": 23, "category": "key_items", "max_storage": 600, "image": "sword_of_avowal", "label": "Sword of Avowal", "max_inventory": 99},
-    {"id": 1073743964, "order": 33, "category": "key_items", "max_storage": 600, "image": "golden_scroll", "label": "Golden Scroll", "max_inventory": 99},
-    {"id": 1073743966, "order": 21, "category": "key_items", "max_storage": 600, "image": "hawkwoods_swordgrass", "label": "Hawkwood's Swordgrass", "max_inventory": 99},
-    {"id": 1073743968, "order": 43, "category": "key_items", "max_storage": 600, "image": "deep_braille_divine_tome", "label": "Deep Braille Divine Tome", "max_inventory": 99},
-    {"id": 1073743969, "order": 42, "category": "key_items", "max_storage": 600, "image": "londor_braille_divine_tome", "label": "Londor Braille Divine Tome", "max_inventory": 99},
-    {"id": 1073743970, "order": 48, "category": "key_items", "max_storage": 600, "image": "excrement_covered_ashes", "label": "Excrement-covered Ashes", "max_inventory": 99},
-    {"id": 1073743971, "order": 49, "category": "key_items", "max_storage": 600, "image": "prisoner_chiefs_ashes", "label": "Prisoner Chief's Ashes", "max_inventory": 99},
-    {"id": 1073743972, "order": 50, "category": "key_items", "max_storage": 600, "image": "xanthous_ashes", "label": "Xanthous Ashes", "max_inventory": 99},
-    {"id": 1073743973, "order": 53, "category": "key_items", "max_storage": 600, "image": "hollows_ashes", "label": "Hollow's Ashes", "max_inventory": 99},
-    {"id": 1073743974, "order": 60, "category": "key_items", "max_storage": 600, "image": "patches_ashes", "label": "Patches' Ashes", "max_inventory": 99},
-    {"id": 1073743975, "order": 52, "category": "key_items", "max_storage": 600, "image": "dragon_chasers_ashes", "label": "Dragon Chaser's Ashes", "max_inventory": 99},
-    {"id": 1073743976, "order": 51, "category": "key_items", "max_storage": 600, "image": "easterners_ashes", "label": "Easterner's Ashes", "max_inventory": 99},
-    {"id": 1073743977, "order": 62, "category": "key_items", "max_storage": 600, "image": "champions_bones", "label": "Champions Bones", "max_inventory": 99},
-    {"id": 1073743978, "order": 54, "category": "key_items", "max_storage": 600, "image": "captains_ashes", "label": "Captain's Ashes", "max_inventory": 99},
-    {"id": 1073743979, "order": 16, "category": "key_items", "max_storage": 600, "image": "contraption_key", "label": "Contraption Key", "max_inventory": 99},
-    {"id": 1073743980, "order": 18, "category": "key_items", "max_storage": 600, "image": "small_envoy_banner", "label": "Small Envoy Banner", "max_inventory": 99},
-    {"id": 1073743981, "order": 63, "category": "key_items", "max_storage": 600, "image": "old_womans_ashes", "label": "Old Woman's Ashes", "max_inventory": 99},
-    {"id": 1073743982, "order": 24, "category": "key_items", "max_storage": 600, "image": "blood_of_the_dark_souls", "label": "Blood of the Dark souls", "max_inventory": 99},
-    {"id": 1073743983, "order": 25, "category": "key_items", "max_storage": 600, "image": "young_grass_dew", "label": "Young Grass Dew", "max_inventory": 99},
+    {"id": 1073743963, "order": 25, "category": "key_items", "max_storage": 600, "image": "sword_of_avowal", "label": "Sword of Avowal", "max_inventory": 99},
+    {"id": 1073743964, "order": 35, "category": "key_items", "max_storage": 600, "image": "golden_scroll", "label": "Golden Scroll", "max_inventory": 99},
+    {"id": 1073743966, "order": 23, "category": "key_items", "max_storage": 600, "image": "hawkwoods_swordgrass", "label": "Hawkwood's Swordgrass", "max_inventory": 99},
+    {"id": 1073743968, "order": 45, "category": "key_items", "max_storage": 600, "image": "deep_braille_divine_tome", "label": "Deep Braille Divine Tome", "max_inventory": 99},
+    {"id": 1073743969, "order": 44, "category": "key_items", "max_storage": 600, "image": "londor_braille_divine_tome", "label": "Londor Braille Divine Tome", "max_inventory": 99},
+    {"id": 1073743970, "order": 50, "category": "key_items", "max_storage": 600, "image": "excrement_covered_ashes", "label": "Excrement-covered Ashes", "max_inventory": 99},
+    {"id": 1073743971, "order": 51, "category": "key_items", "max_storage": 600, "image": "prisoner_chiefs_ashes", "label": "Prisoner Chief's Ashes", "max_inventory": 99},
+    {"id": 1073743972, "order": 52, "category": "key_items", "max_storage": 600, "image": "xanthous_ashes", "label": "Xanthous Ashes", "max_inventory": 99},
+    {"id": 1073743973, "order": 55, "category": "key_items", "max_storage": 600, "image": "hollows_ashes", "label": "Hollow's Ashes", "max_inventory": 99},
+    {"id": 1073743974, "order": 62, "category": "key_items", "max_storage": 600, "image": "patches_ashes", "label": "Patches' Ashes", "max_inventory": 99},
+    {"id": 1073743975, "order": 54, "category": "key_items", "max_storage": 600, "image": "dragon_chasers_ashes", "label": "Dragon Chaser's Ashes", "max_inventory": 99},
+    {"id": 1073743976, "order": 53, "category": "key_items", "max_storage": 600, "image": "easterners_ashes", "label": "Easterner's Ashes", "max_inventory": 99},
+    {"id": 1073743977, "order": 64, "category": "key_items", "max_storage": 600, "image": "champions_bones", "label": "Champions Bones", "max_inventory": 99},
+    {"id": 1073743978, "order": 56, "category": "key_items", "max_storage": 600, "image": "captains_ashes", "label": "Captain's Ashes", "max_inventory": 99},
+    {"id": 1073743979, "order": 18, "category": "key_items", "max_storage": 600, "image": "contraption_key", "label": "Contraption Key", "max_inventory": 99},
+    {"id": 1073743980, "order": 20, "category": "key_items", "max_storage": 600, "image": "small_envoy_banner", "label": "Small Envoy Banner", "max_inventory": 99},
+    {"id": 1073743981, "order": 65, "category": "key_items", "max_storage": 600, "image": "old_womans_ashes", "label": "Old Woman's Ashes", "max_inventory": 99},
+    {"id": 1073743982, "order": 26, "category": "key_items", "max_storage": 600, "image": "blood_of_the_dark_souls", "label": "Blood of the Dark souls", "max_inventory": 99},
+    {"id": 1073743983, "order": 27, "category": "key_items", "max_storage": 600, "image": "young_grass_dew", "label": "Young Grass Dew", "max_inventory": 99},
 ]
 
 SPELLS = [
@@ -1259,6 +1260,46 @@ COVENANT_ITEMS = [
     {"id": 536880992, "order": 4, "category": "covenant", "image": "rosarias_fingers", "label": "Rosaria's Fingers"},
     {"id": 536881002, "order": 8, "category": "covenant", "image": "spears_of_the_church", "label": "Spears of the church"},
 ]
+
+# armor_id = item["id"]
+# item_type = armor_id % 10000
+# if item_type == 5456:
+#     item_type_s = "head"
+# elif item_type == 6456:
+#     item_type_s = "chest"
+# elif item_type == 7456:
+#     item_type_s = "hands"
+# elif item_type == 8456:
+#     item_type_s = "legs"
+#
+
+# for item in sorted(ARMOR_LEGS, key=lambda x: x["id"]):
+#     item_id = item["id"]
+#     order = item.get("order")
+#     if order is None:
+#         order = 0
+#     order_value = f", \"order\": {int(order)}"
+#     bytes_id = item.get("bytes_id")
+#     bytes_id_value = ""
+#     # if bytes_id:
+#     #     bytes_id_value = f", \"bytes_id\": {bytes_id}"
+#     label = item["label"]
+#     category = item["category"]
+#     image = item["image"]
+#     infusion_label = item.get("infusion_label")
+#     infusion_value = ""
+#     if infusion_label:
+#         infusion_value = f", \"infusion_label\": \"{infusion_label}\""
+#     max_inventory = item.get("max_inventory")
+#     max_inventory_value = ""
+#     if max_inventory:
+#         infusion_value = f", \"max_inventory\": {int(max_inventory)}"
+#     max_storage = item.get("max_storage")
+#     max_storage_value = ""
+#     if max_storage:
+#         max_storage_value = f", \"max_storage\": {int(max_storage)}"
+#     print(f"    {{\"id\": {item_id}{order_value}{bytes_id_value}, \"category\": \"{category}\"{max_inventory_value}{max_storage_value}, \"image\": \"{image}\", \"label\": \"{label}\"{infusion_value}}},")
+
 
 ITEMS_BY_ID = {
     item["id"]: item
