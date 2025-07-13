@@ -990,7 +990,7 @@ TOOLS = [
     {"id": 1073742275, "order": -1, "category": "tools", "max_storage": 600, "image": "oozing_flash_berry", "label": "Oozing Flash Berry", "max_inventory": 99},
     {"id": 1073742276, "order": 18, "category": "tools", "max_storage": 600, "image": "mossfruit", "label": "Mossfruit", "max_inventory": 99},
     {"id": 1073742277, "order": -1, "category": "tools", "max_storage": 600, "image": "brightbug", "label": "Brightbug", "max_inventory": 99},
-    {"id": 1073742278, "order": 5, "category": "tools", "max_storage": 600, "image": "estus_shard", "label": "Estus Shard", "max_inventory": 99},
+    {"id": 1073742278, "order": 48, "category": "tools", "max_storage": 600, "image": "young_white_branch", "label": "Young White Branch", "max_inventory": 10},
     {"id": 1073742279, "order": 46, "category": "tools", "max_storage": 600, "image": "rusted_coin", "label": "Rusted Coin", "max_inventory": 99},
     {"id": 1073742280, "order": 9, "category": "tools", "max_storage": 600, "image": "siegbrau", "label": "Siegbräu", "max_inventory": 10},
     {"id": 1073742281, "order": 47, "category": "tools", "max_storage": 600, "image": "rusted_gold_coin", "label": "Rusted Gold Coin", "max_inventory": 10},
@@ -998,8 +998,8 @@ TOOLS = [
     {"id": 1073742283, "order": 15, "category": "tools", "max_storage": 600, "image": "red_bug_pellet", "label": "Red Bug Pellet", "max_inventory": 5},
     {"id": 1073742284, "order": 16, "category": "tools", "max_storage": 600, "image": "yellow_bug_pellet", "label": "Yellow Bug Pellet", "max_inventory": 5},
     {"id": 1073742285, "order": 17, "category": "tools", "max_storage": 600, "image": "black_bug_pellet", "label": "Black Bug Pellet", "max_inventory": 5},
-    {"id": 1073742286, "order": 48, "category": "tools", "max_storage": 600, "image": "young_white_branch", "label": "Young White Branch", "max_inventory": 10},
-    {"id": 1073742287, "order": 49, "category": "tools", "max_storage": 600, "image": "young_white_branch", "label": "Young White Branch", "max_inventory": 10},
+    {"id": 1073742286, "order": 49, "category": "tools", "max_storage": 600, "image": "young_white_branch", "label": "Young White Branch", "max_inventory": 10},
+    {"id": 1073742287, "order": 50, "category": "tools", "max_storage": 600, "image": "young_white_branch", "label": "Young White Branch", "max_inventory": 10},
     {"id": 1073742324, "order": 4, "category": "tools", "max_storage": 600, "image": "ember", "label": "Ember", "max_inventory": 99},
     {"id": 1073742344, "order": 63, "category": "tools", "max_storage": 600, "image": "hello_carving", "label": "Hello Carving", "max_inventory": 99},
     {"id": 1073742345, "order": 64, "category": "tools", "max_storage": 600, "image": "thank_you_carving", "label": "Thank you Carving", "max_inventory": 99},
@@ -1035,6 +1035,7 @@ TOOLS = [
     {"id": 1073742570, "order": 111, "category": "tools", "max_storage": 600, "image": "soul_of_the_demon_prince", "label": "Soul of the Demon Prince", "max_inventory": 99},
     {"id": 1073742571, "order": 112, "category": "tools", "max_storage": 600, "image": "soul_of_darkeater_midir", "label": "Soul of Darkeater Midir", "max_inventory": 99},
     {"id": 1073743942, "order": 56, "category": "tools", "max_storage": 600, "image": "lorettas_bone", "label": "Loretta's Bone", "max_inventory": 99},
+    {"id": 1073743965, "order": 5, "category": "tools", "max_storage": 600, "image": "estus_shard", "label": "Estus Shard", "max_inventory": 99},
     {"id": 1073743967, "order": 6, "category": "tools", "max_storage": 600, "image": "undead_bone_shard", "label": "Undead Bone Shard", "max_inventory": 99},
 ]
 
