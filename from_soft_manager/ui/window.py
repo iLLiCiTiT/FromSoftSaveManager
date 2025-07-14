@@ -191,7 +191,7 @@ class SideBarWidget(QtWidgets.QFrame):
         self.set_current_tab(None)
 
 
-class MainWindow(QtWidgets.QDialog):
+class MainWindow(QtWidgets.QWidget):
     def __init__(self, controller: "Controller"):
         super().__init__()
 
