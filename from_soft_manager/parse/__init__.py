@@ -4,7 +4,6 @@ from .parse_dsr import (
     parse_dsr_file,
     DSRSaveFile,
     DSRCharacter,
-    InventoryItem,
 )
 from .parse_ds3 import (
     parse_ds3_file,
@@ -17,7 +16,6 @@ from ._dsr_items import (
     DSR_PHYSIQUE,
     DSR_CLASSES,
     DSR_GIFTS,
-    ITEMS_BY_IDS,
 )
 
 
@@ -31,7 +29,6 @@ __all__ = (
     "parse_dsr_file",
     "DSRSaveFile",
     "DSRCharacter",
-    "InventoryItem",
 
     "parse_ds3_file",
     "DS3SaveFile",
@@ -42,5 +39,4 @@ __all__ = (
     "DSR_PHYSIQUE",
     "DSR_CLASSES",
     "DSR_GIFTS",
-    "ITEMS_BY_IDS",
 )
