@@ -20,4 +20,8 @@ def main():
     window = MainWindow(controller)
     window.show()
 
-    sys.exit(app.exec_())
+    try:
+        sys.exit(app.exec_())
+    finally:
+        controller.save_config()
+

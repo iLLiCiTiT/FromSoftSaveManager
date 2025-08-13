@@ -180,6 +180,9 @@ class ConfigModel(QtCore.QObject):
             self.autobackup_changed.emit()
         self.config_changed.emit()
 
+    def save_config(self) -> None:
+        self._save_config()
+
     def get_backup_dir_path(self, *args) -> str:
         return os.path.join(self._app_dir, "backups", *args)
 
