@@ -289,6 +289,8 @@ class MainWindow(QtWidgets.QWidget):
             save_id = None
             if first_widget is not None:
                 save_id = first_widget.save_id
+
+        if save_id != self._current_save_id:
             self._side_bar_widget.set_current_tab(save_id)
             self._controller.set_current_save_id(save_id)
 
