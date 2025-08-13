@@ -336,6 +336,9 @@ class Controller(QtCore.QObject):
     def save_config_info(self, config_data: ConfigConfirmData):
         return self._config_model.save_config_info(config_data)
 
+    def save_config(self) -> None:
+        self._config_model.save_config()
+
     def get_save_items(self) -> list[SaveItem]:
         return self._config_model.get_save_items()
 
