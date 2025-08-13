@@ -223,6 +223,7 @@ class ConfigModel(QtCore.QObject):
         return self._config_data["last_selected_save_id"]
 
     def set_last_selected_save_id(self, save_id: str | None) -> None:
+        # Settings page is opened if 'save_id' is 'None'
         if save_id is None:
             return
         self._config_data["last_selected_save_id"] = save_id
