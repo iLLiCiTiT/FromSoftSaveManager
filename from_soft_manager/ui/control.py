@@ -336,6 +336,9 @@ class Controller(QtCore.QObject):
     def save_config_info(self, config_data: ConfigConfirmData):
         return self._config_model.save_config_info(config_data)
 
+    def save_config(self) -> None:
+        self._config_model.save_config()
+
     def get_save_items(self) -> list[SaveItem]:
         return self._config_model.get_save_items()
 
@@ -369,8 +372,12 @@ class Controller(QtCore.QObject):
         self._fill_er_characters(info)
         return info
 
-    def set_current_save_id(self, save_id: str | None):
+    def get_last_selected_save_id(self) -> str | None:
+        return self._config_model.get_last_selected_save_id()
+
+    def set_current_save_id(self, save_id: str | None) -> None:
         self._current_save_id = save_id
+        self._config_model.set_last_selected_save_id(save_id)
 
     def create_manual_backup(self, label: str):
         # TODO warn user if save failed.

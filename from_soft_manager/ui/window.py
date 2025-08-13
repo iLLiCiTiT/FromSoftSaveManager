@@ -282,12 +282,17 @@ class MainWindow(QtWidgets.QWidget):
                 save_item.save_id,
             )
 
-        current_widget = self._widgets_by_id.get(self._current_save_id)
+        save_id = self._controller.get_last_selected_save_id()
+        current_widget = self._widgets_by_id.get(save_id)
+
         if current_widget is None:
             save_id = None
             if first_widget is not None:
                 save_id = first_widget.save_id
+
+        if save_id != self._current_save_id:
             self._side_bar_widget.set_current_tab(save_id)
+            self._controller.set_current_save_id(save_id)
 
         for save_id in tuple(self._widgets_by_id.keys()):
             if save_id in used_ids:
