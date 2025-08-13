@@ -10,6 +10,11 @@ from .parse_ds3 import (
     DS3SaveFile,
     DS3Character,
 )
+from .parse_er import (
+    parse_er_file,
+    EldenRingSaveFile,
+    EldenRingCharacter,
+)
 from ._dsr_items import (
     DSR_COVENANTS,
     DSR_GESTURES,
@@ -33,6 +38,10 @@ __all__ = (
     "parse_ds3_file",
     "DS3SaveFile",
     "DS3Character",
+
+    "parse_er_file",
+    "EldenRingSaveFile",
+    "EldenRingCharacter",
 
     "DSR_COVENANTS",
     "DSR_GESTURES",
