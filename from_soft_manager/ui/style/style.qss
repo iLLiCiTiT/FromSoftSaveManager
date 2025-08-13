@@ -230,3 +230,7 @@ ManageSavesWidget QPushButton {
 ManageSavesWidget QPushButton:hover {
     background: #4B4C4F;
 }
+
+ERAttributesLabel QLabel {
+    color: #A99B82;
+}
