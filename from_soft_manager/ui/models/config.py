@@ -219,6 +219,12 @@ class ConfigModel(QtCore.QObject):
                 return save_id
         return None
 
+    def get_last_selected_save_id(self) -> Game | None:
+        return self._config_data["last_selected_save_id"]
+
+    def set_last_selected_save_id(self, save_id: str | None) -> None:
+        self._config_data["last_selected_save_id"] = save_id
+
     def _get_default_save_path(self, game: Game) -> tuple[str, bool]:
         if game == Game.DSR:
             return self._get_default_dsr_save_path()
@@ -330,6 +336,8 @@ class ConfigModel(QtCore.QObject):
         autobackup.setdefault("enabled", False)
         autobackup.setdefault("frequency", 60)
         autobackup.setdefault("max_autobackups", 10)
+
+        config_data.setdefault("last_selected_save_id", None)
 
         self._save_info_by_id = info_by_id
         self._config_data = config_data
