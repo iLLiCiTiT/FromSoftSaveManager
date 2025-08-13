@@ -223,6 +223,8 @@ class ConfigModel(QtCore.QObject):
         return self._config_data["last_selected_save_id"]
 
     def set_last_selected_save_id(self, save_id: str | None) -> None:
+        if save_id is None:
+            return
         self._config_data["last_selected_save_id"] = save_id
 
     def _get_default_save_path(self, game: Game) -> tuple[str, bool]:
