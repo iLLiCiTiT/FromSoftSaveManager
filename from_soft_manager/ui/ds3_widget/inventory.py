@@ -19,6 +19,40 @@ ITEM_STORAGE_BOX_AMOUNT_ROLE = QtCore.Qt.UserRole + 6
 ITEM_IMAGE_ROLE = QtCore.Qt.UserRole + 7
 ITEM_CATEGORY_ROLE = QtCore.Qt.UserRole + 8
 
+
+def map_flask_amounts(max_amount: int, amount: int) -> str:
+    if amount == 0:
+        return "empty"
+    if max_amount in (1, 2):
+        return "full"
+
+    if max_amount == (3, 4):
+        full, half = 2, 1
+    elif max_amount == 5:
+        full, half = 3, 1
+    elif max_amount == (6, 7):
+        full, half = 4, 2
+    elif max_amount == 8:
+        full, half = 5, 3
+    elif max_amount == 9:
+        full, half = 6, 3
+    elif max_amount == 10:
+        full, half = 7, 3
+    elif max_amount == 11:
+        full, half = 7, 4
+    elif max_amount == 12:
+        full, half = 8, 4
+    elif max_amount in (13, 14):
+        full, half = 9, 5
+    else:
+        full, half = 10, 5
+
+    if amount > full:
+        return "full"
+    if amount > half:
+        return "half"
+    return "quater"
+
 CATEGORIES = [
     "tools",
     "materials",
@@ -233,9 +267,13 @@ class InventoryModel(QtGui.QStandardItemModel):
                 inventory_item = inventory_item_by_id.get(item_id)
                 blb_item = blb_items_by_id.get(item_id)
                 if inventory_item is None:
-                    model_item = self._create_model_item(blb_item, True)
+                    model_item = self._create_model_item(
+                        char, blb_item, True
+                    )
                 else:
-                    model_item = self._create_model_item(inventory_item, False)
+                    model_item = self._create_model_item(
+                        char, inventory_item, False
+                    )
                     if blb_item is not None:
                         model_item.setData(
                             blb_item.amount, ITEM_STORAGE_BOX_AMOUNT_ROLE
@@ -245,19 +283,25 @@ class InventoryModel(QtGui.QStandardItemModel):
                     new_items.append(model_item)
 
         for inventory_item in inventory_items:
-            model_item = self._create_model_item(inventory_item, False)
+            model_item = self._create_model_item(
+                char, inventory_item, False
+            )
             if model_item is not None:
                 new_items.append(model_item)
 
         for inventory_item in blb_items:
-            model_item = self._create_model_item(inventory_item, True)
+            model_item = self._create_model_item(
+                char, inventory_item, True
+            )
             if model_item is not None:
                 new_items.append(model_item)
 
         if new_items:
             root_item.appendRows(new_items)
 
-    def _create_model_item(self, inventory_item, in_bottomless_box):
+    def _create_model_item(
+        self, char, inventory_item, in_bottomless_box
+    ):
         item_id = inventory_item.item_id
         item = ITEMS_BY_ID.get(item_id)
         if item is None:
@@ -321,15 +365,39 @@ class InventoryModel(QtGui.QStandardItemModel):
             else:
                 label = " ".join([infusion_name.capitalize(), label])
 
-        category = item["category"]
-        image_name = item["image"]
-        order = item.get("order") or 0
-        pix = get_item_pixmap(image_name)
         inventory_amount = bottomless_amount = 0
         if in_bottomless_box:
             bottomless_amount = inventory_item.amount
         else:
             inventory_amount = inventory_item.amount
+
+        category = item["category"]
+        image_name = item["image"]
+        if 1073741974 <= item_id <= 1073741995:
+            image_type = map_flask_amounts(
+                char.estus_max, inventory_amount
+            )
+            if image_type == "empty":
+                image_name = "estus_flask_empty"
+            elif image_type == "half":
+                image_name = "estus_flask_half"
+            elif image_type == "quater":
+                image_name = "estus_flask_quater"
+
+        # Ashen Estus flask
+        elif 1073742014 <= item_id <= 1073742033:
+            image_type = map_flask_amounts(
+                char.ashen_estus_max, inventory_amount
+            )
+            if image_type == "empty":
+                image_name = "ashen_estus_flask_empty"
+            elif image_type == "half":
+                image_name = "ashen_estus_flask_half"
+            elif image_type == "quater":
+                image_name = "ashen_estus_flask_quater"
+
+        order = item.get("order") or 0
+        pix = get_item_pixmap(image_name)
 
         new_item = QtGui.QStandardItem(label)
         new_item.setFlags(
