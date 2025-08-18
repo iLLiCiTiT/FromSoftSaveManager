@@ -33,14 +33,16 @@ class InventoryItem:
         #   level of Estus flask (how many Estus shard upgrades happened).
         # If 'item level - current estus level = -1' then it is empty flask.
         # Estus flask
-        if 1073741975 < item_id <= 1073741990:
-            level = item_id - 1073741975
-            item_id -= level
+        if 1073741974 <= item_id <= 1073741995:
+            diff = item_id - 1073741974
+            level = int(diff / 2)
+            item_id -= diff
 
         # Ashen Estus flask
-        elif 1073742015 < item_id <= 1073742030:
-            level = item_id - 1073742015
-            item_id -= level
+        elif 1073742014 <= item_id <= 1073742035:
+            diff = item_id - 1073742014
+            level = int(diff / 2)
+            item_id -= diff
 
         if 1000000 < item_id <= 23020000:
             level = item_id % 100
@@ -92,6 +94,10 @@ class DS3Character:
     poison_res: int
     curse_res: int
     frost_res: int
+
+    hollowing: int
+    estus_max: int
+    ashen_estus_max: int
 
     inventory_items: list[InventoryItem]
     key_items: list[InventoryItem]
@@ -166,6 +172,8 @@ def character_from_entry(
     )
     b_name_2 = entry.content[idx + 112:idx + 144]
 
+    unknown = entry.content[idx + 144:idx + 152]
+
     # Warrior of Sunlight attempts and success - maybe?
     wos_attempts, wos_success = struct.unpack(
         "<II", entry.content[idx + 156:idx + 164]
@@ -181,7 +189,14 @@ def character_from_entry(
         entry.content[idx + 200:idx + 220]
     )
 
-    unknown = entry.content[idx + 220:idx + 288]
+    unknown = entry.content[idx + 220:idx + 234]
+    hollowing = entry.content[idx + 230]
+
+    estus_max = entry.content[idx + 234]
+    ashen_estus_max = entry.content[idx + 235]
+
+    unknown = entry.content[idx + 236:idx + 288]
+
     # \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00
     unknown = entry.content[idx + 288:idx + 300]
     # \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\xff (11x)
@@ -209,6 +224,14 @@ def character_from_entry(
         inv_item = InventoryItem.from_inventory_id(item_id)
         if inv_item is None:
             continue
+
+        if (
+            item_count == 1
+            and inv_item.item_id in (1073741974, 1073742014)
+            and item_id % 2 == 0
+        ):
+            item_count = 0
+
         inv_item.amount = item_count
         item = ITEMS_BY_ID.get(inv_item.item_id)
         if item is None:
@@ -392,6 +415,9 @@ def character_from_entry(
         poison_res=poison_res,
         curse_res=curse_res,
         frost_res=frost_res,
+        hollowing=hollowing,
+        estus_max=estus_max,
+        ashen_estus_max=ashen_estus_max,
         inventory_items=inventory_items,
         key_items=key_items,
         storage_box_items=storage_box_items,
