@@ -29,9 +29,9 @@ class InventoryItem:
             return None
 
         level = infusion = 0
-        # Wrong level calculation, to make it work is must be known current
-        #   level of Estus flask (how many Estus shard upgrades happened).
-        # If 'item level - current estus level = -1' then it is empty flask.
+        # Item id of flasks holds level and information if is empty.
+        #    even number means it is empty odd number means it is filled
+        # -> (Item id - Base item id) / 2 = Level
         # Estus flask
         if 1073741974 <= item_id <= 1073741995:
             diff = item_id - 1073741974
