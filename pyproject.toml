@@ -1,6 +1,6 @@
 [project]
 name = "fromsoftsavemanager"
-version = "0.5.1"
+version = "0.5.2-dev"
 description = "Save file manager for FromSoftware games"
 readme = "README.md"
 requires-python = ">=3.11"
