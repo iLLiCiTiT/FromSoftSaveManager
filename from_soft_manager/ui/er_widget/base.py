@@ -146,9 +146,9 @@ class ERWidget(QtWidgets.QWidget):
         if ratio > 1.0:
             src_width *= ratio
         else:
-            src_width /= ratio
+            src_height *= float(rect.height()) / rect.width()
         pos_x = (pix.width() - src_width) * 0.5
-        pos_y = 0
+        pos_y = (pix.height() - src_height) * 0.5
 
         src_rect = QtCore.QRect(pos_x, pos_y, src_width, src_height)
         painter.drawPixmap(rect, pix, src_rect)
