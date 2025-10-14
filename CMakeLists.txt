@@ -13,8 +13,8 @@ find_package(Qt6 COMPONENTS
         REQUIRED)
 
 add_executable(FromSoftSaveManager
-        main.cpp
-        parse/Parse.cpp
+        src/main.cpp
+        src/parse/Parse.cpp
 )
 target_link_libraries(FromSoftSaveManager
         Qt::Core
