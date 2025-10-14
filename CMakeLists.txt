@@ -12,6 +12,9 @@ find_package(Qt6 COMPONENTS
         Widgets
         REQUIRED)
 
+# Add the vendor tiny-AES-c as a subdirectory (uses its own CMakeLists)
+add_subdirectory(vendor/tiny-AES-c)
+
 add_executable(FromSoftSaveManager
         src/main.cpp
         src/parse/Parse.cpp
@@ -20,6 +23,7 @@ target_link_libraries(FromSoftSaveManager
         Qt::Core
         Qt::Gui
         Qt::Widgets
+        tiny-aes
 )
 if ((MSVC) AND (MSVC_VERSION GREATER_EQUAL 1914))
     target_compile_options(FromSoftSaveManager PUBLIC "-Zc:__cplusplus" "-permissive-")
