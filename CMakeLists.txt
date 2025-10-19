@@ -18,6 +18,8 @@ add_subdirectory(vendor/tiny-AES-c)
 add_executable(FromSoftSaveManager
         src/main.cpp
         src/parse/Parse.cpp
+        src/parse/DSRSaveFile.cpp
+        src/parse/Utils.cpp
 )
 target_link_libraries(FromSoftSaveManager
         Qt::Core

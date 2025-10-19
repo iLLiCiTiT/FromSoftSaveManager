@@ -52,12 +52,6 @@ struct SL2File {
 };
 
 // Game-specific character/result structures
-struct DSRCharacterInfo {
-    int index{-1};
-    std::u16string name;
-    int level{-1};
-    std::vector<std::string> inventory; // human-readable inventory lines
-};
 
 struct DS3CharacterInfo {
     int index{-1};

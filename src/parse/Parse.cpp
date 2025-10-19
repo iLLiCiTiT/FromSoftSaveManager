@@ -7,6 +7,7 @@
 #include <iostream>
 #include <locale>
 
+#include "Utils.h"
 #include "Parse.h"
 #include "aes.hpp"
 
@@ -15,39 +16,6 @@ static const unsigned char DS2_KEY[16] = {0x59,0x9f,0x9b,0x69,0x96,0x40,0xa5,0x5
 static const unsigned char DS3_KEY[16] = {0xfd,0x46,0x4d,0x69,0x5e,0x69,0xa3,0x9a,0x10,0xe3,0x19,0xa7,0xac,0xe8,0xb7,0xfa};
 
 namespace fsm::parse {
-
-static uint32_t read_u32_le(const uint8_t* p) {
-    uint32_t v;
-    std::memcpy(&v, p, sizeof(v));
-#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-    v = ((v & 0x000000FFu) << 24) | ((v & 0x0000FF00u) << 8) | ((v & 0x00FF0000u) >> 8) | ((v & 0xFF000000u) >> 24);
-#endif
-    return v;
-}
-
-static uint64_t read_u64_le(const uint8_t* p) {
-    uint64_t v;
-    std::memcpy(&v, p, sizeof(v));
-#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-    v = ((v & 0x00000000000000FFull) << 56) |
-        ((v & 0x000000000000FF00ull) << 40) |
-        ((v & 0x0000000000FF0000ull) << 24) |
-        ((v & 0x00000000FF000000ull) << 8)  |
-        ((v & 0x000000FF00000000ull) >> 8)  |
-        ((v & 0x0000FF0000000000ull) >> 24) |
-        ((v & 0x00FF000000000000ull) >> 40) |
-        ((v & 0xFF00000000000000ull) >> 56);
-#endif
-    return v;
-}
-
-
-std::string u16_to_utf8(const std::u16string& s)
-{
-    // Note: deprecated in C++17, removed in some lib std builds; still widely available.
-    std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> conv;
-    return conv.to_bytes(s);
-}
 
 static Game detect_game(const BND4Header& header, const std::vector<uint8_t>& content) {
     Game game = Game::Unknown;
@@ -173,7 +141,7 @@ SL2File parse_sl2_file(const std::string& input_sl2_file) {
                 if (ch == 0) break;
                 name_u16.push_back(ch);
             }
-            name = u16_to_utf8(name_u16);
+            name = utf16_to_utf8(name_u16);
         } else {
             for (char c: name_b) {
                 if (c == 0) break;
@@ -192,11 +160,11 @@ SL2File parse_sl2_file(const std::string& input_sl2_file) {
 ParsedFile parse_save_file(const std::string& filepath) {
     SL2File sl2 = parse_sl2_file(filepath);
     switch (sl2.game) {
-        case Game::DSR: return parse_dsr_file(sl2);
-        case Game::DS2_SOTFS: return parse_ds2_file(sl2);
-        case Game::DS3: return parse_ds3_file(sl2);
-        case Game::ER: return parse_er_file(sl2);
-        case Game::Sekiro: return parse_sekiro_file(sl2);
+        // case Game::DSR: return parse_dsr_file(sl2);
+        // case Game::DS2_SOTFS: return parse_ds2_file(sl2);
+        // case Game::DS3: return parse_ds3_file(sl2);
+        // case Game::ER: return parse_er_file(sl2);
+        // case Game::Sekiro: return parse_sekiro_file(sl2);
         case Game::Unknown:
         default: {
             ParsedFile pf; pf.game = Game::Unknown; pf.sl2 = sl2; return pf;
