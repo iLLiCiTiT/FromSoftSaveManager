@@ -20,6 +20,7 @@ add_executable(FromSoftSaveManager
         src/parse/Parse.cpp
         src/parse/DSRSaveFile.cpp
         src/parse/Utils.cpp
+        src/ui/resources.qrc
 )
 target_link_libraries(FromSoftSaveManager
         Qt::Core

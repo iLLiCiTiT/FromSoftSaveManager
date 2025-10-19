@@ -1,0 +1,16 @@
+<RCC>
+    <qresource prefix="/fonts">
+        <file alias="NotoSans-Regular.ttf">resources/fonts/Noto_Sans/NotoSans-Regular.ttf</file>
+    </qresource>
+    <qresource prefix="/icons">
+        <file alias="DSR_256x256.png">resources/icons/DSR_256x256.png</file>
+        <file alias="DS2-SOTFS_256x256.png">resources/icons/DS2-SOTFS_256x256.png</file>
+        <file alias="DS3_256x256.png">resources/icons/DS3_256x256.png</file>
+        <file alias="ER_256x256.png">resources/icons/ER_256x256.png</file>
+        <file alias="Sekiro_256x256.png">resources/icons/Sekiro_256x256.png</file>
+        <file alias="settings_256x256.png">resources/icons/settings_256x256.png</file>
+    </qresource>
+    <qresource prefix="/stylesheet">
+        <file alias="app.qss">resources/style/app.qss</file>
+    </qresource>
+</RCC>
