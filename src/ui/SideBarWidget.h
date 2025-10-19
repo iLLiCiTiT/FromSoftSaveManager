@@ -33,5 +33,6 @@ public:
     explicit SideBarWidget(QWidget* parent);
 
 private:
-    std::vector<TabIconButton*> m_tabs;
+    std::vector<TabIconButton*> m_gameTabs;
+    TabIconButton* m_settingsTab;
 };

@@ -9,7 +9,7 @@ TabButtonHint::TabButtonHint(const QString &title, QWidget* parent): QWidget(par
 
     QHBoxLayout* m_layout = new QHBoxLayout(this);
     m_layout->setContentsMargins(0, 0, 0, 0);
-    m_layout->addWidget(m_labelWidget, 1);
+    m_layout->addWidget(m_labelWidget);
 
     setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
     setAttribute(Qt::WA_TranslucentBackground);
@@ -45,8 +45,16 @@ void TabIconButton::leaveEvent(QEvent *event) {
 
 SideBarWidget::SideBarWidget(QWidget* parent): QWidget(parent) {
     QVBoxLayout* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setContentsMargins(4, 4, 4, 4);
+    layout->setSpacing(3);
+    layout->addStretch(1);
 
+    QIcon icon(":/icons/settings_256x256.png");
+    QString title = "Settings";
+    m_settingsTab = new TabIconButton(icon, title, this);
+    layout->addWidget(m_settingsTab, 0);
+
+    // Temporary for dev purposes
     struct TabSpec { const char* icon; const char* title; };
     const TabSpec tabs[] = {
         {":/icons/DSR_256x256.png", "Dark Souls Remastered",},
@@ -59,14 +67,7 @@ SideBarWidget::SideBarWidget(QWidget* parent): QWidget(parent) {
         QIcon icon(t.icon);
         QString title = QString::fromStdString(t.title);
         TabIconButton* btn = new TabIconButton(icon, title, this);
-        layout->addWidget(btn, 0);
-        m_tabs.push_back(btn);
+        layout->insertWidget(layout->count() - 2, btn, 0);
+        m_gameTabs.push_back(btn);
     }
-
-    layout->addStretch(1);
-    QIcon icon(":/icons/settings_256x256.png");
-    QString title = "Settings";
-    TabIconButton* settingBtn = new TabIconButton(icon, title, this);
-    layout->addWidget(settingBtn, 0);
-    m_tabs.push_back(settingBtn);
 };
