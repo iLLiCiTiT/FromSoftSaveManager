@@ -27,10 +27,10 @@ private:
     TabButtonHint* m_hint {nullptr};
 };
 
-class SideBar: public QWidget {
+class SideBarWidget: public QWidget {
     Q_OBJECT
 public:
-    explicit SideBar(QWidget* parent);
+    explicit SideBarWidget(QWidget* parent);
 
 private:
     std::vector<TabIconButton*> m_tabs;

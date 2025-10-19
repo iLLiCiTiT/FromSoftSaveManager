@@ -6,7 +6,7 @@ MainWindow::MainWindow(Controller* controller, QWidget* parent)
     setWindowTitle("FromSoftSaveManager");
     resize(1100, 700);
 
-    m_sideBar = new SideBar(this);
+    m_sideBar = new SideBarWidget(this);
 
     m_stack = new QStackedWidget(this);
 

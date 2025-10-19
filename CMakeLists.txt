@@ -21,7 +21,7 @@ add_executable(FromSoftSaveManager
         src/parse/DSRSaveFile.cpp
         src/parse/Utils.cpp
         src/ui/MainWindow.cpp
-        src/ui/SideBar.cpp
+        src/ui/SideBarWidget.cpp
         src/ui/SquareButton.h
         src/ui/Controller.h
         src/ui/resources.qrc

@@ -1,4 +1,4 @@
-#include "SideBar.h"
+#include "SideBarWidget.h"
 
 #include <QLabel>
 #include <QString>
@@ -43,7 +43,7 @@ void TabIconButton::leaveEvent(QEvent *event) {
     m_hint->hide();
 };
 
-SideBar::SideBar(QWidget* parent): QWidget(parent) {
+SideBarWidget::SideBarWidget(QWidget* parent): QWidget(parent) {
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
 
