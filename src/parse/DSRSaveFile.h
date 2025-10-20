@@ -1,7 +1,6 @@
 #pragma once
 #include <cstdint>
-#include <map>
-#include <optional>
+#include <unordered_map>
 #include <string>
 #include <vector>
 
@@ -31,7 +30,7 @@ namespace fsm::parse {
         std::string image;
         std::string label = "Unknown";
     };
-    inline const std::map<uint32_t, BaseItem> ITEMS_MAPPING = {
+    inline const std::unordered_map<uint32_t, BaseItem> ITEMS_MAPPING = {
         {100, {.id = 100, .type = 536870912, .max_stack_count = 1, .category = "rings", .image = "havels_ring", .label = "Havel's Ring"}},
         {101, {.id = 101, .type = 536870912, .max_stack_count = 1, .category = "rings", .image = "red_tearstone_ring", .label = "Red Tearstone Ring"}},
         {102, {.id = 102, .type = 536870912, .max_stack_count = 1, .category = "rings", .image = "darkmoon_blade_covenant_ring", .label = "Darkmoon Blade Covenant Ring"}},

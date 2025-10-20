@@ -3,7 +3,7 @@
 #include <cstring>
 #include <iostream>
 #include <locale>
-#include <math.h>
+#include <optional>
 
 std::string utf16_to_utf8(const std::u16string& s)
 {
@@ -122,7 +122,7 @@ namespace fsm::parse {
                 int offset = inventory_offset + (idx * 28);
                 uint32_t item_id = bytes_to_u32(c, offset + 4);
                 if (item_id == 0xFFFFFFFFu) continue;
-                std::map<uint32_t, BaseItem>::const_iterator tmp_it = ITEMS_MAPPING.find(item_id);
+                std::unordered_map<uint32_t, BaseItem>::const_iterator tmp_it = ITEMS_MAPPING.find(item_id);
                 uint8_t upgrade_level = 0;
                 uint8_t infusion = 0;
                 std::optional<BaseItem> base_item = std::nullopt;
