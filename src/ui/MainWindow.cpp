@@ -10,6 +10,12 @@ MainWindow::MainWindow(Controller* controller, QWidget* parent)
 
     m_stack = new QStackedWidget(this);
 
+    m_settingsWidget = new SettingsWidget(m_stack);
+
+    m_stack->addWidget(m_settingsWidget);
+
+    m_stack->setCurrentWidget(m_settingsWidget);
+
     QHBoxLayout* rootLayout = new QHBoxLayout(this);
     rootLayout->setContentsMargins(0, 0, 0, 0);
     rootLayout->setSpacing(0);

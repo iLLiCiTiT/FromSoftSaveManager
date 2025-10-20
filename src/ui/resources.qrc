@@ -9,6 +9,7 @@
         <file alias="ER_256x256.png">resources/icons/ER_256x256.png</file>
         <file alias="Sekiro_256x256.png">resources/icons/Sekiro_256x256.png</file>
         <file alias="settings_256x256.png">resources/icons/settings_256x256.png</file>
+        <file alias="folder_256x256.png">resources/icons/folder_256x256.png</file>
     </qresource>
     <qresource prefix="/stylesheet">
         <file alias="app.qss">resources/style/app.qss</file>
