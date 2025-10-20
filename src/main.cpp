@@ -9,6 +9,7 @@ int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
     app.setApplicationName("FromSoftSaveManager");
     app.setApplicationVersion("0.1.0");
+    app.setWindowIcon(QIcon(":/icons/icon.png"));
 
     QFile f(":/stylesheet/app.qss");
     if (f.open(QFile::ReadOnly)) {

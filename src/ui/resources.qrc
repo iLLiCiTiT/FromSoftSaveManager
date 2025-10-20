@@ -3,6 +3,7 @@
         <file alias="NotoSans-Regular.ttf">resources/fonts/Noto_Sans/NotoSans-Regular.ttf</file>
     </qresource>
     <qresource prefix="/icons">
+        <file alias="icon.png">resources/icons/icon.png</file>
         <file alias="DSR_256x256.png">resources/icons/DSR_256x256.png</file>
         <file alias="DS2-SOTFS_256x256.png">resources/icons/DS2-SOTFS_256x256.png</file>
         <file alias="DS3_256x256.png">resources/icons/DS3_256x256.png</file>
