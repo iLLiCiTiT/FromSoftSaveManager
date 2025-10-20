@@ -13,7 +13,7 @@ std::string utf16_to_utf8(const std::u16string& s)
 }
 
 namespace fsm::parse {
-    uint32_t bytes_to_u32(const std::vector<uint8_t>& b, int offset)
+    uint32_t bytes_to_u32(const std::vector<uint8_t>& b, const int& offset)
     {
         if (b.size() % sizeof(uint32_t) != 0) {
             throw std::runtime_error("Byte size not a multiple of 4");

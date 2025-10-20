@@ -5,7 +5,7 @@
 class TabButtonHint: public QWidget {
     Q_OBJECT
 public:
-    explicit TabButtonHint(const QString &title, QWidget* parent);
+    explicit TabButtonHint(const QString& title, QWidget* parent);
     ~TabButtonHint() override = default;
 
 private:
@@ -15,16 +15,16 @@ private:
 class TabIconButton: public SquareButton {
     Q_OBJECT
 public:
-    explicit TabIconButton(QIcon &icon, const QString &title, QWidget* parent);
+    explicit TabIconButton(QIcon& icon, const QString& title, QWidget* parent);
     ~TabIconButton() override = default;
     void setSelected(bool selected);
     bool isSelected() const;
-    void enterEvent(QEnterEvent *event) override;
-    void leaveEvent(QEvent *event) override;
+    virtual void enterEvent(QEnterEvent *event) override;
+    virtual void leaveEvent(QEvent *event) override;
 
 private:
     bool m_isSelected = false;
-    TabButtonHint* m_hint {nullptr};
+    TabButtonHint* m_hint = nullptr;
 };
 
 class SideBarWidget: public QWidget {
