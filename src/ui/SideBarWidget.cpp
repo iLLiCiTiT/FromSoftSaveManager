@@ -93,6 +93,9 @@ SideBarWidget::SideBarWidget(QWidget* parent): QWidget(parent) {
     m_layout->addWidget(m_settingsTab, 0);
 
     connect(m_settingsTab, SIGNAL(requested(QString)), this, SLOT(setCurrentTab(QString)));
+
+    // Temporary for dev purposes
+    addTab(fsm::parse::Game::DSR, "test");
 };
 
 void SideBarWidget::addTab(const fsm::parse::Game& game, const QString& save_id) {
