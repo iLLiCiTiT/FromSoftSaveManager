@@ -106,6 +106,14 @@ void SideBarWidget::addTab(const fsm::parse::Game& game, const QString& save_id)
 };
 
 void SideBarWidget::removeTab(const QString& save_id) {
+    if (save_id == m_currentTab) setCurrentTab("");
+    if (m_gameTabs.find(save_id) == m_gameTabs.end()) return;
+
+    TabIconButton* btn = m_gameTabs.at(save_id);
+
+    btn->setVisible(false);
+    if (const int idx = m_layout->indexOf(btn); idx != -1) m_layout->takeAt(idx);
+    btn->deleteLater();
 };
 
 void SideBarWidget::setCurrentTab(const QString& save_id) {
