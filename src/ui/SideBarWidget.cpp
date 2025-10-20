@@ -82,7 +82,4 @@ void SideBarWidget::addTab(fsm::parse::Game game, QString save_id) {
     m_gameTabs[save_id] = tab_btn;
     // // tab_btn.requested.connect(self.setCurrentTab);
     m_layout->insertWidget(m_layout->count() - 2, tab_btn, 0);
-    if (m_currentTab.isEmpty()) {
-        setCurrentTab(save_id);
-    }
 };
