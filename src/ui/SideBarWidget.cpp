@@ -1,8 +1,11 @@
 #include "SideBarWidget.h"
 
+#include <iostream>
 #include <QLabel>
+#include <QStyle>
 #include <QString>
 #include <QVBoxLayout>
+#include "../parse/Parse.h"
 
 TabButtonHint::TabButtonHint(const QString& title, QWidget* parent): QWidget(parent) {
     m_labelWidget = new QLabel(title, this);
@@ -15,19 +18,23 @@ TabButtonHint::TabButtonHint(const QString& title, QWidget* parent): QWidget(par
     setAttribute(Qt::WA_TranslucentBackground);
 };
 
+void TabButtonHint::setSelected(const bool& selected) {
+    m_labelWidget->setProperty("selected", selected ? "1" : "0");
+    m_labelWidget->style()->polish(m_labelWidget);
+}
+
 TabIconButton::TabIconButton(const QIcon& icon, const QString& title, QWidget* parent): SquareButton(parent) {
     m_hint = new TabButtonHint(title, this);
+    connect(this, SIGNAL(clicked()), SLOT(onClick()));
     setIcon(icon);
 };
 
-void TabIconButton::setSelected(bool selected) {
+void TabIconButton::setSelected(const bool& selected) {
     if (selected == m_isSelected) return;
     m_isSelected = selected;
-    // TODO change style
-};
-
-bool TabIconButton::isSelected() const {
-    return m_isSelected;
+    setProperty("selected", selected ? "1" : "0");
+    style()->polish(this);
+    m_hint->setSelected(selected);
 };
 
 void TabIconButton::enterEvent(QEnterEvent* event) {
@@ -43,8 +50,12 @@ void TabIconButton::leaveEvent(QEvent* event) {
     m_hint->hide();
 };
 
-GameSaveTabButton::GameSaveTabButton(QString save_id, QIcon &icon, const QString &title, QWidget* parent): TabIconButton(icon, title, parent) {
-    m_saveId = save_id;
+void TabIconButton::onClick() {
+    emit requested("");
+};
+
+GameSaveTabButton::GameSaveTabButton(const QString& save_id, const QIcon &icon, const QString &title, QWidget* parent): TabIconButton(icon, title, parent) {
+    m_saveId = QString(save_id);
 }
 
 ButtonGameInfo GameSaveTabButton::getGameInfo(fsm::parse::Game game) {
@@ -65,6 +76,10 @@ ButtonGameInfo GameSaveTabButton::getGameInfo(fsm::parse::Game game) {
     }
 };
 
+void GameSaveTabButton::onClick() {
+    emit requested(m_saveId);
+};
+
 SideBarWidget::SideBarWidget(QWidget* parent): QWidget(parent) {
     m_layout = new QVBoxLayout(this);
     m_layout->setContentsMargins(4, 4, 4, 4);
@@ -74,12 +89,38 @@ SideBarWidget::SideBarWidget(QWidget* parent): QWidget(parent) {
     QIcon icon(":/icons/settings_256x256.png");
     QString title = "Settings";
     m_settingsTab = new TabIconButton(icon, title, this);
+    m_settingsTab->setSelected(true);
     m_layout->addWidget(m_settingsTab, 0);
+
+    connect(m_settingsTab, SIGNAL(requested(QString)), this, SLOT(setCurrentTab(QString)));
 };
 
-void SideBarWidget::addTab(fsm::parse::Game game, QString save_id) {
+void SideBarWidget::addTab(const fsm::parse::Game& game, const QString& save_id) {
     GameSaveTabButton* tab_btn = GameSaveTabButton::fromGame(game, save_id, this);
     m_gameTabs[save_id] = tab_btn;
-    // // tab_btn.requested.connect(self.setCurrentTab);
+    connect(tab_btn, SIGNAL(requested(QString)), this, SLOT(setCurrentTab(QString)));
     m_layout->insertWidget(m_layout->count() - 2, tab_btn, 0);
+    if (m_currentTab.isEmpty()) {
+        setCurrentTab(save_id);
+    }
+};
+
+void SideBarWidget::removeTab(const QString& save_id) {
+};
+
+void SideBarWidget::setCurrentTab(const QString& save_id) {
+    if (save_id == m_currentTab) {
+        return;
+    }
+    if (save_id.isEmpty())
+        m_settingsTab->setSelected(true);
+    else
+        m_gameTabs.at(save_id)->setSelected(true);
+
+    if (m_currentTab.isEmpty())
+        m_settingsTab->setSelected(false);
+    else
+        m_gameTabs.at(m_currentTab)->setSelected(false);
+    m_currentTab = QString(save_id);
+    emit tabChanged(save_id);
 };
