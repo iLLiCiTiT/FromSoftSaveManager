@@ -21,7 +21,7 @@ private:
 class TabIconButton: public SquareButton {
     Q_OBJECT
 public:
-    explicit TabIconButton(QIcon& icon, const QString& title, QWidget* parent);
+    explicit TabIconButton(const QIcon& icon, const QString& title, QWidget* parent);
     ~TabIconButton() override = default;
     void setSelected(bool selected);
     bool isSelected() const;
