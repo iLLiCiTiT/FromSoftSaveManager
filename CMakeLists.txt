@@ -30,6 +30,8 @@ add_executable(FromSoftSaveManager
         src/ui/resources.qrc
         src/ui/Utils.cpp
         src/ui/Utils.h
+        src/ui/KeysWindows.cpp
+        src/ui/KeysWindows.h
 )
 target_link_libraries(FromSoftSaveManager
         Qt::Core
