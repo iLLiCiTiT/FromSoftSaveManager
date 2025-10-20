@@ -70,7 +70,6 @@ struct ParsedFile {
     Game game{Game::Unknown};
     SL2File sl2; // retain container and entries
     // Separated per-game structures
-    std::vector<DSRCharacterInfo> dsr_characters;
     std::vector<DS3CharacterInfo> ds3_characters;
     std::vector<ERCharacter> er_characters;
 };
@@ -79,7 +78,6 @@ struct ParsedFile {
 SL2File parse_sl2_file(const std::string& input_sl2_file);
 
 // Per-game parse functions (currently minimal wrappers, to be expanded later)
-ParsedFile parse_dsr_file(const SL2File& sl2);
 ParsedFile parse_ds2_file(const SL2File& sl2);
 ParsedFile parse_ds3_file(const SL2File& sl2);
 ParsedFile parse_er_file(const SL2File& sl2);
