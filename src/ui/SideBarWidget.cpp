@@ -4,7 +4,7 @@
 #include <QString>
 #include <QVBoxLayout>
 
-TabButtonHint::TabButtonHint(const QString &title, QWidget* parent): QWidget(parent) {
+TabButtonHint::TabButtonHint(const QString& title, QWidget* parent): QWidget(parent) {
     m_labelWidget = new QLabel(title, this);
 
     QHBoxLayout* m_layout = new QHBoxLayout(this);
@@ -15,7 +15,7 @@ TabButtonHint::TabButtonHint(const QString &title, QWidget* parent): QWidget(par
     setAttribute(Qt::WA_TranslucentBackground);
 };
 
-TabIconButton::TabIconButton(QIcon &icon, const QString &title, QWidget* parent): SquareButton(parent) {
+TabIconButton::TabIconButton(const QIcon& icon, const QString& title, QWidget* parent): SquareButton(parent) {
     m_hint = new TabButtonHint(title, this);
     setIcon(icon);
 };
@@ -30,7 +30,7 @@ bool TabIconButton::isSelected() const {
     return m_isSelected;
 };
 
-void TabIconButton::enterEvent(QEnterEvent *event) {
+void TabIconButton::enterEvent(QEnterEvent* event) {
     SquareButton::enterEvent(event);
     m_hint->show();
     int y_offset = (height() - m_hint->height()) / 2;
@@ -38,7 +38,7 @@ void TabIconButton::enterEvent(QEnterEvent *event) {
     m_hint->move(pos);
 };
 
-void TabIconButton::leaveEvent(QEvent *event) {
+void TabIconButton::leaveEvent(QEvent* event) {
     QPushButton::leaveEvent(event);
     m_hint->hide();
 };
