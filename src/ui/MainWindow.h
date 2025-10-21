@@ -4,7 +4,7 @@
 #include "Controller.h"
 #include "SideBarWidget.h"
 #include "SettingsWidget.h"
-#include "DSRWidget.h"
+#include "GameWidgets.h"
 
 class MainWindow : public QWidget {
     Q_OBJECT
