@@ -4,13 +4,30 @@
 #include <QSpinBox>
 #include <QPushButton>
 #include <QVBoxLayout>
+#include <QLabel>
 
 // Spinbox that does listen to wheel evens only if has focus
 class FocusSpinBox: public QSpinBox {
     Q_OBJECT
 public:
-    explicit FocusSpinBox(QWidget* parent);
+    explicit FocusSpinBox(QWidget* parent = nullptr);
     void wheelEvent(QWheelEvent *event) override ;
+};
+
+// Label showing pixmaps with correct aspect ratio
+class PixmaxLabel: public QLabel {
+public:
+    explicit PixmaxLabel(QPixmap pix, QWidget* parent = nullptr);
+    void setSourcePixmap(QPixmap pix);
+    void resizeEvent(QResizeEvent *event) override;
+    QSize minimumSizeHint();
+private:
+    QSize getPixmapSize();
+    void setResizedPixmap();
+    inline static QPixmap m_emptyPix = QPixmap(0, 0);
+    QSize m_lastSize;
+    float m_aspectRatio;
+    QPixmap m_pix;
 };
 
 // Custom tab widget
@@ -36,7 +53,7 @@ struct TabButtonWrap {
 class TabWidget: public QWidget {
     Q_OBJECT
 public:
-    explicit TabWidget(QWidget* parent);
+    explicit TabWidget(QWidget* parent = nullptr);
     void addTab(const QString& tabLabel, QWidget* widget);
 
 private slots:

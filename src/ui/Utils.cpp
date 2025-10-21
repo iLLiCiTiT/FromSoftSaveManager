@@ -13,6 +13,43 @@ void FocusSpinBox::wheelEvent(QWheelEvent *event) {
         event->ignore();
 };
 
+PixmaxLabel::PixmaxLabel(QPixmap pix, QWidget* parent)
+    : QLabel(parent)
+    , m_pix(pix)
+{
+    m_aspectRatio = (float)pix.width() / (float)pix.height();
+    m_lastSize = QSize(0, 0);
+};
+
+void PixmaxLabel::setSourcePixmap(QPixmap pix) {
+    m_pix = pix;
+    m_aspectRatio = (float)pix.width() / (float)pix.height();
+    setResizedPixmap();
+};
+
+void PixmaxLabel::resizeEvent(QResizeEvent *event) {
+    QLabel::resizeEvent(event);
+    setResizedPixmap();
+};
+
+QSize PixmaxLabel::minimumSizeHint() {
+    QSize size = getPixmapSize();
+    if (size != m_lastSize) setResizedPixmap();
+    return size;
+};
+
+QSize PixmaxLabel::getPixmapSize() {
+    int height = fontMetrics().height();
+    height += height % 2;
+    if (m_aspectRatio > 1) return QSize(height, height / m_aspectRatio);
+    return QSize(height * m_aspectRatio, height);
+};
+
+void PixmaxLabel::setResizedPixmap() {
+    if (m_pix.isNull()) setPixmap(m_emptyPix);
+    m_lastSize = getPixmapSize();
+    setPixmap(m_pix.scaled(m_lastSize, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+};
 
 TabButton::TabButton(int tabIdx, const QString& tabLabel, QWidget* parent)
     : QPushButton(tabLabel, parent),
