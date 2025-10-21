@@ -88,9 +88,9 @@ DSRWidget::DSRWidget(Controller* controller, const QString& saveId, QWidget* par
     viewWrapLayout->addSpacing(28);
     viewWrapLayout->addWidget(m_view, 4);
     // viewWrapLayout->addWidget(manage_saves_widget, 1);
-    //
-    // m_charTabs = new TabWidget(this);
-    //
+
+    m_charTabs = new TabWidget(this);
+
     // m_covenantsWidget = new CovenantsWidget(m_charTabs);
     // m_charInfoWidget = new CharacterInfoWidget(m_charTabs);
     // m_inventoryWidget = new InventoryWidget(m_charTabs);
@@ -116,7 +116,7 @@ DSRWidget::DSRWidget(Controller* controller, const QString& saveId, QWidget* par
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->setContentsMargins(20, 20, 20, 20);
     layout->addWidget(viewWrap, 0);
-    // layout->addWidget(m_charTabs, 1);
+    layout->addWidget(m_charTabs, 1);
 
     connect(m_view->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)), this, SLOT(onSelectionChange(const QItemSelection&, const QItemSelection&)));
     connect(m_model, SIGNAL(refreshed()), this, SLOT(onRefresh()));

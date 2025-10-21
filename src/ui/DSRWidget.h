@@ -3,6 +3,7 @@
 #include <QStandardItemModel>
 
 #include "Controller.h"
+#include "Utils.h"
 #include "../parse/DSRSaveFile.h"
 
 const int CHAR_ID_ROLE = Qt::UserRole + 1;
@@ -40,7 +41,7 @@ private:
     Controller* m_controller;
     CharsListModel* m_model;
     QListView* m_view;
-    // TabWidget* m_charTabs;
+    TabWidget* m_charTabs;
     // CovenantsWidget* m_covenantsWidget;
     // CharacterInfoWidget* m_charInfoWidget;
     // InventoryWidget* m_inventoryWidget;
