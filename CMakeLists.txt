@@ -27,18 +27,22 @@ add_executable(FromSoftSaveManager
         src/ui/Controller.h
         src/ui/SettingsWidget.cpp
         src/ui/SettingsWidget.h
+        src/ui/DSRWidget.cpp
+        src/ui/DSRWidget.h
         src/ui/resources.qrc
         src/ui/Utils.cpp
         src/ui/Utils.h
         src/ui/KeysWindows.cpp
         src/ui/KeysWindows.h
 )
+
 target_link_libraries(FromSoftSaveManager
         Qt::Core
         Qt::Gui
         Qt::Widgets
         tiny-aes
 )
+
 if ((MSVC) AND (MSVC_VERSION GREATER_EQUAL 1914))
     target_compile_options(FromSoftSaveManager PUBLIC "-Zc:__cplusplus" "-permissive-")
 endif()

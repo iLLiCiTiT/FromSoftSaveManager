@@ -1,11 +1,15 @@
 #pragma once
 
-#include <QObject>
 #include <QSettings>
-#include <QKeySequence>
 #include <QWidget>
-#include <QEvent>
 #include <QKeyEvent>
+
+#include "../parse/DSRSaveFile.h"
+
+struct DSRCharInfoResult {
+    QString error;
+    std::vector<fsm::parse::DSRCharacterInfo> characters;
+};
 
 class Controller : public QObject {
     Q_OBJECT
@@ -27,8 +31,12 @@ public:
         m_settings.sync();
     }
 
-    // Install as global event filter to handle key presses
-    bool eventFilter(QObject* obj, QEvent* event) override;
+    DSRCharInfoResult getDsrCharacters(const QString& m_saveId) {
+        return {
+            "Nothing",
+            std::vector<fsm::parse::DSRCharacterInfo>()
+        };
+    };
 
 signals:
     void quicksaveRequested();
@@ -45,30 +53,3 @@ private:
     QSettings m_settings;
     int m_lastTabIndex {0};
 };
-
-// Inline implementation of the event filter
-inline bool Controller::eventFilter(QObject* obj, QEvent* event) {
-    // Q_UNUSED(obj);
-    // if (event->type() == QEvent::KeyPress) {
-    //     auto* ke = static_cast<QKeyEvent*>(event);
-    //     const Qt::KeyboardModifiers mods = ke->modifiers();
-    //     const int key = ke->key();
-    //     if ((mods & Qt::ControlModifier) && key == Qt::Key_O) {
-    //         emit openRequested();
-    //         return false;
-    //     }
-    //     if ((mods & Qt::ControlModifier) && key == Qt::Key_S) {
-    //         emit quicksaveRequested();
-    //         return false;
-    //     }
-    //     if ((mods & Qt::ControlModifier) && key == Qt::Key_L) {
-    //         emit quickloadRequested();
-    //         return false;
-    //     }
-    //     if (mods == Qt::NoModifier && key == Qt::Key_F5) {
-    //         emit refreshRequested();
-    //         return false;
-    //     }
-    // }
-    return QObject::eventFilter(obj, event);
-}

@@ -11,10 +11,12 @@ MainWindow::MainWindow(Controller* controller, QWidget* parent)
     m_stack = new QStackedWidget(this);
 
     m_settingsWidget = new SettingsWidget(m_stack);
+    m_dsrWidget = new DSRWidget(controller, "test", m_stack);
 
     m_stack->addWidget(m_settingsWidget);
+    m_stack->addWidget(m_dsrWidget);
 
-    m_stack->setCurrentWidget(m_settingsWidget);
+    m_stack->setCurrentWidget(m_dsrWidget);
 
     QHBoxLayout* rootLayout = new QHBoxLayout(this);
     rootLayout->setContentsMargins(0, 0, 0, 0);

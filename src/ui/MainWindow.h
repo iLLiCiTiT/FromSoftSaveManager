@@ -4,6 +4,7 @@
 #include "Controller.h"
 #include "SideBarWidget.h"
 #include "SettingsWidget.h"
+#include "DSRWidget.h"
 
 class MainWindow : public QWidget {
     Q_OBJECT
@@ -15,4 +16,5 @@ private:
     QStackedWidget* m_stack = nullptr;
     SideBarWidget* m_sideBar = nullptr;
     SettingsWidget* m_settingsWidget = nullptr;
+    DSRWidget* m_dsrWidget = nullptr;
 };
