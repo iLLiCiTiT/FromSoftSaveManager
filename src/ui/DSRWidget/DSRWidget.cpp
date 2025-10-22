@@ -92,14 +92,14 @@ DSRWidget::DSRWidget(Controller* controller, const QString& saveId, QWidget* par
     m_charTabs = new TabWidget(this);
 
     // m_covenantsWidget = new CovenantsWidget(m_charTabs);
-    // m_charInfoWidget = new CharacterInfoWidget(m_charTabs);
+    m_charInfoWidget = new CharacterInfoWidget(m_charTabs);
     // m_inventoryWidget = new InventoryWidget(m_charTabs);
     // # m_charEquipWidget = new QWidget(m_charTabs);
     //
-    // m_charTabs->addTab(
-    //     "Character Info",
-    //     m_charInfoWidget
-    // );
+    m_charTabs->addTab(
+        "Character Info",
+        m_charInfoWidget
+    );
     // m_charTabs->addTab(
     //     "Inventory",
     //     m_inventoryWidget

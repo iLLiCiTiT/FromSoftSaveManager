@@ -2,6 +2,7 @@
 #include <QStandardItemModel>
 #include <QListView>
 
+#include "CharInfo.h"
 #include "../Controller.h"
 #include "../Utils.h"
 #include "../../parse/DSRSaveFile.h"
@@ -43,6 +44,6 @@ private:
     QListView* m_view;
     TabWidget* m_charTabs;
     // CovenantsWidget* m_covenantsWidget;
-    // CharacterInfoWidget* m_charInfoWidget;
+    CharacterInfoWidget* m_charInfoWidget;
     // InventoryWidget* m_inventoryWidget;
 };

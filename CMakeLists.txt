@@ -34,6 +34,8 @@ add_executable(FromSoftSaveManager
         src/ui/KeysWindows.h
         src/ui/DSRWidget/DSRWidget.cpp
         src/ui/DSRWidget/DSRWidget.h
+        src/ui/DSRWidget/CharInfo.cpp
+        src/ui/DSRWidget/CharInfo.h
 )
 
 target_link_libraries(FromSoftSaveManager

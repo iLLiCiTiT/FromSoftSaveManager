@@ -17,6 +17,7 @@ PixmapLabel::PixmapLabel(QPixmap pix, QWidget* parent)
     : QLabel(parent)
     , m_pix(pix)
 {
+    m_emptyPix = QPixmap(0, 0);
     m_aspectRatio = (float)pix.width() / (float)pix.height();
     m_lastSize = QSize(0, 0);
 };

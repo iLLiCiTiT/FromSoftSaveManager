@@ -24,10 +24,10 @@ public:
 private:
     QSize getPixmapSize();
     void setResizedPixmap();
-    inline static QPixmap m_emptyPix = QPixmap(0, 0);
     QSize m_lastSize;
     float m_aspectRatio;
     QPixmap m_pix;
+    QPixmap m_emptyPix;
 };
 
 // Custom tab widget
