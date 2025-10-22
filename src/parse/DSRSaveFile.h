@@ -760,7 +760,7 @@ namespace fsm::parse {
 
     struct DSRCharacterInfo {
         int index;
-        std::string name;
+        std::u16string name;
         uint32_t humanity;
         uint32_t souls;
         uint32_t earned_souls;

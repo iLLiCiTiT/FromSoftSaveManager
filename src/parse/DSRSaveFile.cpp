@@ -5,13 +5,6 @@
 #include <locale>
 #include <optional>
 
-std::string utf16_to_utf8(const std::u16string& s)
-{
-    // Note: deprecated in C++17, removed in some lib std builds; still widely available.
-    std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> conv;
-    return conv.to_bytes(s);
-}
-
 namespace fsm::parse {
     uint32_t bytes_to_u32(const std::vector<uint8_t>& b, const int& offset)
     {
@@ -69,14 +62,14 @@ namespace fsm::parse {
             std::vector<uint8_t> name_b;
             name_b.assign(c.begin() + 244, c.begin() + 258);
 
-            std::u16string name_u16;
+            std::u16string name;
             for (size_t i = 0; i + 1 < name_b.size(); i += 2) {
                 char16_t ch = static_cast<char16_t>(name_b[i] | (static_cast<char16_t>(name_b[i + 1]) << 8));
                 if (ch == 0) break;
-                name_u16.push_back(ch);
+                name.push_back(ch);
             }
 
-            ci.name = utf16_to_utf8(name_u16);
+            ci.name = name;
 
             // uint32_t l_ring_slot_item_type = bytes_to_u32(c, 712);
             // uint32_t r_ring_slot_item_type = bytes_to_u32(c, 716);
