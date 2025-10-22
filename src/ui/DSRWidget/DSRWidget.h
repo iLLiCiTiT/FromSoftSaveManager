@@ -1,10 +1,10 @@
 #pragma once
-#include "GameWidget.h"
 #include <QStandardItemModel>
+#include <QListView>
 
-#include "Controller.h"
-#include "Utils.h"
-#include "../parse/DSRSaveFile.h"
+#include "../Controller.h"
+#include "../Utils.h"
+#include "../../parse/DSRSaveFile.h"
 
 const int CHAR_ID_ROLE = Qt::UserRole + 1;
 const int CHAR_NAME_ROLE = Qt::UserRole + 2;
