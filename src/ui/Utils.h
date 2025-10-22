@@ -15,9 +15,9 @@ public:
 };
 
 // Label showing pixmaps with correct aspect ratio
-class PixmaxLabel: public QLabel {
+class PixmapLabel: public QLabel {
 public:
-    explicit PixmaxLabel(QPixmap pix, QWidget* parent = nullptr);
+    explicit PixmapLabel(QPixmap pix, QWidget* parent = nullptr);
     void setSourcePixmap(QPixmap pix);
     void resizeEvent(QResizeEvent *event) override;
     QSize minimumSizeHint();

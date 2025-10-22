@@ -13,7 +13,7 @@ void FocusSpinBox::wheelEvent(QWheelEvent *event) {
         event->ignore();
 };
 
-PixmaxLabel::PixmaxLabel(QPixmap pix, QWidget* parent)
+PixmapLabel::PixmapLabel(QPixmap pix, QWidget* parent)
     : QLabel(parent)
     , m_pix(pix)
 {
@@ -21,31 +21,31 @@ PixmaxLabel::PixmaxLabel(QPixmap pix, QWidget* parent)
     m_lastSize = QSize(0, 0);
 };
 
-void PixmaxLabel::setSourcePixmap(QPixmap pix) {
+void PixmapLabel::setSourcePixmap(QPixmap pix) {
     m_pix = pix;
     m_aspectRatio = (float)pix.width() / (float)pix.height();
     setResizedPixmap();
 };
 
-void PixmaxLabel::resizeEvent(QResizeEvent *event) {
+void PixmapLabel::resizeEvent(QResizeEvent *event) {
     QLabel::resizeEvent(event);
     setResizedPixmap();
 };
 
-QSize PixmaxLabel::minimumSizeHint() {
+QSize PixmapLabel::minimumSizeHint() {
     QSize size = getPixmapSize();
     if (size != m_lastSize) setResizedPixmap();
     return size;
 };
 
-QSize PixmaxLabel::getPixmapSize() {
+QSize PixmapLabel::getPixmapSize() {
     int height = fontMetrics().height();
     height += height % 2;
     if (m_aspectRatio > 1) return QSize(height, height / m_aspectRatio);
     return QSize(height * m_aspectRatio, height);
 };
 
-void PixmaxLabel::setResizedPixmap() {
+void PixmapLabel::setResizedPixmap() {
     if (m_pix.isNull()) setPixmap(m_emptyPix);
     m_lastSize = getPixmapSize();
     setPixmap(m_pix.scaled(m_lastSize, Qt::KeepAspectRatio, Qt::SmoothTransformation));
