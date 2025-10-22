@@ -44,8 +44,8 @@ void CharsListModel::refresh() {
         bool found = false;
         for (auto& character: m_chars) {
             if (i == character.index) {
-                item->setText(QString::fromStdString(character.name));
-                item->setData(QString::fromStdString(character.name), CHAR_NAME_ROLE);
+                item->setText(QString::fromStdU16String(character.name));
+                item->setData(QString::fromStdU16String(character.name), CHAR_NAME_ROLE);
                 found = true;
                 break;
             }
