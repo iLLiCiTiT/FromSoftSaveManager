@@ -27,13 +27,13 @@ add_executable(FromSoftSaveManager
         src/ui/Controller.h
         src/ui/SettingsWidget.cpp
         src/ui/SettingsWidget.h
-        src/ui/DSRWidget.cpp
-        src/ui/DSRWidget.h
         src/ui/resources.qrc
         src/ui/Utils.cpp
         src/ui/Utils.h
         src/ui/KeysWindows.cpp
         src/ui/KeysWindows.h
+        src/ui/DSRWidget/DSRWidget.cpp
+        src/ui/DSRWidget/DSRWidget.h
 )
 
 target_link_libraries(FromSoftSaveManager
