@@ -1,0 +1,62 @@
+#include "Covenants.h"
+#include <QGridLayout>
+
+namespace {
+    struct WidgetsHelper {
+        QLabel* labelW;
+        QLabel* valueW;
+    };
+}
+
+CovenantsWidget::CovenantsWidget(QWidget* parent): QWidget(parent) {
+    QWidget* wrapperWidget = new QWidget(this);
+
+    QLabel* headerWidget = new QLabel("Covenant levels", wrapperWidget);
+    headerWidget->setAlignment(Qt::AlignCenter);
+
+    QLabel* wosLabel = new QLabel("Warrior of Sunlight", wrapperWidget);
+    m_wosWidget = new QLabel("0", wrapperWidget);
+    QLabel* dwLabel = new QLabel("Darkwraith", wrapperWidget);
+    m_dwWidget = new QLabel("0", wrapperWidget);
+    QLabel* potdLabel = new QLabel("Path of the Dragon", wrapperWidget);
+    m_potdWidget = new QLabel("0", wrapperWidget);
+    QLabel* glsLabel = new QLabel("Gravelord Servant", wrapperWidget);
+    m_glsWidget = new QLabel("0", wrapperWidget);
+    QLabel* fhLabel = new QLabel("Forest Hunter", wrapperWidget);
+    m_fhWidget = new QLabel("0", wrapperWidget);
+    QLabel* dmbLabel = new QLabel("Darkmoon Blade", wrapperWidget);
+    m_dmbWidget = new QLabel("0", wrapperWidget);
+    QLabel* csLabel = new QLabel("Chaos Servant", wrapperWidget);
+    m_csWidget = new QLabel("0", wrapperWidget);
+
+    QGridLayout* wrapperLayout = new QGridLayout(wrapperWidget);
+    wrapperLayout->setContentsMargins(0, 0, 0, 0);
+    wrapperLayout->addWidget(headerWidget, 0, 0, 1, 2);
+
+    for (auto [labelW, valueW] : std::initializer_list<WidgetsHelper> {
+        {wosLabel, m_wosWidget},
+        {dwLabel, m_dwWidget},
+        {potdLabel, m_potdWidget},
+        {glsLabel, m_glsWidget},
+        {fhLabel, m_fhWidget},
+        {dmbLabel, m_dmbWidget},
+        {csLabel, m_csWidget},
+    }) {
+        int row = wrapperLayout->rowCount();
+        labelW->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+        valueW->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        wrapperLayout->addWidget(labelW, row, 0);
+        wrapperLayout->addWidget(valueW, row, 1);
+    }
+    int row = wrapperLayout->rowCount();
+    wrapperLayout->setRowStretch(row, 1);
+
+    QHBoxLayout* layout = new QHBoxLayout(this);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(wrapperWidget, 0);
+    layout->addStretch(1);
+};
+void CovenantsWidget::setCharacter() {
+
+};
+

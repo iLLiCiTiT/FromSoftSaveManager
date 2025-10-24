@@ -3,6 +3,7 @@
 #include <QListView>
 
 #include "CharInfo.h"
+#include "Covenants.h"
 #include "../Controller.h"
 #include "../Utils.h"
 #include "../../parse/DSRSaveFile.h"
@@ -43,7 +44,7 @@ private:
     CharsListModel* m_model;
     QListView* m_view;
     TabWidget* m_charTabs;
-    // CovenantsWidget* m_covenantsWidget;
+    CovenantsWidget* m_covenantsWidget;
     CharacterInfoWidget* m_charInfoWidget;
     // InventoryWidget* m_inventoryWidget;
 };
