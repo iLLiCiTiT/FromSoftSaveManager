@@ -5,11 +5,13 @@
 
 #include "../Utils.h"
 
-struct WidgetsHelper {
-    QLabel* labelW;
-    QLabel* valueW;
-    PixmapLabel* iconW;
-};
+namespace {
+    struct WidgetsHelper {
+        QLabel* labelW;
+        QLabel* valueW;
+        PixmapLabel* iconW;
+    };
+}
 
 CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
     QWidget* attributesWidget = new QWidget(this);
@@ -66,6 +68,7 @@ CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
 
     QGridLayout* attributesLayout = new QGridLayout(attributesWidget);
     attributesLayout->setContentsMargins(0, 0, 0, 0);
+
     attributesLayout->addWidget(m_nameValueWidget, 0, 0, 1, 3);
 
     for (auto [labelW, valueW, iconW] : std::initializer_list<WidgetsHelper> {
@@ -96,8 +99,6 @@ CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
     attributesLayout->setColumnStretch(0, 0);
     attributesLayout->setColumnStretch(1, 1);
     attributesLayout->setColumnStretch(2, 1);
-
-
 
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
