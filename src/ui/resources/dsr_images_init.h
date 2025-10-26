@@ -6,3 +6,6 @@ static int init_dsr_images() {
     Q_INIT_RESOURCE(dsr_images);
     return 1;
 }
+
+// Run on DLL load
+static int dummy_dsr_images = init_dsr_images();
