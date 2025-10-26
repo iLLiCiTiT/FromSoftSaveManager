@@ -100,10 +100,76 @@ CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
     attributesLayout->setColumnStretch(1, 1);
     attributesLayout->setColumnStretch(2, 1);
 
+    QWidget* statsWidget = new QWidget(this);
+
+    QLabel* hollowLabel = new QLabel("State", statsWidget);
+    m_hollowValueWidget = new QLabel(statsWidget);
+
+    QLabel* sexLabel = new QLabel("Sex", statsWidget);
+    m_sexValueWidget = new QLabel(statsWidget);
+
+    QLabel* classLabel = new QLabel("Class", statsWidget);
+    m_classValueWidget = new QLabel(statsWidget);
+
+    QLabel* physiqueLabel = new QLabel("Physique", statsWidget);
+    m_physiqueValueWidget = new QLabel(statsWidget);
+
+    QLabel* giftLabel = new QLabel("Gift", statsWidget);
+    m_giftValueWidget = new QLabel(statsWidget);
+
+    PixmapLabel* hpIconWidget = new PixmapLabel(QPixmap(":/dsr_images/hp"), statsWidget);
+    QLabel* hpLabel = new QLabel("HP", statsWidget);
+    m_hpValueWidget = new QLabel(statsWidget);
+
+    PixmapLabel* staminaIconWidget = new PixmapLabel(QPixmap(":/dsr_images/stamina"), statsWidget);
+    QLabel* staminaLabel = new QLabel("Stamina", statsWidget);
+    m_staminaValueWidget = new QLabel(statsWidget);
+
+    PixmapLabel* bleed_resIconWidget = new PixmapLabel(QPixmap(":/dsr_images/res_bleed"), statsWidget);
+    QLabel* bleedResLabel = new QLabel("Bleed Resistance", statsWidget);
+    m_bleed_resValueWidget = new QLabel(statsWidget);
+
+    PixmapLabel* poison_resIconWidget = new PixmapLabel(QPixmap(":/dsr_images/res_poison"), statsWidget);
+    QLabel* poisonResLabel = new QLabel("Poison Resistance", statsWidget);
+    m_poisonResValueWidget = new QLabel(statsWidget);
+
+    PixmapLabel* curseResIconWidget = new PixmapLabel(QPixmap(":/dsr_images/res_curse"), statsWidget);
+    QLabel* curseResLabel = new QLabel("Curse Resistance", statsWidget);
+    m_curseResValueWidget = new QLabel(statsWidget);
+
+    QGridLayout* statsLayout = new QGridLayout(statsWidget);
+    statsLayout->setContentsMargins(0, 0, 0, 0);
+
+    for (auto [labelW, valueW, iconW] : std::initializer_list<WidgetsHelper> {
+        {hollowLabel, m_hollowValueWidget, nullptr},
+        {sexLabel, m_sexValueWidget, nullptr},
+        {classLabel, m_classValueWidget, nullptr},
+        {physiqueLabel, m_physiqueValueWidget, nullptr},
+        {giftLabel, m_giftValueWidget, nullptr},
+        {hpLabel, m_hpValueWidget, hpIconWidget},
+        {staminaLabel, m_staminaValueWidget, staminaIconWidget},
+        {bleedResLabel, m_bleed_resValueWidget, bleed_resIconWidget},
+        {poisonResLabel, m_poisonResValueWidget, poison_resIconWidget},
+        {curseResLabel, m_curseResValueWidget, curseResIconWidget},
+    }) {
+        int row = statsLayout->rowCount();
+        labelW->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+        valueW->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        if (iconW != nullptr) {
+            statsLayout->addWidget(iconW, row, 0);
+        }
+        statsLayout->addWidget(labelW, row, (iconW == nullptr) ? 0 : 1, 1, (iconW == nullptr) ? 2 : 1);
+        statsLayout->addWidget(valueW, row, 2);
+    }
+    statsLayout->setRowStretch(attributesLayout->rowCount(), 1);
+    statsLayout->setColumnStretch(0, 0);
+    statsLayout->setColumnStretch(1, 1);
+    statsLayout->setColumnStretch(2, 1);
+
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(attributesWidget, 1);
-    // layout->addWidget(statsWidget, 1);
+    layout->addWidget(statsWidget, 1);
 }
 
 void CharacterStatusWidget::setCharacter() {

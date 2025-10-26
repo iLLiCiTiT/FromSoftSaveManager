@@ -22,6 +22,17 @@ private:
     QLabel* m_intelligenceValueWidget = nullptr;
     QLabel* m_faithValueWidget = nullptr;
     QLabel* m_humanityValueWidget = nullptr;
+
+    QLabel* m_hollowValueWidget = nullptr;
+    QLabel* m_sexValueWidget = nullptr;
+    QLabel* m_classValueWidget = nullptr;
+    QLabel* m_physiqueValueWidget = nullptr;
+    QLabel* m_giftValueWidget = nullptr;
+    QLabel* m_hpValueWidget = nullptr;
+    QLabel* m_staminaValueWidget = nullptr;
+    QLabel* m_bleed_resValueWidget = nullptr;
+    QLabel* m_poisonResValueWidget = nullptr;
+    QLabel* m_curseResValueWidget = nullptr;
 };
 
 class CharacterInfoWidget: public QWidget {
