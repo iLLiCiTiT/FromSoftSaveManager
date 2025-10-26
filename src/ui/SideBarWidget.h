@@ -20,7 +20,7 @@ private:
 class TabIconButton: public SquareButton {
     Q_OBJECT
 signals:
-    void virtual requested(QString save_id);
+    void virtual requested(QString saveId);
 
 public:
     explicit TabIconButton(const QIcon& icon, const QString& title, QWidget* parent);
@@ -45,10 +45,10 @@ struct ButtonGameInfo {
 class GameSaveTabButton: public TabIconButton {
     Q_OBJECT
 public:
-    explicit GameSaveTabButton(const QString& save_id, const QIcon &icon, const QString &title, QWidget* parent);
-    static GameSaveTabButton* fromGame(const fsm::parse::Game game, const QString& save_id, QWidget* parent) {
+    explicit GameSaveTabButton(const QString& saveId, const QIcon &icon, const QString &title, QWidget* parent);
+    static GameSaveTabButton* fromGame(const fsm::parse::Game game, const QString& saveId, QWidget* parent) {
         ButtonGameInfo gi = getGameInfo(game);
-        return new GameSaveTabButton(save_id, gi.icon, gi.title, parent);
+        return new GameSaveTabButton(saveId, gi.icon, gi.title, parent);
     };
 private:
     QString m_saveId = "";
@@ -62,14 +62,14 @@ private slots:
 class SideBarWidget: public QWidget {
     Q_OBJECT
 signals:
-    void tabChanged(QString save_id);
+    void tabChanged(QString saveId);
 public:
     explicit SideBarWidget(QWidget* parent);
 
-    void addTab(const fsm::parse::Game& game, const QString& save_id);
-    void removeTab(const QString& save_id);
+    void addTab(const fsm::parse::Game& game, const QString& saveId);
+    void removeTab(const QString& saveId);
 public slots:
-    void setCurrentTab(const QString& save_id);
+    void setCurrentTab(const QString& saveId);
 
 private:
     QVBoxLayout* m_layout {nullptr};

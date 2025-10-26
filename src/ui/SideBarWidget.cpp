@@ -54,8 +54,8 @@ void TabIconButton::onClick() {
     emit requested("");
 };
 
-GameSaveTabButton::GameSaveTabButton(const QString& save_id, const QIcon &icon, const QString &title, QWidget* parent): TabIconButton(icon, title, parent) {
-    m_saveId = QString(save_id);
+GameSaveTabButton::GameSaveTabButton(const QString& saveId, const QIcon &icon, const QString &title, QWidget* parent): TabIconButton(icon, title, parent) {
+    m_saveId = QString(saveId);
 }
 
 ButtonGameInfo GameSaveTabButton::getGameInfo(fsm::parse::Game game) {
@@ -93,45 +93,42 @@ SideBarWidget::SideBarWidget(QWidget* parent): QWidget(parent) {
     m_layout->addWidget(m_settingsTab, 0);
 
     connect(m_settingsTab, SIGNAL(requested(QString)), this, SLOT(setCurrentTab(QString)));
-
-    // Temporary for dev purposes
-    addTab(fsm::parse::Game::DSR, "test");
 };
 
-void SideBarWidget::addTab(const fsm::parse::Game& game, const QString& save_id) {
-    GameSaveTabButton* tab_btn = GameSaveTabButton::fromGame(game, save_id, this);
-    m_gameTabs[save_id] = tab_btn;
+void SideBarWidget::addTab(const fsm::parse::Game& game, const QString& saveId) {
+    GameSaveTabButton* tab_btn = GameSaveTabButton::fromGame(game, saveId, this);
+    m_gameTabs[saveId] = tab_btn;
     connect(tab_btn, SIGNAL(requested(QString)), this, SLOT(setCurrentTab(QString)));
     m_layout->insertWidget(m_layout->count() - 2, tab_btn, 0);
     if (m_currentTab.isEmpty()) {
-        setCurrentTab(save_id);
+        setCurrentTab(saveId);
     }
 };
 
-void SideBarWidget::removeTab(const QString& save_id) {
-    if (save_id == m_currentTab) setCurrentTab("");
-    if (m_gameTabs.find(save_id) == m_gameTabs.end()) return;
+void SideBarWidget::removeTab(const QString& saveId) {
+    if (saveId == m_currentTab) setCurrentTab("");
+    if (m_gameTabs.find(saveId) == m_gameTabs.end()) return;
 
-    TabIconButton* btn = m_gameTabs.at(save_id);
+    TabIconButton* btn = m_gameTabs.at(saveId);
 
     btn->setVisible(false);
     if (const int idx = m_layout->indexOf(btn); idx != -1) m_layout->takeAt(idx);
     btn->deleteLater();
 };
 
-void SideBarWidget::setCurrentTab(const QString& save_id) {
-    if (save_id == m_currentTab) {
+void SideBarWidget::setCurrentTab(const QString& saveId) {
+    if (saveId == m_currentTab) {
         return;
     }
-    if (save_id.isEmpty())
+    if (saveId.isEmpty())
         m_settingsTab->setSelected(true);
     else
-        m_gameTabs.at(save_id)->setSelected(true);
+        m_gameTabs.at(saveId)->setSelected(true);
 
     if (m_currentTab.isEmpty())
         m_settingsTab->setSelected(false);
     else
         m_gameTabs.at(m_currentTab)->setSelected(false);
-    m_currentTab = QString(save_id);
-    emit tabChanged(save_id);
+    m_currentTab = QString(saveId);
+    emit tabChanged(saveId);
 };

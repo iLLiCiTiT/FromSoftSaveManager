@@ -166,48 +166,6 @@ HotkeyInput {
     color: #ffffff;
 }
 
-/* Dark Souls: Remastered specific styles */
-DSRWidget QWidget {
-    background: transparent;
-}
-
-#ds_list_view {
-    border: none;
-    border-radius: 0px;
-    background: transparent;
-    selection-background-color: transparent;
-}
-
-#ds_list_view::item {
-    border: none;
-    background: transparent;
-}
-
-#ds_list_view::item:hover {
-    background: rgba(181, 142, 41, 0.3);
-}
-#ds_list_view::item:selected, #ds_list_view::item:selected:!active, #ds_list_view::item:selected:hover {
-    background: rgba(181, 142, 41, 0.5);
-}
-DSRInventoryCategoryButton PixmapLabel {
-    font-size: 26pt;
-}
-DSRInventoryCategoryButton:hover {
-}
-DSRWidget QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
-    background: #6B2E0E;
-    border-radius: 0px;
-}
-
-DSRWidget QScrollBar::handle:vertical:hover, QScrollBar::handle:horizontal:hover {
-    background: #803711;
-}
-DSRWidget QScrollBar:vertical {
-    background: transparent;
-    border: 1px solid #5D432D;
-    border-radius: 0px;
-}
-
 TabButton {
     background: transparent;
     border: none;
@@ -233,4 +191,46 @@ ManageSavesWidget QPushButton:hover {
 
 ERAttributesLabel QLabel {
     color: #A99B82;
+}
+
+/* Dark Souls: Remastered specific styles */
+DSRWidget QWidget {
+    background: transparent;
+}
+DSRWidget QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
+    background: #6B2E0E;
+    border-radius: 0px;
+}
+DSRWidget QScrollBar::handle:vertical:hover, QScrollBar::handle:horizontal:hover {
+    background: #803711;
+}
+DSRWidget QScrollBar:vertical {
+    background: transparent;
+    border: 1px solid #5D432D;
+    border-radius: 0px;
+}
+DSRInventoryCategoryButton:hover {
+}
+
+#dsr_category_icon {
+    font-size: 26pt;
+}
+
+#ds_list_view {
+    border: none;
+    border-radius: 0px;
+    background: transparent;
+    selection-background-color: transparent;
+}
+
+#ds_list_view::item {
+    border: none;
+    background: transparent;
+}
+
+#ds_list_view::item:hover {
+    background: rgba(181, 142, 41, 0.3);
+}
+#ds_list_view::item:selected, #ds_list_view::item:selected:!active, #ds_list_view::item:selected:hover {
+    background: rgba(181, 142, 41, 0.5);
 }
