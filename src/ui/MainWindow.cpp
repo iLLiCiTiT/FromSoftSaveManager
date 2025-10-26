@@ -32,15 +32,49 @@ void MainWindow::showEvent(QShowEvent *event) {
 }
 
 void MainWindow::refresh() {
-    // TODO use controller to get all save information
-    // - temporary for dev purposes
-    QString saveId = "test";
+    std::set<QString> availableIds;
+    QString firstId;
+    for (const auto&[game, saveId]: m_controller->getSaveFileItems()) {
+        BaseGameWidget* gameWidget = nullptr;
+        switch (game) {
+            case fsm::parse::Game::DSR:
+                if (firstId.isEmpty()) firstId = saveId;
+                availableIds.insert(saveId);
+                if (m_widgetsMapping.find(saveId) != m_widgetsMapping.end()) {
+                    gameWidget = m_widgetsMapping.find(saveId)->second;
+                    gameWidget->refresh();
+                    break;
+                }
+                gameWidget = new DSRWidget(m_controller, saveId, m_stack);
+                m_stack->addWidget(gameWidget);
+                m_widgetsMapping[saveId] = gameWidget;
+                m_sideBar->addTab(game, saveId);
+                break;
 
-    m_dsrWidget = new DSRWidget(m_controller, saveId, m_stack);
-    m_stack->addWidget(m_dsrWidget);
-    m_widgetsMapping[saveId] = m_dsrWidget;
+            default:
+                break;
+        }
+        if (gameWidget != nullptr) {
+            gameWidget->refresh();
+        }
+    }
+    std::unordered_map<QString, BaseGameWidget*>::iterator it = m_widgetsMapping.begin();
+    while (it != m_widgetsMapping.end()) {
+        if (availableIds.find(it->first) != availableIds.end()) {
+            it = std::next(it);
+            continue;
+        }
 
-    m_sideBar->addTab(fsm::parse::Game::DSR, saveId);
+        it->second->setVisible(false);
+        it->second->deleteLater();
+        m_stack->removeWidget(it->second);
+        m_sideBar->removeTab(it->first);
+        it = m_widgetsMapping.erase(it);
+    }
+
+    if (m_widgetsMapping.find(m_saveId) == m_widgetsMapping.end()) {
+        onTabChange(firstId);
+    }
 }
 
 void MainWindow::onTabChange(QString saveId) {
