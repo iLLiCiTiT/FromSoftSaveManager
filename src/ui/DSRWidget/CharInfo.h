@@ -1,12 +1,13 @@
 #pragma once
 
 #include <QLabel>
+#include "../../parse/DSRSaveFile.h"
 
 class CharacterStatusWidget: public QWidget {
     Q_OBJECT
 public:
     explicit CharacterStatusWidget(QWidget* parent);
-    void setCharacter();
+    void setCharacter(const fsm::parse::DSRCharacterInfo* charInfo);
 private:
     void setEmpty();
     QLabel* m_nameValueWidget = nullptr;
@@ -30,7 +31,7 @@ private:
     QLabel* m_giftValueWidget = nullptr;
     QLabel* m_hpValueWidget = nullptr;
     QLabel* m_staminaValueWidget = nullptr;
-    QLabel* m_bleed_resValueWidget = nullptr;
+    QLabel* m_bleedResValueWidget = nullptr;
     QLabel* m_poisonResValueWidget = nullptr;
     QLabel* m_curseResValueWidget = nullptr;
 };
@@ -39,7 +40,7 @@ class CharacterInfoWidget: public QWidget {
     Q_OBJECT
 public:
     explicit CharacterInfoWidget(QWidget* parent);
-    void setCharacter();
+    void setCharacter(const fsm::parse::DSRCharacterInfo* charInfo);
 private:
     CharacterStatusWidget* m_statusWidget = nullptr;
 };

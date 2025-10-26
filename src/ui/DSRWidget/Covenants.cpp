@@ -56,7 +56,23 @@ CovenantsWidget::CovenantsWidget(QWidget* parent): QWidget(parent) {
     layout->addWidget(wrapperWidget, 1);
     layout->addStretch(1);
 };
-void CovenantsWidget::setCharacter() {
 
+void CovenantsWidget::setCharacter(const fsm::parse::DSRCharacterInfo* charInfo) {
+    // Skip 3 covenants that don't have a way how to level
+    int idx = 3;
+    for (auto valueW : std::initializer_list {
+        m_wosWidget,
+        m_dwWidget,
+        m_potdWidget,
+        m_glsWidget,
+        m_fhWidget,
+        m_dmbWidget,
+        m_csWidget,
+    }) {
+        QString value = "0";
+        if (charInfo != nullptr) value = QString::number(charInfo->covenantLevels[idx]);
+        valueW->setText(value);
+        idx += 1;
+    }
 };
 

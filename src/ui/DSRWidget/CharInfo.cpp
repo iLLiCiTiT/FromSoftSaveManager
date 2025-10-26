@@ -16,7 +16,7 @@ namespace {
 CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
     QWidget* attributesWidget = new QWidget(this);
 
-    m_nameValueWidget = new QLabel("Name", attributesWidget);
+    m_nameValueWidget = new QLabel("< Empty >", attributesWidget);
     m_nameValueWidget->setAlignment(Qt::AlignCenter);
 
     QLabel* covenantLabelWidget = new QLabel("Covenant", attributesWidget);
@@ -24,7 +24,7 @@ CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
 
     PixmapLabel* levelIconWidget = new PixmapLabel(QPixmap(":/dsr_images/attr_level.png"), attributesWidget);
     QLabel* levelLabelWidget = new QLabel("Level", attributesWidget);
-    m_levelValueWidget = new QLabel("Level", attributesWidget);
+    m_levelValueWidget = new QLabel(attributesWidget);
 
     PixmapLabel* soulsIconWidget = new PixmapLabel(QPixmap(":/dsr_images/attr_souls.png"), attributesWidget);
     QLabel* soulsLabelWidget = new QLabel("Souls", attributesWidget);
@@ -125,11 +125,11 @@ CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
     QLabel* staminaLabel = new QLabel("Stamina", statsWidget);
     m_staminaValueWidget = new QLabel(statsWidget);
 
-    PixmapLabel* bleed_resIconWidget = new PixmapLabel(QPixmap(":/dsr_images/res_bleed"), statsWidget);
+    PixmapLabel* bleedResIconWidget = new PixmapLabel(QPixmap(":/dsr_images/res_bleed"), statsWidget);
     QLabel* bleedResLabel = new QLabel("Bleed Resistance", statsWidget);
-    m_bleed_resValueWidget = new QLabel(statsWidget);
+    m_bleedResValueWidget = new QLabel(statsWidget);
 
-    PixmapLabel* poison_resIconWidget = new PixmapLabel(QPixmap(":/dsr_images/res_poison"), statsWidget);
+    PixmapLabel* poisonResIconWidget = new PixmapLabel(QPixmap(":/dsr_images/res_poison"), statsWidget);
     QLabel* poisonResLabel = new QLabel("Poison Resistance", statsWidget);
     m_poisonResValueWidget = new QLabel(statsWidget);
 
@@ -148,8 +148,8 @@ CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
         {giftLabel, m_giftValueWidget, nullptr},
         {hpLabel, m_hpValueWidget, hpIconWidget},
         {staminaLabel, m_staminaValueWidget, staminaIconWidget},
-        {bleedResLabel, m_bleed_resValueWidget, bleed_resIconWidget},
-        {poisonResLabel, m_poisonResValueWidget, poison_resIconWidget},
+        {bleedResLabel, m_bleedResValueWidget, bleedResIconWidget},
+        {poisonResLabel, m_poisonResValueWidget, poisonResIconWidget},
         {curseResLabel, m_curseResValueWidget, curseResIconWidget},
     }) {
         int row = statsLayout->rowCount();
@@ -172,11 +172,63 @@ CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
     layout->addWidget(statsWidget, 1);
 }
 
-void CharacterStatusWidget::setCharacter() {
-
+void CharacterStatusWidget::setCharacter(const fsm::parse::DSRCharacterInfo* charInfo) {
+    if (charInfo == nullptr) return setEmpty();
+    m_nameValueWidget->setText(QString::fromStdU16String(charInfo->name));
+    // m_covenantValueWidget->setText();
+    m_levelValueWidget->setText(QString::number(charInfo->level));
+    m_soulsValueWidget->setText(QString::number(charInfo->souls));
+    m_vitalityValueWidget->setText(QString::number(charInfo->vitality));
+    m_attunementValueWidget->setText(QString::number(charInfo->attunement));
+    m_enduranceValueWidget->setText(QString::number(charInfo->endurance));
+    m_strengthValueWidget->setText(QString::number(charInfo->strength));
+    m_dexterityValueWidget->setText(QString::number(charInfo->dexterity));
+    m_resistanceValueWidget->setText(QString::number(charInfo->resistance));
+    m_intelligenceValueWidget->setText(QString::number(charInfo->intelligence));
+    m_faithValueWidget->setText(QString::number(charInfo->faith));
+    m_humanityValueWidget->setText(QString::number(charInfo->humanity));
+    m_hollowValueWidget->setText((charInfo->hollowState == 8) ? "Hollow" : "Human");
+    m_sexValueWidget->setText((charInfo->sex == 1) ? "Male" : "Female");
+    // m_classValueWidget->setText();
+    // m_physiqueValueWidget->setText();
+    // m_giftValueWidget->setText();
+    QString hpValue = QString::number(charInfo->hpCurrent);
+    hpValue.append("/");
+    hpValue.append(QString::number(charInfo->hpMax));
+    QString staminaValue = QString::number(charInfo->staminaCurrent);
+    staminaValue.append("/");
+    staminaValue.append(QString::number(charInfo->staminaMax));
+    m_hpValueWidget->setText(hpValue);
+    m_staminaValueWidget->setText(staminaValue);
+    m_bleedResValueWidget->setText(QString::number(charInfo->bleedRes));
+    m_poisonResValueWidget->setText(QString::number(charInfo->poisonRes));
+    m_curseResValueWidget->setText(QString::number(charInfo->curseRes));
 };
 
 void CharacterStatusWidget::setEmpty() {
+    m_nameValueWidget->setText("< Empty >");
+    m_covenantValueWidget->setText("");
+    m_levelValueWidget->setText("");
+    m_soulsValueWidget->setText("");
+    m_vitalityValueWidget->setText("");
+    m_attunementValueWidget->setText("");
+    m_enduranceValueWidget->setText("");
+    m_strengthValueWidget->setText("");
+    m_dexterityValueWidget->setText("");
+    m_resistanceValueWidget->setText("");
+    m_intelligenceValueWidget->setText("");
+    m_faithValueWidget->setText("");
+    m_humanityValueWidget->setText("");
+    m_hollowValueWidget->setText("");
+    m_sexValueWidget->setText("");
+    m_classValueWidget->setText("");
+    m_physiqueValueWidget->setText("");
+    m_giftValueWidget->setText("");
+    m_hpValueWidget->setText("");
+    m_staminaValueWidget->setText("");
+    m_bleedResValueWidget->setText("");
+    m_poisonResValueWidget->setText("");
+    m_curseResValueWidget->setText("");
 
 };
 
@@ -187,7 +239,6 @@ CharacterInfoWidget::CharacterInfoWidget(QWidget* parent): QWidget(parent) {
     layout->addWidget(m_statusWidget, 1);
 }
 
-void CharacterInfoWidget::setCharacter() {
-    m_statusWidget->setCharacter();
-
+void CharacterInfoWidget::setCharacter(const fsm::parse::DSRCharacterInfo* charInfo) {
+    m_statusWidget->setCharacter(charInfo);
 };

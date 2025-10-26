@@ -179,9 +179,14 @@ void DSRWidget::onSelectionChange(const QItemSelection &selected, const QItemSel
     for (auto& index: selected.indexes()) {
         QVariant charId = index.data(CHAR_ID_ROLE);
         if (!charId.isValid() || charId.isNull()) continue;
-        fsm::parse::DSRCharacterInfo* charInfo = m_model->getCharByIdx(charId.toInt());
-        // TODO update subwidgets with char info
+        const fsm::parse::DSRCharacterInfo* charInfo = m_model->getCharByIdx(charId.toInt());
+
+        m_charInfoWidget->setCharacter(charInfo);
+        m_inventoryWidget->setCharacter(charInfo);
+        m_covenantsWidget->setCharacter(charInfo);
         return;
     }
-    // TODO clear subwidgets
+    m_charInfoWidget->setCharacter(nullptr);
+    m_inventoryWidget->setCharacter(nullptr);
+    m_covenantsWidget->setCharacter(nullptr);
 };

@@ -755,7 +755,7 @@ namespace fsm::parse {
 
     struct AttunementSlot {
         uint8_t itemId;
-        uint8_t remaining_uses;
+        uint8_t remainingUses;
     };
 
     struct DSRCharacterInfo {
@@ -763,19 +763,19 @@ namespace fsm::parse {
         std::u16string name;
         uint32_t humanity;
         uint32_t souls;
-        uint32_t earned_souls;
-        uint32_t hollow_state;
-        uint8_t covenant_id;
-        uint8_t covenant_levels[10];
+        uint32_t earnedSouls;
+        uint32_t hollowState;
+        uint8_t covenantId;
+        uint8_t covenantLevels[10];
 
-        std::vector<uint8_t> used_gestures;
+        std::vector<uint8_t> usedGestures;
 
-        uint32_t hp_current;
-        uint32_t hp_max;
-        uint32_t hp_base;
-        uint32_t stamina_current;
-        uint32_t stamina_max;
-        uint32_t stamina_base;
+        uint32_t hpCurrent;
+        uint32_t hpMax;
+        uint32_t hpBase;
+        uint32_t staminaCurrent;
+        uint32_t staminaMax;
+        uint32_t staminaBase;
 
         uint32_t level;
         uint32_t vitality;
@@ -788,46 +788,46 @@ namespace fsm::parse {
         uint32_t faith;
 
         uint8_t sex;
-        uint8_t class_id;
-        uint8_t physique_id;
-        uint8_t gift_id;
+        uint8_t classId;
+        uint8_t physiqueId;
+        uint8_t giftId;
 
-        uint8_t toxic_res;
-        uint8_t bleed_res;
-        uint8_t poison_res;
-        uint8_t curse_res;
+        uint8_t toxicRes;
+        uint8_t bleedRes;
+        uint8_t poisonRes;
+        uint8_t curseRes;
 
-        uint8_t face_id;
-        uint8_t hair_style_id;
-        uint8_t hair_color_id;
+        uint8_t faceId;
+        uint8_t hairStyleId;
+        uint8_t hairColorId;
 
-        uint8_t l_hand_slot_1;
-        uint8_t l_hand_slot_2;
-        uint8_t r_hand_slot_1;
-        uint8_t r_hand_slot_2;
-        uint8_t l_arrows_slot;
-        uint8_t l_bolts_slot;
-        uint8_t r_arrows_slot;
-        uint8_t r_bolts_slot;
+        uint8_t lHandSlot1;
+        uint8_t lHandSlot2;
+        uint8_t rHandSlot1;
+        uint8_t rHandSlot2;
+        uint8_t lArrowsSlot;
+        uint8_t lBoltsSlot;
+        uint8_t rArrowsSlot;
+        uint8_t rBoltsSlot;
         uint8_t head_slot;
         uint8_t body_slot;
         uint8_t arms_slot;
         uint8_t legs_slot;
-        uint8_t l_ring_slot;
-        uint8_t r_ring_slot;
-        uint8_t q1_slot;
-        uint8_t q2_slot;
-        uint8_t q3_slot;
-        uint8_t q4_slot;
-        uint8_t q5_slot;
-        std::vector<InventoryItem> inventory_items;
-        std::vector<InventoryItem> botomless_box_items;
-        std::vector<AttunementSlot> attunement_slots;
+        uint8_t lRingSlot;
+        uint8_t rRingSlot;
+        uint8_t q1Slot;
+        uint8_t q2Slot;
+        uint8_t q3Slot;
+        uint8_t q4Slot;
+        uint8_t q5Slot;
+        std::vector<InventoryItem> inventoryItems;
+        std::vector<InventoryItem> botomlessBoxItems;
+        std::vector<AttunementSlot> attunementSlots;
     };
 
     struct DSRSaveFile {
         std::vector<DSRCharacterInfo> characters;
-        BND4Entry side_car_enty;
+        BND4Entry sideCarEnty;
     };
 
     DSRSaveFile parse_dsr_file(const SL2File& sl2);

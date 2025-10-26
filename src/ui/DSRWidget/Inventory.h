@@ -21,7 +21,7 @@ class InventoryModel: public QStandardItemModel {
     Q_OBJECT
 public:
     explicit InventoryModel(QObject* parent = nullptr);
-    void setCharacter();
+    void setCharacter(const fsm::parse::DSRCharacterInfo* charInfo);
 private:
     QStandardItem* createModelItem(fsm::parse::InventoryItem& inventoryItem, bool inBottomlessBox);
     QStandardItem* createUnknownItem(fsm::parse::InventoryItem& inventoryItem);
@@ -104,7 +104,7 @@ class InventoryWidget: public QWidget {
     Q_OBJECT
 public:
     explicit InventoryWidget(QWidget* parent);
-    void setCharacter();
+    void setCharacter(const fsm::parse::DSRCharacterInfo* charInfo);
 private slots:
     void onCategoryChange(QString category);
 private:

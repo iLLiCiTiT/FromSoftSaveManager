@@ -25,13 +25,13 @@ namespace fsm::parse {
             if (c.empty() || c[0] == 0x00) continue;
             DSRCharacterInfo ci;
 
-            ci.hp_current = bytes_to_u32(c, 96);
-            ci.hp_max = bytes_to_u32(c, 100);
-            ci.hp_base = bytes_to_u32(c, 104);
+            ci.hpCurrent = bytes_to_u32(c, 96);
+            ci.hpMax = bytes_to_u32(c, 100);
+            ci.hpBase = bytes_to_u32(c, 104);
 
-            ci.stamina_current = bytes_to_u32(c, 124);
-            ci.stamina_max = bytes_to_u32(c, 128);
-            ci.stamina_base = bytes_to_u32(c, 132);
+            ci.staminaCurrent = bytes_to_u32(c, 124);
+            ci.staminaMax = bytes_to_u32(c, 128);
+            ci.staminaBase = bytes_to_u32(c, 132);
 
             ci.vitality = bytes_to_u32(c, 140);
             ci.attunement = bytes_to_u32(c, 148);
@@ -46,18 +46,18 @@ namespace fsm::parse {
 
             ci.level = bytes_to_u32(c, 216);
             ci.souls = bytes_to_u32(c, 220);
-            ci.earned_souls = bytes_to_u32(c, 224);
-            ci.hollow_state = bytes_to_u32(c, 232);
+            ci.earnedSouls = bytes_to_u32(c, 224);
+            ci.hollowState = bytes_to_u32(c, 232);
 
-            std::copy(c.begin() + 310, c.begin() + 319, std::begin(ci.covenant_levels));
-            // &ci.covenant_levels = {c[310],c[311],c[312],c[313],c[314],c[315],c[316],c[317],c[318],c[319]};
+            std::copy(c.begin() + 310, c.begin() + 319, std::begin(ci.covenantLevels));
+            // &ci.covenantLevels = {c[310],c[311],c[312],c[313],c[314],c[315],c[316],c[317],c[318],c[319]};
 
-            ci.toxic_res = bytes_to_u32(c, 332);
-            ci.bleed_res = bytes_to_u32(c, 336);
-            ci.poison_res = bytes_to_u32(c, 340);
-            ci.curse_res = bytes_to_u32(c, 344);
+            ci.toxicRes = bytes_to_u32(c, 332);
+            ci.bleedRes = bytes_to_u32(c, 336);
+            ci.poisonRes = bytes_to_u32(c, 340);
+            ci.curseRes = bytes_to_u32(c, 344);
 
-            ci.covenant_id = c[351];
+            ci.covenantId = c[351];
 
             std::vector<uint8_t> name_b;
             name_b.assign(c.begin() + 244, c.begin() + 258);
@@ -71,13 +71,13 @@ namespace fsm::parse {
 
             ci.name = name;
 
-            // uint32_t l_ring_slotItemType = bytes_to_u32(c, 712);
-            // uint32_t r_ring_slotItemType = bytes_to_u32(c, 716);
-            // uint32_t q1_slotItemType = bytes_to_u32(c, 720);
-            // uint32_t q2_slotItemType = bytes_to_u32(c, 724);
-            // uint32_t q3_slotItemType = bytes_to_u32(c, 728);
-            // uint32_t q4_slotItemType = bytes_to_u32(c, 732);
-            // uint32_t q5_slotItemType = bytes_to_u32(c, 736);
+            // uint32_t lRingSlotItemType = bytes_to_u32(c, 712);
+            // uint32_t rRingSlotItemType = bytes_to_u32(c, 716);
+            // uint32_t q1SlotItemType = bytes_to_u32(c, 720);
+            // uint32_t q2SlotItemType = bytes_to_u32(c, 724);
+            // uint32_t q3SlotItemType = bytes_to_u32(c, 728);
+            // uint32_t q4SlotItemType = bytes_to_u32(c, 732);
+            // uint32_t q5SlotItemType = bytes_to_u32(c, 736);
             // uint32_t one_double_handling = bytes_to_u32(c, 740);
             // uint32_t l_hand_flag = bytes_to_u32(c, 744);
             // uint32_t r_hand_flag = bytes_to_u32(c, 748);
@@ -85,31 +85,31 @@ namespace fsm::parse {
             // uint32_t unknown_18_flag = bytes_to_u32(c, 756);
             // uint32_t unknown_19_flag = bytes_to_u32(c, 760);
             // uint32_t unknown_20_flag = bytes_to_u32(c, 764);
-            ci.l_hand_slot_1 = bytes_to_u32(c, 768);
-            ci.l_hand_slot_2 = bytes_to_u32(c, 772);
-            ci.r_hand_slot_1 = bytes_to_u32(c, 776);
-            ci.r_hand_slot_2 = bytes_to_u32(c, 780);
-            ci.l_arrows_slot = bytes_to_u32(c, 784);
-            ci.l_bolts_slot = bytes_to_u32(c, 788);
-            ci.r_arrows_slot = bytes_to_u32(c, 792);
-            ci.r_bolts_slot = bytes_to_u32(c, 796);
+            ci.lHandSlot1 = bytes_to_u32(c, 768);
+            ci.lHandSlot2 = bytes_to_u32(c, 772);
+            ci.rHandSlot1 = bytes_to_u32(c, 776);
+            ci.rHandSlot2 = bytes_to_u32(c, 780);
+            ci.lArrowsSlot = bytes_to_u32(c, 784);
+            ci.lBoltsSlot = bytes_to_u32(c, 788);
+            ci.rArrowsSlot = bytes_to_u32(c, 792);
+            ci.rBoltsSlot = bytes_to_u32(c, 796);
             ci.head_slot = bytes_to_u32(c, 800);
             ci.body_slot = bytes_to_u32(c, 804);
             ci.arms_slot = bytes_to_u32(c, 808);
             ci.legs_slot = bytes_to_u32(c, 812);
             // uint32_t unknown_21_flag = bytes_to_u32(c, 816);
-            ci.l_ring_slot = bytes_to_u32(c, 820);
-            ci.r_ring_slot = bytes_to_u32(c, 824);
-            ci.q1_slot = bytes_to_u32(c, 828);
-            ci.q2_slot = bytes_to_u32(c, 832);
-            ci.q3_slot = bytes_to_u32(c, 836);
-            ci.q4_slot = bytes_to_u32(c, 840);
-            ci.q5_slot = bytes_to_u32(c, 844);
+            ci.lRingSlot = bytes_to_u32(c, 820);
+            ci.rRingSlot = bytes_to_u32(c, 824);
+            ci.q1Slot = bytes_to_u32(c, 828);
+            ci.q2Slot = bytes_to_u32(c, 832);
+            ci.q3Slot = bytes_to_u32(c, 836);
+            ci.q4Slot = bytes_to_u32(c, 840);
+            ci.q5Slot = bytes_to_u32(c, 844);
             uint32_t backpack_count = bytes_to_u32(c, 848);
             uint32_t unknown_22_flag = bytes_to_u32(c, 852);
             uint32_t max_inventory_count = bytes_to_u32(c, 856);
 
-            ci.inventory_items.reserve(max_inventory_count);
+            ci.inventoryItems.reserve(max_inventory_count);
             int inventory_offset = 860;
             for (uint32_t idx = 0; idx < max_inventory_count; ++idx) {
                 int offset = inventory_offset + (idx * 28);
@@ -194,7 +194,7 @@ namespace fsm::parse {
                     new_item.label = "Unknown " + std::to_string(itemId);
                     baseItem = new_item;
                 }
-                ci.inventory_items.push_back({
+                ci.inventoryItems.push_back({
                     .itemId = itemId,
                     .upgradeLevel = upgradeLevel,
                     .infusion = infusion,
@@ -209,7 +209,7 @@ namespace fsm::parse {
         }
         DSRSaveFile save_file = {
             .characters = characters,
-            .side_car_enty = sl2.entries[10]
+            .sideCarEnty = sl2.entries[10]
         };
         return save_file;
     }

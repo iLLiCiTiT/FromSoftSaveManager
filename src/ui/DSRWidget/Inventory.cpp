@@ -14,8 +14,47 @@
 
 InventoryModel::InventoryModel(QObject* parent): QStandardItemModel(parent) {};
 
-void InventoryModel::setCharacter() {
 
+void InventoryModel::setCharacter(const fsm::parse::DSRCharacterInfo* charInfo) {
+    QStandardItem* rootItem = invisibleRootItem();
+    rootItem->removeRows(0, rootItem->rowCount());
+    if (charInfo == nullptr) return;
+
+    std::unordered_map<uint32_t, QStandardItem*> itemsById;
+    QList<QStandardItem*> newItems;
+    for (auto invItem: charInfo->inventoryItems) {
+        QStandardItem* item = createModelItem(invItem, false);
+        if (item == nullptr) {
+            item = createUnknownItem(invItem);
+        }
+
+        item->setData(invItem.amount, ITEM_AMOUNT_ROLE);
+        // Show consumables, materials and ammunition items from both inventory and bottomless box in one item
+        // TODO use enum for category
+        if (invItem.baseItem.category == "consumables" || invItem.baseItem.category == "materials" || invItem.baseItem.category == "ammunition") {
+            itemsById[invItem.itemId] = item;
+        }
+        newItems.append(item);
+    }
+    for (auto blbItem: charInfo->botomlessBoxItems) {
+        QStandardItem* item = nullptr;
+        if (blbItem.baseItem.category == "consumables" || blbItem.baseItem.category == "materials" || blbItem.baseItem.category == "ammunition") {
+            auto iterItem = itemsById.find(blbItem.itemId);
+            if (iterItem != itemsById.end()) item = iterItem->second;
+        };
+        if (item == nullptr) {
+            item = createModelItem(blbItem, true);
+            if (item == nullptr) {
+                item = createUnknownItem(blbItem);
+            }
+            itemsById[blbItem.itemId] = item;
+            newItems.append(item);
+        }
+        item->setData(blbItem.amount, ITEM_BOTOMLESS_BOX_AMOUNT_ROLE);
+    }
+
+    if (!newItems.isEmpty())
+        rootItem->appendRows(newItems);
 };
 
 QStandardItem* InventoryModel::createModelItem(fsm::parse::InventoryItem& inventoryItem, bool inBottomlessBox) {
@@ -75,8 +114,6 @@ QStandardItem* InventoryModel::createModelItem(fsm::parse::InventoryItem& invent
             break;
     }
 
-    uint32_t bottomlessBoxAmount = inBottomlessBox ? inventoryItem.amount : 0;
-    uint32_t inventoryAmount = !inBottomlessBox ? inventoryItem.amount : 0;
     QString imagePath = QString::fromStdString(":/dsr_images/" + inventoryItem.baseItem.image + ".png");
 
     QStandardItem* item = new QStandardItem(QString::fromStdString(inventoryItem.baseItem.label));
@@ -85,9 +122,9 @@ QStandardItem* InventoryModel::createModelItem(fsm::parse::InventoryItem& invent
     item->setData(inventoryItem.upgradeLevel, ITEM_LEVEL_ROLE);
     item->setData(infusionPix, ITEM_INFUSION_ICON_ROLE);
     item->setData(inventoryItem.order, ITEM_ORDER_ROLE);
-    item->setData(inventoryAmount, ITEM_AMOUNT_ROLE);
     item->setData(inventoryItem.durability, ITEM_DURABILITY_ROLE);
-    item->setData(bottomlessBoxAmount, ITEM_BOTOMLESS_BOX_AMOUNT_ROLE);
+    item->setData(0, ITEM_AMOUNT_ROLE);
+    item->setData(0, ITEM_BOTOMLESS_BOX_AMOUNT_ROLE);
     item->setData(QPixmap(imagePath), ITEM_IMAGE_ROLE);
     item->setData(QString::fromStdString(inventoryItem.baseItem.category), ITEM_CATEGORY_ROLE);
     return item;
@@ -103,9 +140,7 @@ QStandardItem* InventoryModel::createUnknownItem(fsm::parse::InventoryItem& inve
 
     item->setData(inventoryItem.upgradeLevel, ITEM_LEVEL_ROLE);
     item->setData(inventoryItem.order, ITEM_ORDER_ROLE);
-    item->setData(inventoryItem.amount, ITEM_AMOUNT_ROLE);
     item->setData(inventoryItem.durability, ITEM_DURABILITY_ROLE);
-    item->setData(0, ITEM_BOTOMLESS_BOX_AMOUNT_ROLE);
     item->setData(QVariant(QString::fromStdString(inventoryItem.baseItem.category)), ITEM_CATEGORY_ROLE);
     item->setData(QPixmap(":/dsr_images/unknown.png"), ITEM_IMAGE_ROLE);
     return item;
@@ -398,8 +433,8 @@ InventoryWidget::InventoryWidget(QWidget* parent): QWidget(parent) {
     m_proxy->setCategory(m_categoryBtns->getCategory());
 };
 
-void InventoryWidget::setCharacter() {
-    m_model->setCharacter();
+void InventoryWidget::setCharacter(const fsm::parse::DSRCharacterInfo* charInfo) {
+    m_model->setCharacter(charInfo);
     m_proxy->sort(0, Qt::AscendingOrder);
 };
 
