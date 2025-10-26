@@ -741,20 +741,20 @@ namespace fsm::parse {
         {711, {.id = 711, .type = 1073741824, .max_stack_count = 99, .category = "consumables", .image = "soul_of_manus", .label = "Soul of Manus"}},
     };
     struct InventoryItem {
-        uint32_t item_id;
-        uint8_t item_type;
-        uint8_t upgrade_level;
-        uint8_t infusion;
+        uint32_t itemId;
+        uint8_t itemType;
+        uint8_t upgradeLevel;
+        uint16_t infusion;
         uint32_t amount;
         uint32_t durability;
         uint32_t order;
         uint32_t idx;
         // NOTE how to pass in reference only reference?
-        BaseItem base_item;
+        BaseItem baseItem;
     };
 
     struct AttunementSlot {
-        uint8_t item_id;
+        uint8_t itemId;
         uint8_t remaining_uses;
     };
 

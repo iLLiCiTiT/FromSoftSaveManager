@@ -71,13 +71,13 @@ namespace fsm::parse {
 
             ci.name = name;
 
-            // uint32_t l_ring_slot_item_type = bytes_to_u32(c, 712);
-            // uint32_t r_ring_slot_item_type = bytes_to_u32(c, 716);
-            // uint32_t q1_slot_item_type = bytes_to_u32(c, 720);
-            // uint32_t q2_slot_item_type = bytes_to_u32(c, 724);
-            // uint32_t q3_slot_item_type = bytes_to_u32(c, 728);
-            // uint32_t q4_slot_item_type = bytes_to_u32(c, 732);
-            // uint32_t q5_slot_item_type = bytes_to_u32(c, 736);
+            // uint32_t l_ring_slotItemType = bytes_to_u32(c, 712);
+            // uint32_t r_ring_slotItemType = bytes_to_u32(c, 716);
+            // uint32_t q1_slotItemType = bytes_to_u32(c, 720);
+            // uint32_t q2_slotItemType = bytes_to_u32(c, 724);
+            // uint32_t q3_slotItemType = bytes_to_u32(c, 728);
+            // uint32_t q4_slotItemType = bytes_to_u32(c, 732);
+            // uint32_t q5_slotItemType = bytes_to_u32(c, 736);
             // uint32_t one_double_handling = bytes_to_u32(c, 740);
             // uint32_t l_hand_flag = bytes_to_u32(c, 744);
             // uint32_t r_hand_flag = bytes_to_u32(c, 748);
@@ -113,60 +113,60 @@ namespace fsm::parse {
             int inventory_offset = 860;
             for (uint32_t idx = 0; idx < max_inventory_count; ++idx) {
                 int offset = inventory_offset + (idx * 28);
-                uint32_t item_id = bytes_to_u32(c, offset + 4);
-                if (item_id == 0xFFFFFFFFu) continue;
-                std::unordered_map<uint32_t, BaseItem>::const_iterator tmp_it = ITEMS_MAPPING.find(item_id);
-                uint8_t upgrade_level = 0;
-                uint8_t infusion = 0;
-                std::optional<BaseItem> base_item = std::nullopt;
+                uint32_t itemId = bytes_to_u32(c, offset + 4);
+                if (itemId == 0xFFFFFFFFu) continue;
+                std::unordered_map<uint32_t, BaseItem>::const_iterator tmp_it = ITEMS_MAPPING.find(itemId);
+                uint8_t upgradeLevel = 0;
+                uint16_t infusion = 0;
+                std::optional<BaseItem> baseItem = std::nullopt;
                 if (tmp_it == ITEMS_MAPPING.end()) {
                     // Pyromancy Flame has different upgrade levels
-                    if (1330000 <= item_id && item_id < 1332000) {
+                    if (1330000 <= itemId && itemId < 1332000) {
                         // Pyromancy Flame
-                        upgrade_level = (item_id - 1330000) / 100;
-                        item_id = 1330000;
-                        base_item = ITEMS_MAPPING.at(item_id);
-                    } else if (1332000 <= item_id && item_id <= 1332500) {
+                        upgradeLevel = (itemId - 1330000) / 100;
+                        itemId = 1330000;
+                        baseItem = ITEMS_MAPPING.at(itemId);
+                    } else if (1332000 <= itemId && itemId <= 1332500) {
                         // Ascended Pyromancy Flame
-                        upgrade_level = (item_id - 1332000) / 100;
-                        item_id = 1332000;
-                        base_item = ITEMS_MAPPING.at(item_id);
-                    } else if (311000 <= item_id && item_id <= 312705) {
+                        upgradeLevel = (itemId - 1332000) / 100;
+                        itemId = 1332000;
+                        baseItem = ITEMS_MAPPING.at(itemId);
+                    } else if (311000 <= itemId && itemId <= 312705) {
                         // Sword of Artorias cursed variations
-                        upgrade_level = item_id % 100;
-                        item_id = 311000;
-                        base_item = ITEMS_MAPPING.at(item_id);
+                        upgradeLevel = itemId % 100;
+                        itemId = 311000;
+                        baseItem = ITEMS_MAPPING.at(itemId);
                     } else {
-                        upgrade_level = item_id % 100;
-                        uint32_t new_id = item_id - upgrade_level;
+                        upgradeLevel = itemId % 100;
+                        uint32_t new_id = itemId - upgradeLevel;
                         tmp_it = ITEMS_MAPPING.find(new_id);
                         if (tmp_it != ITEMS_MAPPING.end()) {
-                            item_id = new_id;
-                            base_item = ITEMS_MAPPING.at(item_id);
+                            itemId = new_id;
+                            baseItem = ITEMS_MAPPING.at(itemId);
                         } else {
                             infusion = new_id % 1000;
                             new_id -= infusion;
                             tmp_it = ITEMS_MAPPING.find(new_id);
                             if (tmp_it != ITEMS_MAPPING.end()) {
-                                item_id = new_id;
-                                base_item = ITEMS_MAPPING.at(item_id);
+                                itemId = new_id;
+                                baseItem = ITEMS_MAPPING.at(itemId);
                             }
                         }
                     }
                 } else {
-                    base_item = tmp_it->second;
+                    baseItem = tmp_it->second;
                 }
                 // Read rest of item information
-                uint32_t item_type = bytes_to_u32(c, offset);
+                uint32_t itemType = bytes_to_u32(c, offset);
                 uint32_t amount = bytes_to_u32(c, offset + 8);
                 uint32_t order = bytes_to_u32(c, offset + 12);
                 // uint32_t _un1 = bytes_to_u32(c, offset + 16);
                 uint32_t durability = bytes_to_u32(c, offset + 20);
                 // uint32_t _un2 = bytes_to_u32(c, offset + 24);
 
-                if (!base_item.has_value()) {
+                if (!baseItem.has_value()) {
                     BaseItem new_item;
-                    switch (item_type) {
+                    switch (itemType) {
                         case 0:
                             new_item.category = "weapons_shields";
                             break;
@@ -177,11 +177,11 @@ namespace fsm::parse {
                             new_item.category = "rings";
                             break;
                         case 1073741824:
-                            if (item_id < 800) {
+                            if (itemId < 800) {
                                 new_item.category = "consumables";
-                            } else if (1000 <= item_id && item_id < 2000) {
+                            } else if (1000 <= itemId && itemId < 2000) {
                                 new_item.category = "materials";
-                            } else if (item_id > 3000) {
+                            } else if (itemId > 3000) {
                                 new_item.category = "spells";
                             } else {
                                 new_item.category = "key_items";
@@ -191,18 +191,18 @@ namespace fsm::parse {
                             new_item.category = "consumables";
                             break;
                     }
-                    new_item.label = "Unknown " + std::to_string(item_id);
-                    base_item = new_item;
+                    new_item.label = "Unknown " + std::to_string(itemId);
+                    baseItem = new_item;
                 }
                 ci.inventory_items.push_back({
-                    .item_id = item_id,
-                    .upgrade_level = upgrade_level,
+                    .itemId = itemId,
+                    .upgradeLevel = upgradeLevel,
                     .infusion = infusion,
                     .amount = amount,
                     .durability = durability,
                     .order = order,
                     .idx = idx,
-                    .base_item = base_item.value()
+                    .baseItem = baseItem.value()
                 });
             }
             characters.push_back(std::move(ci));
