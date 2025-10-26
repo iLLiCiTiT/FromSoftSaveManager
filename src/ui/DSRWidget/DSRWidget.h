@@ -1,9 +1,8 @@
 #pragma once
-#include <QStandardItemModel>
-#include <QListView>
 
 #include "CharInfo.h"
 #include "Covenants.h"
+#include "Inventory.h"
 #include "../Controller.h"
 #include "../Utils.h"
 #include "../../parse/DSRSaveFile.h"
@@ -46,5 +45,5 @@ private:
     TabWidget* m_charTabs;
     CovenantsWidget* m_covenantsWidget;
     CharacterInfoWidget* m_charInfoWidget;
-    // InventoryWidget* m_inventoryWidget;
+    InventoryWidget* m_inventoryWidget;
 };
