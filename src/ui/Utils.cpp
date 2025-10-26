@@ -130,3 +130,26 @@ void TabWidget::setCurrentTab(int tabIdx) {
     m_contentLayout->takeAt(0);
     m_contentLayout->addWidget(m_tabs.at(m_currentTabId).widget, 1);
 };
+
+
+BaseClickableFrame::BaseClickableFrame(QWidget* parent): QFrame(parent) {};
+
+void BaseClickableFrame::mousePressEvent(QMouseEvent* event) {
+    QFrame::mousePressEvent(event);
+    if (event->isAccepted()) return;
+    if (event->button() == Qt::LeftButton) {
+        m_mousePressed = true;
+        event->accept();
+    }
+};
+
+void BaseClickableFrame::mouseReleaseEvent(QMouseEvent* event) {
+    bool pressed = m_mousePressed;
+    m_mousePressed = false;
+    QFrame::mouseReleaseEvent(event);
+    if (event->isAccepted()) return;
+    if (pressed && event->button() == Qt::LeftButton) {
+        event->accept();
+        onMouseRelease();
+    }
+};

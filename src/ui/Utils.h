@@ -68,3 +68,14 @@ private:
     QVBoxLayout* m_contentLayout = nullptr;
     QWidget* m_emptyWidget = nullptr;
 };
+
+class BaseClickableFrame: public QFrame {
+    Q_OBJECT
+public:
+    explicit BaseClickableFrame(QWidget* parent);
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
+private:
+    virtual void onMouseRelease() = 0;
+    bool m_mousePressed = false;
+};
