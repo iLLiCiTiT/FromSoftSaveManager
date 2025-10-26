@@ -23,10 +23,8 @@ void InventoryModel::setCharacter(const fsm::parse::DSRCharacterInfo* charInfo) 
     std::unordered_map<uint32_t, QStandardItem*> itemsById;
     QList<QStandardItem*> newItems;
     for (auto invItem: charInfo->inventoryItems) {
-        QStandardItem* item = createModelItem(invItem, false);
-        if (item == nullptr) {
-            item = createUnknownItem(invItem);
-        }
+        QStandardItem* item = createModelItem(invItem);
+        if (item == nullptr) continue;
 
         item->setData(invItem.amount, ITEM_AMOUNT_ROLE);
         // Show consumables, materials and ammunition items from both inventory and bottomless box in one item
@@ -43,10 +41,8 @@ void InventoryModel::setCharacter(const fsm::parse::DSRCharacterInfo* charInfo) 
             if (iterItem != itemsById.end()) item = iterItem->second;
         };
         if (item == nullptr) {
-            item = createModelItem(blbItem, true);
-            if (item == nullptr) {
-                item = createUnknownItem(blbItem);
-            }
+            item = createModelItem(blbItem);
+            if (item == nullptr) continue;
             itemsById[blbItem.itemId] = item;
             newItems.append(item);
         }
@@ -57,7 +53,8 @@ void InventoryModel::setCharacter(const fsm::parse::DSRCharacterInfo* charInfo) 
         rootItem->appendRows(newItems);
 };
 
-QStandardItem* InventoryModel::createModelItem(fsm::parse::InventoryItem& inventoryItem, bool inBottomlessBox) {
+QStandardItem* InventoryModel::createModelItem(fsm::parse::InventoryItem& inventoryItem) {
+    if (!inventoryItem.knownItem) return createUnknownItem(inventoryItem);
     // Skip fist
     if (inventoryItem.baseItem.type == 0 && inventoryItem.baseItem.id == 900000) return nullptr;
     // Skip no armor
@@ -72,6 +69,7 @@ QStandardItem* InventoryModel::createModelItem(fsm::parse::InventoryItem& invent
                 break;
         }
     }
+
     QPixmap infusionPix;
     switch (inventoryItem.infusion) {
         case 100:
@@ -193,10 +191,11 @@ void InventoryDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
                 pixmap = qvariant_cast<QPixmap>(pixmapValue);
                 break;
             default:
-                pixmap = QPixmap(":/dsr_images/unknown.png");
                 break;
         }
     }
+    if (pixmap.isNull())
+        pixmap = QPixmap(":/dsr_images/unknown.png");
     int imgSize = option.rect.height() - 20;
     pixmap = pixmap.scaled(
         imgSize, imgSize,
@@ -214,7 +213,7 @@ void InventoryDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
 
     QRect standRect = QRect(
         iconRect.left(),
-        (iconRect.bottom() - iconRect.height()) + 10,
+        (iconRect.bottom() - standPix.height()) + 10,
         standPix.width(),
         standPix.height()
     );
@@ -223,9 +222,13 @@ void InventoryDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
     painter->drawPixmap(iconRect, pixmap);
 
     QVariant infusionIconValue = index.data(ITEM_INFUSION_ICON_ROLE);
-    if (infusionIconValue.isValid() && !infusionIconValue.isNull()) {
+    QPixmap infusionIcon;
+    if (infusionIconValue.isValid()) {
+        infusionIcon = qvariant_cast<QPixmap>(infusionIconValue);
+    }
+    if (!infusionIcon.isNull()) {
         int infusionSize = int(option.rect.height() * 0.3);
-        QPixmap infusionIcon = qvariant_cast<QPixmap>(infusionIconValue).scaled(
+        infusionIcon = infusionIcon.scaled(
             infusionSize,
             infusionSize,
             Qt::KeepAspectRatio,
@@ -243,7 +246,9 @@ void InventoryDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
     QString label = index.data(Qt::DisplayRole).toString();
     QVariant levelValue = index.data(ITEM_LEVEL_ROLE);
     if (levelValue.isValid() && !levelValue.isNull()) {
-        label.append("+" + QString::number(levelValue.toInt()));
+        int level = levelValue.toInt();
+        if (level > 0)
+            label.append("+" + QString::number(level));
     }
 
     QFont font = painter->font();

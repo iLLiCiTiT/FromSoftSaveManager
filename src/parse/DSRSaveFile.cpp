@@ -6,7 +6,7 @@
 #include <optional>
 
 namespace fsm::parse {
-    uint32_t bytes_to_u32(const std::vector<uint8_t>& b, const int& offset)
+    uint32_t bytes_to_u32(const std::vector<uint8_t>& b, const uint32_t& offset)
     {
         if (b.size() % sizeof(uint32_t) != 0) {
             throw std::runtime_error("Byte size not a multiple of 4");
@@ -20,11 +20,11 @@ namespace fsm::parse {
     DSRSaveFile parse_dsr_file(const SL2File& sl2) {
         std::vector<DSRCharacterInfo> characters;
         characters.reserve(10);
-        for (int char_idx = 0; char_idx < (int)sl2.entries.size() && char_idx < 10; ++char_idx) {
-            const auto& c = sl2.entries[char_idx].content;
+        for (int charIdx = 0; charIdx < (int)sl2.entries.size() && charIdx < 10; ++charIdx) {
+            const auto& c = sl2.entries[charIdx].content;
             if (c.empty() || c[0] == 0x00) continue;
             DSRCharacterInfo ci;
-
+            ci.index = charIdx;
             ci.hpCurrent = bytes_to_u32(c, 96);
             ci.hpMax = bytes_to_u32(c, 100);
             ci.hpBase = bytes_to_u32(c, 104);
@@ -60,7 +60,7 @@ namespace fsm::parse {
             ci.covenantId = c[351];
 
             std::vector<uint8_t> name_b;
-            name_b.assign(c.begin() + 244, c.begin() + 258);
+            name_b.assign(c.begin() + 244, c.begin() + 268);
 
             std::u16string name;
             for (size_t i = 0; i + 1 < name_b.size(); i += 2) {
@@ -105,105 +105,97 @@ namespace fsm::parse {
             ci.q3Slot = bytes_to_u32(c, 836);
             ci.q4Slot = bytes_to_u32(c, 840);
             ci.q5Slot = bytes_to_u32(c, 844);
-            uint32_t backpack_count = bytes_to_u32(c, 848);
+            uint32_t backpackCount = bytes_to_u32(c, 848);
             uint32_t unknown_22_flag = bytes_to_u32(c, 852);
-            uint32_t max_inventory_count = bytes_to_u32(c, 856);
+            uint32_t maxInventoryCount = bytes_to_u32(c, 856);
 
-            ci.inventoryItems.reserve(max_inventory_count);
-            int inventory_offset = 860;
-            for (uint32_t idx = 0; idx < max_inventory_count; ++idx) {
-                int offset = inventory_offset + (idx * 28);
+            ci.inventoryItems.reserve(maxInventoryCount);
+            // TODO Use constant
+            uint32_t inventoryOffset = 860;
+            std::unordered_map<uint32_t, BaseItem>::const_iterator itemsIt;
+            for (uint32_t idx = 0; idx < maxInventoryCount; ++idx) {
+                uint32_t offset = inventoryOffset + (idx * 28);
                 uint32_t itemId = bytes_to_u32(c, offset + 4);
                 if (itemId == 0xFFFFFFFFu) continue;
-                std::unordered_map<uint32_t, BaseItem>::const_iterator tmp_it = ITEMS_MAPPING.find(itemId);
-                uint8_t upgradeLevel = 0;
-                uint16_t infusion = 0;
+                InventoryItem invItem;
+                invItem.itemId = itemId;
+                itemsIt = ITEMS_MAPPING.find(invItem.itemId);
                 std::optional<BaseItem> baseItem = std::nullopt;
-                if (tmp_it == ITEMS_MAPPING.end()) {
+                if (itemsIt != ITEMS_MAPPING.end()) {
+                    baseItem = itemsIt->second;
+                } else if (1330000 <= invItem.itemId && invItem.itemId < 1332000) {
                     // Pyromancy Flame has different upgrade levels
-                    if (1330000 <= itemId && itemId < 1332000) {
-                        // Pyromancy Flame
-                        upgradeLevel = (itemId - 1330000) / 100;
-                        itemId = 1330000;
-                        baseItem = ITEMS_MAPPING.at(itemId);
-                    } else if (1332000 <= itemId && itemId <= 1332500) {
-                        // Ascended Pyromancy Flame
-                        upgradeLevel = (itemId - 1332000) / 100;
-                        itemId = 1332000;
-                        baseItem = ITEMS_MAPPING.at(itemId);
-                    } else if (311000 <= itemId && itemId <= 312705) {
-                        // Sword of Artorias cursed variations
-                        upgradeLevel = itemId % 100;
-                        itemId = 311000;
-                        baseItem = ITEMS_MAPPING.at(itemId);
+                    // Pyromancy Flame
+                    invItem.upgradeLevel = (invItem.itemId - 1330000) / 100;
+                    invItem.itemId = 1330000;
+                    baseItem = ITEMS_MAPPING.at(invItem.itemId);
+                } else if (1332000 <= invItem.itemId && invItem.itemId <= 1332500) {
+                    // Ascended Pyromancy Flame
+                    invItem.upgradeLevel = (invItem.itemId - 1332000) / 100;
+                    invItem.itemId = 1332000;
+                    baseItem = ITEMS_MAPPING.at(invItem.itemId);
+                } else if (311000 <= invItem.itemId && invItem.itemId <= 312705) {
+                    // Sword of Artorias cursed variations
+                    invItem.upgradeLevel = invItem.itemId % 100;
+                    invItem.itemId = 311000;
+                } else {
+                    invItem.upgradeLevel = invItem.itemId % 100;
+                    uint32_t new_id = invItem.itemId - invItem.upgradeLevel;
+                    itemsIt = ITEMS_MAPPING.find(new_id);
+                    if (itemsIt != ITEMS_MAPPING.end()) {
+                        invItem.itemId = new_id;
+                        baseItem = itemsIt->second;
                     } else {
-                        upgradeLevel = itemId % 100;
-                        uint32_t new_id = itemId - upgradeLevel;
-                        tmp_it = ITEMS_MAPPING.find(new_id);
-                        if (tmp_it != ITEMS_MAPPING.end()) {
-                            itemId = new_id;
-                            baseItem = ITEMS_MAPPING.at(itemId);
-                        } else {
-                            infusion = new_id % 1000;
-                            new_id -= infusion;
-                            tmp_it = ITEMS_MAPPING.find(new_id);
-                            if (tmp_it != ITEMS_MAPPING.end()) {
-                                itemId = new_id;
-                                baseItem = ITEMS_MAPPING.at(itemId);
-                            }
+                        invItem.infusion = new_id % 1000;
+                        new_id -= invItem.infusion;
+                        itemsIt = ITEMS_MAPPING.find(new_id);
+                        if (itemsIt != ITEMS_MAPPING.end()) {
+                            invItem.itemId = new_id;
+                            baseItem = itemsIt->second;
                         }
                     }
-                } else {
-                    baseItem = tmp_it->second;
                 }
                 // Read rest of item information
-                uint32_t itemType = bytes_to_u32(c, offset);
-                uint32_t amount = bytes_to_u32(c, offset + 8);
-                uint32_t order = bytes_to_u32(c, offset + 12);
+                invItem.itemType = bytes_to_u32(c, offset);
+                invItem.amount = bytes_to_u32(c, offset + 8);
+                invItem.order = bytes_to_u32(c, offset + 12);
                 // uint32_t _un1 = bytes_to_u32(c, offset + 16);
-                uint32_t durability = bytes_to_u32(c, offset + 20);
+                invItem.durability = bytes_to_u32(c, offset + 20);
                 // uint32_t _un2 = bytes_to_u32(c, offset + 24);
 
                 if (!baseItem.has_value()) {
-                    BaseItem new_item;
-                    switch (itemType) {
+                    invItem.knownItem = false;
+                    BaseItem newBaseItem;
+                    switch (invItem.itemType) {
                         case 0:
-                            new_item.category = "weapons_shields";
+                            newBaseItem.category = "weapons_shields";
                             break;
                         case 268435456:
-                            new_item.category = "armor";
+                            newBaseItem.category = "armor";
                             break;
                         case 536870912:
-                            new_item.category = "rings";
+                            newBaseItem.category = "rings";
                             break;
                         case 1073741824:
-                            if (itemId < 800) {
-                                new_item.category = "consumables";
-                            } else if (1000 <= itemId && itemId < 2000) {
-                                new_item.category = "materials";
-                            } else if (itemId > 3000) {
-                                new_item.category = "spells";
+                            if (invItem.itemId < 800) {
+                                newBaseItem.category = "consumables";
+                            } else if (1000 <= invItem.itemId && itemId < 2000) {
+                                newBaseItem.category = "materials";
+                            } else if (invItem.itemId > 3000) {
+                                newBaseItem.category = "spells";
                             } else {
-                                new_item.category = "key_items";
+                                newBaseItem.category = "key_items";
                             }
                             break;
                         default:
-                            new_item.category = "consumables";
+                            newBaseItem.category = "consumables";
                             break;
                     }
-                    new_item.label = "Unknown " + std::to_string(itemId);
-                    baseItem = new_item;
+                    newBaseItem.label = "Unknown " + std::to_string(invItem.itemId);
+                    baseItem = newBaseItem;
                 }
-                ci.inventoryItems.push_back({
-                    .itemId = itemId,
-                    .upgradeLevel = upgradeLevel,
-                    .infusion = infusion,
-                    .amount = amount,
-                    .durability = durability,
-                    .order = order,
-                    .idx = idx,
-                    .baseItem = baseItem.value()
-                });
+                invItem.baseItem = baseItem.value();
+                ci.inventoryItems.push_back(invItem);
             }
             characters.push_back(std::move(ci));
         }

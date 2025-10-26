@@ -1,7 +1,6 @@
 #include "Controller.h"
+#include "../parse/DSRSaveFile.h"
 
-#include <iostream>
-#include <ostream>
 
 Controller::Controller(QObject* parent): QObject(parent) {
 };

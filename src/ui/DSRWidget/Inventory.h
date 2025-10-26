@@ -23,7 +23,7 @@ public:
     explicit InventoryModel(QObject* parent = nullptr);
     void setCharacter(const fsm::parse::DSRCharacterInfo* charInfo);
 private:
-    QStandardItem* createModelItem(fsm::parse::InventoryItem& inventoryItem, bool inBottomlessBox);
+    QStandardItem* createModelItem(fsm::parse::InventoryItem& inventoryItem);
     QStandardItem* createUnknownItem(fsm::parse::InventoryItem& inventoryItem);
 };
 
