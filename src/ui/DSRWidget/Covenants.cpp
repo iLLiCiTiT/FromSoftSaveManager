@@ -53,7 +53,7 @@ CovenantsWidget::CovenantsWidget(QWidget* parent): QWidget(parent) {
 
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(wrapperWidget, 0);
+    layout->addWidget(wrapperWidget, 1);
     layout->addStretch(1);
 };
 void CovenantsWidget::setCharacter() {
