@@ -128,10 +128,32 @@ void DSRWidget::refresh() {
 
 void DSRWidget::paintEvent(QPaintEvent* event) {
     QPainter painter = QPainter(this);
+    painter.setClipRect(event->rect());
     painter.setPen(Qt::NoPen);
-    painter.setBrush(QColor("#060507"));
-    painter.drawRect(event->rect());
-    painter.drawPixmap(rect(), QPixmap(":/dsr_images/bg.png"));
+    painter.setBrush(QColor(6, 5, 7));
+    const QRect targetRect = rect();
+    painter.drawRect(targetRect);
+    QPixmap pix = QPixmap(":/dsr_images/bg.png");
+    QPixmap scaled = pix.scaled(size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+    // center vertically
+    const int y = (height() - scaled.height()) / 2;
+    painter.drawPixmap(0, y, scaled);
+    // --- Manual approach ---
+    // const double sAspect = double(pix.width()) / pix.height();
+    // const double tAspect = double(targetRect.width()) / targetRect.height();
+    // int posY = 0;
+    // int srcWidth = pix.width();
+    // int srcHeight = pix.height();
+    // if (tAspect > sAspect) {
+    //     // Crop vertically in source and offset y position
+    //     srcHeight = int(pix.width() / tAspect);
+    //     posY = (pix.height() - srcHeight) / 2;
+    // } else {
+    //     // Crop horizontally in source
+    //     srcWidth = int(pix.height() * tAspect);
+    // }
+    // QRect src = QRect(0, posY, srcWidth, srcHeight);
+    // painter.drawPixmap(targetRect, pix, src);
 };
 
 void DSRWidget::onRefresh() {
