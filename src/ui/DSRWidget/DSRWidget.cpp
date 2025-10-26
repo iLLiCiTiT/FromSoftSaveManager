@@ -66,9 +66,7 @@ fsm::parse::DSRCharacterInfo* CharsListModel::getCharByIdx(const int& index) {
 
 
 DSRWidget::DSRWidget(Controller* controller, const QString& saveId, QWidget* parent)
-    : QWidget(parent),
-    m_saveId(saveId),
-    m_controller(controller)
+    : BaseGameWidget(controller, saveId, parent)
 {
     QWidget* viewWrap = new QWidget(this);
 
@@ -95,7 +93,7 @@ DSRWidget::DSRWidget(Controller* controller, const QString& saveId, QWidget* par
     m_charInfoWidget = new CharacterInfoWidget(m_charTabs);
     m_inventoryWidget = new InventoryWidget(m_charTabs);
     // m_charEquipWidget = new QWidget(m_charTabs);
-    //
+
     m_charTabs->addTab(
         "Character Info",
         m_charInfoWidget

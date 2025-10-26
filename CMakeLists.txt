@@ -22,24 +22,19 @@ add_executable(FromSoftSaveManager
         src/parse/Utils.cpp
 
         src/ui/resources/resources.qrc
-        src/ui/MainWindow.cpp
         src/ui/SideBarWidget.cpp
         src/ui/SquareButton.h
-        src/ui/Controller.h
-        src/ui/SettingsWidget.cpp
-        src/ui/SettingsWidget.h
         src/ui/Utils.cpp
-        src/ui/Utils.h
+        src/ui/Controller.h
         src/ui/KeysWindows.cpp
         src/ui/KeysWindows.h
+        src/ui/MainWindow.cpp
+        src/ui/SettingsWidget.cpp
+        src/ui/BaseGameWidget.h
         src/ui/DSRWidget/DSRWidget.cpp
-        src/ui/DSRWidget/DSRWidget.h
         src/ui/DSRWidget/Inventory.cpp
-        src/ui/DSRWidget/Inventory.h
         src/ui/DSRWidget/Covenants.cpp
-        src/ui/DSRWidget/Covenants.h
         src/ui/DSRWidget/CharInfo.cpp
-        src/ui/DSRWidget/CharInfo.h
 )
 
 add_library(resources_dsr SHARED)

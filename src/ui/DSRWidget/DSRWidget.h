@@ -3,6 +3,7 @@
 #include "CharInfo.h"
 #include "Covenants.h"
 #include "Inventory.h"
+#include "../BaseGameWidget.h"
 #include "../Controller.h"
 #include "../Utils.h"
 #include "../../parse/DSRSaveFile.h"
@@ -27,19 +28,17 @@ private:
 };
 
 
-class DSRWidget: public QWidget {
+class DSRWidget: public BaseGameWidget {
     Q_OBJECT
 public:
     explicit DSRWidget(Controller* controller, const QString& saveId, QWidget* parent);
-    void refresh();
+    void refresh() override;
     void paintEvent(QPaintEvent* event) override;
 private slots:
     void onRefresh();
     void onSelectionChange(const QItemSelection &selected, const QItemSelection &deselected);
 private:
-    QString m_saveId;
     QPixmap m_bgPix;
-    Controller* m_controller;
     CharsListModel* m_model;
     QListView* m_view;
     TabWidget* m_charTabs;
