@@ -1,7 +1,6 @@
 #include <QApplication>
-#include <QIcon>
 #include <QFile>
-#include <QDateTime>
+#include "ui/resources/dsr_images_init.h"
 #include "ui/MainWindow.h"
 #include "ui/Controller.h"
 

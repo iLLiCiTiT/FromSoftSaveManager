@@ -49,7 +49,7 @@ set_source_files_properties(src/ui/resources/dsr_images.qrc PROPERTIES
 set_target_properties(resources_dsr PROPERTIES PREFIX "")
 target_sources(resources_dsr PRIVATE
         src/ui/resources/dsr_images.qrc
-        src/ui/resources/dsr_images_init.cpp
+        src/ui/resources/dsr_images_init.h
 )
 target_link_libraries(resources_dsr PUBLIC Qt::Core)
 
