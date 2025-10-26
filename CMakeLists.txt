@@ -42,11 +42,23 @@ add_executable(FromSoftSaveManager
         src/ui/DSRWidget/CharInfo.h
 )
 
+add_library(resources_dsr SHARED)
+set_source_files_properties(src/ui/resources/dsr_images.qrc PROPERTIES
+    QT_RESOURCE_ALIAS "dsr_images"
+)
+set_target_properties(resources_dsr PROPERTIES PREFIX "")
+target_sources(resources_dsr PRIVATE
+        src/ui/resources/dsr_images.qrc
+        src/ui/resources/dsr_images_init.cpp
+)
+target_link_libraries(resources_dsr PUBLIC Qt::Core)
+
 target_link_libraries(FromSoftSaveManager
         Qt::Core
         Qt::Gui
         Qt::Widgets
         tiny-aes
+        resources_dsr
 )
 
 if ((MSVC) AND (MSVC_VERSION GREATER_EQUAL 1914))
