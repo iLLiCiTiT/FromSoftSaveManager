@@ -1,5 +1,4 @@
 #include "DSRSaveFile.h"
-#include <codecvt>
 #include <cstring>
 #include <iostream>
 #include <locale>
@@ -20,7 +19,7 @@ namespace fsm::parse {
     DSRSaveFile parse_dsr_file(const SL2File& sl2) {
         std::vector<DSRCharacterInfo> characters;
         characters.reserve(10);
-        for (int charIdx = 0; charIdx < (int)sl2.entries.size() && charIdx < 10; ++charIdx) {
+        for (int charIdx = 0; charIdx < sl2.entries.size() && charIdx < 10; ++charIdx) {
             const auto& c = sl2.entries[charIdx].content;
             if (c.empty() || c[0] == 0x00) continue;
             DSRCharacterInfo ci;
@@ -49,8 +48,7 @@ namespace fsm::parse {
             ci.earnedSouls = bytes_to_u32(c, 224);
             ci.hollowState = bytes_to_u32(c, 232);
 
-            std::copy(c.begin() + 310, c.begin() + 319, std::begin(ci.covenantLevels));
-            // &ci.covenantLevels = {c[310],c[311],c[312],c[313],c[314],c[315],c[316],c[317],c[318],c[319]};
+            std::copy(c.begin() + 310, c.begin() + 320, std::begin(ci.covenantLevels));
 
             ci.toxicRes = bytes_to_u32(c, 332);
             ci.bleedRes = bytes_to_u32(c, 336);
@@ -112,28 +110,29 @@ namespace fsm::parse {
             ci.inventoryItems.reserve(maxInventoryCount);
             // TODO Use constant
             uint32_t inventoryOffset = 860;
-            std::unordered_map<uint32_t, BaseItem>::const_iterator itemsIt;
+            std::optional<fssm::parse::dsr::BaseItem> itemOpt;
             for (uint32_t idx = 0; idx < maxInventoryCount; ++idx) {
                 uint32_t offset = inventoryOffset + (idx * 28);
                 uint32_t itemId = bytes_to_u32(c, offset + 4);
                 if (itemId == 0xFFFFFFFFu) continue;
                 InventoryItem invItem;
+                invItem.itemType = bytes_to_u32(c, offset);
                 invItem.itemId = itemId;
-                itemsIt = ITEMS_MAPPING.find(invItem.itemId);
-                std::optional<BaseItem> baseItem = std::nullopt;
-                if (itemsIt != ITEMS_MAPPING.end()) {
-                    baseItem = itemsIt->second;
+                itemOpt = fssm::parse::dsr::findBaseItem(invItem.itemType, invItem.itemId);
+                std::optional<fssm::parse::dsr::BaseItem> baseItem = std::nullopt;
+                if (itemOpt.has_value()) {
+                    baseItem = itemOpt.value();
                 } else if (1330000 <= invItem.itemId && invItem.itemId < 1332000) {
                     // Pyromancy Flame has different upgrade levels
                     // Pyromancy Flame
                     invItem.upgradeLevel = (invItem.itemId - 1330000) / 100;
                     invItem.itemId = 1330000;
-                    baseItem = ITEMS_MAPPING.at(invItem.itemId);
+                    baseItem = fssm::parse::dsr::findBaseItem(invItem.itemType, invItem.itemId).value();
                 } else if (1332000 <= invItem.itemId && invItem.itemId <= 1332500) {
                     // Ascended Pyromancy Flame
                     invItem.upgradeLevel = (invItem.itemId - 1332000) / 100;
                     invItem.itemId = 1332000;
-                    baseItem = ITEMS_MAPPING.at(invItem.itemId);
+                    baseItem = fssm::parse::dsr::findBaseItem(invItem.itemType, invItem.itemId).value();
                 } else if (311000 <= invItem.itemId && invItem.itemId <= 312705) {
                     // Sword of Artorias cursed variations
                     invItem.upgradeLevel = invItem.itemId % 100;
@@ -141,22 +140,21 @@ namespace fsm::parse {
                 } else {
                     invItem.upgradeLevel = invItem.itemId % 100;
                     uint32_t new_id = invItem.itemId - invItem.upgradeLevel;
-                    itemsIt = ITEMS_MAPPING.find(new_id);
-                    if (itemsIt != ITEMS_MAPPING.end()) {
+                    itemOpt = fssm::parse::dsr::findBaseItem(invItem.itemType, new_id);
+                    if (itemOpt.has_value()) {
                         invItem.itemId = new_id;
-                        baseItem = itemsIt->second;
+                        baseItem = itemOpt.value();
                     } else {
                         invItem.infusion = new_id % 1000;
                         new_id -= invItem.infusion;
-                        itemsIt = ITEMS_MAPPING.find(new_id);
-                        if (itemsIt != ITEMS_MAPPING.end()) {
+                        itemOpt = fssm::parse::dsr::findBaseItem(invItem.itemType, new_id);
+                        if (itemOpt.has_value()) {
                             invItem.itemId = new_id;
-                            baseItem = itemsIt->second;
+                            baseItem = itemOpt.value();
                         }
                     }
                 }
                 // Read rest of item information
-                invItem.itemType = bytes_to_u32(c, offset);
                 invItem.amount = bytes_to_u32(c, offset + 8);
                 invItem.order = bytes_to_u32(c, offset + 12);
                 // uint32_t _un1 = bytes_to_u32(c, offset + 16);
@@ -165,7 +163,7 @@ namespace fsm::parse {
 
                 if (!baseItem.has_value()) {
                     invItem.knownItem = false;
-                    BaseItem newBaseItem;
+                    fssm::parse::dsr::BaseItem newBaseItem;
                     switch (invItem.itemType) {
                         case 0:
                             newBaseItem.category = "weapons_shields";

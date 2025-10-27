@@ -1,9 +1,9 @@
 #include "CharInfo.h"
 
 #include <iostream>
-#include <ostream>
 
 #include "../Utils.h"
+#include "../../parse/DSRItems.h"
 
 namespace {
     struct WidgetsHelper {
@@ -174,8 +174,16 @@ CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
 
 void CharacterStatusWidget::setCharacter(const fsm::parse::DSRCharacterInfo* charInfo) {
     if (charInfo == nullptr) return setEmpty();
+
+    QString covenentValue = QString::fromStdString(fssm::parse::dsr::DSR_COVENANT_LABELS[charInfo->covenantId].data());
+    uint8_t covenantLevel = charInfo->covenantLevels[charInfo->covenantId];
+    if (covenantLevel >= 30)
+        covenentValue.push_back("+2");
+    else if (covenantLevel >= 10)
+        covenentValue.push_back("+1");
+
     m_nameValueWidget->setText(QString::fromStdU16String(charInfo->name));
-    // m_covenantValueWidget->setText();
+    m_covenantValueWidget->setText(covenentValue);
     m_levelValueWidget->setText(QString::number(charInfo->level));
     m_soulsValueWidget->setText(QString::number(charInfo->souls));
     m_vitalityValueWidget->setText(QString::number(charInfo->vitality));
@@ -207,7 +215,7 @@ void CharacterStatusWidget::setCharacter(const fsm::parse::DSRCharacterInfo* cha
 
 void CharacterStatusWidget::setEmpty() {
     m_nameValueWidget->setText("< Empty >");
-    m_covenantValueWidget->setText("");
+    m_covenantValueWidget->setText("None");
     m_levelValueWidget->setText("");
     m_soulsValueWidget->setText("");
     m_vitalityValueWidget->setText("");

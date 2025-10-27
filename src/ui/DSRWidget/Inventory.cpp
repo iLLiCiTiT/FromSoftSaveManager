@@ -112,9 +112,11 @@ QStandardItem* InventoryModel::createModelItem(fsm::parse::InventoryItem& invent
             break;
     }
 
-    QString imagePath = QString::fromStdString(":/dsr_images/" + inventoryItem.baseItem.image + ".png");
+    QString imagePath = QString::fromStdString(":/dsr_images/");
+    imagePath.append(QString::fromStdString(inventoryItem.baseItem.image.data()));
+    imagePath.append(QString::fromStdString(".png"));
 
-    QStandardItem* item = new QStandardItem(QString::fromStdString(inventoryItem.baseItem.label));
+    QStandardItem* item = new QStandardItem(QString::fromStdString(inventoryItem.baseItem.label.data()));
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
 
     item->setData(inventoryItem.upgradeLevel, ITEM_LEVEL_ROLE);
@@ -124,7 +126,7 @@ QStandardItem* InventoryModel::createModelItem(fsm::parse::InventoryItem& invent
     item->setData(0, ITEM_AMOUNT_ROLE);
     item->setData(0, ITEM_BOTOMLESS_BOX_AMOUNT_ROLE);
     item->setData(QPixmap(imagePath), ITEM_IMAGE_ROLE);
-    item->setData(QString::fromStdString(inventoryItem.baseItem.category), ITEM_CATEGORY_ROLE);
+    item->setData(QString::fromStdString(inventoryItem.baseItem.category.data()), ITEM_CATEGORY_ROLE);
     return item;
 };
 QStandardItem* InventoryModel::createUnknownItem(fsm::parse::InventoryItem& inventoryItem) {
@@ -139,7 +141,7 @@ QStandardItem* InventoryModel::createUnknownItem(fsm::parse::InventoryItem& inve
     item->setData(inventoryItem.upgradeLevel, ITEM_LEVEL_ROLE);
     item->setData(inventoryItem.order, ITEM_ORDER_ROLE);
     item->setData(inventoryItem.durability, ITEM_DURABILITY_ROLE);
-    item->setData(QVariant(QString::fromStdString(inventoryItem.baseItem.category)), ITEM_CATEGORY_ROLE);
+    item->setData(QVariant(QString::fromStdString(inventoryItem.baseItem.category.data())), ITEM_CATEGORY_ROLE);
     item->setData(QPixmap(":/dsr_images/unknown.png"), ITEM_IMAGE_ROLE);
     return item;
 };

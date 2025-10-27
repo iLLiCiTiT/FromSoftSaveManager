@@ -18,6 +18,8 @@ add_subdirectory(vendor/tiny-AES-c)
 add_executable(FromSoftSaveManager
         src/main.cpp
         src/parse/Parse.cpp
+        src/parse/DSRItems.cpp
+        src/parse/DSRItems.h
         src/parse/DSRSaveFile.cpp
         src/parse/Utils.cpp
 
