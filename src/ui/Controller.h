@@ -29,7 +29,7 @@ public:
     ~Controller() override = default;
 
     QString getLastTabId() const;
-    void setLastTabId(QString saveId);
+    void setLastTabId(const QString& saveId);
 
     std::vector<SaveFileItem> getSaveFileItems();
     DSRCharInfoResult getDsrCharacters(const QString& saveId);

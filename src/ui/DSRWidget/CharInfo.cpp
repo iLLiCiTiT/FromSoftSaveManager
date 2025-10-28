@@ -197,9 +197,9 @@ void CharacterStatusWidget::setCharacter(const fsm::parse::DSRCharacterInfo* cha
     m_humanityValueWidget->setText(QString::number(charInfo->humanity));
     m_hollowValueWidget->setText((charInfo->hollowState == 8) ? "Hollow" : "Human");
     m_sexValueWidget->setText((charInfo->sex == 1) ? "Male" : "Female");
-    // m_classValueWidget->setText();
-    // m_physiqueValueWidget->setText();
-    // m_giftValueWidget->setText();
+    m_classValueWidget->setText(QString::fromStdString(fssm::parse::dsr::DSR_CLASSES[charInfo->classId].data()));
+    m_physiqueValueWidget->setText(QString::fromStdString(fssm::parse::dsr::DSR_PHYSIQUE[charInfo->physiqueId].data()));
+    m_giftValueWidget->setText(QString::fromStdString(fssm::parse::dsr::DSR_GIFTS[charInfo->giftId].data()));
     QString hpValue = QString::number(charInfo->hpCurrent);
     hpValue.append("/");
     hpValue.append(QString::number(charInfo->hpMax));

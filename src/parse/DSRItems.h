@@ -20,6 +20,42 @@ namespace fssm::parse::dsr {
         "Chaos Servant",
     };
 
+    inline constexpr std::array<std::string_view, 10> DSR_CLASSES = {
+        "Warrior",
+        "Knight",
+        "Wanderer",
+        "Thief",
+        "Bandit",
+        "Hunter",
+        "Sorcerer",
+        "Pyromancer",
+        "Cleric",
+        "Deprived"
+    };
+
+    inline constexpr std::array<std::string_view, 9> DSR_GIFTS = {
+        "None",
+        "Goddess's Blessing",
+        "Black Firebomb",
+        "Twin Humanities",
+        "Binoculars",
+        "Pendant",
+        "Master Key",
+        "Tiny Being's Ring",
+        "Old Witch's Ring",
+    };
+    inline constexpr std::array<std::string_view, 9> DSR_PHYSIQUE = {
+        "Average",
+        "Slim",
+        "Very Slim",
+        "Large",
+        "Very Large",
+        "Large Upper Body",
+        "Large Lower Body",
+        "Top-heavy",
+        "Tiny Head",
+    };
+
     struct BaseItem {
         uint32_t id = 0;
         uint32_t type = 0;

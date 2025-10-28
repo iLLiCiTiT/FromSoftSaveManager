@@ -8,7 +8,7 @@ Controller::Controller(QObject* parent): QObject(parent) {
 QString Controller::getLastTabId() const {
     return m_lastTabId;
 }
-void Controller::setLastTabId(QString saveId) {
+void Controller::setLastTabId(const QString& saveId) {
     m_lastTabId = saveId;
 }
 

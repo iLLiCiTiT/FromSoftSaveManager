@@ -43,12 +43,17 @@ namespace fsm::parse {
 
             ci.resistance = bytes_to_u32(c, 212);
 
-            ci.level = bytes_to_u32(c, 216);
-            ci.souls = bytes_to_u32(c, 220);
-            ci.earnedSouls = bytes_to_u32(c, 224);
-            ci.hollowState = bytes_to_u32(c, 232);
+            ci.level = bytes_to_u32(c, 220);
+            ci.souls = bytes_to_u32(c, 224);
+            ci.earnedSouls = bytes_to_u32(c, 228);
+            ci.hollowState = bytes_to_u32(c, 236);
 
             std::copy(c.begin() + 310, c.begin() + 320, std::begin(ci.covenantLevels));
+
+            ci.sex = bytes_to_u32(c, 278);
+            ci.classId = c[282];
+            ci.physiqueId = c[283];
+            ci.giftId = c[284];
 
             ci.toxicRes = bytes_to_u32(c, 332);
             ci.bleedRes = bytes_to_u32(c, 336);
