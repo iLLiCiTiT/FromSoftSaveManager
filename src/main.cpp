@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QFile>
+#include <QFontDatabase>
 #include "ui/resources/dsr_images_init.h"
 #include "ui/MainWindow.h"
 #include "ui/Controller.h"
@@ -9,6 +10,8 @@ int main(int argc, char *argv[]) {
     app.setApplicationName("FromSoftSaveManager");
     app.setApplicationVersion("0.1.0");
     app.setWindowIcon(QIcon(":/icons/icon.png"));
+
+    QFontDatabase::addApplicationFont(":/fonts/NotoSans-Regular.ttf");
 
     QFile f(":/stylesheet/app.qss");
     if (f.open(QFile::ReadOnly)) {
