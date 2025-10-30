@@ -1,10 +1,14 @@
 #include "Config.h"
 
 #include <filesystem>
+#include <fstream>
 #include <iostream>
-#include <locale>
 #include <windows.h>
 #include <shlobj.h>
+#include <QUuid>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 
 static std::wstring GetWindowsDocumentsDirW()
@@ -50,6 +54,18 @@ static QString getAppDataPath(const QString& subfolder) {
     return saveDir;
 }
 
+static QString getAppConfigDir() {
+    QString saveDir = QString::fromStdString(getenv("LOCALAPPDATA"));
+    saveDir.append("\\FromSoftSaveManager\\FromSoftSaveManager");
+    return saveDir;
+}
+
+static std::string generateUniqueId() {
+    QUuid uuid = QUuid::createUuid();
+    QString s = uuid.toString(QUuid::WithoutBraces);
+    return s.toStdString();
+}
+
 static QString findSaveFile(const std::string& dirpath, const std::string& filename) {
     if (std::filesystem::exists(dirpath)) {
         for (auto const& dirEntry : std::filesystem::directory_iterator{dirpath}) {
@@ -62,6 +78,15 @@ static QString findSaveFile(const std::string& dirpath, const std::string& filen
         }
     }
     return QString {};
+}
+
+Config::Config(QObject* parent): QObject(parent) {
+    m_appConfigPath = getAppConfigDir();
+    m_appConfigPath.push_back("\\config.json");
+    m_appBackupsDir = getAppConfigDir();
+    m_appBackupsDir.push_back("\\backups");
+
+    p_loadConfig();
 }
 
 ConfigInfo Config::getConfigInfo() {
@@ -106,6 +131,73 @@ void Config::setLastSelectedSaveId(const QString &saveId) {
 }
 
 void Config::p_loadConfig() {
+    if (m_configData.isLoaded) return;
+    m_configData.isLoaded = true;
+    json data;
+    if (!std::filesystem::exists(m_appConfigPath.toStdString())) {
+        std::ifstream f(m_appConfigPath.toStdString());
+        data = json::parse(f);
+        f.close();
+    }
+    if (data.is_null()) {
+        data = json::object();
+    }
+    if (!data.contains("game_save_files")) {
+        data["game_save_files"] = json::object();
+    }
+    for (auto& game: std::initializer_list<fsm::parse::Game>{
+        fsm::parse::Game::DSR,
+        fsm::parse::Game::DS2_SOTFS,
+        fsm::parse::Game::DS3,
+        fsm::parse::Game::ER,
+        fsm::parse::Game::Sekiro,
+    }) {
+        std::string gameName = game.toString();
+        if (data["game_save_files"].contains(gameName)) continue;
+        auto defaultPathInfo = getDefaultSavePath(game);
+        if (!defaultPathInfo.saveFileExists) continue;
+        json gameInfo = json::object();
+        gameInfo["path"] = defaultPathInfo.savePath.toStdString();
+        gameInfo["save_id"] = generateUniqueId();
+        data["game_save_files"][gameName] = gameInfo;
+    }
+    auto& gameSaveFiles = m_configData.gameSaveFiles;
+    for (auto& el: data["game_save_files"].items()) {
+        json& info = el.value();
+        if (!info.contains("save_id") || !info.contains("path")) continue;
+        QString path = QString::fromStdString(info["path"]);
+        QString saveId = QString::fromStdString(info["save_id"]);
+
+        std::string_view gameName = el.key();
+        fsm::parse::Game game = fsm::parse::Game::fromString(gameName);
+        ConfigSavePathData savePathInfo = {
+            .savePath = path,
+            .saveId = saveId,
+            .isSet = true,
+        };
+        switch (game) {
+            case fsm::parse::Game::DSR:
+                gameSaveFiles.dsrSavePath = savePathInfo;
+                break;
+            case fsm::parse::Game::DS2_SOTFS:
+                gameSaveFiles.ds2SavePath = savePathInfo;
+                break;
+            case fsm::parse::Game::DS3:
+                gameSaveFiles.ds3SavePath = savePathInfo;
+                break;
+            case fsm::parse::Game::Sekiro:
+                gameSaveFiles.sekiroSavePath = savePathInfo;
+                break;
+            case fsm::parse::Game::ER:
+                gameSaveFiles.erSavePath = savePathInfo;
+                break;
+            default:
+                break;
+        }
+    }
+    auto& autobackup = m_configData.autobackup;
+    auto& hotkeys = m_configData.hotkeys;
+
 }
 
 void Config::p_saveConfig() {
