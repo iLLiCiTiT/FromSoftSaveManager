@@ -56,16 +56,15 @@ public:
     std::optional<QString> getSaveIdByGame(const fsm::parse::Game& game);
     QString getLastSelectedSaveId();
     void setLastSelectedSaveId(const QString& saveId);
-    const DefaultSavePathInfo& getDefaultSavePath(const fsm::parse::Game& game);
+    DefaultSavePathInfo getDefaultSavePath(const fsm::parse::Game& game);
 private:
     QString m_lastTabId = "";
     DefaultSavePathInfo m_defaultSavePath {};
     void p_loadConfig();
     void p_saveConfig();
-    const DefaultSavePathInfo p_getDefaultSavePath(const fsm::parse::Game& game);
-    const DefaultSavePathInfo p_getDefaultDSRSavePath();
-    const DefaultSavePathInfo p_getDefaultDS2SavePath();
-    const DefaultSavePathInfo p_getDefaultDS3SavePath();
-    const DefaultSavePathInfo p_getDefaultERSavePath();
-    const DefaultSavePathInfo p_getDefaultSekiroSavePath();
+    static DefaultSavePathInfo p_getDefaultDSRSavePath();
+    static DefaultSavePathInfo p_getDefaultDS2SavePath();
+    static DefaultSavePathInfo p_getDefaultDS3SavePath();
+    static DefaultSavePathInfo p_getDefaultERSavePath();
+    static DefaultSavePathInfo p_getDefaultSekiroSavePath();
 };

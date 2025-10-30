@@ -111,93 +111,81 @@ void Config::p_loadConfig() {
 void Config::p_saveConfig() {
 }
 
-const DefaultSavePathInfo& Config::getDefaultSavePath(const fsm::parse::Game& game) {
-    return p_getDefaultSavePath(game);
-}
-
-const DefaultSavePathInfo Config::p_getDefaultSavePath(const fsm::parse::Game& game) {
+DefaultSavePathInfo Config::getDefaultSavePath(const fsm::parse::Game& game) {
     switch (game) {
-        case fsm::parse::Game::DSR:
-            return p_getDefaultDSRSavePath();
-        case fsm::parse::Game::DS2_SOTFS:
-            return p_getDefaultDS2SavePath();
-        case fsm::parse::Game::DS3:
-            return p_getDefaultDS3SavePath();
-        case fsm::parse::Game::ER:
-            return p_getDefaultERSavePath();
-        case fsm::parse::Game::Sekiro:
-            return p_getDefaultSekiroSavePath();
+        case fsm::parse::Game::DSR: return p_getDefaultDSRSavePath();
+        case fsm::parse::Game::DS2_SOTFS: return p_getDefaultDS2SavePath();
+        case fsm::parse::Game::DS3: return p_getDefaultDS3SavePath();
+        case fsm::parse::Game::ER: return p_getDefaultERSavePath();
+        case fsm::parse::Game::Sekiro: return p_getDefaultSekiroSavePath();
+        default: return m_defaultSavePath;
     }
-    return m_defaultSavePath;
 }
 
-const DefaultSavePathInfo Config::p_getDefaultDSRSavePath() {
+DefaultSavePathInfo Config::p_getDefaultDSRSavePath() {
     DefaultSavePathInfo output;
 
-    QString saveDir = QString::fromStdWString(GetWindowsDocumentsDirW());
-    QString savePath;
+    output.savePathHint = QString::fromStdWString(GetWindowsDocumentsDirW());
+    output.savePath = QString {};
     output.saveFileExists = false;
-    if (!saveDir.isEmpty()) {
-        saveDir.push_back("\\NBGI\\DARK SOULS REMASTERED");
-        if (std::filesystem::exists(saveDir.toStdString())) {
-            for (auto const& dirEntry : std::filesystem::directory_iterator{saveDir.toStdString()}) {
+    if (!output.savePathHint.isEmpty()) {
+        output.savePathHint.push_back("\\NBGI\\DARK SOULS REMASTERED");
+        if (std::filesystem::exists(output.savePathHint.toStdString())) {
+            for (auto const& dirEntry : std::filesystem::directory_iterator{output.savePathHint.toStdString()}) {
                 if (!dirEntry.is_directory()) continue;
                 std::filesystem::path path = std::filesystem::path(dirEntry.path());
                 path += "\\DRAKS0005.sl2";
                 if (is_directory(path)) continue;
                 if (!std::filesystem::exists(path)) continue;
                 output.saveFileExists = true;
-                savePath.push_back(QString::fromStdString(path.string()));
+                output.savePath = QString::fromStdString(path.string());
                 break;
             }
         }
     }
-    output.savePathHint = saveDir;
-    output.savePath = savePath;
-
     return output;
 }
 
-const DefaultSavePathInfo Config::p_getDefaultDS2SavePath() {
+DefaultSavePathInfo Config::p_getDefaultDS2SavePath() {
     DefaultSavePathInfo output;
     output.savePathHint = getAppDataPath("DarkSoulsII");
     output.savePath = findSaveFile(
         output.savePathHint.toStdString(),
         "DS2SOFS0000.sl2"
     );
-    if (!output.savePath.isEmpty()) output.saveFileExists = true;
+    output.saveFileExists = !output.savePath.isEmpty();
     return output;
 }
 
-const DefaultSavePathInfo Config::p_getDefaultDS3SavePath() {
+DefaultSavePathInfo Config::p_getDefaultDS3SavePath() {
     DefaultSavePathInfo output;
     output.savePathHint = getAppDataPath("DarkSoulsIII");
     output.savePath = findSaveFile(
         output.savePathHint.toStdString(),
         "DS30000.sl2"
     );
-    if (!output.savePath.isEmpty()) output.saveFileExists = true;
+    output.saveFileExists = !output.savePath.isEmpty();
     return output;
 }
 
-const DefaultSavePathInfo Config::p_getDefaultERSavePath() {
+DefaultSavePathInfo Config::p_getDefaultERSavePath() {
     DefaultSavePathInfo output;
     output.savePathHint = getAppDataPath("EldenRing");
     output.savePath = findSaveFile(
         output.savePathHint.toStdString(),
         "ER0000.sl2"
     );
-    if (!output.savePath.isEmpty()) output.saveFileExists = true;
+    output.saveFileExists = !output.savePath.isEmpty();
     return output;
 }
 
-const DefaultSavePathInfo Config::p_getDefaultSekiroSavePath() {
+DefaultSavePathInfo Config::p_getDefaultSekiroSavePath() {
     DefaultSavePathInfo output;
     output.savePathHint = getAppDataPath("Sekiro");
     output.savePath = findSaveFile(
         output.savePathHint.toStdString(),
         "S0000.sl2"
     );
-    if (!output.savePath.isEmpty()) output.saveFileExists = true;
+    output.saveFileExists = !output.savePath.isEmpty();
     return output;
 }
