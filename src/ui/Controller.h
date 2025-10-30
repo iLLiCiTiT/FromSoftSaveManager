@@ -2,17 +2,13 @@
 
 #include <QObject>
 
+#include "Config.h"
 #include "../parse/DSRSaveFile.h"
 
 
 struct DSRCharInfoResult {
     QString error;
     std::vector<fsm::parse::DSRCharacterInfo> characters;
-};
-
-struct SaveFileItem {
-    fsm::parse::Game game;
-    QString saveId;
 };
 
 class Controller : public QObject {
@@ -26,14 +22,15 @@ signals:
 
 public:
     explicit Controller(QObject* parent = nullptr);
-    ~Controller() override = default;
+    ~Controller() override;
 
-    QString getLastTabId() const;
-    void setLastTabId(const QString& saveId);
+    QString getCurrentTabId() const;
+    void setCurrentTabId(const QString& saveId);
 
     std::vector<SaveFileItem> getSaveFileItems();
     DSRCharInfoResult getDsrCharacters(const QString& saveId);
 
 private:
-    QString m_lastTabId = "";
+    QString m_currentSaveId = "";
+    Config* m_config;
 };

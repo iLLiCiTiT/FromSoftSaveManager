@@ -80,7 +80,9 @@ QString Config::getBackupDirPath() {
 }
 
 std::vector<SaveFileItem> Config::getSaveFileItems() {
-    return std::vector<SaveFileItem>{};
+    std::vector<SaveFileItem> output;
+    // TODO implement
+    return output;
 }
 
 std::optional<SaveFileItem> Config::getSaveFileItem(const QString &saveId) {

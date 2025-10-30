@@ -10,18 +10,16 @@ Controller::~Controller() {
     QObject::~QObject();
 };
 
-QString Controller::getLastTabId() const {
-    return m_lastTabId;
+QString Controller::getCurrentTabId() const {
+    return m_currentSaveId;
 }
-void Controller::setLastTabId(const QString& saveId) {
-    m_lastTabId = saveId;
+void Controller::setCurrentTabId(const QString& saveId) {
+    m_currentSaveId = saveId;
+    m_config->setLastSelectedSaveId(saveId);
 }
 
 std::vector<SaveFileItem> Controller::getSaveFileItems() {
-    std::vector<SaveFileItem> output;
-    // TODO implement
-    output.push_back({ fsm::parse::Game::DSR, "test" });
-    return output;
+    return m_config->getSaveFileItems();
 }
 
 DSRCharInfoResult Controller::getDsrCharacters(const QString& saveId) {
