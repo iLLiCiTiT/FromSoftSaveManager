@@ -37,7 +37,6 @@ struct DefaultSavePathInfo {
     QString savePath;
     QString savePathHint;
     bool saveFileExists;
-    bool discovered = false;
 };
 
 class Config: public QObject {
@@ -59,18 +58,14 @@ public:
     void setLastSelectedSaveId(const QString& saveId);
     const DefaultSavePathInfo& getDefaultSavePath(const fsm::parse::Game& game);
 private:
-    DefaultSavePathInfo m_defaultSavePath;
-    DefaultSavePathInfo m_defaultDSRSavePath;
-    DefaultSavePathInfo m_defaultDS2SavePath;
-    DefaultSavePathInfo m_defaultDS3SavePath;
-    DefaultSavePathInfo m_defaultERSavePath;
-    DefaultSavePathInfo m_defaultSekiroSavePath;
+    QString m_lastTabId = "";
+    DefaultSavePathInfo m_defaultSavePath {};
     void p_loadConfig();
     void p_saveConfig();
-    const DefaultSavePathInfo& p_getDefaultSavePath(const fsm::parse::Game& game);
-    const DefaultSavePathInfo& p_getDefaultDSRSavePath();
-    const DefaultSavePathInfo& p_getDefaultDS2SavePath();
-    const DefaultSavePathInfo& p_getDefaultDS3SavePath();
-    const DefaultSavePathInfo& p_getDefaultERSavePath();
-    const DefaultSavePathInfo& p_getDefaultSekiroSavePath();
+    const DefaultSavePathInfo p_getDefaultSavePath(const fsm::parse::Game& game);
+    const DefaultSavePathInfo p_getDefaultDSRSavePath();
+    const DefaultSavePathInfo p_getDefaultDS2SavePath();
+    const DefaultSavePathInfo p_getDefaultDS3SavePath();
+    const DefaultSavePathInfo p_getDefaultERSavePath();
+    const DefaultSavePathInfo p_getDefaultSekiroSavePath();
 };
