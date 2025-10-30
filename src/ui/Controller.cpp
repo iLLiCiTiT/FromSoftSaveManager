@@ -1,8 +1,13 @@
 #include "Controller.h"
-#include "../parse/DSRSaveFile.h"
 
+#include "Config.h"
 
 Controller::Controller(QObject* parent): QObject(parent) {
+    m_config = new Config();
+};
+Controller::~Controller() {
+    delete m_config;
+    QObject::~QObject();
 };
 
 QString Controller::getLastTabId() const {
