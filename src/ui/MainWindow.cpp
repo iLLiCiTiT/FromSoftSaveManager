@@ -10,7 +10,7 @@ MainWindow::MainWindow(Controller* controller, QWidget* parent)
 
     m_stack = new QStackedWidget(this);
 
-    m_settingsWidget = new SettingsWidget(m_stack);
+    m_settingsWidget = new SettingsWidget(controller, m_stack);
 
     m_stack->addWidget(m_settingsWidget);
 

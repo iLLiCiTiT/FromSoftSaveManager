@@ -1,8 +1,9 @@
 #pragma once
-#include <QLabel>
+
 #include <QCheckBox>
 #include <QLineEdit>
 
+#include "Controller.h"
 #include "SquareButton.h"
 #include "Utils.h"
 
@@ -26,9 +27,9 @@ private:
 class SavePathInputsWidget: public QWidget {
     Q_OBJECT
 public:
-    explicit SavePathInputsWidget(QWidget* parent);
-    void updateConfigInfo();
-    void applyChanges();
+    explicit SavePathInputsWidget(const ConfigSettingsData& configData, QWidget* parent);
+    void updateConfigInfo(const ConfigSettingsData& configData);
+    void applyChanges(const ConfigSettingsData& configData, ConfigConfirmData& confirmData);
 private:
     SavePathInput* m_dsrPathInput;
     SavePathInput* m_ds2PathInput;
@@ -63,9 +64,9 @@ private:
 class HotkeysWidget: public QWidget {
     Q_OBJECT
 public:
-    explicit HotkeysWidget(QWidget* parent);
-    void updateConfigInfo();
-    void applyChanges();
+    explicit HotkeysWidget(const ConfigSettingsData& configData, QWidget* parent);
+    void updateConfigInfo(const ConfigSettingsData& configData);
+    void applyChanges(const ConfigSettingsData& configData, ConfigConfirmData& confirmData);
 private:
     HotkeyInput* m_quickSaveInput;
     HotkeyInput* m_quickLoadInput;
@@ -74,9 +75,9 @@ private:
 class AutoBackupWidget: public QWidget {
     Q_OBJECT
 public:
-    explicit AutoBackupWidget(QWidget* parent);
-    void updateConfigInfo();
-    void applyChanges();
+    explicit AutoBackupWidget(const ConfigSettingsData& configData, QWidget* parent);
+    void updateConfigInfo(const ConfigSettingsData& configData);
+    void applyChanges(const ConfigSettingsData& configData, ConfigConfirmData& confirmData);
 private:
     QCheckBox* m_enabledInput;
     FocusSpinBox* m_frequencyInput;
@@ -86,12 +87,14 @@ private:
 class SettingsWidget: public QWidget {
     Q_OBJECT
 public:
-    explicit SettingsWidget(QWidget* parent);
+    explicit SettingsWidget(Controller* controller, QWidget* parent);
 
 public slots:
     void virtual discardChanges();
 
 private:
+    Controller* m_controller;
+    ConfigSettingsData m_configData;
     SavePathInputsWidget* m_pathsWidget;
     HotkeysWidget* m_hotkeysWidget;
     AutoBackupWidget* m_autobackupWidget;

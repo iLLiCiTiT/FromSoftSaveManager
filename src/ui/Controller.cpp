@@ -8,21 +8,30 @@ Controller::Controller(QObject* parent): QObject(parent) {
 };
 Controller::~Controller() {
     delete m_config;
-};
+}
 
 QString Controller::getLastSelectedSaveId() const {
     return m_config->getLastSelectedSaveId();
 }
+
 void Controller::setCurrentTabId(const QString& saveId) {
     m_currentSaveId = saveId;
     m_config->setLastSelectedSaveId(saveId);
 }
 
-std::vector<SaveFileItem> Controller::getSaveFileItems() {
+ConfigSettingsData Controller::getConfigSettingsData() const {
+    return m_config->getConfigSettingsData();
+}
+
+void Controller::saveConfigData(const ConfigConfirmData& configData) {
+    m_config->saveConfigData(configData);
+};
+
+std::vector<SaveFileItem> Controller::getSaveFileItems() const {
     return m_config->getSaveFileItems();
 }
 
-DSRCharInfoResult Controller::getDsrCharacters(const QString& saveId) {
+DSRCharInfoResult Controller::getDsrCharacters(const QString& saveId) const {
     auto r_savePath = m_config->getSavePathItem(saveId);
     if (!r_savePath.has_value()) return {
         "Save file path is not set.",

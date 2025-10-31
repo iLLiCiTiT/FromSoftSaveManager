@@ -26,9 +26,11 @@ public:
 
     QString getLastSelectedSaveId() const;
     void setCurrentTabId(const QString& saveId);
+    ConfigSettingsData getConfigSettingsData() const;
+    void saveConfigData(const ConfigConfirmData& configData);
 
-    std::vector<SaveFileItem> getSaveFileItems();
-    DSRCharInfoResult getDsrCharacters(const QString& saveId);
+    std::vector<SaveFileItem> getSaveFileItems() const;
+    DSRCharInfoResult getDsrCharacters(const QString& saveId) const;
 
 private:
     QString m_currentSaveId = "";

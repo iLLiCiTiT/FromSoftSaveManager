@@ -63,7 +63,7 @@ struct ConfigSavePathInfo {
     QString savePathDefault;
 };
 
-struct ConfigInfo {
+struct ConfigSettingsData {
     ConfigSavePathInfo dsrSavePath;
     ConfigSavePathInfo ds2SavePath;
     ConfigSavePathInfo ds3SavePath;
@@ -78,7 +78,19 @@ struct ConfigInfo {
     int maxAutobackups;
 };
 
-class ConfigConfirmInfo {
+struct ConfigConfirmData {
+    std::optional<QString> dsrSavePath;
+    std::optional<QString> ds2SavePath;
+    std::optional<QString> ds3SavePath;
+    std::optional<QString> sekiroSavePath;
+    std::optional<QString> erSavePath;
+
+    std::optional<QKeyCombination> quickSaveHotkey;
+    std::optional<QKeyCombination> quickLoadHotkey;
+
+    std::optional<bool> autobackupEnabled;
+    std::optional<int> autobackupFrequency;
+    std::optional<int> maxAutobackups;
 
 };
 
@@ -90,8 +102,8 @@ signals:
     void configChanged();
 public:
     explicit Config(QObject* parent = nullptr);
-    ConfigInfo getConfigInfo();
-    void saveConfigInfo(const ConfigConfirmInfo& configInfo);
+    ConfigSettingsData getConfigSettingsData();
+    void saveConfigData(const ConfigConfirmData& configData);
     void saveConfig();
     QString getBackupDirPath();
     std::vector<SaveFileItem> getSaveFileItems();

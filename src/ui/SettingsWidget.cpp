@@ -49,7 +49,7 @@ void SavePathInput::selectPath() {
 };
 
 
-SavePathInputsWidget::SavePathInputsWidget(QWidget* parent) : QWidget(parent) {
+SavePathInputsWidget::SavePathInputsWidget(const ConfigSettingsData& configData, QWidget* parent) : QWidget(parent) {
     QLabel* dsrLabel = new QLabel("Dark Souls: Remastered", this);
     QLabel* ds2Label = new QLabel("Dark Souls II: SOTFS", this);
     QLabel* ds3Label = new QLabel("Dark Souls III", this);
@@ -61,6 +61,8 @@ SavePathInputsWidget::SavePathInputsWidget(QWidget* parent) : QWidget(parent) {
     m_ds3PathInput = new SavePathInput("Dark Souls III", this);
     m_sekiroPathInput = new SavePathInput("Sekiro: Shadows Die Twice", this);
     m_erPathInput = new SavePathInput("Elden Ring", this);
+
+    updateConfigInfo(configData);
 
     QGridLayout* layout = new QGridLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -82,12 +84,50 @@ SavePathInputsWidget::SavePathInputsWidget(QWidget* parent) : QWidget(parent) {
     layout->setColumnStretch(1, 1);
 };
 
-void SavePathInputsWidget::updateConfigInfo() {
-
+void SavePathInputsWidget::updateConfigInfo(const ConfigSettingsData& configData) {
+    m_dsrPathInput->updatePath(
+        configData.dsrSavePath.savePath,
+        configData.dsrSavePath.savePathHint
+    );
+    m_ds2PathInput->updatePath(
+        configData.ds2SavePath.savePath,
+        configData.ds2SavePath.savePathHint
+    );
+    m_ds3PathInput->updatePath(
+        configData.ds3SavePath.savePath,
+        configData.ds3SavePath.savePathHint
+    );
+    m_sekiroPathInput->updatePath(
+        configData.sekiroSavePath.savePath,
+        configData.sekiroSavePath.savePathHint
+    );
+    m_erPathInput->updatePath(
+        configData.erSavePath.savePath,
+        configData.erSavePath.savePathHint
+    );
 };
 
-void SavePathInputsWidget::applyChanges() {
-
+void SavePathInputsWidget::applyChanges(const ConfigSettingsData& configData, ConfigConfirmData& confirmData) {
+    QString dsrPath = m_dsrPathInput->getPath();
+    QString ds2Path = m_ds2PathInput->getPath();
+    QString ds3Path = m_ds3PathInput->getPath();
+    QString sekiroPath = m_sekiroPathInput->getPath();
+    QString erPath = m_erPathInput->getPath();
+    if (dsrPath != configData.dsrSavePath.savePath) {
+        confirmData.dsrSavePath = dsrPath;
+    }
+    if (ds2Path != configData.ds2SavePath.savePath) {
+        confirmData.ds2SavePath = ds2Path;
+    }
+    if (ds3Path != configData.ds3SavePath.savePath) {
+        confirmData.ds3SavePath = ds3Path;
+    }
+    if (sekiroPath != configData.sekiroSavePath.savePath) {
+        confirmData.sekiroSavePath = sekiroPath;
+    }
+    if (erPath != configData.erSavePath.savePath) {
+        confirmData.erSavePath = erPath;
+    }
 };
 
 HotkeyInput::HotkeyInput(QWidget* parent): QFrame(parent) {
@@ -207,11 +247,14 @@ void HotkeyInput::finishEdit() {
     updateLabel();
 };
 
-HotkeysWidget::HotkeysWidget(QWidget* parent): QWidget(parent) {
+HotkeysWidget::HotkeysWidget(const ConfigSettingsData& configData, QWidget* parent): QWidget(parent) {
     QLabel* quickSaveLabel = new QLabel("QuickSave", this);
     QLabel* quickLoadLabel = new QLabel("QuickLoad", this);
+
     m_quickSaveInput = new HotkeyInput(this);
     m_quickLoadInput = new HotkeyInput(this);
+
+    updateConfigInfo(configData);
 
     QGridLayout* layout = new QGridLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -224,14 +267,25 @@ HotkeysWidget::HotkeysWidget(QWidget* parent): QWidget(parent) {
     layout->setRowStretch(0, 0);
     layout->setRowStretch(1, 0);
 }
-void HotkeysWidget::updateConfigInfo() {
+
+void HotkeysWidget::updateConfigInfo(const ConfigSettingsData& configData) {
+    m_quickSaveInput->setKeyCombination(configData.quickSaveHotkey);
+    m_quickLoadInput->setKeyCombination(configData.quickLoadHotkey);
 
 };
-void HotkeysWidget::applyChanges() {
+void HotkeysWidget::applyChanges(const ConfigSettingsData& configData, ConfigConfirmData& confirmData) {
+    QKeyCombination quickSaveHotkey = m_quickSaveInput->getKeyCombination();
+    QKeyCombination quickLoadHotkey = m_quickLoadInput->getKeyCombination();
 
+    if (quickSaveHotkey != configData.quickSaveHotkey) {
+        confirmData.quickSaveHotkey = quickSaveHotkey;
+    }
+    if (quickLoadHotkey != configData.quickLoadHotkey) {
+        confirmData.quickLoadHotkey = quickLoadHotkey;
+    }
 };
 
-AutoBackupWidget::AutoBackupWidget(QWidget* parent): QWidget(parent) {
+AutoBackupWidget::AutoBackupWidget(const ConfigSettingsData& configData, QWidget* parent): QWidget(parent) {
     QLabel* enabledLabel = new QLabel("Enabled", this);
 
     m_enabledInput = new QCheckBox(this);
@@ -250,6 +304,8 @@ AutoBackupWidget::AutoBackupWidget(QWidget* parent): QWidget(parent) {
     m_maxAutobackupInput->setRange(1, 100);
     m_maxAutobackupInput->setValue(10);
 
+    updateConfigInfo(configData);
+
     QGridLayout* layout = new QGridLayout(this);
     layout->addWidget(enabledLabel, 0, 0);
     layout->addWidget(m_enabledInput, 0, 1);
@@ -266,26 +322,37 @@ AutoBackupWidget::AutoBackupWidget(QWidget* parent): QWidget(parent) {
     layout->setColumnStretch(2, 1);
 };
 
-void AutoBackupWidget::updateConfigInfo() {
-
+void AutoBackupWidget::updateConfigInfo(const ConfigSettingsData& configData) {
+    m_enabledInput->setChecked(configData.autobackupEnabled);
+    m_frequencyInput->setValue(configData.autobackupFrequency);
+    m_maxAutobackupInput->setValue(configData.maxAutobackups);
 };
 
-void AutoBackupWidget::applyChanges() {
-
+void AutoBackupWidget::applyChanges(const ConfigSettingsData& configData, ConfigConfirmData& confirmData) {
+    if (m_enabledInput->isChecked() != configData.autobackupEnabled) {
+        confirmData.autobackupEnabled = m_enabledInput->isChecked();
+    }
+    if (m_frequencyInput->value() != configData.autobackupFrequency) {
+        confirmData.autobackupFrequency = m_frequencyInput->value();
+    }
+    if (m_maxAutobackupInput->value() != configData.maxAutobackups) {
+        confirmData.maxAutobackups = m_maxAutobackupInput->value();
+    }
 };
 
-SettingsWidget::SettingsWidget(QWidget* parent): QWidget(parent) {
+SettingsWidget::SettingsWidget(Controller* controller, QWidget* parent): QWidget(parent), m_controller(controller) {
+    m_configData = m_controller->getConfigSettingsData();
     QLabel* pathsLabel = new QLabel("Paths", this);
     pathsLabel->setObjectName("settings_header");
-    m_pathsWidget = new SavePathInputsWidget(this);
+    m_pathsWidget = new SavePathInputsWidget(m_configData, this);
 
     QLabel* hotkeysLabel = new QLabel("Hotkeys", this);
     hotkeysLabel->setObjectName("settings_header");
-    m_hotkeysWidget = new HotkeysWidget(this);
+    m_hotkeysWidget = new HotkeysWidget(m_configData, this);
 
     QLabel* autoBackupLabel = new QLabel("Autobackup", this);
     autoBackupLabel->setObjectName("settings_header");
-    m_autobackupWidget = new AutoBackupWidget(this);
+    m_autobackupWidget = new AutoBackupWidget(m_configData, this);
 
     QWidget* btnsWidget = new QWidget(this);
 
@@ -319,9 +386,16 @@ SettingsWidget::SettingsWidget(QWidget* parent): QWidget(parent) {
 };
 
 void SettingsWidget::onSave() {
-
+    ConfigConfirmData confirmData;
+    m_pathsWidget->applyChanges(m_configData, confirmData);
+    m_hotkeysWidget->applyChanges(m_configData, confirmData);
+    m_autobackupWidget->applyChanges(m_configData, confirmData);
+    m_controller->saveConfigData(confirmData);
 }
 
 void SettingsWidget::discardChanges() {
-
+    m_configData = m_controller->getConfigSettingsData();
+    m_pathsWidget->updateConfigInfo(m_configData);
+    m_hotkeysWidget->updateConfigInfo(m_configData);
+    m_autobackupWidget->updateConfigInfo(m_configData);
 }

@@ -92,12 +92,50 @@ Config::Config(QObject* parent): QObject(parent) {
     p_loadConfig();
 }
 
-ConfigInfo Config::getConfigInfo() {
-    // TODO implement
-    return ConfigInfo {};
+ConfigSettingsData Config::getConfigSettingsData() {
+    auto d_dsr = p_getDefaultDSRSavePath();
+    auto d_ds2 = p_getDefaultDS2SavePath();
+    auto d_ds3 = p_getDefaultDS3SavePath();
+    auto d_er = p_getDefaultERSavePath();
+    auto d_sekiro = p_getDefaultSekiroSavePath();
+
+    return ConfigSettingsData {
+        .dsrSavePath = {
+            .savePath = m_configData.gameSaveFiles.dsrSavePath.savePath,
+            .savePathHint = d_dsr.savePathHint,
+            .savePathDefault = d_dsr.savePath,
+        },
+        .ds2SavePath = {
+            .savePath = m_configData.gameSaveFiles.ds2SavePath.savePath,
+            .savePathHint = d_ds2.savePathHint,
+            .savePathDefault = d_ds2.savePath,
+        },
+        .ds3SavePath = {
+            .savePath = m_configData.gameSaveFiles.ds3SavePath.savePath,
+            .savePathHint = d_ds3.savePathHint,
+            .savePathDefault = d_ds3.savePath,
+        },
+        .sekiroSavePath = {
+            .savePath = m_configData.gameSaveFiles.sekiroSavePath.savePath,
+            .savePathHint = d_sekiro.savePathHint,
+            .savePathDefault = d_sekiro.savePath,
+        },
+        .erSavePath = {
+            .savePath = m_configData.gameSaveFiles.erSavePath.savePath,
+            .savePathHint = d_er.savePathHint,
+            .savePathDefault = d_er.savePath,
+        },
+
+        .quickSaveHotkey = m_configData.hotkeys.quickSaveHotkey,
+        .quickLoadHotkey = m_configData.hotkeys.quickLoadHotkey,
+
+        .autobackupEnabled = m_configData.autobackup.enabled,
+        .autobackupFrequency = m_configData.autobackup.frequency,
+        .maxAutobackups = m_configData.autobackup.maxBackups,
+    };
 }
 
-void Config::saveConfigInfo(const ConfigConfirmInfo& configInfo) {
+void Config::saveConfigData(const ConfigConfirmData& configData) {
     // TODO implement
 }
 
