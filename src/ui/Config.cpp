@@ -272,17 +272,10 @@ std::vector<SaveFileItem> Config::getSaveFileItems() {
     return output;
 }
 
-std::optional<SaveFileItem> Config::getSaveFileItem(const QString& saveId) {
+std::optional<QString> Config::getSavePathItem(const QString& saveId) {
     auto it = m_saveInfoById.find(saveId);
     if (it == m_saveInfoById.end()) return std::nullopt;
-    return it->second;
-}
-
-std::optional<QString> Config::getSavePathItem(const QString& saveId) {
-    // TODO find out if it needed?
-    auto item = getSaveFileItem(saveId);
-    if (item.has_value()) return item.value().savePath;
-    return std::nullopt;
+    return it->second.savePath;
 }
 
 std::optional<QString> Config::getSaveIdByGame(const fsm::parse::Game& game) {
@@ -473,35 +466,35 @@ void Config::p_updateInfoById() {
         m_saveInfoById[dsrSavePath.saveId] = {
             .game = fsm::parse::Game::DSR,
             .saveId = dsrSavePath.saveId,
-            .savePath = dsrSavePath.saveId
+            .savePath = dsrSavePath.savePath
         };
     }
     if (ds2SavePath.isSet) {
         m_saveInfoById[ds2SavePath.saveId] = {
             .game = fsm::parse::Game::DSR,
             .saveId = ds2SavePath.saveId,
-            .savePath = ds2SavePath.saveId
+            .savePath = ds2SavePath.savePath
         };
     }
     if (ds3SavePath.isSet) {
         m_saveInfoById[ds3SavePath.saveId] = {
             .game = fsm::parse::Game::DS2_SOTFS,
             .saveId = ds3SavePath.saveId,
-            .savePath = ds3SavePath.saveId
+            .savePath = ds3SavePath.savePath
         };
     }
     if (erSavePath.isSet) {
         m_saveInfoById[erSavePath.saveId] = {
             .game = fsm::parse::Game::DS3,
             .saveId = erSavePath.saveId,
-            .savePath = erSavePath.saveId
+            .savePath = erSavePath.savePath
         };
     }
     if (sekiroSavePath.isSet) {
         m_saveInfoById[sekiroSavePath.saveId] = {
             .game = fsm::parse::Game::Sekiro,
             .saveId = sekiroSavePath.saveId,
-            .savePath = sekiroSavePath.saveId
+            .savePath = sekiroSavePath.savePath
         };
     }
 }

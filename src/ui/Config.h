@@ -110,7 +110,6 @@ public:
     void saveConfig();
     QString getBackupDirPath();
     std::vector<SaveFileItem> getSaveFileItems();
-    std::optional<SaveFileItem> getSaveFileItem(const QString& saveId);
     std::optional<QString> getSavePathItem(const QString& saveId);
     std::optional<QString> getSaveIdByGame(const fsm::parse::Game& game);
     QString getLastSelectedSaveId() const;
