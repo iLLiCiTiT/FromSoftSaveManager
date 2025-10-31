@@ -23,8 +23,8 @@ ConfigSettingsData Controller::getConfigSettingsData() const {
     return m_config->getConfigSettingsData();
 }
 
-void Controller::saveConfigData(const ConfigConfirmData& configData) {
-    m_config->saveConfigData(configData);
+void Controller::saveConfigData(const ConfigConfirmData& confirmData) {
+    m_config->saveConfigData(confirmData);
 };
 
 std::vector<SaveFileItem> Controller::getSaveFileItems() const {

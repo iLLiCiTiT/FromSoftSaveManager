@@ -1,7 +1,9 @@
 #pragma once
 #include <QObject>
+#include <nlohmann/json.hpp>
 
 #include "../parse/DSRSaveFile.h"
+
 
 // How UI receives information about available save files.
 // Each item contains game and save id. The combination can be used to receive available information about save.
@@ -95,6 +97,7 @@ struct ConfigConfirmData {
 };
 
 class Config: public QObject {
+    Q_OBJECT
 signals:
     void pathsChanged();
     void hotkeysChanged();
@@ -119,8 +122,8 @@ private:
     QString m_appBackupsDir = "";
     DefaultSavePathInfo m_defaultSavePath {};
     std::unordered_map<QString, SaveFileItem> m_saveInfoById {};
+    nlohmann::json p_configToJson();
     void p_loadConfig();
-    void p_saveConfig();
     static DefaultSavePathInfo p_getDefaultDSRSavePath();
     static DefaultSavePathInfo p_getDefaultDS2SavePath();
     static DefaultSavePathInfo p_getDefaultDS3SavePath();

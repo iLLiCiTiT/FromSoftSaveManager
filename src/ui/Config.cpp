@@ -135,12 +135,95 @@ ConfigSettingsData Config::getConfigSettingsData() {
     };
 }
 
-void Config::saveConfigData(const ConfigConfirmData& configData) {
-    // TODO implement
+void Config::saveConfigData(const ConfigConfirmData& confirmData) {
+    bool l_pathsChanged = false;
+    bool l_hotkeyChanged = false;
+    bool l_autobackupChanged = false;
+
+    if (confirmData.dsrSavePath.has_value()) {
+        l_pathsChanged = true;
+        auto& dsrSavePath = m_configData.gameSaveFiles.dsrSavePath;
+        dsrSavePath.savePath = confirmData.dsrSavePath.value();
+        dsrSavePath.isSet = std::filesystem::exists(dsrSavePath.savePath.toStdString());
+        if (dsrSavePath.saveId.isEmpty())
+            dsrSavePath.saveId = QString::fromStdString(generateUniqueId());
+    }
+    if (confirmData.ds2SavePath.has_value()) {
+        l_pathsChanged = true;
+        auto& ds2SavePath = m_configData.gameSaveFiles.ds2SavePath;
+        ds2SavePath.savePath = confirmData.ds2SavePath.value();
+        ds2SavePath.isSet = std::filesystem::exists(ds2SavePath.savePath.toStdString());
+        if (ds2SavePath.saveId.isEmpty())
+            ds2SavePath.saveId = QString::fromStdString(generateUniqueId());
+    }
+    if (confirmData.ds3SavePath.has_value()) {
+        l_pathsChanged = true;
+        auto& ds3SavePath = m_configData.gameSaveFiles.ds3SavePath;
+        ds3SavePath.savePath = confirmData.ds2SavePath.value();
+        ds3SavePath.isSet = std::filesystem::exists(ds3SavePath.savePath.toStdString());
+        if (ds3SavePath.saveId.isEmpty())
+            ds3SavePath.saveId = QString::fromStdString(generateUniqueId());
+    }
+    if (confirmData.sekiroSavePath.has_value()) {
+        l_pathsChanged = true;
+        auto& sekiroSavePath = m_configData.gameSaveFiles.sekiroSavePath;
+        sekiroSavePath.savePath = confirmData.ds2SavePath.value();
+        sekiroSavePath.isSet = std::filesystem::exists(sekiroSavePath.savePath.toStdString());
+        if (sekiroSavePath.saveId.isEmpty())
+            sekiroSavePath.saveId = QString::fromStdString(generateUniqueId());
+    }
+    if (confirmData.erSavePath.has_value()) {
+        l_pathsChanged = true;
+        auto& erSavePath = m_configData.gameSaveFiles.erSavePath;
+        erSavePath.savePath = confirmData.ds2SavePath.value();
+        erSavePath.isSet = std::filesystem::exists(erSavePath.savePath.toStdString());
+        if (erSavePath.saveId.isEmpty())
+            erSavePath.saveId = QString::fromStdString(generateUniqueId());
+    }
+
+    if (l_pathsChanged) p_updateInfoById();
+
+    if (confirmData.quickSaveHotkey.has_value()) {
+        l_hotkeyChanged = true;
+        m_configData.hotkeys.quickSaveHotkey = confirmData.quickSaveHotkey.value();
+    }
+    if (confirmData.quickLoadHotkey.has_value()) {
+        l_hotkeyChanged = true;
+        m_configData.hotkeys.quickLoadHotkey = confirmData.quickLoadHotkey.value();
+    }
+
+    if (confirmData.autobackupEnabled.has_value()) {
+        l_autobackupChanged = true;
+        m_configData.autobackup.enabled = confirmData.autobackupEnabled.value();
+    }
+    if (confirmData.autobackupFrequency.has_value()) {
+        l_autobackupChanged = true;
+        m_configData.autobackup.frequency = confirmData.autobackupFrequency.value();
+    }
+    if (confirmData.maxAutobackups.has_value()) {
+        l_autobackupChanged = true;
+        m_configData.autobackup.maxBackups = confirmData.maxAutobackups.value();
+    }
+    bool changed = l_pathsChanged || l_hotkeyChanged || l_autobackupChanged;
+    if (!changed) return;
+
+    saveConfig();
+
+    if (l_pathsChanged) emit pathsChanged();
+    if (l_hotkeyChanged) emit hotkeysChanged();
+    if (l_autobackupChanged) emit autoBackupChanged();
+    emit configChanged();
 }
 
 void Config::saveConfig() {
-    // TODO implement
+    std::string dirPath = getAppConfigDir().toStdString();
+    if (!std::filesystem::exists(dirPath)) {
+        std::filesystem::create_directory(dirPath);
+    }
+    json jsonData = p_configToJson();
+    std::ofstream o(m_appConfigPath.toStdString());
+    o << jsonData.dump(4) << std::endl;
+    o.close();
 }
 
 QString Config::getBackupDirPath() {
@@ -345,8 +428,32 @@ void Config::p_loadConfig() {
     }
 }
 
-void Config::p_saveConfig() {
-    // TODO implement
+json Config::p_configToJson() {
+    json game_save_files = json::object();
+    for (auto& item: getSaveFileItems()) {
+        if (item.savePath.isEmpty()) continue;
+        if (!std::filesystem::exists(item.savePath.toStdString())) continue;
+        game_save_files[item.game.toString()] = {
+            {"path", item.savePath.toStdString()},
+            {"save_id", item.saveId.toStdString()},
+        };
+    }
+
+    json hotkeys = json::object();
+    hotkeys["quicksave"] = qtCombinationToInt(m_configData.hotkeys.quickSaveHotkey);
+    hotkeys["quickload"] = qtCombinationToInt(m_configData.hotkeys.quickLoadHotkey);
+
+    json autobackup = json::object();
+    autobackup["enabled"] = m_configData.autobackup.enabled;
+    autobackup["frequency"] = m_configData.autobackup.frequency;
+    autobackup["max_autobackups"] = m_configData.autobackup.maxBackups;
+
+    json data = json::object();
+    data["game_save_files"] = game_save_files;
+    data["hotkeys"] = hotkeys;
+    data["autobackup"] = autobackup;
+    data["last_selected_save_id"] = m_configData.lastSaveId.toStdString();
+    return data;
 }
 
 DefaultSavePathInfo Config::getDefaultSavePath(const fsm::parse::Game& game) {
