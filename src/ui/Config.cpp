@@ -361,12 +361,6 @@ void Config::p_loadConfig() {
             .saveId = saveId,
             .isSet = true,
         };
-        if (game != fsm::parse::Game::Unknown)
-            m_saveInfoById[saveId] = {
-                .game = game,
-                .saveId = saveId,
-                .savePath = path
-            };
         switch (game) {
             case fsm::parse::Game::DSR:
                 gameSaveFiles.dsrSavePath = savePathInfo;
@@ -387,6 +381,7 @@ void Config::p_loadConfig() {
                 break;
         }
     }
+    p_updateInfoById();
 
     // Hotkeys
     if (!data.contains("hotkeys")) {
@@ -464,6 +459,50 @@ DefaultSavePathInfo Config::getDefaultSavePath(const fsm::parse::Game& game) {
         case fsm::parse::Game::ER: return p_getDefaultERSavePath();
         case fsm::parse::Game::Sekiro: return p_getDefaultSekiroSavePath();
         default: return m_defaultSavePath;
+    }
+}
+
+void Config::p_updateInfoById() {
+    m_saveInfoById.clear();
+    auto& dsrSavePath = m_configData.gameSaveFiles.dsrSavePath;
+    auto& ds2SavePath = m_configData.gameSaveFiles.ds2SavePath;
+    auto& ds3SavePath = m_configData.gameSaveFiles.ds3SavePath;
+    auto& erSavePath = m_configData.gameSaveFiles.erSavePath;
+    auto& sekiroSavePath = m_configData.gameSaveFiles.sekiroSavePath;
+    if (dsrSavePath.isSet) {
+        m_saveInfoById[dsrSavePath.saveId] = {
+            .game = fsm::parse::Game::DSR,
+            .saveId = dsrSavePath.saveId,
+            .savePath = dsrSavePath.saveId
+        };
+    }
+    if (ds2SavePath.isSet) {
+        m_saveInfoById[ds2SavePath.saveId] = {
+            .game = fsm::parse::Game::DSR,
+            .saveId = ds2SavePath.saveId,
+            .savePath = ds2SavePath.saveId
+        };
+    }
+    if (ds3SavePath.isSet) {
+        m_saveInfoById[ds3SavePath.saveId] = {
+            .game = fsm::parse::Game::DS2_SOTFS,
+            .saveId = ds3SavePath.saveId,
+            .savePath = ds3SavePath.saveId
+        };
+    }
+    if (erSavePath.isSet) {
+        m_saveInfoById[erSavePath.saveId] = {
+            .game = fsm::parse::Game::DS3,
+            .saveId = erSavePath.saveId,
+            .savePath = erSavePath.saveId
+        };
+    }
+    if (sekiroSavePath.isSet) {
+        m_saveInfoById[sekiroSavePath.saveId] = {
+            .game = fsm::parse::Game::Sekiro,
+            .saveId = sekiroSavePath.saveId,
+            .savePath = sekiroSavePath.saveId
+        };
     }
 }
 

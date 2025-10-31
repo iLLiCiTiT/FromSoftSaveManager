@@ -123,6 +123,7 @@ private:
     DefaultSavePathInfo m_defaultSavePath {};
     std::unordered_map<QString, SaveFileItem> m_saveInfoById {};
     nlohmann::json p_configToJson();
+    void p_updateInfoById();
     void p_loadConfig();
     static DefaultSavePathInfo p_getDefaultDSRSavePath();
     static DefaultSavePathInfo p_getDefaultDS2SavePath();
