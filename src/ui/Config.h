@@ -8,6 +8,7 @@
 struct SaveFileItem {
     fsm::parse::Game game;
     QString saveId;
+    QString savePath;
 };
 
 // Information about default location of game save files
@@ -47,6 +48,7 @@ struct ConfigAutobackup {
 
 struct ConfigData {
     bool isLoaded = false;
+    QString lastSaveId = "";
     ConfigGameSavePaths gameSaveFiles {};
     ConfigHotkeys hotkeys {};
     ConfigAutobackup autobackup {};
@@ -96,16 +98,15 @@ public:
     std::optional<SaveFileItem> getSaveFileItem(const QString& saveId);
     std::optional<QString> getSavePathItem(const QString& saveId);
     std::optional<QString> getSaveIdByGame(const fsm::parse::Game& game);
-    QString getLastSelectedSaveId();
+    QString getLastSelectedSaveId() const;
     void setLastSelectedSaveId(const QString& saveId);
     DefaultSavePathInfo getDefaultSavePath(const fsm::parse::Game& game);
 private:
     ConfigData m_configData;
-    QString m_lastTabId = "";
     QString m_appConfigPath = "";
     QString m_appBackupsDir = "";
-    std::unordered_map<QString, SaveFileItem> m_saveInfoById {};
     DefaultSavePathInfo m_defaultSavePath {};
+    std::unordered_map<QString, SaveFileItem> m_saveInfoById {};
     void p_loadConfig();
     void p_saveConfig();
     static DefaultSavePathInfo p_getDefaultDSRSavePath();

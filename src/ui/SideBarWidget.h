@@ -20,7 +20,7 @@ private:
 class TabIconButton: public SquareButton {
     Q_OBJECT
 signals:
-    void virtual requested(QString saveId);
+    void requested(QString saveId);
 
 public:
     explicit TabIconButton(const QIcon& icon, const QString& title, QWidget* parent);

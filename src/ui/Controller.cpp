@@ -1,5 +1,6 @@
 #include "Controller.h"
 
+#include <filesystem>
 #include "Config.h"
 
 Controller::Controller(QObject* parent): QObject(parent) {
@@ -7,11 +8,10 @@ Controller::Controller(QObject* parent): QObject(parent) {
 };
 Controller::~Controller() {
     delete m_config;
-    QObject::~QObject();
 };
 
-QString Controller::getCurrentTabId() const {
-    return m_currentSaveId;
+QString Controller::getLastSelectedSaveId() const {
+    return m_config->getLastSelectedSaveId();
 }
 void Controller::setCurrentTabId(const QString& saveId) {
     m_currentSaveId = saveId;
@@ -23,8 +23,21 @@ std::vector<SaveFileItem> Controller::getSaveFileItems() {
 }
 
 DSRCharInfoResult Controller::getDsrCharacters(const QString& saveId) {
+    auto r_savePath = m_config->getSavePathItem(saveId);
+    if (!r_savePath.has_value()) return {
+        "Save file path is not set.",
+        std::vector<fsm::parse::DSRCharacterInfo> {},
+    };
+    std::string savePath = r_savePath.value().toStdString();
+    if (!std::filesystem::exists(savePath)) return {
+        "Save file does not exist.",
+        std::vector<fsm::parse::DSRCharacterInfo> {},
+    };
+    fsm::parse::SL2File sl2_dsr = fsm::parse::parse_sl2_file(savePath);
+    fsm::parse::DSRSaveFile dsr = fsm::parse::parse_dsr_file(sl2_dsr);
+
     return {
-        "Nothing",
-        std::vector<fsm::parse::DSRCharacterInfo>()
+        "",
+        dsr.characters
     };
 }

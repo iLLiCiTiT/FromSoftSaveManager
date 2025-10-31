@@ -24,7 +24,7 @@ public:
     explicit Controller(QObject* parent = nullptr);
     ~Controller() override;
 
-    QString getCurrentTabId() const;
+    QString getLastSelectedSaveId() const;
     void setCurrentTabId(const QString& saveId);
 
     std::vector<SaveFileItem> getSaveFileItems();

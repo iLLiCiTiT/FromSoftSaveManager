@@ -32,9 +32,9 @@ void MainWindow::showEvent(QShowEvent *event) {
 }
 
 void MainWindow::refresh() {
-    std::set<QString> availableIds;
+    std::unordered_set<QString> availableIds;
     QString firstId;
-    for (const auto&[game, saveId]: m_controller->getSaveFileItems()) {
+    for (const auto&[game, saveId, _savePath]: m_controller->getSaveFileItems()) {
         BaseGameWidget* gameWidget = nullptr;
         switch (game) {
             case fsm::parse::Game::DSR:

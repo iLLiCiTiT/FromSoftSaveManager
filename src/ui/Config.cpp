@@ -3,10 +3,13 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <qevent.h>
 #include <windows.h>
 #include <shlobj.h>
 #include <QUuid>
 #include <nlohmann/json.hpp>
+
+#include "KeysWindows.h"
 
 using json = nlohmann::json;
 
@@ -90,44 +93,106 @@ Config::Config(QObject* parent): QObject(parent) {
 }
 
 ConfigInfo Config::getConfigInfo() {
+    // TODO implement
     return ConfigInfo {};
 }
 
-void Config::saveConfigInfo(const ConfigConfirmInfo &configInfo) {
+void Config::saveConfigInfo(const ConfigConfirmInfo& configInfo) {
+    // TODO implement
 }
 
 void Config::saveConfig() {
+    // TODO implement
 }
 
 QString Config::getBackupDirPath() {
-    QString backupDir;
-    return backupDir;
+    return m_appBackupsDir;
 }
 
 std::vector<SaveFileItem> Config::getSaveFileItems() {
     std::vector<SaveFileItem> output;
-    // TODO implement
+
+    const ConfigSavePathData& dsrSavePathInfo = m_configData.gameSaveFiles.dsrSavePath;
+    const ConfigSavePathData& ds2SavePathInfo = m_configData.gameSaveFiles.ds2SavePath;
+    const ConfigSavePathData& ds3SavePathInfo = m_configData.gameSaveFiles.ds3SavePath;
+    const ConfigSavePathData& sekiroSavePathInfo = m_configData.gameSaveFiles.sekiroSavePath;
+    const ConfigSavePathData& erSavePathInfo = m_configData.gameSaveFiles.erSavePath;
+    if (dsrSavePathInfo.isSet)
+        output.push_back({
+            .game = fsm::parse::Game::DSR,
+            .saveId = dsrSavePathInfo.saveId,
+            .savePath = dsrSavePathInfo.savePath,
+        });
+    if (ds2SavePathInfo.isSet)
+        output.push_back({
+            .game = fsm::parse::Game::DS2_SOTFS,
+            .saveId = ds2SavePathInfo.saveId,
+            .savePath = ds2SavePathInfo.savePath,
+        });
+    if (ds3SavePathInfo.isSet)
+        output.push_back({
+            .game = fsm::parse::Game::DS3,
+            .saveId = ds3SavePathInfo.saveId,
+            .savePath = ds3SavePathInfo.savePath,
+        });
+    if (sekiroSavePathInfo.isSet)
+        output.push_back({
+            .game = fsm::parse::Game::Sekiro,
+            .saveId = sekiroSavePathInfo.saveId,
+            .savePath = sekiroSavePathInfo.savePath,
+        });
+    if (erSavePathInfo.isSet)
+        output.push_back({
+            .game = fsm::parse::Game::ER,
+            .saveId = erSavePathInfo.saveId,
+            .savePath = erSavePathInfo.savePath,
+        });
+
     return output;
 }
 
-std::optional<SaveFileItem> Config::getSaveFileItem(const QString &saveId) {
+std::optional<SaveFileItem> Config::getSaveFileItem(const QString& saveId) {
+    auto it = m_saveInfoById.find(saveId);
+    if (it == m_saveInfoById.end()) return std::nullopt;
+    return it->second;
+}
+
+std::optional<QString> Config::getSavePathItem(const QString& saveId) {
+    // TODO find out if it needed?
+    auto item = getSaveFileItem(saveId);
+    if (item.has_value()) return item.value().savePath;
     return std::nullopt;
 }
 
-std::optional<QString> Config::getSavePathItem(const QString &saveId) {
-    return std::nullopt;
+std::optional<QString> Config::getSaveIdByGame(const fsm::parse::Game& game) {
+    switch (game) {
+        case fsm::parse::Game::DSR:
+            if (!m_configData.gameSaveFiles.dsrSavePath.isSet) return std::nullopt;
+            return m_configData.gameSaveFiles.dsrSavePath.saveId;
+        case fsm::parse::Game::DS2_SOTFS:
+            if (!m_configData.gameSaveFiles.ds2SavePath.isSet) return std::nullopt;
+            return m_configData.gameSaveFiles.ds2SavePath.saveId;
+        case fsm::parse::Game::DS3:
+            if (!m_configData.gameSaveFiles.ds3SavePath.isSet) return std::nullopt;
+            return m_configData.gameSaveFiles.ds3SavePath.saveId;
+        case fsm::parse::Game::Sekiro:
+            if (!m_configData.gameSaveFiles.sekiroSavePath.isSet) return std::nullopt;
+            return m_configData.gameSaveFiles.sekiroSavePath.saveId;
+        case fsm::parse::Game::ER:
+            if (!m_configData.gameSaveFiles.erSavePath.isSet) return std::nullopt;
+            return m_configData.gameSaveFiles.erSavePath.saveId;
+        default:
+            return std::nullopt;
+    }
 }
 
-std::optional<QString> Config::getSaveIdByGame(const fsm::parse::Game &game) {
-    return std::nullopt;
-}
-
-QString Config::getLastSelectedSaveId() {
-    QString saveId;
-    return saveId;
+QString Config::getLastSelectedSaveId() const {
+    return m_configData.lastSaveId;
 }
 
 void Config::setLastSelectedSaveId(const QString &saveId) {
+    if (!saveId.isEmpty())
+        m_configData.lastSaveId = saveId;
 }
 
 void Config::p_loadConfig() {
@@ -175,6 +240,12 @@ void Config::p_loadConfig() {
             .saveId = saveId,
             .isSet = true,
         };
+        if (game != fsm::parse::Game::Unknown)
+            m_saveInfoById[saveId] = {
+                .game = game,
+                .saveId = saveId,
+                .savePath = path
+            };
         switch (game) {
             case fsm::parse::Game::DSR:
                 gameSaveFiles.dsrSavePath = savePathInfo;
@@ -195,12 +266,49 @@ void Config::p_loadConfig() {
                 break;
         }
     }
-    auto& autobackup = m_configData.autobackup;
-    auto& hotkeys = m_configData.hotkeys;
 
+    // Hotkeys
+    if (!data.contains("hotkeys")) {
+        data["hotkeys"] = json::object();
+    }
+    if (!data["hotkeys"].contains("quicksave")) {
+        data["hotkeys"]["quicksave"] = qtCombinationToInt(QKeyCombination(Qt::Key_F5));
+    }
+
+    if (!data["hotkeys"].contains("quickload")) {
+        data["hotkeys"]["quickload"] = qtCombinationToInt(QKeyCombination(Qt::Key_F8));
+    }
+    auto& hotkeys = m_configData.hotkeys;
+    std::unordered_set<int> quicksave = data["hotkeys"]["quicksave"];
+    std::unordered_set<int> quickload = data["hotkeys"]["quickload"];
+    hotkeys.quickSaveHotkey = intCombinationToQt(quicksave);
+    hotkeys.quickLoadHotkey = intCombinationToQt(quickload);
+
+    // Autobackup
+    auto& autobackup = m_configData.autobackup;
+    if (!data.contains("autobackup")) {
+        data["autobackup"] = json::object();
+    }
+    json& autobackupData = data["autobackup"];
+
+    if (autobackupData.contains("enabled") && autobackupData["enabled"].is_boolean()) {
+        autobackup.enabled = autobackupData["enabled"];
+    }
+    if (autobackupData.contains("frequency") && autobackupData["frequency"].is_number()) {
+        autobackup.frequency = autobackupData["frequency"];
+    }
+    if (autobackupData.contains("max_autobackups") && autobackupData["max_autobackups"].is_number()) {
+        autobackup.maxBackups = autobackupData["max_autobackups"];
+    }
+
+    // Last selected save id
+    if (data.contains("last_selected_save_id") && data["last_selected_save_id"].is_string()) {
+        m_configData.lastSaveId = QString::fromStdString(data["last_selected_save_id"]);
+    }
 }
 
 void Config::p_saveConfig() {
+    // TODO implement
 }
 
 DefaultSavePathInfo Config::getDefaultSavePath(const fsm::parse::Game& game) {

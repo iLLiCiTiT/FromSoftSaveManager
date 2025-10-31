@@ -89,8 +89,9 @@ const std::unordered_map<int, int> MAP_QT_TO_KEY = [] {
 
 }
 
-std::set<int> qtCombinationToInt(const QKeyCombination& combo) {
-    std::set<int> out;
+std::unordered_set<int> qtCombinationToInt(const QKeyCombination& combo) {
+    std::unordered_set<int> out;
+    if (combo.key() == Qt::Key_unknown) return out;
 
     Qt::KeyboardModifiers mods = combo.keyboardModifiers();
     if (mods & Qt::ShiftModifier) out.insert(VK_SHIFT);
@@ -126,16 +127,17 @@ std::set<int> qtCombinationToInt(const QKeyCombination& combo) {
     return out;
 }
 
-std::optional<QKeyCombination> intCombinationToQt(const std::set<int>& in) {
+QKeyCombination intCombinationToQt(const std::unordered_set<int>& in) {
+    if (in.empty()) return QKeyCombination();
     // Copy and strip modifiers
-    std::set<int> keys = in;
+    std::unordered_set<int> keys = in;
     Qt::KeyboardModifiers mods = Qt::NoModifier;
 
     if (keys.erase(VK_SHIFT)) mods |= Qt::ShiftModifier;
     if (keys.erase(VK_CONTROL)) mods |= Qt::ControlModifier;
     if (keys.erase(VK_MENU)) mods |= Qt::AltModifier;
 
-    if (keys.size() != 1) return std::nullopt; // ambiguous or missing
+    if (keys.size() != 1) return QKeyCombination(); // ambiguous or missing
 
     bool hasKeypad = true;
     int qtKey = Qt::Key_unknown;
@@ -161,15 +163,15 @@ std::optional<QKeyCombination> intCombinationToQt(const std::set<int>& in) {
         mods |= Qt::KeypadModifier;
     } else {
         auto it = MAP_KEY_TO_QT.find(vk);
-        if (it == MAP_KEY_TO_QT.end()) return std::nullopt;
+        if (it == MAP_KEY_TO_QT.end()) return QKeyCombination();
         qtKey = static_cast<int>(it->second);
     }
 
-    if (qtKey == Qt::Key_unknown) return std::nullopt;
+    if (qtKey == Qt::Key_unknown) return QKeyCombination();
     return QKeyCombination(mods, static_cast<Qt::Key>(qtKey));
 }
 
-bool keysArePressed(const std::set<int>& vkCodes) {
+bool keysArePressed(const std::unordered_set<int>& vkCodes) {
     if (vkCodes.empty()) return false;
     for (int vk : vkCodes) {
         SHORT state = GetAsyncKeyState(vk);
