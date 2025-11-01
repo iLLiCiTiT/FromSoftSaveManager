@@ -36,25 +36,40 @@ void MainWindow::refresh() {
     QString firstId;
     for (const auto&[game, saveId, _savePath]: m_controller->getSaveFileItems()) {
         BaseGameWidget* gameWidget = nullptr;
+        if (firstId.isEmpty()) firstId = saveId;
+        availableIds.insert(saveId);
+        if (m_widgetsMapping.find(saveId) != m_widgetsMapping.end()) {
+            gameWidget = m_widgetsMapping.find(saveId)->second;
+            gameWidget->refresh();
+            continue;
+        }
         switch (game) {
             case fsm::parse::Game::DSR:
-                if (firstId.isEmpty()) firstId = saveId;
-                availableIds.insert(saveId);
-                if (m_widgetsMapping.find(saveId) != m_widgetsMapping.end()) {
-                    gameWidget = m_widgetsMapping.find(saveId)->second;
-                    gameWidget->refresh();
-                    break;
-                }
                 gameWidget = new DSRWidget(m_controller, saveId, m_stack);
-                m_stack->addWidget(gameWidget);
-                m_widgetsMapping[saveId] = gameWidget;
-                m_sideBar->addTab(game, saveId);
+                break;
+            case fsm::parse::Game::DS2_SOTFS:
+                gameWidget = new DS2Widget(m_controller, saveId, m_stack);
+                break;
+
+            case fsm::parse::Game::DS3:
+                gameWidget = new DS3Widget(m_controller, saveId, m_stack);
+                break;
+
+            case fsm::parse::Game::Sekiro:
+                gameWidget = new SekiroWidget(m_controller, saveId, m_stack);
+                break;
+
+            case fsm::parse::Game::ER:
+                gameWidget = new ERWidget(m_controller, saveId, m_stack);
                 break;
 
             default:
                 break;
         }
         if (gameWidget != nullptr) {
+            m_stack->addWidget(gameWidget);
+            m_widgetsMapping[saveId] = gameWidget;
+            m_sideBar->addTab(game, saveId);
             gameWidget->refresh();
         }
     }

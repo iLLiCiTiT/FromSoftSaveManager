@@ -41,6 +41,10 @@ add_executable(FromSoftSaveManager
         src/ui/DSRWidget/Inventory.cpp
         src/ui/DSRWidget/Covenants.cpp
         src/ui/DSRWidget/CharInfo.cpp
+        src/ui/DS2Widget/DS2Widget.cpp
+        src/ui/DS3Widget/DS3Widget.cpp
+        src/ui/SekiroWidget/SekiroWidget.cpp
+        src/ui/ERWidget/ERWidget.cpp
 )
 
 add_library(resources_dsr SHARED)
