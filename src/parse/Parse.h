@@ -5,6 +5,7 @@
 #include <string>
 #include <array>
 
+// TODO this should be 'SL2file' with namespace 'fssm::parse::sl2'
 namespace fsm::parse {
 
 class Game {
@@ -35,7 +36,7 @@ class Game {
         constexpr const char* toString() const {
             switch (value) {
                 case DSR: return "DSR";
-                case DS2_SOTFS: return "DS2_SOTFS";
+                case DS2_SOTFS: return "DS2-SOTFS";
                 case DS3: return "DS3";
                 case ER: return "ER";
                 case Sekiro: return "Sekiro";
@@ -48,7 +49,7 @@ class Game {
             if (iequals(gameName, "ds3"))       return DS3;
             if (iequals(gameName, "er"))        return ER;
             if (iequals(gameName, "sekiro"))    return Sekiro;
-            if (iequals(gameName, "ds2_sotfs")) return DS2_SOTFS;
+            if (iequals(gameName, "ds2-sotfs")) return DS2_SOTFS;
             return Unknown;
         }
 
