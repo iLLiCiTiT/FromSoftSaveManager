@@ -115,6 +115,7 @@ public:
     QString getLastSelectedSaveId() const;
     void setLastSelectedSaveId(const QString& saveId);
     DefaultSavePathInfo getDefaultSavePath(const fsm::parse::Game& game);
+    ConfigHotkeys getHotkeysConfig();
 private:
     ConfigData m_configData;
     QString m_appConfigPath = "";

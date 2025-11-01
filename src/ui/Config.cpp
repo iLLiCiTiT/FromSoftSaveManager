@@ -309,6 +309,10 @@ void Config::setLastSelectedSaveId(const QString &saveId) {
         m_configData.lastSaveId = saveId;
 }
 
+ConfigHotkeys Config::getHotkeysConfig() {
+    return m_configData.hotkeys;
+}
+
 void Config::p_loadConfig() {
     if (m_configData.isLoaded) return;
     m_configData.isLoaded = true;
