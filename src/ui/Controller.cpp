@@ -3,8 +3,6 @@
 #include <filesystem>
 #include <iostream>
 
-#include "Config.h"
-
 
 HotkeysThread::HotkeysThread(const ConfigHotkeys& config, QObject* parent): QThread(parent) {
     updateHotkeys(config);
@@ -52,7 +50,7 @@ void HotkeysThread::updateHotkeys(const ConfigHotkeys& hotkeys) {
 }
 
 Controller::Controller(QObject* parent): QObject(parent) {
-    m_config = new Config();
+    m_config = new ConfigModel();
     m_hotkeysThread = new HotkeysThread(m_config->getHotkeysConfig(), this);
 
     connect(m_hotkeysThread, SIGNAL(quickSaveRequested()), this, SLOT(onQuickSaveRequest()));

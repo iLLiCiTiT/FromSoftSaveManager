@@ -96,7 +96,7 @@ struct ConfigConfirmData {
 
 };
 
-class Config: public QObject {
+class ConfigModel: public QObject {
     Q_OBJECT
 signals:
     void pathsChanged();
@@ -104,7 +104,7 @@ signals:
     void autoBackupChanged();
     void configChanged();
 public:
-    explicit Config(QObject* parent = nullptr);
+    explicit ConfigModel(QObject* parent = nullptr);
     ConfigSettingsData getConfigSettingsData();
     void saveConfigData(const ConfigConfirmData& configData);
     void saveConfig();

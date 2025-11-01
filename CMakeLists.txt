@@ -30,7 +30,7 @@ add_executable(FromSoftSaveManager
         src/ui/SideBarWidget.cpp
         src/ui/SquareButton.h
         src/ui/Utils.cpp
-        src/ui/Config.cpp
+        src/ui/ConfigModel.cpp
         src/ui/Controller.cpp
         src/ui/KeysWindows.cpp
         src/ui/KeysWindows.h

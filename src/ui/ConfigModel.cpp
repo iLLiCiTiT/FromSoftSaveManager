@@ -1,4 +1,4 @@
-#include "Config.h"
+#include "ConfigModel.h"
 
 #include <filesystem>
 #include <fstream>
@@ -83,7 +83,7 @@ static QString findSaveFile(const std::string& dirpath, const std::string& filen
     return QString {};
 }
 
-Config::Config(QObject* parent): QObject(parent) {
+ConfigModel::ConfigModel(QObject* parent): QObject(parent) {
     m_appConfigPath = getAppConfigDir();
     m_appConfigPath.push_back("\\config.json");
     m_appBackupsDir = getAppConfigDir();
@@ -92,7 +92,7 @@ Config::Config(QObject* parent): QObject(parent) {
     p_loadConfig();
 }
 
-ConfigSettingsData Config::getConfigSettingsData() {
+ConfigSettingsData ConfigModel::getConfigSettingsData() {
     auto d_dsr = p_getDefaultDSRSavePath();
     auto d_ds2 = p_getDefaultDS2SavePath();
     auto d_ds3 = p_getDefaultDS3SavePath();
@@ -135,7 +135,7 @@ ConfigSettingsData Config::getConfigSettingsData() {
     };
 }
 
-void Config::saveConfigData(const ConfigConfirmData& confirmData) {
+void ConfigModel::saveConfigData(const ConfigConfirmData& confirmData) {
     bool l_pathsChanged = false;
     bool l_hotkeyChanged = false;
     bool l_autobackupChanged = false;
@@ -215,7 +215,7 @@ void Config::saveConfigData(const ConfigConfirmData& confirmData) {
     emit configChanged();
 }
 
-void Config::saveConfig() {
+void ConfigModel::saveConfig() {
     std::string dirPath = getAppConfigDir().toStdString();
     if (!std::filesystem::exists(dirPath)) {
         std::filesystem::create_directory(dirPath);
@@ -226,11 +226,11 @@ void Config::saveConfig() {
     o.close();
 }
 
-QString Config::getBackupDirPath() {
+QString ConfigModel::getBackupDirPath() {
     return m_appBackupsDir;
 }
 
-std::vector<SaveFileItem> Config::getSaveFileItems() {
+std::vector<SaveFileItem> ConfigModel::getSaveFileItems() {
     std::vector<SaveFileItem> output;
 
     const ConfigSavePathData& dsrSavePathInfo = m_configData.gameSaveFiles.dsrSavePath;
@@ -272,13 +272,13 @@ std::vector<SaveFileItem> Config::getSaveFileItems() {
     return output;
 }
 
-std::optional<QString> Config::getSavePathItem(const QString& saveId) {
+std::optional<QString> ConfigModel::getSavePathItem(const QString& saveId) {
     auto it = m_saveInfoById.find(saveId);
     if (it == m_saveInfoById.end()) return std::nullopt;
     return it->second.savePath;
 }
 
-std::optional<QString> Config::getSaveIdByGame(const fsm::parse::Game& game) {
+std::optional<QString> ConfigModel::getSaveIdByGame(const fsm::parse::Game& game) {
     switch (game) {
         case fsm::parse::Game::DSR:
             if (!m_configData.gameSaveFiles.dsrSavePath.isSet) return std::nullopt;
@@ -300,20 +300,20 @@ std::optional<QString> Config::getSaveIdByGame(const fsm::parse::Game& game) {
     }
 }
 
-QString Config::getLastSelectedSaveId() const {
+QString ConfigModel::getLastSelectedSaveId() const {
     return m_configData.lastSaveId;
 }
 
-void Config::setLastSelectedSaveId(const QString &saveId) {
+void ConfigModel::setLastSelectedSaveId(const QString &saveId) {
     if (!saveId.isEmpty())
         m_configData.lastSaveId = saveId;
 }
 
-ConfigHotkeys Config::getHotkeysConfig() {
+ConfigHotkeys ConfigModel::getHotkeysConfig() {
     return m_configData.hotkeys;
 }
 
-void Config::p_loadConfig() {
+void ConfigModel::p_loadConfig() {
     if (m_configData.isLoaded) return;
     m_configData.isLoaded = true;
     json data;
@@ -420,7 +420,7 @@ void Config::p_loadConfig() {
     }
 }
 
-json Config::p_configToJson() {
+json ConfigModel::p_configToJson() {
     json game_save_files = json::object();
     for (auto& item: getSaveFileItems()) {
         if (item.savePath.isEmpty()) continue;
@@ -448,7 +448,7 @@ json Config::p_configToJson() {
     return data;
 }
 
-DefaultSavePathInfo Config::getDefaultSavePath(const fsm::parse::Game& game) {
+DefaultSavePathInfo ConfigModel::getDefaultSavePath(const fsm::parse::Game& game) {
     switch (game) {
         case fsm::parse::Game::DSR: return p_getDefaultDSRSavePath();
         case fsm::parse::Game::DS2_SOTFS: return p_getDefaultDS2SavePath();
@@ -459,7 +459,7 @@ DefaultSavePathInfo Config::getDefaultSavePath(const fsm::parse::Game& game) {
     }
 }
 
-void Config::p_updateInfoById() {
+void ConfigModel::p_updateInfoById() {
     m_saveInfoById.clear();
     auto& dsrSavePath = m_configData.gameSaveFiles.dsrSavePath;
     auto& ds2SavePath = m_configData.gameSaveFiles.ds2SavePath;
@@ -503,7 +503,7 @@ void Config::p_updateInfoById() {
     }
 }
 
-DefaultSavePathInfo Config::p_getDefaultDSRSavePath() {
+DefaultSavePathInfo ConfigModel::p_getDefaultDSRSavePath() {
     DefaultSavePathInfo output;
 
     output.savePathHint = QString::fromStdWString(GetWindowsDocumentsDirW());
@@ -527,7 +527,7 @@ DefaultSavePathInfo Config::p_getDefaultDSRSavePath() {
     return output;
 }
 
-DefaultSavePathInfo Config::p_getDefaultDS2SavePath() {
+DefaultSavePathInfo ConfigModel::p_getDefaultDS2SavePath() {
     DefaultSavePathInfo output;
     output.savePathHint = getAppDataPath("DarkSoulsII");
     output.savePath = findSaveFile(
@@ -538,7 +538,7 @@ DefaultSavePathInfo Config::p_getDefaultDS2SavePath() {
     return output;
 }
 
-DefaultSavePathInfo Config::p_getDefaultDS3SavePath() {
+DefaultSavePathInfo ConfigModel::p_getDefaultDS3SavePath() {
     DefaultSavePathInfo output;
     output.savePathHint = getAppDataPath("DarkSoulsIII");
     output.savePath = findSaveFile(
@@ -549,7 +549,7 @@ DefaultSavePathInfo Config::p_getDefaultDS3SavePath() {
     return output;
 }
 
-DefaultSavePathInfo Config::p_getDefaultERSavePath() {
+DefaultSavePathInfo ConfigModel::p_getDefaultERSavePath() {
     DefaultSavePathInfo output;
     output.savePathHint = getAppDataPath("EldenRing");
     output.savePath = findSaveFile(
@@ -560,7 +560,7 @@ DefaultSavePathInfo Config::p_getDefaultERSavePath() {
     return output;
 }
 
-DefaultSavePathInfo Config::p_getDefaultSekiroSavePath() {
+DefaultSavePathInfo ConfigModel::p_getDefaultSekiroSavePath() {
     DefaultSavePathInfo output;
     output.savePathHint = getAppDataPath("Sekiro");
     output.savePath = findSaveFile(
