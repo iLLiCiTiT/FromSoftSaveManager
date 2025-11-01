@@ -50,8 +50,8 @@ void HotkeysThread::updateHotkeys(const ConfigHotkeys& hotkeys) {
 }
 
 Controller::Controller(QObject* parent): QObject(parent) {
-    m_config = new ConfigModel();
-    m_hotkeysThread = new HotkeysThread(m_config->getHotkeysConfig(), this);
+    m_configModel = new ConfigModel();
+    m_hotkeysThread = new HotkeysThread(m_configModel->getHotkeysConfig(), this);
 
     connect(m_hotkeysThread, SIGNAL(quickSaveRequested()), this, SLOT(onQuickSaveRequest()));
     connect(m_hotkeysThread, SIGNAL(quickLoadRequested()), this, SLOT(onQuickLoadRequest()));
@@ -59,35 +59,35 @@ Controller::Controller(QObject* parent): QObject(parent) {
     m_hotkeysThread->start();
 };
 Controller::~Controller() {
-    delete m_config;
+    delete m_configModel;
     m_hotkeysThread->stop();
     m_hotkeysThread->wait();
     m_hotkeysThread->deleteLater();
 }
 
 QString Controller::getLastSelectedSaveId() const {
-    return m_config->getLastSelectedSaveId();
+    return m_configModel->getLastSelectedSaveId();
 }
 
 void Controller::setCurrentTabId(const QString& saveId) {
     m_currentSaveId = saveId;
-    m_config->setLastSelectedSaveId(saveId);
+    m_configModel->setLastSelectedSaveId(saveId);
 }
 
 ConfigSettingsData Controller::getConfigSettingsData() const {
-    return m_config->getConfigSettingsData();
+    return m_configModel->getConfigSettingsData();
 }
 
 void Controller::saveConfigData(const ConfigConfirmData& confirmData) {
-    m_config->saveConfigData(confirmData);
+    m_configModel->saveConfigData(confirmData);
 };
 
 std::vector<SaveFileItem> Controller::getSaveFileItems() const {
-    return m_config->getSaveFileItems();
+    return m_configModel->getSaveFileItems();
 }
 
 DSRCharInfoResult Controller::getDsrCharacters(const QString& saveId) const {
-    auto r_savePath = m_config->getSavePathItem(saveId);
+    auto r_savePath = m_configModel->getSavePathItem(saveId);
     if (!r_savePath.has_value()) return {
         "Save file path is not set.",
         std::vector<fsm::parse::DSRCharacterInfo> {},
@@ -107,7 +107,7 @@ DSRCharInfoResult Controller::getDsrCharacters(const QString& saveId) const {
 }
 
 void Controller::onHotkeysChange() {
-    m_hotkeysThread->updateHotkeys(m_config->getHotkeysConfig());
+    m_hotkeysThread->updateHotkeys(m_configModel->getHotkeysConfig());
     emit hotkeysChanged();
 };
 

@@ -61,6 +61,6 @@ private slots:
 
 private:
     QString m_currentSaveId = "";
-    ConfigModel* m_config;
+    ConfigModel* m_configModel;
     HotkeysThread* m_hotkeysThread;
 };
