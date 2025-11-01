@@ -1,4 +1,3 @@
-#pragma once
 #include "SekiroWidget.h"
 #include "../BaseGameWidget.h"
 
