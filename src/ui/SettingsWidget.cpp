@@ -75,8 +75,6 @@ SavePathInputsWidget::SavePathInputsWidget(const ConfigSettingsData& configData,
     layout->addWidget(m_ds3PathInput, row++, 1);
     layout->addWidget(sekiroLabel, row, 0);
     layout->addWidget(m_sekiroPathInput, row++, 1);
-    layout->addWidget(dsrLabel, row, 0);
-    layout->addWidget(m_dsrPathInput, row++, 1);
     layout->addWidget(erLabel, row, 0);
     layout->addWidget(m_erPathInput, row++, 1);
 
