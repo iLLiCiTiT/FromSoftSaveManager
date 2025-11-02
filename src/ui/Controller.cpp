@@ -7,6 +7,7 @@
 HotkeysThread::HotkeysThread(const ConfigHotkeys& config, QObject* parent): QThread(parent) {
     updateHotkeys(config);
 }
+
 void HotkeysThread::stop() {
     m_isRunning = false;
 }
@@ -50,14 +51,17 @@ void HotkeysThread::updateHotkeys(const ConfigHotkeys& hotkeys) {
 }
 
 Controller::Controller(QObject* parent): QObject(parent) {
-    m_configModel = new ConfigModel();
+    m_configModel = new ConfigModel(this);
+    ConfigAutobackup autosave = m_configModel->getAutosaveConfig();
+    m_saveModel = new SaveModel(m_configModel->getBackupDirPath(), autosave.maxBackups, this);
     m_hotkeysThread = new HotkeysThread(m_configModel->getHotkeysConfig(), this);
 
     connect(m_hotkeysThread, SIGNAL(quickSaveRequested()), this, SLOT(onQuickSaveRequest()));
     connect(m_hotkeysThread, SIGNAL(quickLoadRequested()), this, SLOT(onQuickLoadRequest()));
 
     m_hotkeysThread->start();
-};
+}
+
 Controller::~Controller() {
     delete m_configModel;
     m_hotkeysThread->stop();
@@ -80,19 +84,19 @@ ConfigSettingsData Controller::getConfigSettingsData() const {
 
 void Controller::saveConfigData(const ConfigConfirmData& confirmData) {
     m_configModel->saveConfigData(confirmData);
-};
+}
 
 std::vector<SaveFileItem> Controller::getSaveFileItems() const {
     return m_configModel->getSaveFileItems();
 }
 
 DSRCharInfoResult Controller::getDsrCharacters(const QString& saveId) const {
-    auto r_savePath = m_configModel->getSavePathItem(saveId);
-    if (!r_savePath.has_value()) return {
+    QString r_savePath = m_configModel->getSavePathItem(saveId);
+    if (r_savePath.isEmpty()) return {
         "Save file path is not set.",
         std::vector<fsm::parse::DSRCharacterInfo> {},
     };
-    std::string savePath = r_savePath.value().toStdString();
+    std::string savePath = r_savePath.toStdString();
     if (!std::filesystem::exists(savePath)) return {
         "Save file does not exist.",
         std::vector<fsm::parse::DSRCharacterInfo> {},
@@ -106,17 +110,27 @@ DSRCharInfoResult Controller::getDsrCharacters(const QString& saveId) const {
     };
 }
 
+void Controller::openBackupDir() {
+    // TODO implement
+}
+
 void Controller::onHotkeysChange() {
     m_hotkeysThread->updateHotkeys(m_configModel->getHotkeysConfig());
     emit hotkeysChanged();
-};
+}
 
 void Controller::onQuickSaveRequest() {
-    // TODO implement
-    std::cout << "Quick Save Request" << std::endl;
+    if (m_currentSaveId.isEmpty()) return;
+    auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
+    if (!itemOpt.has_value()) return;
+    QString savePath = itemOpt.value().savePath;
+    if (savePath.isEmpty()) return;
+    m_saveModel->createQuickSaveBackup(savePath, itemOpt.value().game);
 };
 
 void Controller::onQuickLoadRequest() {
-    // TODO implement
-    std::cout << "Quick Load Request" << std::endl;
-};
+    if (m_currentSaveId.isEmpty()) return;
+    QString savePath = m_configModel->getSavePathItem(m_currentSaveId);
+    if (savePath.isEmpty()) return;
+    m_saveModel->quickLoad(savePath, m_currentSaveId);
+}

@@ -5,6 +5,7 @@
 
 #include "KeysWindows.h"
 #include "ConfigModel.h"
+#include "SaveModel.h"
 #include "../parse/DSRSaveFile.h"
 
 
@@ -33,7 +34,7 @@ struct DSRCharInfoResult {
     std::vector<fsm::parse::DSRCharacterInfo> characters;
 };
 
-class Controller : public QObject {
+class Controller: public QObject {
     Q_OBJECT
 signals:
     void pathsChanged();
@@ -53,6 +54,12 @@ public:
 
     std::vector<SaveFileItem> getSaveFileItems() const;
     DSRCharInfoResult getDsrCharacters(const QString& saveId) const;
+    // DS2CharInfoResult getDs2Characters(const QString& saveId) const;
+    // DS3CharInfoResult getDs3Characters(const QString& saveId) const;
+    // SekiroCharInfoResult getSekiroCharacters(const QString& saveId) const;
+    // ERCharInfoResult getERCharacters(const QString& saveId) const;
+
+    void openBackupDir();
 
 private slots:
     void onQuickSaveRequest();
@@ -62,5 +69,6 @@ private slots:
 private:
     QString m_currentSaveId = "";
     ConfigModel* m_configModel;
+    SaveModel* m_saveModel;
     HotkeysThread* m_hotkeysThread;
 };

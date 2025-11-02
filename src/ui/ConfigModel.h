@@ -104,18 +104,20 @@ signals:
     void autoBackupChanged();
     void configChanged();
 public:
-    explicit ConfigModel(QObject* parent = nullptr);
+    explicit ConfigModel(QObject* parent);
     ConfigSettingsData getConfigSettingsData();
     void saveConfigData(const ConfigConfirmData& configData);
     void saveConfig();
     QString getBackupDirPath();
     std::vector<SaveFileItem> getSaveFileItems();
-    std::optional<QString> getSavePathItem(const QString& saveId);
+    std::optional<SaveFileItem> getSaveItem(const QString& saveId);
+    QString getSavePathItem(const QString& saveId);
     std::optional<QString> getSaveIdByGame(const fsm::parse::Game& game);
     QString getLastSelectedSaveId() const;
     void setLastSelectedSaveId(const QString& saveId);
     DefaultSavePathInfo getDefaultSavePath(const fsm::parse::Game& game);
     ConfigHotkeys getHotkeysConfig();
+    ConfigAutobackup getAutosaveConfig();
 private:
     ConfigData m_configData;
     QString m_appConfigPath = "";

@@ -266,9 +266,15 @@ std::vector<SaveFileItem> ConfigModel::getSaveFileItems() {
     return output;
 }
 
-std::optional<QString> ConfigModel::getSavePathItem(const QString& saveId) {
+std::optional<SaveFileItem> ConfigModel::getSaveItem(const QString& saveId) {
     auto it = m_saveInfoById.find(saveId);
     if (it == m_saveInfoById.end()) return std::nullopt;
+    return it->second;
+}
+
+QString ConfigModel::getSavePathItem(const QString& saveId) {
+    auto it = m_saveInfoById.find(saveId);
+    if (it == m_saveInfoById.end()) return "";
     return it->second.savePath;
 }
 
@@ -305,6 +311,10 @@ void ConfigModel::setLastSelectedSaveId(const QString &saveId) {
 
 ConfigHotkeys ConfigModel::getHotkeysConfig() {
     return m_configData.hotkeys;
+}
+
+ConfigAutobackup ConfigModel::getAutosaveConfig() {
+    return m_configData.autobackup;
 }
 
 void ConfigModel::p_loadConfig() {
