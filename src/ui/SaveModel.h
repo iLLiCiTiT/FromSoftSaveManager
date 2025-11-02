@@ -57,10 +57,11 @@ public:
     void createManualBackup(const QString& savePath, const fsm::parse::Game& game, const QString& label);
 
     std::vector<BackupMetadata> getBackupItems(const fsm::parse::Game& game);
-    bool restoreBackupSave(const QString& dstSavePath, const BackupMetadata& metadata);
+    bool restoreBackupSave(const QString& dstSavePath, const BackupMetadata& backupItem);
     bool restoreBackupById(const QString& dstSavePath, const fsm::parse::Game &game, const QString& backupId);
     bool quickLoad(const QString& dstSavePath, const fsm::parse::Game &game);
-    void deleteBackups(const std::vector<QString>& backupIds);
+    void deleteBackupByIds(const fsm::parse::Game& game, const std::vector<QString>& backupIds);
+    void deleteBackups(const std::vector<BackupMetadata>& backupItems);
 
 private:
     QString m_backupsRoot;

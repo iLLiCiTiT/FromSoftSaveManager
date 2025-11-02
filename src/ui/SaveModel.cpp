@@ -346,10 +346,41 @@ bool SaveModel::quickLoad(const QString &dstSavePath, const fsm::parse::Game &ga
     return restoreBackupSave(dstSavePath, quicksaveItem.value());
 }
 
-void SaveModel::deleteBackups(const std::vector<QString>& backupIds) {
-    // TODO implement
+void SaveModel::deleteBackups(const std::vector<BackupMetadata>& backupItems) {
+    for (auto& item: backupItems) {
+        if (std::filesystem::exists(item.backupDir)) {
+            std::filesystem::remove_all(item.backupDir);
+        }
+    }
 }
 
 void SaveModel::cleanupAutoBackups(const fsm::parse::Game& game) {
-    // TODO implement
+    if (m_maxAutoBackups < 1) return;
+
+    std::vector<BackupMetadata> autosaveItems;
+    for (auto item: getBackupItems(game)) {
+        if (item.backupType == BackupType::AUTOSAVE) autosaveItems.push_back(item);
+    }
+
+    const auto epochComp = [](const BackupMetadata& lhs, const BackupMetadata& rhs) {
+        return lhs.epoch < rhs.epoch;
+    };
+    std::sort(autosaveItems.begin(), autosaveItems.end(), epochComp);
+    while (autosaveItems.size() > m_maxAutoBackups) {
+        autosaveItems.pop_back();
+    }
+    deleteBackups(autosaveItems);
+}
+
+void SaveModel::deleteBackupByIds(const fsm::parse::Game& game, const std::vector<QString>& backupIds) {
+    std::unordered_set<std::string> backupIdsStd;
+    for (auto& backupId: backupIds) {
+        backupIdsStd.insert(backupId.toStdString());
+    }
+    std::vector<BackupMetadata> backupItems;
+    for (auto item: getBackupItems(game)) {
+        if (backupIdsStd.find(item.id) != backupIdsStd.end())
+            backupItems.push_back(item);
+    }
+    deleteBackups(backupItems);
 }
