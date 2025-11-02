@@ -52,16 +52,73 @@ void HotkeysThread::updateHotkeys(const ConfigHotkeys& hotkeys) {
     m_hotkeysChanged = true;
 }
 
+// --- SaveChangesThread ---
+std::filesystem::file_time_type getFileModificationTime(const std::filesystem::path& filePath) {
+    if (!std::filesystem::exists(filePath)) return std::filesystem::file_time_type {};
+    return std::filesystem::last_write_time(filePath);
+}
+
+SaveChangesThread::SaveChangesThread(const std::vector<SaveFileItem>& saveItems, QObject* parent) : QThread(parent) {
+    updatePaths(saveItems);
+}
+
+void SaveChangesThread::updatePaths(const std::vector<SaveFileItem>& saveItems) {
+    std::unordered_set<QString> currentIds;
+    for (auto& [saveId, _]: m_saveFilesBySaveId) {
+        currentIds.insert(saveId);
+    }
+    for (auto& saveItem: saveItems) {
+        if (currentIds.find(saveItem.saveId) != currentIds.end()) {
+            currentIds.erase(saveItem.saveId);
+        }
+        std::filesystem::path path = saveItem.savePath.toStdString();
+        m_saveFilesBySaveId[saveItem.saveId] = path;
+        m_lastChangedById[saveItem.saveId] = getFileModificationTime(path);
+    }
+    for (auto& saveId: currentIds) {
+        m_saveFilesBySaveId.erase(saveId);
+        m_lastChangedById.erase(saveId);
+    }
+}
+
+void SaveChangesThread::stop() {
+    m_isRunning = false;
+}
+
+void SaveChangesThread::run() {
+    m_isRunning = true;
+
+    while (m_isRunning) {
+        for (auto& [saveId, path]: m_saveFilesBySaveId) {
+            std::filesystem::file_time_type& oldMod = m_lastChangedById[saveId];
+            std::filesystem::file_time_type newMod = getFileModificationTime(path);
+            if (oldMod == newMod) continue;
+            m_lastChangedById[saveId] = newMod;
+            emit saveFileChanged(saveId);
+        }
+        msleep(1000);
+    }
+}
+
+// --- Controller ---
 Controller::Controller(QObject* parent): QObject(parent) {
     m_configModel = new ConfigModel(this);
     ConfigAutobackup autosave = m_configModel->getAutosaveConfig();
     m_backupsModel = new BackupsModel(m_configModel->getBackupDirPath(), autosave.maxBackups, this);
     m_hotkeysThread = new HotkeysThread(m_configModel->getHotkeysConfig(), this);
+    m_saveChangesThread = new SaveChangesThread(m_configModel->getSaveFileItems(), this);
+
+    connect(m_configModel, SIGNAL(pathsChanged()), this, SLOT(onGamePathsChange()));
+    connect(m_configModel, SIGNAL(hotkeysChanged()), this, SLOT(onHotkeysChange()));
+    connect(m_configModel, SIGNAL(autoBackupChanged()), this, SLOT(onAutobackupChange()));
 
     connect(m_hotkeysThread, SIGNAL(quickSaveRequested()), this, SLOT(onQuickSaveRequest()));
     connect(m_hotkeysThread, SIGNAL(quickLoadRequested()), this, SLOT(onQuickLoadRequest()));
 
+    connect(m_saveChangesThread, SIGNAL(saveFileChanged(QString)), this, SLOT(onSaveFileChange(QString)));
+
     m_hotkeysThread->start();
+    m_saveChangesThread->start();
 }
 
 Controller::~Controller() {
@@ -69,6 +126,9 @@ Controller::~Controller() {
     m_hotkeysThread->stop();
     m_hotkeysThread->wait();
     m_hotkeysThread->deleteLater();
+    m_saveChangesThread->stop();
+    m_saveChangesThread->wait();
+    m_saveChangesThread->deleteLater();
 }
 
 QString Controller::getLastSelectedSaveId() const {
@@ -121,11 +181,6 @@ void Controller::openBackupDir() {
     QDesktopServices::openUrl(QUrl::fromLocalFile(QString::fromStdString(backupDir)));
 }
 
-void Controller::onHotkeysChange() {
-    m_hotkeysThread->updateHotkeys(m_configModel->getHotkeysConfig());
-    emit hotkeysChanged();
-}
-
 void Controller::onQuickSaveRequest() {
     if (m_currentSaveId.isEmpty()) return;
     auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
@@ -147,4 +202,26 @@ void Controller::deleteBackupByIds(const std::vector<QString>& backupIds) {
     auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
     if (!itemOpt.has_value()) return;
     m_backupsModel->deleteBackupByIds(itemOpt.value().game, backupIds);
+}
+
+// Config changed slots
+void Controller::onGamePathsChange() {
+    m_saveChangesThread->updatePaths(m_configModel->getSaveFileItems());
+    emit pathsConfigChanged();
+}
+
+void Controller::onHotkeysChange() {
+    m_hotkeysThread->updateHotkeys(m_configModel->getHotkeysConfig());
+    emit hotkeysConfigChanged();
+}
+
+void Controller::onAutobackupChange() {
+    m_backupsModel->setMaxAutoBackups(m_configModel->getAutosaveConfig().maxBackups);
+    emit autobackupConfigChanged();
+}
+
+// Save file changed
+void Controller::onSaveFileChange(const QString& saveId) {
+    // TODO notify autosave handler
+    emit saveIdChanged(saveId);
 }

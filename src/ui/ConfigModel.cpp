@@ -309,6 +309,10 @@ void ConfigModel::setLastSelectedSaveId(const QString &saveId) {
         m_configData.lastSaveId = saveId;
 }
 
+ConfigGameSavePaths ConfigModel::getSaveFilesConfig() {
+    return m_configData.gameSaveFiles;
+}
+
 ConfigHotkeys ConfigModel::getHotkeysConfig() {
     return m_configData.hotkeys;
 }
@@ -341,7 +345,7 @@ void ConfigModel::p_loadConfig() {
     }) {
         std::string gameName = game.toString();
         if (data["game_save_files"].contains(gameName)) continue;
-        auto defaultPathInfo = getDefaultSavePath(game);
+        auto defaultPathInfo = p_getDefaultSavePath(game);
         if (!defaultPathInfo.saveFileExists) continue;
         json gameInfo = json::object();
         gameInfo["path"] = defaultPathInfo.savePath.toStdString();
@@ -452,7 +456,7 @@ json ConfigModel::p_configToJson() {
     return data;
 }
 
-DefaultSavePathInfo ConfigModel::getDefaultSavePath(const fsm::parse::Game& game) {
+DefaultSavePathInfo ConfigModel::p_getDefaultSavePath(const fsm::parse::Game& game) {
     switch (game) {
         case fsm::parse::Game::DSR: return p_getDefaultDSRSavePath();
         case fsm::parse::Game::DS2_SOTFS: return p_getDefaultDS2SavePath();

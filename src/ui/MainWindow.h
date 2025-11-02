@@ -14,7 +14,8 @@ public:
     void refresh();
     void showEvent(QShowEvent *event) override;
 private slots:
-    void onTabChange(QString saveId);
+    void onTabChange(const QString& saveId);
+    void onSaveIdChange(const QString& saveId);
 private:
     QString m_saveId;
     Controller* m_controller = nullptr;

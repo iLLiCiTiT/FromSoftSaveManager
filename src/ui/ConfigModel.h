@@ -105,17 +105,22 @@ signals:
     void configChanged();
 public:
     explicit ConfigModel(QObject* parent);
-    ConfigSettingsData getConfigSettingsData();
-    void saveConfigData(const ConfigConfirmData& configData);
-    void saveConfig();
+
     QString getBackupDirPath();
+
+    QString getLastSelectedSaveId() const;
+    void setLastSelectedSaveId(const QString& saveId);
+
     std::vector<SaveFileItem> getSaveFileItems();
     std::optional<SaveFileItem> getSaveItem(const QString& saveId);
     QString getSavePathItem(const QString& saveId);
     std::optional<QString> getSaveIdByGame(const fsm::parse::Game& game);
-    QString getLastSelectedSaveId() const;
-    void setLastSelectedSaveId(const QString& saveId);
-    DefaultSavePathInfo getDefaultSavePath(const fsm::parse::Game& game);
+
+    ConfigSettingsData getConfigSettingsData();
+    void saveConfigData(const ConfigConfirmData& configData);
+    void saveConfig();
+
+    ConfigGameSavePaths getSaveFilesConfig();
     ConfigHotkeys getHotkeysConfig();
     ConfigAutobackup getAutosaveConfig();
 private:
@@ -124,6 +129,7 @@ private:
     QString m_appBackupsDir = "";
     DefaultSavePathInfo m_defaultSavePath {};
     std::unordered_map<QString, SaveFileItem> m_saveInfoById {};
+    DefaultSavePathInfo p_getDefaultSavePath(const fsm::parse::Game& game);
     nlohmann::json p_configToJson();
     void p_updateInfoById();
     void p_loadConfig();

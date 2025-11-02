@@ -8,7 +8,8 @@
 #include "BackupsModel.h"
 #include "../parse/DSRSaveFile.h"
 
-
+// Handler of hotkeys presss
+// - check for pressed keys using Windows api
 class HotkeysThread: public QThread {
     Q_OBJECT
 signals:
@@ -29,18 +30,40 @@ private:
     std::unordered_set<int> m_quickLoadHotkey = {};
 };
 
+// Thread periodically checking if save file changed
+// NOTE Maybe 'QFileSystemWatcher' could be used instead? How to handle which save id it is related to?
+class SaveChangesThread: public QThread {
+    Q_OBJECT
+signals:
+    void saveFileChanged(QString);
+public:
+    explicit SaveChangesThread(const std::vector<SaveFileItem>& saveItems, QObject* parent);
+    void updatePaths(const std::vector<SaveFileItem>& saveItems);
+    void stop();
+
+protected:
+    void run() override;
+private:
+    bool m_isRunning = false;
+    std::unordered_map<QString, std::filesystem::path> m_saveFilesBySaveId;
+    std::unordered_map<QString, std::filesystem::file_time_type> m_lastChangedById;
+};
+
+// Result to receive characters of DSR save file
 struct DSRCharInfoResult {
     QString error;
     std::vector<fsm::parse::DSRCharacterInfo> characters;
 };
 
+// Controller wrapping backend logic allowing UI to access data it needs
 class Controller: public QObject {
     Q_OBJECT
 signals:
-    void pathsChanged();
     void gameSaveChanged(fsm::parse::Game game);
     void saveIdChanged(QString saveId);
-    void hotkeysChanged();
+    // TODO find out if are used?
+    void pathsConfigChanged();
+    void hotkeysConfigChanged();
     void autobackupConfigChanged();
 
 public:
@@ -66,11 +89,15 @@ public:
 private slots:
     void onQuickSaveRequest();
     void onQuickLoadRequest();
+    void onGamePathsChange();
     void onHotkeysChange();
+    void onAutobackupChange();
+    void onSaveFileChange(const QString& saveId);
 
 private:
     QString m_currentSaveId = "";
     ConfigModel* m_configModel;
     BackupsModel* m_backupsModel;
     HotkeysThread* m_hotkeysThread;
+    SaveChangesThread* m_saveChangesThread;
 };
