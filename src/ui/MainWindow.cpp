@@ -98,6 +98,7 @@ void MainWindow::onTabChange(QString saveId) {
     if (saveId == "") {
         m_saveId = "";
         m_stack->setCurrentWidget(m_settingsWidget);
+        m_controller->setCurrentTabId(saveId);
         return;
     }
 
@@ -109,4 +110,5 @@ void MainWindow::onTabChange(QString saveId) {
     // Change visible widget
     m_stack->setCurrentWidget(m_widgetsMapping.find(saveId)->second);
     m_saveId = saveId;
+    m_controller->setCurrentTabId(saveId);
 }
