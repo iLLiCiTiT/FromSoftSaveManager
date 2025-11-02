@@ -1,5 +1,7 @@
 #include "Controller.h"
 
+#include <QDesktopServices>
+#include <QUrl>
 #include <filesystem>
 #include <iostream>
 
@@ -111,7 +113,12 @@ DSRCharInfoResult Controller::getDsrCharacters(const QString& saveId) const {
 }
 
 void Controller::openBackupDir() {
-    // TODO implement
+    if (m_currentSaveId.isEmpty()) return;
+    auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
+    if (!itemOpt.has_value()) return;
+    std::string backupDir = m_backupsModel->getGameBackupDir(itemOpt.value().game);
+    if (!std::filesystem::exists(backupDir)) return;
+    QDesktopServices::openUrl(QUrl::fromLocalFile(QString::fromStdString(backupDir)));
 }
 
 void Controller::onHotkeysChange() {
