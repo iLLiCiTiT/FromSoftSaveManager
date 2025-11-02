@@ -5,7 +5,7 @@
 
 #include "KeysWindows.h"
 #include "ConfigModel.h"
-#include "SaveModel.h"
+#include "BackupsModel.h"
 #include "../parse/DSRSaveFile.h"
 
 
@@ -69,6 +69,6 @@ private slots:
 private:
     QString m_currentSaveId = "";
     ConfigModel* m_configModel;
-    SaveModel* m_saveModel;
+    BackupsModel* m_backupsModel;
     HotkeysThread* m_hotkeysThread;
 };

@@ -1,4 +1,4 @@
-#include "SaveModel.h"
+#include "BackupsModel.h"
 
 #include <QDateTime>
 #include <QThread>
@@ -211,13 +211,13 @@ std::string indexExistingPath(const std::string& path) {
 }
 
 
-SaveModel::SaveModel(const QString& backupRoot, int maxBackups, QObject *parent)
+BackupsModel::BackupsModel(const QString& backupRoot, int maxBackups, QObject *parent)
     : QObject(parent),
     m_backupsRoot(backupRoot),
     m_maxAutoBackups(maxBackups)
 {}
 
-void SaveModel::createBackup(const QString& savePath, const fsm::parse::Game& game, const BackupType& backupType, const QString& label) {
+void BackupsModel::createBackup(const QString& savePath, const fsm::parse::Game& game, const BackupType& backupType, const QString& label) {
     // Skip empty save path
     if (savePath.isEmpty()) return;
     std::string stdSavePath = savePath.toStdString();
@@ -247,25 +247,25 @@ void SaveModel::createBackup(const QString& savePath, const fsm::parse::Game& ga
     emit createBackupFinished(true, backupType);
 }
 
-void SaveModel::createBackup(const QString& savePath, const fsm::parse::Game& game, const BackupType& backupType) {
+void BackupsModel::createBackup(const QString& savePath, const fsm::parse::Game& game, const BackupType& backupType) {
     createBackup(savePath, game, backupType, "");
 }
 
-void SaveModel::createAutoBackup(const QString& savePath, const fsm::parse::Game& game) {
+void BackupsModel::createAutoBackup(const QString& savePath, const fsm::parse::Game& game) {
     createBackup(savePath, game, BackupType::AUTOSAVE, "");
     cleanupAutoBackups(game);
 }
 
-void SaveModel::createQuickSaveBackup(const QString& savePath, const fsm::parse::Game& game) {
+void BackupsModel::createQuickSaveBackup(const QString& savePath, const fsm::parse::Game& game) {
     createBackup(savePath, game, BackupType::QUICKSAVE, "");
 }
 
-void SaveModel::createManualBackup(const QString& savePath, const fsm::parse::Game& game, const QString& label) {
+void BackupsModel::createManualBackup(const QString& savePath, const fsm::parse::Game& game, const QString& label) {
     if (label.isEmpty()) return;
     createBackup(savePath, game, BackupType::MANUAL, label);
 }
 
-std::vector<BackupMetadata> SaveModel::getBackupItems(const fsm::parse::Game &game) {
+std::vector<BackupMetadata> BackupsModel::getBackupItems(const fsm::parse::Game &game) {
     std::vector<BackupMetadata> output;
     std::string gameBackupDir = m_backupsRoot.toStdString() + "\\" + game.toString();
     if (!std::filesystem::exists(gameBackupDir)) return output;
@@ -285,7 +285,7 @@ std::vector<BackupMetadata> SaveModel::getBackupItems(const fsm::parse::Game &ga
     return output;
 }
 
-bool SaveModel::restoreBackupSave(const QString& dstSavePath, const BackupMetadata &metadata) {
+bool BackupsModel::restoreBackupSave(const QString& dstSavePath, const BackupMetadata &metadata) {
     auto [dstDir, dstFilename] = splitPath(dstSavePath.toStdString());
     if (!std::filesystem::exists(dstDir)) {
         std::filesystem::create_directory(dstDir);
@@ -320,7 +320,7 @@ bool SaveModel::restoreBackupSave(const QString& dstSavePath, const BackupMetada
     return false;
 }
 
-bool SaveModel::restoreBackupById(const QString& dstSavePath, const fsm::parse::Game &game, const QString& backupId) {
+bool BackupsModel::restoreBackupById(const QString& dstSavePath, const fsm::parse::Game &game, const QString& backupId) {
     for (auto item: getBackupItems(game)) {
         if (item.id == backupId) {
             return restoreBackupSave(dstSavePath, item);
@@ -329,7 +329,7 @@ bool SaveModel::restoreBackupById(const QString& dstSavePath, const fsm::parse::
     return false;
 }
 
-bool SaveModel::quickLoad(const QString &dstSavePath, const fsm::parse::Game &game) {
+bool BackupsModel::quickLoad(const QString &dstSavePath, const fsm::parse::Game &game) {
     std::string gameBackupsDir = m_backupsRoot.toStdString() + "\\" + game.toString();
     std::optional<BackupMetadata> quicksaveItem = std::nullopt;
     time_t lastEpoch = 0;
@@ -346,7 +346,7 @@ bool SaveModel::quickLoad(const QString &dstSavePath, const fsm::parse::Game &ga
     return restoreBackupSave(dstSavePath, quicksaveItem.value());
 }
 
-void SaveModel::deleteBackups(const std::vector<BackupMetadata>& backupItems) {
+void BackupsModel::deleteBackups(const std::vector<BackupMetadata>& backupItems) {
     for (auto& item: backupItems) {
         if (std::filesystem::exists(item.backupDir)) {
             std::filesystem::remove_all(item.backupDir);
@@ -354,7 +354,7 @@ void SaveModel::deleteBackups(const std::vector<BackupMetadata>& backupItems) {
     }
 }
 
-void SaveModel::cleanupAutoBackups(const fsm::parse::Game& game) {
+void BackupsModel::cleanupAutoBackups(const fsm::parse::Game& game) {
     if (m_maxAutoBackups < 1) return;
 
     std::vector<BackupMetadata> autosaveItems;
@@ -372,7 +372,7 @@ void SaveModel::cleanupAutoBackups(const fsm::parse::Game& game) {
     deleteBackups(autosaveItems);
 }
 
-void SaveModel::deleteBackupByIds(const fsm::parse::Game& game, const std::vector<QString>& backupIds) {
+void BackupsModel::deleteBackupByIds(const fsm::parse::Game& game, const std::vector<QString>& backupIds) {
     std::unordered_set<std::string> backupIdsStd;
     for (auto& backupId: backupIds) {
         backupIdsStd.insert(backupId.toStdString());

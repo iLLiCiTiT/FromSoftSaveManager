@@ -40,13 +40,13 @@ struct BackupMetadata {
     std::string backupDir;
 };
 
-class SaveModel: public QObject {
+class BackupsModel: public QObject {
     Q_OBJECT
 signals:
     void createBackupFinished(bool, BackupType);
     void loadBackupFinished(bool);
 public:
-    explicit SaveModel(const QString& backupRoot, int maxBackups, QObject *parent);
+    explicit BackupsModel(const QString& backupRoot, int maxBackups, QObject *parent);
 
     void setMaxAutoBackups(const int& maxAutoBackups) {m_maxAutoBackups = maxAutoBackups;}
 

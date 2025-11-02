@@ -53,7 +53,7 @@ void HotkeysThread::updateHotkeys(const ConfigHotkeys& hotkeys) {
 Controller::Controller(QObject* parent): QObject(parent) {
     m_configModel = new ConfigModel(this);
     ConfigAutobackup autosave = m_configModel->getAutosaveConfig();
-    m_saveModel = new SaveModel(m_configModel->getBackupDirPath(), autosave.maxBackups, this);
+    m_backupsModel = new BackupsModel(m_configModel->getBackupDirPath(), autosave.maxBackups, this);
     m_hotkeysThread = new HotkeysThread(m_configModel->getHotkeysConfig(), this);
 
     connect(m_hotkeysThread, SIGNAL(quickSaveRequested()), this, SLOT(onQuickSaveRequest()));
@@ -125,12 +125,12 @@ void Controller::onQuickSaveRequest() {
     if (!itemOpt.has_value()) return;
     QString savePath = itemOpt.value().savePath;
     if (savePath.isEmpty()) return;
-    m_saveModel->createQuickSaveBackup(savePath, itemOpt.value().game);
+    m_backupsModel->createQuickSaveBackup(savePath, itemOpt.value().game);
 };
 
 void Controller::onQuickLoadRequest() {
     if (m_currentSaveId.isEmpty()) return;
     auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
     if (!itemOpt.has_value()) return;
-    m_saveModel->quickLoad(itemOpt.value().savePath, itemOpt.value().game);
+    m_backupsModel->quickLoad(itemOpt.value().savePath, itemOpt.value().game);
 }
