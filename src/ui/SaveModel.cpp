@@ -12,60 +12,136 @@
 using json = nlohmann::json;
 
 
-BackupMetadata::BackupMetadata(
-    const std::string& id,
-    const fsm::parse::Game& game,
-    const BackupType& backupType,
-    const std::string& label,
-    std::vector<std::string> filenames,
-    const std::string& datetime,
-    const time_t epoch
-) {
-    this->id = id;
-    this->game = game;
-    this->backupType = backupType;
-    this->label = label;
-    this->filenames = filenames;
-    this->datetime = datetime;
-    this->epoch = epoch;
-}
-
-BackupMetadata::BackupMetadata(
+BackupMetadata createBackupMetadata(
     const fsm::parse::Game& game,
     const BackupType& backupType,
     const std::string& filename,
-    const std::string& label
+    const std::string& label,
+    const std::string& backupDir
 ) {
     std::vector<std::string> filenames;
     filenames.push_back(filename);
     std::string datetime = QDateTime::currentDateTimeUtc().toString(Qt::ISODate).toStdString();
-
-    this->id = generateUUID();
-    this->game = game;
-    this->backupType = backupType;
-    this->label = label;
-    this->filenames = filenames;
-    this->datetime = datetime;
-    this->epoch = std::time(0);
+    return BackupMetadata {
+        .id =generateUUID(),
+        .game = game,
+        .backupType = backupType,
+        .label = label,
+        .filenames = filenames,
+        .datetime = datetime,
+        .epoch = std::time(nullptr),
+        .backupDir = backupDir
+    };
 }
 
-json BackupMetadata::toJson() {
+std::string filenameByGame(fsm::parse::Game& game) {
+    switch (game) {
+        case fsm::parse::Game::DSR:
+            return "DRAKS0005.sl2";
+        case fsm::parse::Game::DS2_SOTFS:
+            return "DS2SOFS0000.sl2";
+        case fsm::parse::Game::DS3:
+            return "DS30000.sl2";
+        case fsm::parse::Game::Sekiro:
+            return "S0000.sl2";
+        case fsm::parse::Game::ER:
+            return "ER0000.sl2";
+        default:
+            return "";
+    }
+}
+
+std::optional<BackupMetadata> backupMetadatafromJson(const std::filesystem::path& backupDir, const json& data)
+{
+    const auto idIt = data.find("id");
+    const auto gameIt = data.find("game");
+    if (
+        idIt == data.end()
+        || !idIt->is_string()
+        || gameIt == data.end()
+        || !gameIt->is_string()) return std::nullopt;
+
+    fsm::parse::Game game = fsm::parse::Game::fromString(gameIt.value().get<std::string>());
+    if (game == fsm::parse::Game::Unknown) return std::nullopt;
+
+    std::string filename = filenameByGame(game);
+    if (filename.empty()) return std::nullopt;
+
+    const auto backupTypeIt = data.find("backup_type");
+    const auto dateTimeIt = data.find("datetime");
+    const auto epochIt = data.find("epoch");
+    const auto labelIt = data.find("label");
+
+    std::string backupTypeS;
+    if (backupTypeIt != data.end() && backupTypeIt->is_string())
+        backupTypeS = backupTypeIt.value();
+    BackupType backupType = backupTypeFromString(backupTypeS);
+
+    // TODO handle missing or invalid values
+    std::string datetime = "";
+    if (backupTypeIt != data.end() && backupTypeIt->is_string())
+        datetime = dateTimeIt.value();
+
+    time_t epoch = 0;
+    if (epochIt != data.end() && epochIt->is_number_integer())
+        epoch = epochIt.value();
+
+    if (datetime.empty() && epoch == 0) {
+        std::filesystem::path savePath = backupDir;
+        savePath /= filename;
+        if (std::filesystem::exists(savePath)) {
+            std::filesystem::file_time_type ftime = std::filesystem::last_write_time(savePath);
+            auto stp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
+                ftime - std::filesystem::file_time_type::clock::now() + std::chrono::system_clock::now()
+            );
+            epoch = std::chrono::system_clock::to_time_t(stp);
+        }
+    }
+
+    if (datetime.empty()) {
+        QDateTime qdate = QDateTime::fromSecsSinceEpoch(epoch);
+        datetime = qdate.toString(Qt::ISODate).toStdString();
+    } else if (epoch == 0 ) {
+        QDateTime qdate = QDateTime::fromString(QString::fromStdString(datetime), Qt::ISODate);
+        epoch = qdate.toSecsSinceEpoch();
+    }
+
+    std::string label = "";
+    if (labelIt != data.end() && labelIt->is_string())
+        label = labelIt.value();
+
+    if (label.empty() && backupType == BackupType::MANUAL) label = "NA";
+
+    return BackupMetadata {
+        .id = idIt.value(),
+        .game = game,
+        .backupType = backupType,
+        .label = label,
+        .filenames = {filename},
+        .datetime = datetime,
+        .epoch = epoch,
+        .backupDir = backupDir.string()
+    };
+}
+
+json backupMetadataToJson(const BackupMetadata& metadata)
+{
     json jsonFilenames = json::array();
-    for (const auto& filename: filenames) {
+    for (const auto& filename: metadata.filenames) {
         jsonFilenames.push_back(filename);
     }
     json output = {
-        {"id", id},
-        {"game", game.toString()},
-        {"backup_type", backupTypeToString(backupType)},
+        {"id", metadata.id},
+        {"game", metadata.game.toString()},
+        {"backup_type", backupTypeToString(metadata.backupType)},
         {"filenames", jsonFilenames},
-        {"datetime", datetime},
-        {"epoch", epoch},
+        {"datetime", metadata.datetime},
+        {"epoch", metadata.epoch},
     };
-    if (label.empty())
+    if (metadata.label.empty())
         output["label"] = nullptr;
     else
-        output["label"] = label;
+        output["label"] = metadata.label;
     return output;
 }
 
@@ -90,7 +166,6 @@ std::pair<std::string, std::string> splitPath(const std::string& path) {
 std::string getFilename(const std::string& path) {
     // Find filename start
     auto [dir, filename] = splitPath(path);
-    std::cout<<dir<<std::endl;
     return filename;
 }
 
@@ -158,13 +233,14 @@ void SaveModel::createBackup(const QString& savePath, const fsm::parse::Game& ga
     std::filesystem::copy_file(stdSavePath, dstPath);
     std::string metadataPath = backupDir + "\\metadata.json";
 
-    BackupMetadata metadata = BackupMetadata(
+    BackupMetadata metadata = createBackupMetadata(
         game,
         backupType,
         filename,
-        label.toStdString()
+        label.toStdString(),
+        backupDir
     );
-    json jsonMetadata = metadata.toJson();
+    json jsonMetadata = backupMetadataToJson(metadata);
     std::ofstream o(metadataPath);
     o << jsonMetadata.dump(4) << std::endl;
     o.close();
@@ -189,20 +265,37 @@ void SaveModel::createManualBackup(const QString& savePath, const fsm::parse::Ga
     createBackup(savePath, game, BackupType::MANUAL, label);
 }
 
-void SaveModel::getBackupItems(const fsm::parse::Game &game) {
-    // TODO implement
+std::vector<BackupMetadata> SaveModel::getBackupItems(const fsm::parse::Game &game) {
+    std::vector<BackupMetadata> output;
+    std::string gameBackupDir = m_backupsRoot.toStdString() + "\\" + game.toString();
+    if (!std::filesystem::exists(gameBackupDir)) return output;
+    for (auto const& dir_entry : std::filesystem::directory_iterator{gameBackupDir}) {
+        std::filesystem::path metadataPath = dir_entry.path();
+        metadataPath /= "metadata.json";
+        if (!std::filesystem::exists(metadataPath)) continue;
+
+        std::ifstream ifs(metadataPath);
+        json metadata = json::parse(ifs);
+        ifs.close();
+        auto metadateItem = backupMetadatafromJson(dir_entry.path(), metadata);
+        if (metadateItem.has_value()) {
+            output.push_back(metadateItem.value());
+        }
+    }
+    return output;
 }
 
-void SaveModel::restoreBackupSave(const QString& dstSavePath, const std::string& backupDir, const BackupMetadata &metadata) {
+bool SaveModel::restoreBackupSave(const QString& dstSavePath, const BackupMetadata &metadata) {
     auto [dstDir, dstFilename] = splitPath(dstSavePath.toStdString());
     if (!std::filesystem::exists(dstDir)) {
         std::filesystem::create_directory(dstDir);
     }
     if (std::find(metadata.filenames.begin(), metadata.filenames.end(), dstFilename) == metadata.filenames.end()) {
         emit loadBackupFinished(false);
-        return;
+        return false;
     }
-    std::string srcFilePath = backupDir + "\\" + dstFilename;
+    std::string srcFilePath = metadata.backupDir + "\\" + dstFilename;
+
     std::ifstream ifs(srcFilePath, std::ios::binary);
     ifs.seekg(0,std::ios::end);
     std::streampos iLength = ifs.tellg();
@@ -214,24 +307,43 @@ void SaveModel::restoreBackupSave(const QString& dstSavePath, const std::string&
     int attempts = 0;
     while (attempts < 10) {
         attempts++;
-        std::ofstream dstFile(dstFilename, std::ios::binary | std::ios::trunc);
+        std::ofstream dstFile(dstSavePath.toStdString(), std::ios::binary | std::ios::trunc);
         if (dstFile.fail()) {
-            QThread::msleep(50);
+            QThread::msleep(100);
             continue;
         }
         dstFile.write(buffer.data(), buffer.size());
         dstFile.close();
-        break;
+        return true;
     }
+
+    return false;
 }
 
-void SaveModel::restoreBackupById(const QString& dstSavePath, const QString& backupId) {
-    // TODO implement
+bool SaveModel::restoreBackupById(const QString& dstSavePath, const fsm::parse::Game &game, const QString& backupId) {
+    for (auto item: getBackupItems(game)) {
+        if (item.id == backupId) {
+            return restoreBackupSave(dstSavePath, item);
+        };
+    };
+    return false;
 }
 
-void SaveModel::quickLoad(const QString &dstSavePath, const fsm::parse::Game &game) {
+bool SaveModel::quickLoad(const QString &dstSavePath, const fsm::parse::Game &game) {
     std::string gameBackupsDir = m_backupsRoot.toStdString() + "\\" + game.toString();
-    // TODO implement
+    std::optional<BackupMetadata> quicksaveItem = std::nullopt;
+    time_t lastEpoch = 0;
+    for (auto item: getBackupItems(game)) {
+        if (item.backupType != BackupType::QUICKSAVE) continue;
+
+        if (item.epoch > lastEpoch) {
+            lastEpoch = item.epoch;
+            quicksaveItem = item;
+        };
+    }
+
+    if (!quicksaveItem.has_value()) return false;
+    return restoreBackupSave(dstSavePath, quicksaveItem.value());
 }
 
 void SaveModel::deleteBackups(const std::vector<QString>& backupIds) {

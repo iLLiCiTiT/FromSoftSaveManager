@@ -7,34 +7,29 @@
 
 enum class BackupType {
     QUICKSAVE,
-    MANUAL,
     AUTOSAVE,
-    UNKNOWN
+    MANUAL
 };
 
 static std::string backupTypeToString(const BackupType& backupType) {
     switch (backupType) {
         case BackupType::QUICKSAVE:
             return "quicksave";
-        case BackupType::MANUAL:
-            return "manualsave";
         case BackupType::AUTOSAVE:
             return "autosave";
         default:
-            return "unknown";
+            return "manualsave";
     }
 }
 
 static BackupType backupTypeFromString(const std::string& backupType) {
     if (backupType == "quicksave") return BackupType::QUICKSAVE;
-    if (backupType == "manualsave") return BackupType::MANUAL;
     if (backupType == "autosave") return BackupType::AUTOSAVE;
-    return BackupType::UNKNOWN;
+    return BackupType::MANUAL;
 }
 
 
-class BackupMetadata {
-public:
+struct BackupMetadata {
     std::string id;
     fsm::parse::Game game;
     BackupType backupType;
@@ -42,23 +37,7 @@ public:
     std::vector<std::string> filenames;
     std::string datetime;
     time_t epoch;
-
-    BackupMetadata(
-        const std::string& id,
-        const fsm::parse::Game& game,
-        const BackupType& backupType,
-        const std::string& label,
-        std::vector<std::string> filenames,
-        const std::string& datetime,
-        time_t epoch
-    );
-    BackupMetadata(
-        const fsm::parse::Game& game,
-        const BackupType& backupType,
-        const std::string& filename,
-        const std::string& label
-    );
-    nlohmann::json toJson();
+    std::string backupDir;
 };
 
 class SaveModel: public QObject {
@@ -77,11 +56,10 @@ public:
     void createQuickSaveBackup(const QString& savePath, const fsm::parse::Game& game);
     void createManualBackup(const QString& savePath, const fsm::parse::Game& game, const QString& label);
 
-    // TODO not a 'void'
-    void getBackupItems(const fsm::parse::Game& game);
-    void restoreBackupSave(const QString& dstSavePath, const std::string& backupDir, const BackupMetadata& metadata);
-    void restoreBackupById(const QString& dstSavePath, const QString& backupId);
-    void quickLoad(const QString& dstSavePath, const fsm::parse::Game &game);
+    std::vector<BackupMetadata> getBackupItems(const fsm::parse::Game& game);
+    bool restoreBackupSave(const QString& dstSavePath, const BackupMetadata& metadata);
+    bool restoreBackupById(const QString& dstSavePath, const fsm::parse::Game &game, const QString& backupId);
+    bool quickLoad(const QString& dstSavePath, const fsm::parse::Game &game);
     void deleteBackups(const std::vector<QString>& backupIds);
 
 private:

@@ -130,7 +130,7 @@ void Controller::onQuickSaveRequest() {
 
 void Controller::onQuickLoadRequest() {
     if (m_currentSaveId.isEmpty()) return;
-    QString savePath = m_configModel->getSavePathItem(m_currentSaveId);
-    if (savePath.isEmpty()) return;
-    m_saveModel->quickLoad(savePath, m_currentSaveId);
+    auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
+    if (!itemOpt.has_value()) return;
+    m_saveModel->quickLoad(itemOpt.value().savePath, itemOpt.value().game);
 }
