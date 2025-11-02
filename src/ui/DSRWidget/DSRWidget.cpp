@@ -160,7 +160,9 @@ void DSRWidget::onRefresh() {
         QVariant charId = index.data(CHAR_ID_ROLE);
         if (!charId.isValid() || charId.isNull()) continue;
         fsm::parse::DSRCharacterInfo* charInfo = m_model->getCharByIdx(charId.toInt());
-        // TODO update subwidgets with char info
+        m_charInfoWidget->setCharacter(charInfo);
+        m_inventoryWidget->setCharacter(charInfo);
+        m_covenantsWidget->setCharacter(charInfo);
         return;
     }
     for (int row = 0; row < m_model->rowCount(); ++row) {
