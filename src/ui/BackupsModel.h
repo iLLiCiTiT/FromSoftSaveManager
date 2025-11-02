@@ -62,10 +62,10 @@ public:
     bool restoreBackupById(const QString& dstSavePath, const fsm::parse::Game &game, const QString& backupId);
     bool quickLoad(const QString& dstSavePath, const fsm::parse::Game &game);
     void deleteBackupByIds(const fsm::parse::Game& game, const std::vector<QString>& backupIds);
-    void deleteBackups(const std::vector<BackupMetadata>& backupItems);
 
 private:
     QString m_backupsRoot;
     int m_maxAutoBackups;
     void cleanupAutoBackups(const fsm::parse::Game& game);
+    void deleteBackups(const std::vector<BackupMetadata>& backupItems);
 };
