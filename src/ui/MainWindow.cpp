@@ -24,6 +24,7 @@ MainWindow::MainWindow(Controller* controller, QWidget* parent)
     rootLayout->addWidget(m_stack, 1);
 
     connect(m_sideBar, SIGNAL(tabChanged(QString)), this, SLOT(onTabChange(QString)));
+    connect(m_controller, SIGNAL(saveIdChanged(QString)), this, SLOT(onSaveIdChange(QString)));
 }
 
 void MainWindow::showEvent(QShowEvent *event) {
@@ -92,7 +93,7 @@ void MainWindow::refresh() {
     }
 }
 
-void MainWindow::onTabChange(QString saveId) {
+void MainWindow::onTabChange(const QString& saveId) {
     if (m_saveId == saveId) return;
     // Empty save id is settings widget
     if (saveId == "") {
@@ -111,4 +112,9 @@ void MainWindow::onTabChange(QString saveId) {
     m_stack->setCurrentWidget(m_widgetsMapping.find(saveId)->second);
     m_saveId = saveId;
     m_controller->setCurrentTabId(saveId);
+}
+
+void MainWindow::onSaveIdChange(const QString& saveId) {
+    auto wIt = m_widgetsMapping.find(saveId);
+    if (wIt != m_widgetsMapping.end()) wIt->second->refresh();
 }
