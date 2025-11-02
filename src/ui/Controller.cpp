@@ -134,3 +134,10 @@ void Controller::onQuickLoadRequest() {
     if (!itemOpt.has_value()) return;
     m_backupsModel->quickLoad(itemOpt.value().savePath, itemOpt.value().game);
 }
+
+void Controller::deleteBackupByIds(const std::vector<QString>& backupIds) {
+    if (m_currentSaveId.isEmpty()) return;
+    auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
+    if (!itemOpt.has_value()) return;
+    m_backupsModel->deleteBackupByIds(itemOpt.value().game, backupIds);
+}

@@ -59,6 +59,8 @@ public:
     // SekiroCharInfoResult getSekiroCharacters(const QString& saveId) const;
     // ERCharInfoResult getERCharacters(const QString& saveId) const;
 
+    void deleteBackupByIds(const std::vector<QString>& backupIds);
+
     void openBackupDir();
 
 private slots:
