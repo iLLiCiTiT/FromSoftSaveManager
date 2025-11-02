@@ -6,10 +6,10 @@
 #include <qevent.h>
 #include <windows.h>
 #include <shlobj.h>
-#include <QUuid>
 #include <nlohmann/json.hpp>
 
 #include "KeysWindows.h"
+#include "Utils.h"
 
 using json = nlohmann::json;
 
@@ -61,12 +61,6 @@ static QString getAppConfigDir() {
     QString saveDir = QString::fromStdString(getenv("LOCALAPPDATA"));
     saveDir.append("\\FromSoftSaveManager\\FromSoftSaveManager");
     return saveDir;
-}
-
-static std::string generateUniqueId() {
-    QUuid uuid = QUuid::createUuid();
-    QString s = uuid.toString(QUuid::WithoutBraces);
-    return s.toStdString();
 }
 
 static QString findSaveFile(const std::string& dirpath, const std::string& filename) {
@@ -146,7 +140,7 @@ void ConfigModel::saveConfigData(const ConfigConfirmData& confirmData) {
         dsrSavePath.savePath = confirmData.dsrSavePath.value();
         dsrSavePath.isSet = std::filesystem::exists(dsrSavePath.savePath.toStdString());
         if (dsrSavePath.saveId.isEmpty())
-            dsrSavePath.saveId = QString::fromStdString(generateUniqueId());
+            dsrSavePath.saveId = QString::fromStdString(generateUUID());
     }
     if (confirmData.ds2SavePath.has_value()) {
         l_pathsChanged = true;
@@ -154,7 +148,7 @@ void ConfigModel::saveConfigData(const ConfigConfirmData& confirmData) {
         ds2SavePath.savePath = confirmData.ds2SavePath.value();
         ds2SavePath.isSet = std::filesystem::exists(ds2SavePath.savePath.toStdString());
         if (ds2SavePath.saveId.isEmpty())
-            ds2SavePath.saveId = QString::fromStdString(generateUniqueId());
+            ds2SavePath.saveId = QString::fromStdString(generateUUID());
     }
     if (confirmData.ds3SavePath.has_value()) {
         l_pathsChanged = true;
@@ -162,7 +156,7 @@ void ConfigModel::saveConfigData(const ConfigConfirmData& confirmData) {
         ds3SavePath.savePath = confirmData.ds2SavePath.value();
         ds3SavePath.isSet = std::filesystem::exists(ds3SavePath.savePath.toStdString());
         if (ds3SavePath.saveId.isEmpty())
-            ds3SavePath.saveId = QString::fromStdString(generateUniqueId());
+            ds3SavePath.saveId = QString::fromStdString(generateUUID());
     }
     if (confirmData.sekiroSavePath.has_value()) {
         l_pathsChanged = true;
@@ -170,7 +164,7 @@ void ConfigModel::saveConfigData(const ConfigConfirmData& confirmData) {
         sekiroSavePath.savePath = confirmData.ds2SavePath.value();
         sekiroSavePath.isSet = std::filesystem::exists(sekiroSavePath.savePath.toStdString());
         if (sekiroSavePath.saveId.isEmpty())
-            sekiroSavePath.saveId = QString::fromStdString(generateUniqueId());
+            sekiroSavePath.saveId = QString::fromStdString(generateUUID());
     }
     if (confirmData.erSavePath.has_value()) {
         l_pathsChanged = true;
@@ -178,7 +172,7 @@ void ConfigModel::saveConfigData(const ConfigConfirmData& confirmData) {
         erSavePath.savePath = confirmData.ds2SavePath.value();
         erSavePath.isSet = std::filesystem::exists(erSavePath.savePath.toStdString());
         if (erSavePath.saveId.isEmpty())
-            erSavePath.saveId = QString::fromStdString(generateUniqueId());
+            erSavePath.saveId = QString::fromStdString(generateUUID());
     }
 
     if (l_pathsChanged) p_updateInfoById();
@@ -341,7 +335,7 @@ void ConfigModel::p_loadConfig() {
         if (!defaultPathInfo.saveFileExists) continue;
         json gameInfo = json::object();
         gameInfo["path"] = defaultPathInfo.savePath.toStdString();
-        gameInfo["save_id"] = generateUniqueId();
+        gameInfo["save_id"] = generateUUID();
         data["game_save_files"][gameName] = gameInfo;
     }
     auto& gameSaveFiles = m_configData.gameSaveFiles;

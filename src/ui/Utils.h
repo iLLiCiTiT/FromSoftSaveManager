@@ -5,6 +5,14 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QLabel>
+#include <QUuid>
+
+
+static std::string generateUUID() {
+    QUuid uuid = QUuid::createUuid();
+    QString s = uuid.toString(QUuid::WithoutBraces);
+    return s.toStdString();
+}
 
 // Spinbox that does listen to wheel evens only if has focus
 class FocusSpinBox: public QSpinBox {
