@@ -225,7 +225,7 @@ void BackupsModel::createBackup(const QString& savePath, const fsm::parse::Game&
     if (!std::filesystem::exists(stdSavePath)) return;
 
     std::string timestamp = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss").toStdString();
-    std::string backupDir = m_backupsRoot.toStdString() + "\\" + game.toString() + "\\new_" + timestamp;
+    std::string backupDir = getGameBackupDir(game) + "\\" + timestamp;
     std::string filename = getFilename(stdSavePath);
     backupDir = indexExistingPath(backupDir);
     std::string dstPath = backupDir + "\\" + filename;
@@ -265,9 +265,13 @@ void BackupsModel::createManualBackup(const QString& savePath, const fsm::parse:
     createBackup(savePath, game, BackupType::MANUAL, label);
 }
 
+std::string BackupsModel::getGameBackupDir(const fsm::parse::Game& game) {
+    return m_backupsRoot.toStdString() + "\\" + game.toString();
+}
+
 std::vector<BackupMetadata> BackupsModel::getBackupItems(const fsm::parse::Game &game) {
     std::vector<BackupMetadata> output;
-    std::string gameBackupDir = m_backupsRoot.toStdString() + "\\" + game.toString();
+    std::string gameBackupDir = getGameBackupDir(game);
     if (!std::filesystem::exists(gameBackupDir)) return output;
     for (auto const& dir_entry : std::filesystem::directory_iterator{gameBackupDir}) {
         std::filesystem::path metadataPath = dir_entry.path();
@@ -330,7 +334,7 @@ bool BackupsModel::restoreBackupById(const QString& dstSavePath, const fsm::pars
 }
 
 bool BackupsModel::quickLoad(const QString &dstSavePath, const fsm::parse::Game &game) {
-    std::string gameBackupsDir = m_backupsRoot.toStdString() + "\\" + game.toString();
+    std::string gameBackupsDir = getGameBackupDir(game);
     std::optional<BackupMetadata> quicksaveItem = std::nullopt;
     time_t lastEpoch = 0;
     for (auto item: getBackupItems(game)) {

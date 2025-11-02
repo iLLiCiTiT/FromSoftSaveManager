@@ -56,6 +56,7 @@ public:
     void createQuickSaveBackup(const QString& savePath, const fsm::parse::Game& game);
     void createManualBackup(const QString& savePath, const fsm::parse::Game& game, const QString& label);
 
+    std::string getGameBackupDir(const fsm::parse::Game& game);
     std::vector<BackupMetadata> getBackupItems(const fsm::parse::Game& game);
     bool restoreBackupSave(const QString& dstSavePath, const BackupMetadata& backupItem);
     bool restoreBackupById(const QString& dstSavePath, const fsm::parse::Game &game, const QString& backupId);
