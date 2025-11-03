@@ -6,7 +6,8 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QUuid>
-
+// TODO add path related helpers
+// - e.g. join using 'std::filesystem::path'
 
 static std::string generateUUID() {
     QUuid uuid = QUuid::createUuid();
