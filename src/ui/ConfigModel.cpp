@@ -134,46 +134,21 @@ void ConfigModel::saveConfigData(const ConfigConfirmData& confirmData) {
     bool l_hotkeyChanged = false;
     bool l_autobackupChanged = false;
 
-    if (confirmData.dsrSavePath.has_value()) {
+    auto& gsf = m_configData.gameSaveFiles;
+    auto updatePathIfSet = [&](const std::optional<QString>& confirmPath, ConfigSavePathData& savePathInfo) {
+        if (!confirmPath.has_value()) return;
         l_pathsChanged = true;
-        auto& dsrSavePath = m_configData.gameSaveFiles.dsrSavePath;
-        dsrSavePath.savePath = confirmData.dsrSavePath.value();
-        dsrSavePath.isSet = std::filesystem::exists(dsrSavePath.savePath.toStdString());
-        if (dsrSavePath.saveId.isEmpty())
-            dsrSavePath.saveId = QString::fromStdString(generateUUID());
-    }
-    if (confirmData.ds2SavePath.has_value()) {
-        l_pathsChanged = true;
-        auto& ds2SavePath = m_configData.gameSaveFiles.ds2SavePath;
-        ds2SavePath.savePath = confirmData.ds2SavePath.value();
-        ds2SavePath.isSet = std::filesystem::exists(ds2SavePath.savePath.toStdString());
-        if (ds2SavePath.saveId.isEmpty())
-            ds2SavePath.saveId = QString::fromStdString(generateUUID());
-    }
-    if (confirmData.ds3SavePath.has_value()) {
-        l_pathsChanged = true;
-        auto& ds3SavePath = m_configData.gameSaveFiles.ds3SavePath;
-        ds3SavePath.savePath = confirmData.ds2SavePath.value();
-        ds3SavePath.isSet = std::filesystem::exists(ds3SavePath.savePath.toStdString());
-        if (ds3SavePath.saveId.isEmpty())
-            ds3SavePath.saveId = QString::fromStdString(generateUUID());
-    }
-    if (confirmData.sekiroSavePath.has_value()) {
-        l_pathsChanged = true;
-        auto& sekiroSavePath = m_configData.gameSaveFiles.sekiroSavePath;
-        sekiroSavePath.savePath = confirmData.ds2SavePath.value();
-        sekiroSavePath.isSet = std::filesystem::exists(sekiroSavePath.savePath.toStdString());
-        if (sekiroSavePath.saveId.isEmpty())
-            sekiroSavePath.saveId = QString::fromStdString(generateUUID());
-    }
-    if (confirmData.erSavePath.has_value()) {
-        l_pathsChanged = true;
-        auto& erSavePath = m_configData.gameSaveFiles.erSavePath;
-        erSavePath.savePath = confirmData.ds2SavePath.value();
-        erSavePath.isSet = std::filesystem::exists(erSavePath.savePath.toStdString());
-        if (erSavePath.saveId.isEmpty())
-            erSavePath.saveId = QString::fromStdString(generateUUID());
-    }
+        savePathInfo.savePath = confirmPath.value();
+        savePathInfo.isSet = !savePathInfo.savePath.isEmpty();
+        if (savePathInfo.saveId.isEmpty())
+            savePathInfo.saveId = QString::fromStdString(generateUUID());
+    };
+
+    updatePathIfSet(confirmData.dsrSavePath,    gsf.dsrSavePath);
+    updatePathIfSet(confirmData.ds2SavePath,    gsf.ds2SavePath);
+    updatePathIfSet(confirmData.ds3SavePath,    gsf.ds3SavePath);
+    updatePathIfSet(confirmData.sekiroSavePath, gsf.sekiroSavePath);
+    updatePathIfSet(confirmData.erSavePath,     gsf.erSavePath);
 
     if (l_pathsChanged) p_updateInfoById();
 
@@ -227,42 +202,17 @@ QString ConfigModel::getBackupDirPath() {
 std::vector<SaveFileItem> ConfigModel::getSaveFileItems() {
     std::vector<SaveFileItem> output;
 
-    const ConfigSavePathData& dsrSavePathInfo = m_configData.gameSaveFiles.dsrSavePath;
-    const ConfigSavePathData& ds2SavePathInfo = m_configData.gameSaveFiles.ds2SavePath;
-    const ConfigSavePathData& ds3SavePathInfo = m_configData.gameSaveFiles.ds3SavePath;
-    const ConfigSavePathData& sekiroSavePathInfo = m_configData.gameSaveFiles.sekiroSavePath;
-    const ConfigSavePathData& erSavePathInfo = m_configData.gameSaveFiles.erSavePath;
-    if (dsrSavePathInfo.isSet)
-        output.push_back({
-            .game = fsm::parse::Game::DSR,
-            .saveId = dsrSavePathInfo.saveId,
-            .savePath = dsrSavePathInfo.savePath,
-        });
-    if (ds2SavePathInfo.isSet)
-        output.push_back({
-            .game = fsm::parse::Game::DS2_SOTFS,
-            .saveId = ds2SavePathInfo.saveId,
-            .savePath = ds2SavePathInfo.savePath,
-        });
-    if (ds3SavePathInfo.isSet)
-        output.push_back({
-            .game = fsm::parse::Game::DS3,
-            .saveId = ds3SavePathInfo.saveId,
-            .savePath = ds3SavePathInfo.savePath,
-        });
-    if (sekiroSavePathInfo.isSet)
-        output.push_back({
-            .game = fsm::parse::Game::Sekiro,
-            .saveId = sekiroSavePathInfo.saveId,
-            .savePath = sekiroSavePathInfo.savePath,
-        });
-    if (erSavePathInfo.isSet)
-        output.push_back({
-            .game = fsm::parse::Game::ER,
-            .saveId = erSavePathInfo.saveId,
-            .savePath = erSavePathInfo.savePath,
-        });
+    const auto& gsf = m_configData.gameSaveFiles;
+    auto pushIfSet = [&](fsm::parse::Game game, const ConfigSavePathData& savePathInfo) {
+        if (savePathInfo.isSet)
+            output.push_back({ game, savePathInfo.saveId, savePathInfo.savePath });
+    };
 
+    pushIfSet(fsm::parse::Game::DSR,       gsf.dsrSavePath);
+    pushIfSet(fsm::parse::Game::DS2_SOTFS, gsf.ds2SavePath);
+    pushIfSet(fsm::parse::Game::DS3,       gsf.ds3SavePath);
+    pushIfSet(fsm::parse::Game::Sekiro,    gsf.sekiroSavePath);
+    pushIfSet(fsm::parse::Game::ER,        gsf.erSavePath);
     return output;
 }
 
@@ -437,7 +387,6 @@ json ConfigModel::p_configToJson() {
     json game_save_files = json::object();
     for (auto& item: getSaveFileItems()) {
         if (item.savePath.isEmpty()) continue;
-        if (!std::filesystem::exists(item.savePath.toStdString())) continue;
         game_save_files[item.game.toString()] = {
             {"path", item.savePath.toStdString()},
             {"save_id", item.saveId.toStdString()},
