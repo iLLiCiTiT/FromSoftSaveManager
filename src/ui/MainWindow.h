@@ -16,6 +16,7 @@ public:
 private slots:
     void onTabChange(const QString& saveId);
     void onSaveIdChange(const QString& saveId);
+    void onPathsConfigChange();
 private:
     QString m_saveId;
     Controller* m_controller = nullptr;

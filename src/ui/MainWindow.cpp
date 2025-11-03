@@ -25,6 +25,7 @@ MainWindow::MainWindow(Controller* controller, QWidget* parent)
 
     connect(m_sideBar, SIGNAL(tabChanged(QString)), this, SLOT(onTabChange(QString)));
     connect(m_controller, SIGNAL(saveIdChanged(QString)), this, SLOT(onSaveIdChange(QString)));
+    connect(m_controller, SIGNAL(pathsConfigChanged()), this, SLOT(onPathsConfigChange()));
 }
 
 void MainWindow::showEvent(QShowEvent *event) {
@@ -35,6 +36,7 @@ void MainWindow::showEvent(QShowEvent *event) {
 void MainWindow::refresh() {
     std::unordered_set<QString> availableIds;
     QString firstId;
+    bool wasEmpty = m_widgetsMapping.empty();
     for (const auto&[game, saveId, _savePath]: m_controller->getSaveFileItems()) {
         BaseGameWidget* gameWidget = nullptr;
         if (firstId.isEmpty()) firstId = saveId;
@@ -88,8 +90,10 @@ void MainWindow::refresh() {
         it = m_widgetsMapping.erase(it);
     }
 
+    // Jump to a game tab only if there were not any before
+    if (!wasEmpty) return;
     if (m_widgetsMapping.find(m_saveId) == m_widgetsMapping.end()) {
-        onTabChange(firstId);
+        m_sideBar->setCurrentTab(firstId);
     }
 }
 
@@ -117,4 +121,8 @@ void MainWindow::onTabChange(const QString& saveId) {
 void MainWindow::onSaveIdChange(const QString& saveId) {
     auto wIt = m_widgetsMapping.find(saveId);
     if (wIt != m_widgetsMapping.end()) wIt->second->refresh();
+}
+
+void MainWindow::onPathsConfigChange() {
+    refresh();
 }
