@@ -27,7 +27,6 @@ add_executable(FromSoftSaveManager
         src/parse/Utils.cpp
 
         src/ui/resources/resources.qrc
-        src/ui/SideBarWidget.cpp
         src/ui/SquareButton.h
         src/ui/Utils.cpp
         src/ui/ConfigModel.cpp
@@ -36,8 +35,10 @@ add_executable(FromSoftSaveManager
         src/ui/KeysWindows.cpp
         src/ui/KeysWindows.h
         src/ui/MainWindow.cpp
+        src/ui/SideBarWidget.cpp
         src/ui/SettingsWidget.cpp
         src/ui/BaseGameWidget.h
+        src/ui/ManageBackupsWidget.cpp
         src/ui/DSRWidget/DSRWidget.cpp
         src/ui/DSRWidget/Inventory.cpp
         src/ui/DSRWidget/Covenants.cpp

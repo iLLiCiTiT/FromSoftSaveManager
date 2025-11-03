@@ -4,6 +4,8 @@
 #include <qevent.h>
 #include <QPainter>
 
+#include "../ManageBackupsWidget.h"
+
 
 CharsListModel::CharsListModel(Controller* controller, const QString& saveId, QObject* parent)
     : QStandardItemModel(parent),
@@ -76,7 +78,7 @@ DSRWidget::DSRWidget(Controller* controller, const QString& saveId, QWidget* par
     m_view->setTextElideMode(Qt::ElideLeft);
     m_view->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
 
-    // manage_saves_widget = ManageSavesWidget(controller, view_wrap)
+    ManageSavesButtonsWidget* manageSavesBtnsWidget = new ManageSavesButtonsWidget(controller, viewWrap);
 
     m_model = new CharsListModel(controller, saveId, m_view);
     m_view->setModel(m_model);
@@ -85,7 +87,7 @@ DSRWidget::DSRWidget(Controller* controller, const QString& saveId, QWidget* par
     viewWrapLayout->setContentsMargins(0, 0, 0, 0);
     viewWrapLayout->addSpacing(28);
     viewWrapLayout->addWidget(m_view, 4);
-    // viewWrapLayout->addWidget(manage_saves_widget, 1);
+    viewWrapLayout->addWidget(manageSavesBtnsWidget, 1);
 
     m_charTabs = new TabWidget(this);
 

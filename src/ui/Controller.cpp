@@ -144,6 +144,10 @@ ConfigSettingsData Controller::getConfigSettingsData() const {
     return m_configModel->getConfigSettingsData();
 }
 
+ConfigHotkeys Controller::getHotkeysConfig() const {
+    return m_configModel->getHotkeysConfig();
+}
+
 void Controller::saveConfigData(const ConfigConfirmData& confirmData) {
     m_configModel->saveConfigData(confirmData);
 }
@@ -195,6 +199,13 @@ void Controller::onQuickLoadRequest() {
     auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
     if (!itemOpt.has_value()) return;
     m_backupsModel->quickLoad(itemOpt.value().savePath, itemOpt.value().game);
+}
+
+void Controller::createManualBackup(const QString& label) {
+    if (m_currentSaveId.isEmpty()) return;
+    auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
+    if (!itemOpt.has_value()) return;
+    m_backupsModel->createManualBackup(itemOpt.value().savePath, itemOpt.value().game, label);
 }
 
 void Controller::deleteBackupByIds(const std::vector<QString>& backupIds) {

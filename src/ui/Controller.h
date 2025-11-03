@@ -73,6 +73,7 @@ public:
     QString getLastSelectedSaveId() const;
     void setCurrentTabId(const QString& saveId);
     ConfigSettingsData getConfigSettingsData() const;
+    ConfigHotkeys getHotkeysConfig() const;
     void saveConfigData(const ConfigConfirmData& confirmData);
 
     std::vector<SaveFileItem> getSaveFileItems() const;
@@ -82,6 +83,7 @@ public:
     // SekiroCharInfoResult getSekiroCharacters(const QString& saveId) const;
     // ERCharInfoResult getERCharacters(const QString& saveId) const;
 
+    void createManualBackup(const QString& label);
     void deleteBackupByIds(const std::vector<QString>& backupIds);
 
     void openBackupDir();

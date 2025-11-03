@@ -182,13 +182,6 @@ TabButton[selected="1"] {
     border-bottom: 2px solid #5B4229;
 }
 
-ManageSavesWidget QPushButton {
-    background: #3D3F42;
-}
-ManageSavesWidget QPushButton:hover {
-    background: #4B4C4F;
-}
-
 ERAttributesLabel QLabel {
     color: #A99B82;
 }
@@ -233,4 +226,12 @@ DSRInventoryCategoryButton:hover {
 }
 #ds_list_view::item:selected, #ds_list_view::item:selected:!active, #ds_list_view::item:selected:hover {
     background: rgba(181, 142, 41, 0.5);
+}
+
+ManageSavesButtonsWidget QPushButton {
+    background: #3D3F42;
+}
+
+ManageSavesButtonsWidget QPushButton:hover {
+    background: #4B4C4F;
 }
