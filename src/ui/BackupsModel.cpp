@@ -12,6 +12,7 @@
 using json = nlohmann::json;
 
 
+// Helper functions
 BackupMetadata createBackupMetadata(
     const fsm::parse::Game& game,
     const BackupType& backupType,
@@ -145,7 +146,7 @@ json backupMetadataToJson(const BackupMetadata& metadata)
     return output;
 }
 
-
+// TODO move these to global utils
 std::pair<std::string, std::string> splitPath(const std::string& path) {
     // Find filename start
     const auto is_sep = [](char c) { return c == '/' || c == '\\'; };
@@ -210,12 +211,70 @@ std::string indexExistingPath(const std::string& path) {
     };
 }
 
+AutoBackupHandler::AutoBackupHandler(const std::vector<SaveFileItem>& saveItems, const ConfigAutobackup& autobackupConfig, QObject* parent): QObject(parent) {
+    m_timer = new QTimer(this);
+    m_timer->setSingleShot(false);
+    m_timer->setInterval(1000);
 
-BackupsModel::BackupsModel(const QString& backupRoot, int maxBackups, QObject *parent)
+    connect(m_timer, SIGNAL(timeout()), this, SLOT(onTimer()));
+
+    updatePaths(saveItems);
+    updateAutobackupConfig(autobackupConfig);
+}
+
+void AutoBackupHandler::saveGameChanged(const QString& saveId) {
+    m_changedSaves.insert(saveId);
+}
+
+void AutoBackupHandler::updatePaths(const std::vector<SaveFileItem>& saveItems) {
+    m_saveItemsBySaveId.clear();
+    for (auto& item: saveItems) {
+        m_saveItemsBySaveId[item.saveId] = item;
+    }
+}
+
+void AutoBackupHandler::updateAutobackupConfig(const ConfigAutobackup& autobackupConfig) {
+    m_enabled = autobackupConfig.enabled;
+    m_maxAutoBackups = autobackupConfig.maxBackups;
+    m_frequency = autobackupConfig.frequency;
+    if (m_enabled && !m_timer->isActive()) {
+        m_timer->start();
+    }
+}
+
+void AutoBackupHandler::onTimer() {
+    if (!m_enabled) {
+        m_timer->stop();
+        return;
+    }
+    std::unordered_set<QString> changedSaves = m_changedSaves;
+    for (auto& saveId: changedSaves) {
+        auto it = m_saveItemsBySaveId.find(saveId);
+        if (it == m_saveItemsBySaveId.end()) continue;
+        SaveFileItem& item = it->second;
+        std::filesystem::path path = item.savePath.toStdString();
+        if (!std::filesystem::exists(path)) continue;
+        m_changedSaves.erase(saveId);
+        emit autoBackupRequested(item.savePath, item.game);
+    }
+}
+
+
+// Backup model implementation
+BackupsModel::BackupsModel(const std::vector<SaveFileItem>& saveItems, const ConfigAutobackup& autobackupConfig, const QString& backupRoot, QObject *parent)
     : QObject(parent),
     m_backupsRoot(backupRoot),
-    m_maxAutoBackups(maxBackups)
-{}
+    m_maxAutoBackups(autobackupConfig.maxBackups)
+{
+    m_autoBackupHandler = new AutoBackupHandler(saveItems, autobackupConfig, this);
+
+    connect(m_autoBackupHandler, SIGNAL(autoBackupRequested(QString, fsm::parse::Game)), this, SLOT(createAutoBackup(QString, fsm::parse::Game)));
+}
+
+void BackupsModel::updateAutobackupConfig(const ConfigAutobackup& autobackupConfig) {
+    m_maxAutoBackups = autobackupConfig.maxBackups;
+    m_autoBackupHandler->updateAutobackupConfig(autobackupConfig);
+}
 
 void BackupsModel::createBackup(const QString& savePath, const fsm::parse::Game& game, const BackupType& backupType, const QString& label) {
     // Skip empty save path
@@ -370,7 +429,8 @@ void BackupsModel::cleanupAutoBackups(const fsm::parse::Game& game) {
         return lhs.epoch < rhs.epoch;
     };
     std::sort(autosaveItems.begin(), autosaveItems.end(), epochComp);
-    while (autosaveItems.size() > m_maxAutoBackups) {
+    for(int i = 0; i < m_maxAutoBackups; i++) {
+        if (autosaveItems.empty()) return;
         autosaveItems.pop_back();
     }
     deleteBackups(autosaveItems);
@@ -387,4 +447,8 @@ void BackupsModel::deleteBackupByIds(const fsm::parse::Game& game, const std::ve
             backupItems.push_back(item);
     }
     deleteBackups(backupItems);
+}
+
+void BackupsModel::saveGameChanged(const QString& saveId) {
+    m_autoBackupHandler->saveGameChanged(saveId);
 }

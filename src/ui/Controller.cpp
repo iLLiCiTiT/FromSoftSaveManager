@@ -103,10 +103,10 @@ void SaveChangesThread::run() {
 // --- Controller ---
 Controller::Controller(QObject* parent): QObject(parent) {
     m_configModel = new ConfigModel(this);
-    ConfigAutobackup autosave = m_configModel->getAutosaveConfig();
-    m_backupsModel = new BackupsModel(m_configModel->getBackupDirPath(), autosave.maxBackups, this);
+    auto saveFileItems = m_configModel->getSaveFileItems();
+    m_backupsModel = new BackupsModel(saveFileItems, m_configModel->getAutosaveConfig(), m_configModel->getBackupDirPath(), this);
     m_hotkeysThread = new HotkeysThread(m_configModel->getHotkeysConfig(), this);
-    m_saveChangesThread = new SaveChangesThread(m_configModel->getSaveFileItems(), this);
+    m_saveChangesThread = new SaveChangesThread(saveFileItems, this);
 
     connect(m_configModel, SIGNAL(pathsChanged()), this, SLOT(onGamePathsChange()));
     connect(m_configModel, SIGNAL(hotkeysChanged()), this, SLOT(onHotkeysChange()));
@@ -216,12 +216,12 @@ void Controller::onHotkeysChange() {
 }
 
 void Controller::onAutobackupChange() {
-    m_backupsModel->setMaxAutoBackups(m_configModel->getAutosaveConfig().maxBackups);
+    m_backupsModel->updateAutobackupConfig(m_configModel->getAutosaveConfig());
     emit autobackupConfigChanged();
 }
 
 // Save file changed
 void Controller::onSaveFileChange(const QString& saveId) {
-    // TODO notify autosave handler
+    m_backupsModel->saveGameChanged(saveId);
     emit saveIdChanged(saveId);
 }
