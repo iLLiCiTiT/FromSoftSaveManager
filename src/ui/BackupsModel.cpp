@@ -429,7 +429,7 @@ void BackupsModel::cleanupAutoBackups(const fsm::parse::Game& game) {
         return lhs.epoch < rhs.epoch;
     };
     std::sort(autosaveItems.begin(), autosaveItems.end(), epochComp);
-    for(int i = 0; i < m_maxAutoBackups; i++) {
+    for (int i = 0; i < m_maxAutoBackups; i++) {
         if (autosaveItems.empty()) return;
         autosaveItems.pop_back();
     }

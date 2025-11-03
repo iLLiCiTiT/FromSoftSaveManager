@@ -325,7 +325,7 @@ void ConfigModel::p_loadConfig() {
     if (m_configData.isLoaded) return;
     m_configData.isLoaded = true;
     json data;
-    if (!std::filesystem::exists(m_appConfigPath.toStdString())) {
+    if (std::filesystem::exists(m_appConfigPath.toStdString())) {
         std::ifstream f(m_appConfigPath.toStdString());
         data = json::parse(f);
         f.close();
@@ -336,6 +336,7 @@ void ConfigModel::p_loadConfig() {
     if (!data.contains("game_save_files")) {
         data["game_save_files"] = json::object();
     }
+    auto& jsonGameSaveFile = data["game_save_files"];
     for (auto& game: std::initializer_list<fsm::parse::Game>{
         fsm::parse::Game::DSR,
         fsm::parse::Game::DS2_SOTFS,
@@ -344,20 +345,22 @@ void ConfigModel::p_loadConfig() {
         fsm::parse::Game::Sekiro,
     }) {
         std::string gameName = game.toString();
-        if (data["game_save_files"].contains(gameName)) continue;
+        if (jsonGameSaveFile.contains(gameName)) continue;
         auto defaultPathInfo = p_getDefaultSavePath(game);
         if (!defaultPathInfo.saveFileExists) continue;
         json gameInfo = json::object();
         gameInfo["path"] = defaultPathInfo.savePath.toStdString();
         gameInfo["save_id"] = generateUUID();
-        data["game_save_files"][gameName] = gameInfo;
+        jsonGameSaveFile[gameName] = gameInfo;
     }
     auto& gameSaveFiles = m_configData.gameSaveFiles;
-    for (auto& el: data["game_save_files"].items()) {
+    for (auto& el: jsonGameSaveFile.items()) {
         json& info = el.value();
-        if (!info.contains("save_id") || !info.contains("path")) continue;
-        QString path = QString::fromStdString(info["path"]);
-        QString saveId = QString::fromStdString(info["save_id"]);
+        auto saveIdIt = info.find("save_id");
+        auto pathIt = info.find("path");
+        if (saveIdIt == info.end() || pathIt == info.end()) continue;
+        QString path = QString::fromStdString(pathIt.value());
+        QString saveId = QString::fromStdString(saveIdIt.value());
 
         std::string_view gameName = el.key();
         fsm::parse::Game game = fsm::parse::Game::fromString(gameName);
@@ -411,21 +414,23 @@ void ConfigModel::p_loadConfig() {
         data["autobackup"] = json::object();
     }
     json& autobackupData = data["autobackup"];
+    auto enabledIt = autobackupData.find("enabled");
+    auto frequencyIt = autobackupData.find("frequency");
+    auto maxAutobackupsIt = autobackupData.find("max_autobackups");
 
-    if (autobackupData.contains("enabled") && autobackupData["enabled"].is_boolean()) {
-        autobackup.enabled = autobackupData["enabled"];
-    }
-    if (autobackupData.contains("frequency") && autobackupData["frequency"].is_number()) {
-        autobackup.frequency = autobackupData["frequency"];
-    }
-    if (autobackupData.contains("max_autobackups") && autobackupData["max_autobackups"].is_number()) {
-        autobackup.maxBackups = autobackupData["max_autobackups"];
-    }
+    if (enabledIt != autobackupData.end() && enabledIt->is_boolean())
+        autobackup.enabled = enabledIt.value();
+
+    if (frequencyIt != autobackupData.end() && frequencyIt->is_number())
+        autobackup.frequency = frequencyIt.value();
+
+    if (maxAutobackupsIt != autobackupData.end() && maxAutobackupsIt->is_number())
+        autobackup.maxBackups = maxAutobackupsIt.value();
 
     // Last selected save id
-    if (data.contains("last_selected_save_id") && data["last_selected_save_id"].is_string()) {
-        m_configData.lastSaveId = QString::fromStdString(data["last_selected_save_id"]);
-    }
+    auto lastIdIt = data.find("last_selected_save_id");
+    if (lastIdIt != data.end() && lastIdIt->is_string())
+        m_configData.lastSaveId = QString::fromStdString(lastIdIt.value());
 }
 
 json ConfigModel::p_configToJson() {
