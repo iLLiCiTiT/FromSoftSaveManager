@@ -4,7 +4,7 @@
 #include <locale>
 #include <optional>
 
-namespace fsm::parse {
+namespace fssm::parse {
     uint32_t bytes_to_u32(const std::vector<uint8_t>& b, const uint32_t& offset)
     {
         if (b.size() % sizeof(uint32_t) != 0) {

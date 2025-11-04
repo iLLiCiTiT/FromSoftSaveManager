@@ -172,7 +172,7 @@ CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
     layout->addWidget(statsWidget, 1);
 }
 
-void CharacterStatusWidget::setCharacter(const fsm::parse::DSRCharacterInfo* charInfo) {
+void CharacterStatusWidget::setCharacter(const fssm::parse::DSRCharacterInfo* charInfo) {
     if (charInfo == nullptr) return setEmpty();
 
     QString covenentValue = QString::fromStdString(fssm::parse::dsr::DSR_COVENANT_LABELS[charInfo->covenantId].data());
@@ -247,6 +247,6 @@ CharacterInfoWidget::CharacterInfoWidget(QWidget* parent): QWidget(parent) {
     layout->addWidget(m_statusWidget, 1);
 }
 
-void CharacterInfoWidget::setCharacter(const fsm::parse::DSRCharacterInfo* charInfo) {
+void CharacterInfoWidget::setCharacter(const fssm::parse::DSRCharacterInfo* charInfo) {
     m_statusWidget->setCharacter(charInfo);
 };

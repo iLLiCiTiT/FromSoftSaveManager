@@ -14,7 +14,7 @@ using json = nlohmann::json;
 
 // Helper functions
 BackupMetadata createBackupMetadata(
-    const fsm::parse::Game& game,
+    const fssm::parse::Game& game,
     const BackupType& backupType,
     const std::string& filename,
     const std::string& label,
@@ -35,17 +35,17 @@ BackupMetadata createBackupMetadata(
     };
 }
 
-std::string filenameByGame(fsm::parse::Game& game) {
+std::string filenameByGame(fssm::parse::Game& game) {
     switch (game) {
-        case fsm::parse::Game::DSR:
+        case fssm::parse::Game::DSR:
             return "DRAKS0005.sl2";
-        case fsm::parse::Game::DS2_SOTFS:
+        case fssm::parse::Game::DS2_SOTFS:
             return "DS2SOFS0000.sl2";
-        case fsm::parse::Game::DS3:
+        case fssm::parse::Game::DS3:
             return "DS30000.sl2";
-        case fsm::parse::Game::Sekiro:
+        case fssm::parse::Game::Sekiro:
             return "S0000.sl2";
-        case fsm::parse::Game::ER:
+        case fssm::parse::Game::ER:
             return "ER0000.sl2";
         default:
             return "";
@@ -62,7 +62,7 @@ std::optional<BackupMetadata> backupMetadatafromJson(const std::filesystem::path
         || gameIt == data.end()
         || !gameIt->is_string()) return std::nullopt;
 
-    fsm::parse::Game game = fsm::parse::Game::fromString(gameIt.value().get<std::string>());
+    fssm::parse::Game game = fsm::parse::Game::fromString(gameIt.value().get<std::string>());
     if (game == fsm::parse::Game::Unknown) return std::nullopt;
 
     std::string filename = filenameByGame(game);

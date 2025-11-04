@@ -19,9 +19,9 @@ signals:
 public:
     explicit CharsListModel(Controller* controller, const QString& saveId, QObject* parent);
     void refresh();
-    fsm::parse::DSRCharacterInfo* getCharByIdx(const int& index);
+    fssm::parse::DSRCharacterInfo* getCharByIdx(const int& index);
 private:
-    std::vector<fsm::parse::DSRCharacterInfo> m_chars;
+    std::vector<fssm::parse::DSRCharacterInfo> m_chars;
     std::array<QStandardItem*, 10> m_items;
     QString m_saveId;
     Controller* m_controller;

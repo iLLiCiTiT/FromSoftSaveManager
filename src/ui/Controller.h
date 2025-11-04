@@ -52,14 +52,14 @@ private:
 // Result to receive characters of DSR save file
 struct DSRCharInfoResult {
     QString error;
-    std::vector<fsm::parse::DSRCharacterInfo> characters;
+    std::vector<fssm::parse::DSRCharacterInfo> characters;
 };
 
 // Controller wrapping backend logic allowing UI to access data it needs
 class Controller: public QObject {
     Q_OBJECT
 signals:
-    void gameSaveChanged(fsm::parse::Game game);
+    void gameSaveChanged(fssm::parse::Game game);
     void saveIdChanged(QString saveId);
     // TODO find out if are used?
     void pathsConfigChanged();

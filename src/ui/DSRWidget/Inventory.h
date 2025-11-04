@@ -21,10 +21,10 @@ class InventoryModel: public QStandardItemModel {
     Q_OBJECT
 public:
     explicit InventoryModel(QObject* parent = nullptr);
-    void setCharacter(const fsm::parse::DSRCharacterInfo* charInfo);
+    void setCharacter(const fssm::parse::DSRCharacterInfo* charInfo);
 private:
-    QStandardItem* createModelItem(fsm::parse::InventoryItem& inventoryItem);
-    QStandardItem* createUnknownItem(fsm::parse::InventoryItem& inventoryItem);
+    QStandardItem* createModelItem(fssm::parse::InventoryItem& inventoryItem);
+    QStandardItem* createUnknownItem(fssm::parse::InventoryItem& inventoryItem);
 };
 
 class InventoryProxyModel: public QSortFilterProxyModel {
@@ -97,14 +97,13 @@ private:
     QVariantAnimation* m_overlayAnim;
     QString m_category;
     std::unordered_map<QString, DSRInventoryCategoryButton*> m_categoryMapping;
-
 };
 
 class InventoryWidget: public QWidget {
     Q_OBJECT
 public:
     explicit InventoryWidget(QWidget* parent);
-    void setCharacter(const fsm::parse::DSRCharacterInfo* charInfo);
+    void setCharacter(const fssm::parse::DSRCharacterInfo* charInfo);
 private slots:
     void onCategoryChange(QString category);
 private:

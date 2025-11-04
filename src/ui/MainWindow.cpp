@@ -47,22 +47,22 @@ void MainWindow::refresh() {
             continue;
         }
         switch (game) {
-            case fsm::parse::Game::DSR:
+            case fssm::parse::Game::DSR:
                 gameWidget = new DSRWidget(m_controller, saveId, m_stack);
                 break;
-            case fsm::parse::Game::DS2_SOTFS:
+            case fssm::parse::Game::DS2_SOTFS:
                 gameWidget = new DS2Widget(m_controller, saveId, m_stack);
                 break;
 
-            case fsm::parse::Game::DS3:
+            case fssm::parse::Game::DS3:
                 gameWidget = new DS3Widget(m_controller, saveId, m_stack);
                 break;
 
-            case fsm::parse::Game::Sekiro:
+            case fssm::parse::Game::Sekiro:
                 gameWidget = new SekiroWidget(m_controller, saveId, m_stack);
                 break;
 
-            case fsm::parse::Game::ER:
+            case fssm::parse::Game::ER:
                 gameWidget = new ERWidget(m_controller, saveId, m_stack);
                 break;
 

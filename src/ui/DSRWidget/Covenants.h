@@ -6,7 +6,7 @@ class CovenantsWidget: public QWidget {
     Q_OBJECT
 public:
     explicit CovenantsWidget(QWidget* parent);
-    void setCharacter(const fsm::parse::DSRCharacterInfo* charInfo);
+    void setCharacter(const fssm::parse::DSRCharacterInfo* charInfo);
 private:
     QLabel* m_wosWidget;
     QLabel* m_dwWidget;

@@ -160,15 +160,15 @@ DSRCharInfoResult Controller::getDsrCharacters(const QString& saveId) const {
     QString r_savePath = m_configModel->getSavePathItem(saveId);
     if (r_savePath.isEmpty()) return {
         "Save file path is not set.",
-        std::vector<fsm::parse::DSRCharacterInfo> {},
+        std::vector<fssm::parse::DSRCharacterInfo> {},
     };
     std::string savePath = r_savePath.toStdString();
     if (!std::filesystem::exists(savePath)) return {
         "Save file does not exist.",
-        std::vector<fsm::parse::DSRCharacterInfo> {},
+        std::vector<fssm::parse::DSRCharacterInfo> {},
     };
-    fsm::parse::SL2File sl2_dsr = fsm::parse::parse_sl2_file(savePath);
-    fsm::parse::DSRSaveFile dsr = fsm::parse::parse_dsr_file(sl2_dsr);
+    fssm::parse::SL2File sl2_dsr = fssm::parse::parse_sl2_file(savePath);
+    fssm::parse::DSRSaveFile dsr = fsm::parse::parse_dsr_file(sl2_dsr);
 
     return {
         "",

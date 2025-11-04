@@ -33,7 +33,7 @@ static BackupType backupTypeFromString(const std::string& backupType) {
 
 struct BackupMetadata {
     std::string id;
-    fsm::parse::Game game;
+    fssm::parse::Game game;
     BackupType backupType;
     std::string label;
     std::vector<std::string> filenames;
@@ -46,7 +46,7 @@ struct BackupMetadata {
 class AutoBackupHandler: public QObject {
     Q_OBJECT
 signals:
-    void autoBackupRequested(QString savePath, fsm::parse::Game game);
+    void autoBackupRequested(QString savePath, fssm::parse::Game game);
 public:
     explicit AutoBackupHandler(const std::vector<SaveFileItem>& saveItems, const ConfigAutobackup& autobackupConfig, QObject* parent);
     void saveGameChanged(const QString& saveId);
@@ -73,12 +73,12 @@ public:
 
     void updateAutobackupConfig(const ConfigAutobackup& autobackupConfig);
 
-    void createBackup(const QString& savePath, const fsm::parse::Game& game, const BackupType& backupType);
-    void createBackup(const QString& savePath, const fsm::parse::Game& game, const BackupType& backupType, const QString& label);
-    void createQuickSaveBackup(const QString& savePath, const fsm::parse::Game& game);
-    void createManualBackup(const QString& savePath, const fsm::parse::Game& game, const QString& label);
+    void createBackup(const QString& savePath, const fssm::parse::Game& game, const BackupType& backupType);
+    void createBackup(const QString& savePath, const fssm::parse::Game& game, const BackupType& backupType, const QString& label);
+    void createQuickSaveBackup(const QString& savePath, const fssm::parse::Game& game);
+    void createManualBackup(const QString& savePath, const fssm::parse::Game& game, const QString& label);
 
-    std::string getGameBackupDir(const fsm::parse::Game& game);
+    std::string getGameBackupDir(const fssm::parse::Game& game);
     std::vector<BackupMetadata> getBackupItems(const fsm::parse::Game& game);
     bool restoreBackupSave(const QString& dstSavePath, const BackupMetadata& backupItem);
     bool restoreBackupById(const QString& dstSavePath, const fsm::parse::Game &game, const QString& backupId);

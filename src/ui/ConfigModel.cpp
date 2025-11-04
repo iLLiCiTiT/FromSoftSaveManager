@@ -203,16 +203,16 @@ std::vector<SaveFileItem> ConfigModel::getSaveFileItems() {
     std::vector<SaveFileItem> output;
 
     const auto& gsf = m_configData.gameSaveFiles;
-    auto pushIfSet = [&](fsm::parse::Game game, const ConfigSavePathData& savePathInfo) {
+    auto pushIfSet = [&](fssm::parse::Game game, const ConfigSavePathData& savePathInfo) {
         if (savePathInfo.isSet)
             output.push_back({ game, savePathInfo.saveId, savePathInfo.savePath });
     };
 
-    pushIfSet(fsm::parse::Game::DSR,       gsf.dsrSavePath);
-    pushIfSet(fsm::parse::Game::DS2_SOTFS, gsf.ds2SavePath);
-    pushIfSet(fsm::parse::Game::DS3,       gsf.ds3SavePath);
-    pushIfSet(fsm::parse::Game::Sekiro,    gsf.sekiroSavePath);
-    pushIfSet(fsm::parse::Game::ER,        gsf.erSavePath);
+    pushIfSet(fssm::parse::Game::DSR,       gsf.dsrSavePath);
+    pushIfSet(fssm::parse::Game::DS2_SOTFS, gsf.ds2SavePath);
+    pushIfSet(fssm::parse::Game::DS3,       gsf.ds3SavePath);
+    pushIfSet(fssm::parse::Game::Sekiro,    gsf.sekiroSavePath);
+    pushIfSet(fssm::parse::Game::ER,        gsf.erSavePath);
     return output;
 }
 
@@ -228,7 +228,7 @@ QString ConfigModel::getSavePathItem(const QString& saveId) {
     return it->second.savePath;
 }
 
-std::optional<QString> ConfigModel::getSaveIdByGame(const fsm::parse::Game& game) {
+std::optional<QString> ConfigModel::getSaveIdByGame(const fssm::parse::Game& game) {
     switch (game) {
         case fsm::parse::Game::DSR:
             if (!m_configData.gameSaveFiles.dsrSavePath.isSet) return std::nullopt;
@@ -259,15 +259,15 @@ void ConfigModel::setLastSelectedSaveId(const QString &saveId) {
         m_configData.lastSaveId = saveId;
 }
 
-ConfigGameSavePaths ConfigModel::getSaveFilesConfig() {
+ConfigGameSavePaths ConfigModel::getSaveFilesConfig() const {
     return m_configData.gameSaveFiles;
 }
 
-ConfigHotkeys ConfigModel::getHotkeysConfig() {
+ConfigHotkeys ConfigModel::getHotkeysConfig() const {
     return m_configData.hotkeys;
 }
 
-ConfigAutobackup ConfigModel::getAutosaveConfig() {
+ConfigAutobackup ConfigModel::getAutosaveConfig() const {
     return m_configData.autobackup;
 }
 

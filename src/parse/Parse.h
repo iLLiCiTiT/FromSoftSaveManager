@@ -6,7 +6,7 @@
 #include <array>
 
 // TODO this should be 'SL2file' with namespace 'fssm::parse::sl2'
-namespace fsm::parse {
+namespace fssm::parse {
 
 class Game {
     public:
@@ -136,4 +136,3 @@ ParsedFile parse_sekiro_file(const SL2File& sl2);
 // Dispatch by detected game
 ParsedFile parse_save_file(const std::string& filepath);
 
-} // namespace fsm::parse

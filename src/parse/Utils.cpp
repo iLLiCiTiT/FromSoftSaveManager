@@ -6,7 +6,7 @@
 
 #include "Utils.h"
 
-namespace fsm::parse {
+namespace fssm::parse {
     uint32_t read_u32_le(const uint8_t* p) {
         uint32_t v;
         std::memcpy(&v, p, sizeof(v));

@@ -7,7 +7,7 @@
 #include "Parse.h"
 
 
-namespace fsm::parse {
+namespace fssm::parse {
     struct InventoryItem {
         uint32_t itemId = 0;
         uint32_t itemType = 0;

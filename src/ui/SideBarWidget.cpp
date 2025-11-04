@@ -58,18 +58,18 @@ GameSaveTabButton::GameSaveTabButton(const QString& saveId, const QIcon &icon, c
     m_saveId = QString(saveId);
 }
 
-ButtonGameInfo GameSaveTabButton::getGameInfo(fsm::parse::Game game) {
+ButtonGameInfo GameSaveTabButton::getGameInfo(fssm::parse::Game game) {
     QString title;
     switch (game) {
-        case fsm::parse::Game::DSR:
+        case fssm::parse::Game::DSR:
             return {"DS: Remastered", QIcon(":/icons/DSR_256x256.png")};
-        case fsm::parse::Game::DS2_SOTFS:
+        case fssm::parse::Game::DS2_SOTFS:
             return {"DS II: SotFS", QIcon(":/icons/DS2-SOTFS_256x256.png")};
-        case fsm::parse::Game::DS3:
+        case fssm::parse::Game::DS3:
             return {"Dark Souls III", QIcon(":/icons/DS3_256x256.png")};
-        case fsm::parse::Game::Sekiro:
+        case fssm::parse::Game::Sekiro:
             return {"Sekiro: Shadows Die Twice", QIcon(":/icons/ER_256x256.png")};
-        case fsm::parse::Game::ER:
+        case fssm::parse::Game::ER:
             return {"Elden Ring", QIcon(":/icons/Sekiro_256x256.png")};
         default:
             return {"Unknown", QIcon()};
@@ -95,7 +95,7 @@ SideBarWidget::SideBarWidget(QWidget* parent): QWidget(parent) {
     connect(m_settingsTab, SIGNAL(requested(QString)), this, SLOT(setCurrentTab(QString)));
 };
 
-void SideBarWidget::addTab(const fsm::parse::Game& game, const QString& saveId) {
+void SideBarWidget::addTab(const fssm::parse::Game& game, const QString& saveId) {
     GameSaveTabButton* tab_btn = GameSaveTabButton::fromGame(game, saveId, this);
     m_gameTabs[saveId] = tab_btn;
     connect(tab_btn, SIGNAL(requested(QString)), this, SLOT(setCurrentTab(QString)));

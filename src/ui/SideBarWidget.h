@@ -46,13 +46,13 @@ class GameSaveTabButton: public TabIconButton {
     Q_OBJECT
 public:
     explicit GameSaveTabButton(const QString& saveId, const QIcon &icon, const QString &title, QWidget* parent);
-    static GameSaveTabButton* fromGame(const fsm::parse::Game game, const QString& saveId, QWidget* parent) {
+    static GameSaveTabButton* fromGame(const fssm::parse::Game game, const QString& saveId, QWidget* parent) {
         ButtonGameInfo gi = getGameInfo(game);
         return new GameSaveTabButton(saveId, gi.icon, gi.title, parent);
     };
 private:
     QString m_saveId = "";
-    static ButtonGameInfo getGameInfo(fsm::parse::Game game);
+    static ButtonGameInfo getGameInfo(fssm::parse::Game game);
 
 private slots:
     void onClick() override;
@@ -66,7 +66,7 @@ signals:
 public:
     explicit SideBarWidget(QWidget* parent);
 
-    void addTab(const fsm::parse::Game& game, const QString& saveId);
+    void addTab(const fssm::parse::Game& game, const QString& saveId);
     void removeTab(const QString& saveId);
 public slots:
     void setCurrentTab(const QString& saveId);
