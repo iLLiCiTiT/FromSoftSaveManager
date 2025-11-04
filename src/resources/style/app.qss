@@ -117,6 +117,25 @@ SideBarWidget {
     color: rgba(255, 255, 255, 0.85);
 }
 
+SavePathInput {
+    background: #1E1F22;
+    border: none;
+}
+
+SavePathInput QPushButton {
+    padding: 0px;
+    background: transparent;
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+}
+
+HotkeyInput {
+    background: #3D3F42;
+    padding: 4px;
+    border: none;
+    color: #ffffff;
+}
+
 TabIconButton {
     background: transparent;
     border: none;
@@ -147,25 +166,6 @@ TabButtonHint QLabel[selected="1"] {
     background: #4B4C4F;
 }
 
-SavePathInput {
-    background: #1E1F22;
-    border: none;
-}
-
-SavePathInput QPushButton {
-    padding: 0px;
-    background: transparent;
-    border-top-left-radius: 0px;
-    border-bottom-left-radius: 0px;
-}
-
-HotkeyInput {
-    background: #3D3F42;
-    padding: 4px;
-    border: none;
-    color: #ffffff;
-}
-
 TabButton {
     background: transparent;
     border: none;
@@ -182,6 +182,7 @@ TabButton[selected="1"] {
     border-bottom: 2px solid #5B4229;
 }
 
+/* Elden Ring specific styles */
 ERAttributesLabel QLabel {
     color: #A99B82;
 }
