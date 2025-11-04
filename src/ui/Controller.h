@@ -83,6 +83,7 @@ public:
     // SekiroCharInfoResult getSekiroCharacters(const QString& saveId) const;
     // ERCharInfoResult getERCharacters(const QString& saveId) const;
 
+    std::vector<BackupMetadata> getBackupItems();
     void createManualBackup(const QString& label);
     void deleteBackupByIds(const std::vector<QString>& backupIds);
 

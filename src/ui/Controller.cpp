@@ -201,6 +201,13 @@ void Controller::onQuickLoadRequest() {
     m_backupsModel->quickLoad(itemOpt.value().savePath, itemOpt.value().game);
 }
 
+std::vector<BackupMetadata> Controller::getBackupItems() {
+    if (m_currentSaveId.isEmpty()) return {};
+    auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
+    if (!itemOpt.has_value()) return {};
+    return m_backupsModel->getBackupItems(itemOpt.value().game);
+}
+
 void Controller::createManualBackup(const QString& label) {
     if (m_currentSaveId.isEmpty()) return;
     auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
