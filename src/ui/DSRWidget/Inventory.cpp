@@ -320,14 +320,12 @@ void DSRInventoryCategoryButton::setSelected(bool selected) {
     }
 };
 void DSRInventoryCategoryButton::enterEvent(QEnterEvent *event) {
-    BaseClickableFrame::enterEvent(event);
     m_isHovered = true;
     if (!m_isSelected) {
         m_imageLabel->setSourcePixmap(m_hoverPix);
     }
 };
 void DSRInventoryCategoryButton::leaveEvent(QEvent *event) {
-    BaseClickableFrame::leaveEvent(event);
     m_isHovered = false;
     if (!m_isSelected) {
         m_imageLabel->setSourcePixmap(m_pix);
