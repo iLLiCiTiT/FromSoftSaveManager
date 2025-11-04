@@ -1,9 +1,7 @@
 #include "CharInfo.h"
 
-#include <iostream>
-
 #include "../Utils.h"
-#include "../../parse/DSRItems.h"
+#include "../../parse/Parse.h"
 
 namespace {
     struct WidgetsHelper {
@@ -172,7 +170,7 @@ CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
     layout->addWidget(statsWidget, 1);
 }
 
-void CharacterStatusWidget::setCharacter(const fssm::parse::DSRCharacterInfo* charInfo) {
+void CharacterStatusWidget::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo) {
     if (charInfo == nullptr) return setEmpty();
 
     QString covenentValue = QString::fromStdString(fssm::parse::dsr::DSR_COVENANT_LABELS[charInfo->covenantId].data());
@@ -247,6 +245,6 @@ CharacterInfoWidget::CharacterInfoWidget(QWidget* parent): QWidget(parent) {
     layout->addWidget(m_statusWidget, 1);
 }
 
-void CharacterInfoWidget::setCharacter(const fssm::parse::DSRCharacterInfo* charInfo) {
+void CharacterInfoWidget::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo) {
     m_statusWidget->setCharacter(charInfo);
 };

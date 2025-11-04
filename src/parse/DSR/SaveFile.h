@@ -1,13 +1,14 @@
 #pragma once
+
 #include <cstdint>
 #include <string>
 #include <vector>
 
-#include "DSRItems.h"
-#include "Parse.h"
+#include "../SL2File.h"
+#include "Items.h"
 
 
-namespace fssm::parse {
+namespace fssm::parse::dsr {
     struct InventoryItem {
         uint32_t itemId = 0;
         uint32_t itemType = 0;
@@ -19,7 +20,7 @@ namespace fssm::parse {
         uint32_t idx = 0;
         // NOTE how to pass in reference only reference?
         bool knownItem = true;
-        fssm::parse::dsr::BaseItem baseItem;
+        BaseItem baseItem;
     };
 
     struct AttunementSlot {

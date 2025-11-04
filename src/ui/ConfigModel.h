@@ -2,7 +2,7 @@
 #include <QObject>
 #include <nlohmann/json.hpp>
 
-#include "../parse/DSRSaveFile.h"
+#include "../parse/Parse.h"
 
 
 // How UI receives information about available save files.

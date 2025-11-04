@@ -1,12 +1,12 @@
 #pragma once
 #include <QLabel>
-#include "../../parse/DSRSaveFile.h"
+#include "../../parse/Parse.h"
 
 class CovenantsWidget: public QWidget {
     Q_OBJECT
 public:
     explicit CovenantsWidget(QWidget* parent);
-    void setCharacter(const fssm::parse::DSRCharacterInfo* charInfo);
+    void setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo);
 private:
     QLabel* m_wosWidget;
     QLabel* m_dwWidget;

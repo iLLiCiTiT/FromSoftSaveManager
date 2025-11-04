@@ -6,7 +6,6 @@
 #include <QVariantAnimation>
 
 #include "../Utils.h"
-#include "../../parse/DSRSaveFile.h"
 
 inline int ITEM_LEVEL_ROLE = Qt::UserRole + 1;
 inline int ITEM_INFUSION_ICON_ROLE = Qt::UserRole + 2;
@@ -16,15 +15,16 @@ inline int ITEM_DURABILITY_ROLE = Qt::UserRole + 5;
 inline int ITEM_BOTOMLESS_BOX_AMOUNT_ROLE = Qt::UserRole + 6;
 inline int ITEM_IMAGE_ROLE = Qt::UserRole + 7;
 inline int ITEM_CATEGORY_ROLE = Qt::UserRole + 8;
+#include "../../parse/Parse.h"
 
 class InventoryModel: public QStandardItemModel {
     Q_OBJECT
 public:
     explicit InventoryModel(QObject* parent = nullptr);
-    void setCharacter(const fssm::parse::DSRCharacterInfo* charInfo);
+    void setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo);
 private:
-    QStandardItem* createModelItem(fssm::parse::InventoryItem& inventoryItem);
-    QStandardItem* createUnknownItem(fssm::parse::InventoryItem& inventoryItem);
+    QStandardItem* createModelItem(fssm::parse::dsr::InventoryItem& inventoryItem);
+    QStandardItem* createUnknownItem(fssm::parse::dsr::InventoryItem& inventoryItem);
 };
 
 class InventoryProxyModel: public QSortFilterProxyModel {
@@ -103,7 +103,7 @@ class InventoryWidget: public QWidget {
     Q_OBJECT
 public:
     explicit InventoryWidget(QWidget* parent);
-    void setCharacter(const fssm::parse::DSRCharacterInfo* charInfo);
+    void setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo);
 private slots:
     void onCategoryChange(QString category);
 private:

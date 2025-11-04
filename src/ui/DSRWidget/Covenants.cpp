@@ -57,7 +57,7 @@ CovenantsWidget::CovenantsWidget(QWidget* parent): QWidget(parent) {
     layout->addStretch(1);
 };
 
-void CovenantsWidget::setCharacter(const fssm::parse::DSRCharacterInfo* charInfo) {
+void CovenantsWidget::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo) {
     // Skip 3 covenants that don't have a way how to level
     int idx = 3;
     for (auto valueW : std::initializer_list {

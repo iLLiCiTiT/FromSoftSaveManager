@@ -6,7 +6,7 @@
 #include "../BaseGameWidget.h"
 #include "../Controller.h"
 #include "../Utils.h"
-#include "../../parse/DSRSaveFile.h"
+#include "../../parse/Parse.h"
 
 const int CHAR_ID_ROLE = Qt::UserRole + 1;
 const int CHAR_NAME_ROLE = Qt::UserRole + 2;
@@ -19,9 +19,9 @@ signals:
 public:
     explicit CharsListModel(Controller* controller, const QString& saveId, QObject* parent);
     void refresh();
-    fssm::parse::DSRCharacterInfo* getCharByIdx(const int& index);
+    fssm::parse::dsr::DSRCharacterInfo* getCharByIdx(const int& index);
 private:
-    std::vector<fssm::parse::DSRCharacterInfo> m_chars;
+    std::vector<fssm::parse::dsr::DSRCharacterInfo> m_chars;
     std::array<QStandardItem*, 10> m_items;
     QString m_saveId;
     Controller* m_controller;

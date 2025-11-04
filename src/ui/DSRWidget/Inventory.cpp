@@ -10,12 +10,12 @@
 #include <QVariantAnimation>
 
 #include "../Utils.h"
-#include "../../parse/DSRSaveFile.h"
+#include "../../parse/Parse.h"
 
 InventoryModel::InventoryModel(QObject* parent): QStandardItemModel(parent) {};
 
 
-void InventoryModel::setCharacter(const fssm::parse::DSRCharacterInfo* charInfo) {
+void InventoryModel::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo) {
     QStandardItem* rootItem = invisibleRootItem();
     rootItem->removeRows(0, rootItem->rowCount());
     if (charInfo == nullptr) return;
@@ -53,7 +53,7 @@ void InventoryModel::setCharacter(const fssm::parse::DSRCharacterInfo* charInfo)
         rootItem->appendRows(newItems);
 };
 
-QStandardItem* InventoryModel::createModelItem(fssm::parse::InventoryItem& inventoryItem) {
+QStandardItem* InventoryModel::createModelItem(fssm::parse::dsr::InventoryItem& inventoryItem) {
     if (!inventoryItem.knownItem) return createUnknownItem(inventoryItem);
     // Skip fist
     if (inventoryItem.baseItem.type == 0 && inventoryItem.baseItem.id == 900000) return nullptr;
@@ -129,7 +129,7 @@ QStandardItem* InventoryModel::createModelItem(fssm::parse::InventoryItem& inven
     item->setData(QString::fromStdString(inventoryItem.baseItem.category.data()), ITEM_CATEGORY_ROLE);
     return item;
 };
-QStandardItem* InventoryModel::createUnknownItem(fssm::parse::InventoryItem& inventoryItem) {
+QStandardItem* InventoryModel::createUnknownItem(fssm::parse::dsr::InventoryItem& inventoryItem) {
     QStandardItem* item = new QStandardItem();
     QString label;
     label.push_back("NA ");
@@ -440,7 +440,7 @@ InventoryWidget::InventoryWidget(QWidget* parent): QWidget(parent) {
     m_proxy->setCategory(m_categoryBtns->getCategory());
 };
 
-void InventoryWidget::setCharacter(const fssm::parse::DSRCharacterInfo* charInfo) {
+void InventoryWidget::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo) {
     m_model->setCharacter(charInfo);
     m_proxy->sort(0, Qt::AscendingOrder);
 };

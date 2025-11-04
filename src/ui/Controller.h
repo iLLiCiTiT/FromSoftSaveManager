@@ -6,7 +6,7 @@
 #include "KeysWindows.h"
 #include "ConfigModel.h"
 #include "BackupsModel.h"
-#include "../parse/DSRSaveFile.h"
+#include "../parse/Parse.h"
 
 // Handler of hotkeys presss
 // - check for pressed keys using Windows api
@@ -52,7 +52,7 @@ private:
 // Result to receive characters of DSR save file
 struct DSRCharInfoResult {
     QString error;
-    std::vector<fssm::parse::DSRCharacterInfo> characters;
+    std::vector<fssm::parse::dsr::DSRCharacterInfo> characters;
 };
 
 // Controller wrapping backend logic allowing UI to access data it needs

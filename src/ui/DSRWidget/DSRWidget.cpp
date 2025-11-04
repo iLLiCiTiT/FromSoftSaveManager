@@ -29,7 +29,7 @@ void CharsListModel::refresh() {
 
     DSRCharInfoResult charsInfo = m_controller->getDsrCharacters(m_saveId);
     if (!charsInfo.error.isEmpty()) {
-        m_chars = std::vector<fssm::parse::DSRCharacterInfo>();
+        m_chars = std::vector<fssm::parse::dsr::DSRCharacterInfo>();
         QStandardItem* item = root->child(0);
         item->setText(charsInfo.error);
         for (int i = 1; i < root->rowCount(); ++i) {
@@ -59,7 +59,7 @@ void CharsListModel::refresh() {
     emit refreshed();
 };
 
-fssm::parse::DSRCharacterInfo* CharsListModel::getCharByIdx(const int& index) {
+fssm::parse::dsr::DSRCharacterInfo* CharsListModel::getCharByIdx(const int& index) {
     for (auto& character: m_chars) {
         if (character.index == index) return &character;
     }
@@ -161,7 +161,7 @@ void DSRWidget::onRefresh() {
     for (auto& index: selModel->selectedIndexes()) {
         QVariant charId = index.data(CHAR_ID_ROLE);
         if (!charId.isValid() || charId.isNull()) continue;
-        fssm::parse::DSRCharacterInfo* charInfo = m_model->getCharByIdx(charId.toInt());
+        fssm::parse::dsr::DSRCharacterInfo* charInfo = m_model->getCharByIdx(charId.toInt());
         m_charInfoWidget->setCharacter(charInfo);
         m_inventoryWidget->setCharacter(charInfo);
         m_covenantsWidget->setCharacter(charInfo);
@@ -181,7 +181,7 @@ void DSRWidget::onSelectionChange(const QItemSelection &selected, const QItemSel
     for (auto& index: selected.indexes()) {
         QVariant charId = index.data(CHAR_ID_ROLE);
         if (!charId.isValid() || charId.isNull()) continue;
-        const fssm::parse::DSRCharacterInfo* charInfo = m_model->getCharByIdx(charId.toInt());
+        const fssm::parse::dsr::DSRCharacterInfo* charInfo = m_model->getCharByIdx(charId.toInt());
 
         m_charInfoWidget->setCharacter(charInfo);
         m_inventoryWidget->setCharacter(charInfo);

@@ -1,10 +1,10 @@
-#include "DSRSaveFile.h"
+#include "SaveFile.h"
 #include <cstring>
 #include <iostream>
 #include <locale>
 #include <optional>
 
-namespace fssm::parse {
+namespace fssm::parse::dsr {
     uint32_t bytes_to_u32(const std::vector<uint8_t>& b, const uint32_t& offset)
     {
         if (b.size() % sizeof(uint32_t) != 0) {
@@ -115,7 +115,7 @@ namespace fssm::parse {
             ci.inventoryItems.reserve(maxInventoryCount);
             // TODO Use constant
             uint32_t inventoryOffset = 860;
-            std::optional<fssm::parse::dsr::BaseItem> itemOpt;
+            std::optional<BaseItem> itemOpt;
             for (uint32_t idx = 0; idx < maxInventoryCount; ++idx) {
                 uint32_t offset = inventoryOffset + (idx * 28);
                 uint32_t itemId = bytes_to_u32(c, offset + 4);
@@ -123,8 +123,8 @@ namespace fssm::parse {
                 InventoryItem invItem;
                 invItem.itemType = bytes_to_u32(c, offset);
                 invItem.itemId = itemId;
-                itemOpt = fssm::parse::dsr::findBaseItem(invItem.itemType, invItem.itemId);
-                std::optional<fssm::parse::dsr::BaseItem> baseItem = std::nullopt;
+                itemOpt = findBaseItem(invItem.itemType, invItem.itemId);
+                std::optional<BaseItem> baseItem = std::nullopt;
                 if (itemOpt.has_value()) {
                     baseItem = itemOpt.value();
                 } else if (1330000 <= invItem.itemId && invItem.itemId < 1332000) {
@@ -132,12 +132,12 @@ namespace fssm::parse {
                     // Pyromancy Flame
                     invItem.upgradeLevel = (invItem.itemId - 1330000) / 100;
                     invItem.itemId = 1330000;
-                    baseItem = fssm::parse::dsr::findBaseItem(invItem.itemType, invItem.itemId).value();
+                    baseItem = findBaseItem(invItem.itemType, invItem.itemId).value();
                 } else if (1332000 <= invItem.itemId && invItem.itemId <= 1332500) {
                     // Ascended Pyromancy Flame
                     invItem.upgradeLevel = (invItem.itemId - 1332000) / 100;
                     invItem.itemId = 1332000;
-                    baseItem = fssm::parse::dsr::findBaseItem(invItem.itemType, invItem.itemId).value();
+                    baseItem = findBaseItem(invItem.itemType, invItem.itemId).value();
                 } else if (311000 <= invItem.itemId && invItem.itemId <= 312705) {
                     // Sword of Artorias cursed variations
                     invItem.upgradeLevel = invItem.itemId % 100;
@@ -145,14 +145,14 @@ namespace fssm::parse {
                 } else {
                     invItem.upgradeLevel = invItem.itemId % 100;
                     uint32_t new_id = invItem.itemId - invItem.upgradeLevel;
-                    itemOpt = fssm::parse::dsr::findBaseItem(invItem.itemType, new_id);
+                    itemOpt = findBaseItem(invItem.itemType, new_id);
                     if (itemOpt.has_value()) {
                         invItem.itemId = new_id;
                         baseItem = itemOpt.value();
                     } else {
                         invItem.infusion = new_id % 1000;
                         new_id -= invItem.infusion;
-                        itemOpt = fssm::parse::dsr::findBaseItem(invItem.itemType, new_id);
+                        itemOpt = findBaseItem(invItem.itemType, new_id);
                         if (itemOpt.has_value()) {
                             invItem.itemId = new_id;
                             baseItem = itemOpt.value();
@@ -168,7 +168,7 @@ namespace fssm::parse {
 
                 if (!baseItem.has_value()) {
                     invItem.knownItem = false;
-                    fssm::parse::dsr::BaseItem newBaseItem;
+                    BaseItem newBaseItem;
                     switch (invItem.itemType) {
                         case 0:
                             newBaseItem.category = "weapons_shields";
