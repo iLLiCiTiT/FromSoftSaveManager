@@ -78,7 +78,7 @@ DSRWidget::DSRWidget(Controller* controller, const QString& saveId, QWidget* par
     m_view->setTextElideMode(Qt::ElideLeft);
     m_view->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
 
-    ManageSavesButtonsWidget* manageSavesBtnsWidget = new ManageSavesButtonsWidget(controller, viewWrap);
+    ManageBackupsButtonsWidget* manageBackupsBtnsWidget = new ManageBackupsButtonsWidget(controller, viewWrap);
 
     m_model = new CharsListModel(controller, saveId, m_view);
     m_view->setModel(m_model);
@@ -87,7 +87,7 @@ DSRWidget::DSRWidget(Controller* controller, const QString& saveId, QWidget* par
     viewWrapLayout->setContentsMargins(0, 0, 0, 0);
     viewWrapLayout->addSpacing(28);
     viewWrapLayout->addWidget(m_view, 4);
-    viewWrapLayout->addWidget(manageSavesBtnsWidget, 1);
+    viewWrapLayout->addWidget(manageBackupsBtnsWidget, 1);
 
     m_charTabs = new TabWidget(this);
 

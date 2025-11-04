@@ -42,7 +42,8 @@ QString CreateBackupDialog::getBackupName() {
     return m_backupNameinput->text();
 }
 
-ManageSavesButtonsWidget::ManageSavesButtonsWidget(Controller* controller, QWidget* parent): QFrame(parent), m_controller(controller)
+// Common UI widget for all games
+ManageBackupsButtonsWidget::ManageBackupsButtonsWidget(Controller* controller, QWidget* parent): QFrame(parent), m_controller(controller)
 {
     m_hotkeysLabel = new QLabel(this);
     m_hotkeysLabel->setAlignment(Qt::AlignCenter);
@@ -83,7 +84,7 @@ ManageSavesButtonsWidget::ManageSavesButtonsWidget(Controller* controller, QWidg
     onHotkeysChange();
 };
 
-void ManageSavesButtonsWidget::onCreateBackup() {
+void ManageBackupsButtonsWidget::onCreateBackup() {
     CreateBackupDialog dialog = CreateBackupDialog(this);
     if (dialog.exec() == QDialog::Accepted) {
         QString label = dialog.getBackupName();
@@ -91,15 +92,15 @@ void ManageSavesButtonsWidget::onCreateBackup() {
     }
 }
 
-void ManageSavesButtonsWidget::onShowBackups() {
+void ManageBackupsButtonsWidget::onShowBackups() {
     // TODO implement
 }
 
-void ManageSavesButtonsWidget::onOpenBackupDir() {
+void ManageBackupsButtonsWidget::onOpenBackupDir() {
     m_controller->openBackupDir();
 }
 
-void ManageSavesButtonsWidget::onHotkeysChange() {
+void ManageBackupsButtonsWidget::onHotkeysChange() {
     auto hotkeysConfig = m_controller->getHotkeysConfig();
     auto& quicksave = hotkeysConfig.quickSaveHotkey;
     auto& quickload = hotkeysConfig.quickLoadHotkey;

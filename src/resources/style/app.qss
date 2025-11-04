@@ -228,10 +228,11 @@ DSRInventoryCategoryButton:hover {
     background: rgba(181, 142, 41, 0.5);
 }
 
-ManageSavesButtonsWidget QPushButton {
+/* Manage backups specific styles */
+ManageBackupsButtonsWidget QPushButton {
     background: #3D3F42;
 }
 
-ManageSavesButtonsWidget QPushButton:hover {
+ManageBackupsButtonsWidget QPushButton:hover {
     background: #4B4C4F;
 }

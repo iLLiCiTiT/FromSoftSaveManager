@@ -23,10 +23,10 @@ private:
     QLineEdit* m_backupNameinput = nullptr;
 };
 
-class ManageSavesButtonsWidget: public QFrame {
+class ManageBackupsButtonsWidget: public QFrame {
     Q_OBJECT
 public:
-    explicit ManageSavesButtonsWidget(Controller* m_controller, QWidget* parent);
+    explicit ManageBackupsButtonsWidget(Controller* m_controller, QWidget* parent);
 private slots:
     void onCreateBackup();
     void onShowBackups();
