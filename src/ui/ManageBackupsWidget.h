@@ -3,15 +3,35 @@
 #include <QDialog>
 #include <QLabel>
 #include <QLineEdit>
+#include <QStandardItemModel>
+#include <QTreeView>
 
 #include "Controller.h"
 
-// TODO implement
-class ManageSavesOverlayWidget: public QWidget {
+class BackupsOverlayModel: public QStandardItemModel {
     Q_OBJECT
 public:
-    explicit ManageSavesOverlayWidget(QWidget* parent);
+    explicit BackupsOverlayModel(QObject* parent = nullptr);
+    void setBackupItems(std::vector<BackupMetadata>& backupItems);
+    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+    Qt::ItemFlags flags(const QModelIndex &index) const override;
+};
 
+class ManageBackupsOverlayWidget: public QWidget {
+    Q_OBJECT
+signals:
+    void hideRequested();
+public:
+    explicit ManageBackupsOverlayWidget(Controller* controller, QWidget* parent);
+    void refresh();
+protected:
+    void showEvent(QShowEvent *event) override;
+private slots:
+    void onDeleteBackkups();
+private:
+    Controller* m_controller = nullptr;
+    BackupsOverlayModel* m_backupsModel = nullptr;
+    QTreeView* m_backupsView = nullptr;
 };
 
 class CreateBackupDialog: public QDialog {
@@ -25,6 +45,9 @@ private:
 
 class ManageBackupsButtonsWidget: public QFrame {
     Q_OBJECT
+signals:
+    void showBackupsRequested();
+
 public:
     explicit ManageBackupsButtonsWidget(Controller* m_controller, QWidget* parent);
 private slots:

@@ -236,3 +236,10 @@ ManageBackupsButtonsWidget QPushButton {
 ManageBackupsButtonsWidget QPushButton:hover {
     background: #4B4C4F;
 }
+
+ManageBackupsOverlayWidget QSplitter::handle:horizontal {
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                stop: 0.3 transparent,
+                                stop: 0.5 rgb(181, 142, 41),
+                                stop: 0.7 transparent);
+}

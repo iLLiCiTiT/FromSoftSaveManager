@@ -2,7 +2,15 @@
 
 #include <QHBoxLayout>
 #include <QPushButton>
+#include <QSplitter>
+#include <QTreeView>
+#include <QGraphicsBlurEffect>
 
+static int BACKUP_ID_ROLE = Qt::UserRole + 1;
+static int BACKUP_DATE_ROLE = Qt::UserRole + 2;
+
+
+// Dialog asking for backup name
 CreateBackupDialog::CreateBackupDialog(QWidget* parent): QDialog(parent) {
     setWindowTitle("Create save backup");
     setModal(true);
@@ -40,6 +48,170 @@ CreateBackupDialog::CreateBackupDialog(QWidget* parent): QDialog(parent) {
 
 QString CreateBackupDialog::getBackupName() {
     return m_backupNameinput->text();
+}
+
+BackupsOverlayModel::BackupsOverlayModel(QObject* parent): QStandardItemModel(parent) {
+    setColumnCount(2);
+    setHorizontalHeaderLabels({"Title", "Date"});
+}
+
+Qt::ItemFlags BackupsOverlayModel::flags(const QModelIndex &index) const {
+    QModelIndex newIndex = index;
+    if (index.column() != 0)
+        newIndex = this->index(index.row(), 0);
+    return QStandardItemModel::flags(newIndex);
+}
+
+QVariant BackupsOverlayModel::data(const QModelIndex &index, int role) const {
+    if (!index.isValid()) return QVariant();
+    if (role == Qt::DisplayRole && index.column() == 1)
+        role = BACKUP_DATE_ROLE;
+
+    QModelIndex newIndex = index;
+    if (index.column() != 0)
+        newIndex = this->index(index.row(), 0);
+    return QStandardItemModel::data(newIndex, role);
+}
+
+void BackupsOverlayModel::setBackupItems(std::vector<BackupMetadata>& backupItems) {
+    QStandardItem* rootItem = invisibleRootItem();
+    rootItem->removeRows(0, rootItem->rowCount());
+    if (backupItems.empty()) return;
+    std::sort(backupItems.begin(), backupItems.end(), [](const BackupMetadata& a, const BackupMetadata& b) {return a.epoch > b.epoch;});
+    int autosaveCount = 0;
+    int quicksaveCount = 0;
+    QList<QStandardItem*> newItems;
+    for (auto& backupItem: backupItems) {
+        QString label = QString::fromStdString(backupItem.label);
+        if (label.isEmpty()) {
+            switch (backupItem.backupType) {
+                case BackupType::AUTOSAVE:
+                    label.push_back("< Auto Save");
+                    label.push_back(QString::number(autosaveCount));
+                    label.push_back(" >");
+                    autosaveCount++;
+                    break;
+
+                case BackupType::QUICKSAVE:
+                    label.push_back("< Quick Save");
+                    label.push_back(QString::number(quicksaveCount));
+                    label.push_back(" >");
+                    quicksaveCount++;
+                    break;
+
+                default:
+                    label = QString::fromStdString(backupItem.datetime);
+                    break;
+            }
+        };
+        QStandardItem* item = new QStandardItem(label);
+        item->setColumnCount(columnCount());
+        item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+        item->setData(QVariant(QString::fromStdString(backupItem.id)), BACKUP_ID_ROLE);
+        item->setData(QVariant(QString::fromStdString(backupItem.datetime)), BACKUP_DATE_ROLE);
+        newItems.append(item);
+    }
+    if (!newItems.isEmpty())
+        rootItem->appendRows(newItems);
+}
+
+// Overlay showin available backups
+ManageBackupsOverlayWidget::ManageBackupsOverlayWidget(Controller* controller, QWidget* parent)
+    : QWidget(parent), m_controller(controller)
+{
+    QSplitter* splitter = new QSplitter(Qt::Horizontal, this);
+
+    QWidget* wrapWidget = new QWidget(splitter);
+
+    QLabel* headerWidget = new QLabel("Backups", wrapWidget);
+
+    m_backupsView = new QTreeView(wrapWidget);
+    m_backupsView->setSortingEnabled(true);
+    m_backupsView->setAllColumnsShowFocus(true);
+    m_backupsView->setAlternatingRowColors(true);
+    m_backupsView->setIndentation(0);
+    m_backupsView->setTextElideMode(Qt::ElideLeft);
+    m_backupsView->sortByColumn(1, Qt::AscendingOrder);
+    m_backupsView->setEditTriggers(
+        QAbstractItemView::NoEditTriggers
+    );
+    m_backupsView->setSelectionMode(
+        QAbstractItemView::ExtendedSelection
+    );
+    m_backupsView->setVerticalScrollMode(
+        QAbstractItemView::ScrollPerPixel
+    );
+
+    m_backupsModel = new BackupsOverlayModel(m_backupsView);
+    m_backupsView->setModel(m_backupsModel);
+
+    QWidget* btnsWidget = new QWidget(wrapWidget);
+    QPushButton* closeBackupBtn = new QPushButton("Close", btnsWidget);
+    closeBackupBtn->setToolTip("Closes this overlay");
+    QPushButton* createBackupBtn = new QPushButton("Create", btnsWidget);
+    createBackupBtn->setToolTip("Create a backup of the current save");
+    // TODO implement
+    createBackupBtn->setVisible(false);
+    QPushButton* deleteBackupsBtn = new QPushButton("Delete", btnsWidget);
+    deleteBackupsBtn->setToolTip("Delete selected backups");
+
+    QHBoxLayout* btnsLayout = new QHBoxLayout(btnsWidget);
+    btnsLayout->setContentsMargins(0, 0, 0, 0);
+    btnsLayout->setSpacing(10);
+    btnsLayout->addWidget(closeBackupBtn, 0);
+    btnsLayout->addStretch(1);
+    btnsLayout->addWidget(createBackupBtn, 0);
+    btnsLayout->addWidget(deleteBackupsBtn, 0);
+
+    QVBoxLayout* wrapLayout = new QVBoxLayout(wrapWidget);
+    wrapLayout->setContentsMargins(5, 5, 5, 5);
+    wrapLayout->setSpacing(5);
+    wrapLayout->addWidget(headerWidget, 0);
+    wrapLayout->addWidget(m_backupsView, 1);
+    wrapLayout->addWidget(btnsWidget, 0);
+
+    QFrame* shadowFrame = new QFrame(splitter);
+    shadowFrame->setStyleSheet("background-color: rgba(0, 0, 0, 0.5);");
+
+    splitter->addWidget(wrapWidget);
+    splitter->addWidget(shadowFrame);
+    splitter->setCollapsible(0, false);
+    splitter->setCollapsible(1, false);
+    splitter->setSizes({100, 200});
+    splitter->setStretchFactor(0, 1);
+    splitter->setStretchFactor(1, 2);
+
+    QVBoxLayout* mainLayout = new QVBoxLayout(this);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    mainLayout->addWidget(splitter, 1);
+
+    this->setAttribute(Qt::WA_TranslucentBackground, true);
+    splitter->setAttribute(Qt::WA_TranslucentBackground, true);
+
+    connect(closeBackupBtn, SIGNAL(clicked()), this, SIGNAL(hideRequested()));
+    connect(deleteBackupsBtn, SIGNAL(clicked()), this, SLOT(onDeleteBackkups()));
+}
+
+void ManageBackupsOverlayWidget::showEvent(QShowEvent *event) {
+    m_backupsView->resizeColumnToContents(0);
+}
+
+void ManageBackupsOverlayWidget::refresh() {
+    auto backupItems = m_controller->getBackupItems();
+    m_backupsModel->setBackupItems(backupItems);
+    m_backupsView->resizeColumnToContents(0);
+}
+
+void ManageBackupsOverlayWidget::onDeleteBackkups() {
+    std::vector<QString> backupIds;
+    for (auto& index: m_backupsView->selectionModel()->selectedIndexes()) {
+        QVariant backupId = index.data(BACKUP_ID_ROLE);
+        if (!backupId.isValid() || backupId.isNull()) continue;
+        backupIds.push_back(backupId.toString());
+    }
+    if (backupIds.empty()) return;
+    m_controller->deleteBackupByIds(backupIds);
+    refresh();
 }
 
 // Common UI widget for all games
@@ -93,7 +265,7 @@ void ManageBackupsButtonsWidget::onCreateBackup() {
 }
 
 void ManageBackupsButtonsWidget::onShowBackups() {
-    // TODO implement
+    emit showBackupsRequested();
 }
 
 void ManageBackupsButtonsWidget::onOpenBackupDir() {

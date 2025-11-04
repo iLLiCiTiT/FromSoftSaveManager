@@ -120,6 +120,7 @@ DSRWidget::DSRWidget(Controller* controller, const QString& saveId, QWidget* par
 
     connect(m_view->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)), this, SLOT(onSelectionChange(const QItemSelection&, const QItemSelection&)));
     connect(m_model, SIGNAL(refreshed()), this, SLOT(onRefresh()));
+    connect(manageBackupsBtnsWidget, SIGNAL(showBackupsRequested()), this, SIGNAL(showBackupsRequested()));
 };
 
 void DSRWidget::refresh() {

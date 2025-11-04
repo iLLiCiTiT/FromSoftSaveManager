@@ -1,5 +1,7 @@
 #include "MainWindow.h"
 
+#include <iostream>
+
 
 MainWindow::MainWindow(Controller* controller, QWidget* parent)
     : QWidget(parent), m_controller(controller) {
@@ -10,7 +12,17 @@ MainWindow::MainWindow(Controller* controller, QWidget* parent)
 
     m_stack = new QStackedWidget(this);
 
+    m_blurEffect = new QGraphicsBlurEffect(m_stack);
+    m_blurEffect->setEnabled(false);
+    m_blurEffect->setBlurHints(QGraphicsBlurEffect::QualityHint);
+    m_blurEffect->setBlurRadius(5);
+
+    m_stack->setGraphicsEffect(m_blurEffect);
+
     m_settingsWidget = new SettingsWidget(controller, m_stack);
+
+    m_manageBackupsOverlay = new ManageBackupsOverlayWidget(controller, this);
+    m_manageBackupsOverlay->setVisible(false);
 
     m_stack->addWidget(m_settingsWidget);
 
@@ -26,11 +38,17 @@ MainWindow::MainWindow(Controller* controller, QWidget* parent)
     connect(m_sideBar, SIGNAL(tabChanged(QString)), this, SLOT(onTabChange(QString)));
     connect(m_controller, SIGNAL(saveIdChanged(QString)), this, SLOT(onSaveIdChange(QString)));
     connect(m_controller, SIGNAL(pathsConfigChanged()), this, SLOT(onPathsConfigChange()));
+    connect(m_manageBackupsOverlay, SIGNAL(hideRequested()), this, SLOT(onHideBackupsRequest()));
 }
 
 void MainWindow::showEvent(QShowEvent *event) {
-    QWidget::showEvent(event);
     refresh();
+    updateOverlayGeo();
+}
+
+void MainWindow::resizeEvent(QResizeEvent *event) {
+    QWidget::resizeEvent(event);
+    updateOverlayGeo();
 }
 
 void MainWindow::refresh() {
@@ -74,6 +92,7 @@ void MainWindow::refresh() {
             m_widgetsMapping[saveId] = gameWidget;
             m_sideBar->addTab(game, saveId);
             gameWidget->refresh();
+            connect(gameWidget, SIGNAL(showBackupsRequested()), this, SLOT(onShowBackupsRequest()));
         }
     }
     std::unordered_map<QString, BaseGameWidget*>::iterator it = m_widgetsMapping.begin();
@@ -97,6 +116,12 @@ void MainWindow::refresh() {
     }
 }
 
+void MainWindow::updateOverlayGeo() {
+    if (m_manageBackupsOverlay->isVisible()) {
+        m_manageBackupsOverlay->setGeometry(m_stack->geometry());
+    }
+}
+
 void MainWindow::onTabChange(const QString& saveId) {
     if (m_saveId == saveId) return;
     // Empty save id is settings widget
@@ -104,6 +129,7 @@ void MainWindow::onTabChange(const QString& saveId) {
         m_saveId = "";
         m_stack->setCurrentWidget(m_settingsWidget);
         m_controller->setCurrentTabId(saveId);
+        onHideBackupsRequest();
         return;
     }
 
@@ -116,6 +142,9 @@ void MainWindow::onTabChange(const QString& saveId) {
     m_stack->setCurrentWidget(m_widgetsMapping.find(saveId)->second);
     m_saveId = saveId;
     m_controller->setCurrentTabId(saveId);
+
+    if (m_saveId != "" && m_manageBackupsOverlay->isVisible())
+        m_manageBackupsOverlay->refresh();
 }
 
 void MainWindow::onSaveIdChange(const QString& saveId) {
@@ -125,4 +154,16 @@ void MainWindow::onSaveIdChange(const QString& saveId) {
 
 void MainWindow::onPathsConfigChange() {
     refresh();
+}
+
+void MainWindow::onShowBackupsRequest() {
+    m_blurEffect->setEnabled(true);
+    m_manageBackupsOverlay->setVisible(true);
+    m_manageBackupsOverlay->refresh();
+    updateOverlayGeo();
+}
+
+void MainWindow::onHideBackupsRequest() {
+    m_blurEffect->setEnabled(false);
+    m_manageBackupsOverlay->setVisible(false);
 }
