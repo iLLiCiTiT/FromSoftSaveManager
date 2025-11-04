@@ -15,13 +15,11 @@ public:
     }
 
     void showEvent(QShowEvent *event) {
-        QPushButton::showEvent(event);
         m_idealWidth = height();
         updateGeometry();
     };
 
     void resizeEvent(QResizeEvent *event) {
-        QPushButton::resizeEvent(event);
         m_idealWidth = height();
         updateGeometry();
     };

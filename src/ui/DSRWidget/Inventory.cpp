@@ -399,7 +399,6 @@ void CategoryButtons::setCategory(QString category) {
 
 };
 void CategoryButtons::showEvent(QShowEvent* event) {
-    QWidget::showEvent(event);
     m_overlayWidget->setGeometry(m_categoryMapping[m_category]->geometry());
     m_overlayWidget->raise();
 };

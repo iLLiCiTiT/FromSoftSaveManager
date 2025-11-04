@@ -85,6 +85,7 @@ signals:
 public:
     explicit CategoryButtons(QWidget* parent);
     QString getCategory();
+protected:
     void showEvent(QShowEvent* event) override;
     void resizeEvent(QResizeEvent *event) override;
 public slots:
