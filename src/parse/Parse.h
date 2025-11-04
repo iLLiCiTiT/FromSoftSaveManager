@@ -103,28 +103,6 @@ struct SL2File {
     std::vector<BND4Entry> entries;
 };
 
-// Game-specific character/result structures
-
-struct DS3CharacterInfo {
-    int index{-1};
-    std::u16string name;
-    int level{-1};
-};
-
-struct ERCharacter {
-    int index{-1};
-    int ver{0};
-    int level{-1};
-    std::u16string name;
-};
-
-struct ParsedFile {
-    Game game{Game::Unknown};
-    SL2File sl2; // retain container and entries
-    // Separated per-game structures
-    std::vector<DS3CharacterInfo> ds3_characters;
-    std::vector<ERCharacter> er_characters;
-};
 
 // Parse the .sl2 container and detect the game. Does not decrypt inner files yet.
 SL2File parse_sl2_file(const std::string& input_sl2_file);
