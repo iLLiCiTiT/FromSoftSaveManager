@@ -26,7 +26,7 @@ add_executable(FromSoftSaveManager
         src/parse/DSRSaveFile.cpp
         src/parse/Utils.cpp
 
-        src/ui/resources/resources.qrc
+        src/resources/resources.qrc
         src/ui/SquareButton.h
         src/ui/Utils.cpp
         src/ui/ConfigModel.cpp
@@ -50,13 +50,13 @@ add_executable(FromSoftSaveManager
 )
 
 add_library(resources_dsr SHARED)
-set_source_files_properties(src/ui/resources/dsr_images.qrc PROPERTIES
+set_source_files_properties(src/resources/dsr_images.qrc PROPERTIES
     QT_RESOURCE_ALIAS "dsr_images"
 )
 set_target_properties(resources_dsr PROPERTIES PREFIX "")
 target_sources(resources_dsr PRIVATE
-        src/ui/resources/dsr_images.qrc
-        src/ui/resources/dsr_images_init.h
+        src/resources/dsr_images.qrc
+        src/resources/dsr_images_init.h
 )
 target_link_libraries(resources_dsr PUBLIC Qt::Core)
 
