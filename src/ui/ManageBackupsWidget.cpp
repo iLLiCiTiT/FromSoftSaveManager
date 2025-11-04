@@ -1,10 +1,11 @@
 #include "ManageBackupsWidget.h"
 
-#include <QHBoxLayout>
-#include <QPushButton>
 #include <QSplitter>
 #include <QTreeView>
 #include <QGraphicsBlurEffect>
+#include <QStackedLayout>
+
+#include "Utils.h"
 
 static int BACKUP_ID_ROLE = Qt::UserRole + 1;
 static int BACKUP_DATE_ROLE = Qt::UserRole + 2;
@@ -119,11 +120,16 @@ void BackupsOverlayModel::setBackupItems(std::vector<BackupMetadata>& backupItem
 ManageBackupsOverlayWidget::ManageBackupsOverlayWidget(Controller* controller, QWidget* parent)
     : QWidget(parent), m_controller(controller)
 {
+    QFrame* shadowFrame = new QFrame(this);
+    shadowFrame->setStyleSheet("background-color: rgba(0, 0, 0, 0.5);");
+
     QSplitter* splitter = new QSplitter(Qt::Horizontal, this);
+    splitter->setContentsMargins(5, 5, 5, 5);
 
     QWidget* wrapWidget = new QWidget(splitter);
 
     QLabel* headerWidget = new QLabel("Backups", wrapWidget);
+    headerWidget->setAlignment(Qt::AlignCenter);
 
     m_backupsView = new QTreeView(wrapWidget);
     m_backupsView->setSortingEnabled(true);
@@ -165,29 +171,33 @@ ManageBackupsOverlayWidget::ManageBackupsOverlayWidget(Controller* controller, Q
 
     QVBoxLayout* wrapLayout = new QVBoxLayout(wrapWidget);
     wrapLayout->setContentsMargins(5, 5, 5, 5);
-    wrapLayout->setSpacing(5);
+    wrapLayout->setSpacing(10);
     wrapLayout->addWidget(headerWidget, 0);
     wrapLayout->addWidget(m_backupsView, 1);
     wrapLayout->addWidget(btnsWidget, 0);
 
-    QFrame* shadowFrame = new QFrame(splitter);
-    shadowFrame->setStyleSheet("background-color: rgba(0, 0, 0, 0.5);");
+    ClickableFrame* fillupWidget = new ClickableFrame(this);
 
     splitter->addWidget(wrapWidget);
-    splitter->addWidget(shadowFrame);
+    splitter->addWidget(fillupWidget);
     splitter->setCollapsible(0, false);
     splitter->setCollapsible(1, false);
-    splitter->setSizes({100, 200});
-    splitter->setStretchFactor(0, 1);
-    splitter->setStretchFactor(1, 2);
+    splitter->setSizes({150, 200});
+    splitter->setStretchFactor(0, 3);
+    splitter->setStretchFactor(1, 4);
 
-    QVBoxLayout* mainLayout = new QVBoxLayout(this);
+    QStackedLayout* mainLayout = new QStackedLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
-    mainLayout->addWidget(splitter, 1);
+    mainLayout->addWidget(shadowFrame);
+    mainLayout->addWidget(splitter);
+    mainLayout->setStackingMode(QStackedLayout::StackAll);
+    mainLayout->setCurrentWidget(splitter);
 
     this->setAttribute(Qt::WA_TranslucentBackground, true);
     splitter->setAttribute(Qt::WA_TranslucentBackground, true);
+    fillupWidget->setAttribute(Qt::WA_TranslucentBackground, true);
 
+    connect(fillupWidget, SIGNAL(clicked()), this, SIGNAL(hideRequested()));
     connect(closeBackupBtn, SIGNAL(clicked()), this, SIGNAL(hideRequested()));
     connect(deleteBackupsBtn, SIGNAL(clicked()), this, SLOT(onDeleteBackkups()));
 }

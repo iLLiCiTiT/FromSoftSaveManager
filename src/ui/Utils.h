@@ -88,3 +88,15 @@ private:
     virtual void onMouseRelease() = 0;
     bool m_mousePressed = false;
 };
+
+class ClickableFrame: public BaseClickableFrame {
+    Q_OBJECT
+public:
+    explicit ClickableFrame(QWidget* parent): BaseClickableFrame(parent) {};
+signals:
+    void clicked();
+private:
+    void onMouseRelease() override {
+        emit clicked();
+    };
+};
