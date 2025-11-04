@@ -1,8 +1,14 @@
 #include "KeysWindows.h"
 
+#ifndef NOMINMAX
+#define _NOMINMAX_ADDED_HERE
 #define NOMINMAX
+#endif
 #include <windows.h>
+#ifdef _NOMINMAX_ADDED_HERE
+#undef _NOMINMAX_ADDED_HERE
 #undef NOMINMAX
+#endif
 
 #include <unordered_map>
 
