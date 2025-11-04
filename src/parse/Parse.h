@@ -137,4 +137,4 @@ ParsedFile parse_sekiro_file(const SL2File& sl2);
 
 // Dispatch by detected game
 ParsedFile parse_save_file(const std::string& filepath);
-
+}
