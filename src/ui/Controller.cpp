@@ -168,7 +168,7 @@ DSRCharInfoResult Controller::getDsrCharacters(const QString& saveId) const {
         std::vector<fssm::parse::DSRCharacterInfo> {},
     };
     fssm::parse::SL2File sl2_dsr = fssm::parse::parse_sl2_file(savePath);
-    fssm::parse::DSRSaveFile dsr = fsm::parse::parse_dsr_file(sl2_dsr);
+    fssm::parse::DSRSaveFile dsr = fssm::parse::parse_dsr_file(sl2_dsr);
 
     return {
         "",

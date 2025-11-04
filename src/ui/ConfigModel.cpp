@@ -203,16 +203,16 @@ std::vector<SaveFileItem> ConfigModel::getSaveFileItems() {
     std::vector<SaveFileItem> output;
 
     const auto& gsf = m_configData.gameSaveFiles;
-    auto pushIfSet = [&](fssm::parse::Game game, const ConfigSavePathData& savePathInfo) {
+    auto pushIfSet = [&](fssm::Game game, const ConfigSavePathData& savePathInfo) {
         if (savePathInfo.isSet)
             output.push_back({ game, savePathInfo.saveId, savePathInfo.savePath });
     };
 
-    pushIfSet(fssm::parse::Game::DSR,       gsf.dsrSavePath);
-    pushIfSet(fssm::parse::Game::DS2_SOTFS, gsf.ds2SavePath);
-    pushIfSet(fssm::parse::Game::DS3,       gsf.ds3SavePath);
-    pushIfSet(fssm::parse::Game::Sekiro,    gsf.sekiroSavePath);
-    pushIfSet(fssm::parse::Game::ER,        gsf.erSavePath);
+    pushIfSet(fssm::Game::DSR,       gsf.dsrSavePath);
+    pushIfSet(fssm::Game::DS2_SOTFS, gsf.ds2SavePath);
+    pushIfSet(fssm::Game::DS3,       gsf.ds3SavePath);
+    pushIfSet(fssm::Game::Sekiro,    gsf.sekiroSavePath);
+    pushIfSet(fssm::Game::ER,        gsf.erSavePath);
     return output;
 }
 
@@ -228,21 +228,21 @@ QString ConfigModel::getSavePathItem(const QString& saveId) {
     return it->second.savePath;
 }
 
-std::optional<QString> ConfigModel::getSaveIdByGame(const fssm::parse::Game& game) {
+std::optional<QString> ConfigModel::getSaveIdByGame(const fssm::Game& game) {
     switch (game) {
-        case fsm::parse::Game::DSR:
+        case fssm::Game::DSR:
             if (!m_configData.gameSaveFiles.dsrSavePath.isSet) return std::nullopt;
             return m_configData.gameSaveFiles.dsrSavePath.saveId;
-        case fsm::parse::Game::DS2_SOTFS:
+        case fssm::Game::DS2_SOTFS:
             if (!m_configData.gameSaveFiles.ds2SavePath.isSet) return std::nullopt;
             return m_configData.gameSaveFiles.ds2SavePath.saveId;
-        case fsm::parse::Game::DS3:
+        case fssm::Game::DS3:
             if (!m_configData.gameSaveFiles.ds3SavePath.isSet) return std::nullopt;
             return m_configData.gameSaveFiles.ds3SavePath.saveId;
-        case fsm::parse::Game::Sekiro:
+        case fssm::Game::Sekiro:
             if (!m_configData.gameSaveFiles.sekiroSavePath.isSet) return std::nullopt;
             return m_configData.gameSaveFiles.sekiroSavePath.saveId;
-        case fsm::parse::Game::ER:
+        case fssm::Game::ER:
             if (!m_configData.gameSaveFiles.erSavePath.isSet) return std::nullopt;
             return m_configData.gameSaveFiles.erSavePath.saveId;
         default:
@@ -287,12 +287,12 @@ void ConfigModel::p_loadConfig() {
         data["game_save_files"] = json::object();
     }
     auto& jsonGameSaveFile = data["game_save_files"];
-    for (auto& game: std::initializer_list<fsm::parse::Game>{
-        fsm::parse::Game::DSR,
-        fsm::parse::Game::DS2_SOTFS,
-        fsm::parse::Game::DS3,
-        fsm::parse::Game::ER,
-        fsm::parse::Game::Sekiro,
+    for (auto& game: std::initializer_list<fssm::Game>{
+        fssm::Game::DSR,
+        fssm::Game::DS2_SOTFS,
+        fssm::Game::DS3,
+        fssm::Game::ER,
+        fssm::Game::Sekiro,
     }) {
         std::string gameName = game.toString();
         if (jsonGameSaveFile.contains(gameName)) continue;
@@ -313,26 +313,26 @@ void ConfigModel::p_loadConfig() {
         QString saveId = QString::fromStdString(saveIdIt.value());
 
         std::string_view gameName = el.key();
-        fsm::parse::Game game = fsm::parse::Game::fromString(gameName);
+        fssm::Game game = fssm::Game::fromString(gameName);
         ConfigSavePathData savePathInfo = {
             .savePath = path,
             .saveId = saveId,
             .isSet = true,
         };
         switch (game) {
-            case fsm::parse::Game::DSR:
+            case fssm::Game::DSR:
                 gameSaveFiles.dsrSavePath = savePathInfo;
                 break;
-            case fsm::parse::Game::DS2_SOTFS:
+            case fssm::Game::DS2_SOTFS:
                 gameSaveFiles.ds2SavePath = savePathInfo;
                 break;
-            case fsm::parse::Game::DS3:
+            case fssm::Game::DS3:
                 gameSaveFiles.ds3SavePath = savePathInfo;
                 break;
-            case fsm::parse::Game::Sekiro:
+            case fssm::Game::Sekiro:
                 gameSaveFiles.sekiroSavePath = savePathInfo;
                 break;
-            case fsm::parse::Game::ER:
+            case fssm::Game::ER:
                 gameSaveFiles.erSavePath = savePathInfo;
                 break;
             default:
@@ -410,13 +410,13 @@ json ConfigModel::p_configToJson() {
     return data;
 }
 
-DefaultSavePathInfo ConfigModel::p_getDefaultSavePath(const fsm::parse::Game& game) {
+DefaultSavePathInfo ConfigModel::p_getDefaultSavePath(const fssm::Game& game) {
     switch (game) {
-        case fsm::parse::Game::DSR: return p_getDefaultDSRSavePath();
-        case fsm::parse::Game::DS2_SOTFS: return p_getDefaultDS2SavePath();
-        case fsm::parse::Game::DS3: return p_getDefaultDS3SavePath();
-        case fsm::parse::Game::ER: return p_getDefaultERSavePath();
-        case fsm::parse::Game::Sekiro: return p_getDefaultSekiroSavePath();
+        case fssm::Game::DSR: return p_getDefaultDSRSavePath();
+        case fssm::Game::DS2_SOTFS: return p_getDefaultDS2SavePath();
+        case fssm::Game::DS3: return p_getDefaultDS3SavePath();
+        case fssm::Game::ER: return p_getDefaultERSavePath();
+        case fssm::Game::Sekiro: return p_getDefaultSekiroSavePath();
         default: return m_defaultSavePath;
     }
 }
@@ -430,35 +430,35 @@ void ConfigModel::p_updateInfoById() {
     auto& sekiroSavePath = m_configData.gameSaveFiles.sekiroSavePath;
     if (dsrSavePath.isSet) {
         m_saveInfoById[dsrSavePath.saveId] = {
-            .game = fsm::parse::Game::DSR,
+            .game = fssm::Game::DSR,
             .saveId = dsrSavePath.saveId,
             .savePath = dsrSavePath.savePath
         };
     }
     if (ds2SavePath.isSet) {
         m_saveInfoById[ds2SavePath.saveId] = {
-            .game = fsm::parse::Game::DSR,
+            .game = fssm::Game::DSR,
             .saveId = ds2SavePath.saveId,
             .savePath = ds2SavePath.savePath
         };
     }
     if (ds3SavePath.isSet) {
         m_saveInfoById[ds3SavePath.saveId] = {
-            .game = fsm::parse::Game::DS2_SOTFS,
+            .game = fssm::Game::DS2_SOTFS,
             .saveId = ds3SavePath.saveId,
             .savePath = ds3SavePath.savePath
         };
     }
     if (erSavePath.isSet) {
         m_saveInfoById[erSavePath.saveId] = {
-            .game = fsm::parse::Game::DS3,
+            .game = fssm::Game::DS3,
             .saveId = erSavePath.saveId,
             .savePath = erSavePath.savePath
         };
     }
     if (sekiroSavePath.isSet) {
         m_saveInfoById[sekiroSavePath.saveId] = {
-            .game = fsm::parse::Game::Sekiro,
+            .game = fssm::Game::Sekiro,
             .saveId = sekiroSavePath.saveId,
             .savePath = sekiroSavePath.savePath
         };

@@ -33,7 +33,7 @@ static BackupType backupTypeFromString(const std::string& backupType) {
 
 struct BackupMetadata {
     std::string id;
-    fssm::parse::Game game;
+    fssm::Game game;
     BackupType backupType;
     std::string label;
     std::vector<std::string> filenames;
@@ -46,7 +46,7 @@ struct BackupMetadata {
 class AutoBackupHandler: public QObject {
     Q_OBJECT
 signals:
-    void autoBackupRequested(QString savePath, fssm::parse::Game game);
+    void autoBackupRequested(QString savePath, fssm::Game game);
 public:
     explicit AutoBackupHandler(const std::vector<SaveFileItem>& saveItems, const ConfigAutobackup& autobackupConfig, QObject* parent);
     void saveGameChanged(const QString& saveId);
@@ -73,26 +73,26 @@ public:
 
     void updateAutobackupConfig(const ConfigAutobackup& autobackupConfig);
 
-    void createBackup(const QString& savePath, const fssm::parse::Game& game, const BackupType& backupType);
-    void createBackup(const QString& savePath, const fssm::parse::Game& game, const BackupType& backupType, const QString& label);
-    void createQuickSaveBackup(const QString& savePath, const fssm::parse::Game& game);
-    void createManualBackup(const QString& savePath, const fssm::parse::Game& game, const QString& label);
+    void createBackup(const QString& savePath, const fssm::Game& game, const BackupType& backupType);
+    void createBackup(const QString& savePath, const fssm::Game& game, const BackupType& backupType, const QString& label);
+    void createQuickSaveBackup(const QString& savePath, const fssm::Game& game);
+    void createManualBackup(const QString& savePath, const fssm::Game& game, const QString& label);
 
-    std::string getGameBackupDir(const fssm::parse::Game& game);
-    std::vector<BackupMetadata> getBackupItems(const fsm::parse::Game& game);
+    std::string getGameBackupDir(const fssm::Game& game);
+    std::vector<BackupMetadata> getBackupItems(const fssm::Game& game);
     bool restoreBackupSave(const QString& dstSavePath, const BackupMetadata& backupItem);
-    bool restoreBackupById(const QString& dstSavePath, const fsm::parse::Game &game, const QString& backupId);
-    bool quickLoad(const QString& dstSavePath, const fsm::parse::Game &game);
-    void deleteBackupByIds(const fsm::parse::Game& game, const std::vector<QString>& backupIds);
+    bool restoreBackupById(const QString& dstSavePath, const fssm::Game &game, const QString& backupId);
+    bool quickLoad(const QString& dstSavePath, const fssm::Game &game);
+    void deleteBackupByIds(const fssm::Game& game, const std::vector<QString>& backupIds);
     void saveGameChanged(const QString& saveId);
 
 private slots:
-    void createAutoBackup(const QString& savePath, const fsm::parse::Game& game);
+    void createAutoBackup(const QString& savePath, const fssm::Game& game);
 
 private:
     AutoBackupHandler* m_autoBackupHandler;
     QString m_backupsRoot;
     int m_maxAutoBackups;
-    void cleanupAutoBackups(const fsm::parse::Game& game);
+    void cleanupAutoBackups(const fssm::Game& game);
     void deleteBackups(const std::vector<BackupMetadata>& backupItems);
 };

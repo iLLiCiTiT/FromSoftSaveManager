@@ -59,7 +59,7 @@ struct DSRCharInfoResult {
 class Controller: public QObject {
     Q_OBJECT
 signals:
-    void gameSaveChanged(fssm::parse::Game game);
+    void gameSaveChanged(fssm::Game game);
     void saveIdChanged(QString saveId);
     // TODO find out if are used?
     void pathsConfigChanged();

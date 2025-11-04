@@ -6,8 +6,8 @@
 #include <array>
 
 // TODO this should be 'SL2file' with namespace 'fssm::parse::sl2'
-namespace fssm::parse {
 
+namespace fssm {
 class Game {
     public:
         enum Value: uint8_t {
@@ -65,7 +65,9 @@ class Game {
             return true;
         }
 };
+}
 
+namespace fssm::parse {
 struct BND4Header {
     // Only fields we currently need
     std::array<uint8_t, 4> bnd_vers;           // 'BND4' as little-endian integer

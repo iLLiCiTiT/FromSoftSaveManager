@@ -14,7 +14,7 @@ using json = nlohmann::json;
 
 // Helper functions
 BackupMetadata createBackupMetadata(
-    const fssm::parse::Game& game,
+    const fssm::Game& game,
     const BackupType& backupType,
     const std::string& filename,
     const std::string& label,
@@ -35,17 +35,17 @@ BackupMetadata createBackupMetadata(
     };
 }
 
-std::string filenameByGame(fssm::parse::Game& game) {
+std::string filenameByGame(fssm::Game& game) {
     switch (game) {
-        case fssm::parse::Game::DSR:
+        case fssm::Game::DSR:
             return "DRAKS0005.sl2";
-        case fssm::parse::Game::DS2_SOTFS:
+        case fssm::Game::DS2_SOTFS:
             return "DS2SOFS0000.sl2";
-        case fssm::parse::Game::DS3:
+        case fssm::Game::DS3:
             return "DS30000.sl2";
-        case fssm::parse::Game::Sekiro:
+        case fssm::Game::Sekiro:
             return "S0000.sl2";
-        case fssm::parse::Game::ER:
+        case fssm::Game::ER:
             return "ER0000.sl2";
         default:
             return "";
@@ -62,8 +62,8 @@ std::optional<BackupMetadata> backupMetadatafromJson(const std::filesystem::path
         || gameIt == data.end()
         || !gameIt->is_string()) return std::nullopt;
 
-    fssm::parse::Game game = fsm::parse::Game::fromString(gameIt.value().get<std::string>());
-    if (game == fsm::parse::Game::Unknown) return std::nullopt;
+    fssm::Game game = fssm::Game::fromString(gameIt.value().get<std::string>());
+    if (game == fssm::Game::Unknown) return std::nullopt;
 
     std::string filename = filenameByGame(game);
     if (filename.empty()) return std::nullopt;
@@ -268,7 +268,7 @@ BackupsModel::BackupsModel(const std::vector<SaveFileItem>& saveItems, const Con
 {
     m_autoBackupHandler = new AutoBackupHandler(saveItems, autobackupConfig, this);
 
-    connect(m_autoBackupHandler, SIGNAL(autoBackupRequested(QString, fsm::parse::Game)), this, SLOT(createAutoBackup(QString, fsm::parse::Game)));
+    connect(m_autoBackupHandler, SIGNAL(autoBackupRequested(QString, fssm::Game)), this, SLOT(createAutoBackup(QString, fssm::Game)));
 }
 
 void BackupsModel::updateAutobackupConfig(const ConfigAutobackup& autobackupConfig) {
@@ -276,7 +276,7 @@ void BackupsModel::updateAutobackupConfig(const ConfigAutobackup& autobackupConf
     m_autoBackupHandler->updateAutobackupConfig(autobackupConfig);
 }
 
-void BackupsModel::createBackup(const QString& savePath, const fsm::parse::Game& game, const BackupType& backupType, const QString& label) {
+void BackupsModel::createBackup(const QString& savePath, const fssm::Game& game, const BackupType& backupType, const QString& label) {
     // Skip empty save path
     if (savePath.isEmpty()) return;
     std::string stdSavePath = savePath.toStdString();
@@ -306,29 +306,29 @@ void BackupsModel::createBackup(const QString& savePath, const fsm::parse::Game&
     emit createBackupFinished(true, backupType);
 }
 
-void BackupsModel::createBackup(const QString& savePath, const fsm::parse::Game& game, const BackupType& backupType) {
+void BackupsModel::createBackup(const QString& savePath, const fssm::Game& game, const BackupType& backupType) {
     createBackup(savePath, game, backupType, "");
 }
 
-void BackupsModel::createAutoBackup(const QString& savePath, const fsm::parse::Game& game) {
+void BackupsModel::createAutoBackup(const QString& savePath, const fssm::Game& game) {
     createBackup(savePath, game, BackupType::AUTOSAVE, "");
     cleanupAutoBackups(game);
 }
 
-void BackupsModel::createQuickSaveBackup(const QString& savePath, const fsm::parse::Game& game) {
+void BackupsModel::createQuickSaveBackup(const QString& savePath, const fssm::Game& game) {
     createBackup(savePath, game, BackupType::QUICKSAVE, "");
 }
 
-void BackupsModel::createManualBackup(const QString& savePath, const fsm::parse::Game& game, const QString& label) {
+void BackupsModel::createManualBackup(const QString& savePath, const fssm::Game& game, const QString& label) {
     if (label.isEmpty()) return;
     createBackup(savePath, game, BackupType::MANUAL, label);
 }
 
-std::string BackupsModel::getGameBackupDir(const fsm::parse::Game& game) {
+std::string BackupsModel::getGameBackupDir(const fssm::Game& game) {
     return m_backupsRoot.toStdString() + "\\" + game.toString();
 }
 
-std::vector<BackupMetadata> BackupsModel::getBackupItems(const fsm::parse::Game &game) {
+std::vector<BackupMetadata> BackupsModel::getBackupItems(const fssm::Game &game) {
     std::vector<BackupMetadata> output;
     std::string gameBackupDir = getGameBackupDir(game);
     if (!std::filesystem::exists(gameBackupDir)) return output;
@@ -383,7 +383,7 @@ bool BackupsModel::restoreBackupSave(const QString& dstSavePath, const BackupMet
     return false;
 }
 
-bool BackupsModel::restoreBackupById(const QString& dstSavePath, const fsm::parse::Game &game, const QString& backupId) {
+bool BackupsModel::restoreBackupById(const QString& dstSavePath, const fssm::Game &game, const QString& backupId) {
     for (auto item: getBackupItems(game)) {
         if (item.id == backupId) {
             return restoreBackupSave(dstSavePath, item);
@@ -392,7 +392,7 @@ bool BackupsModel::restoreBackupById(const QString& dstSavePath, const fsm::pars
     return false;
 }
 
-bool BackupsModel::quickLoad(const QString &dstSavePath, const fsm::parse::Game &game) {
+bool BackupsModel::quickLoad(const QString &dstSavePath, const fssm::Game &game) {
     std::string gameBackupsDir = getGameBackupDir(game);
     std::optional<BackupMetadata> quicksaveItem = std::nullopt;
     time_t lastEpoch = 0;
@@ -417,7 +417,7 @@ void BackupsModel::deleteBackups(const std::vector<BackupMetadata>& backupItems)
     }
 }
 
-void BackupsModel::cleanupAutoBackups(const fsm::parse::Game& game) {
+void BackupsModel::cleanupAutoBackups(const fssm::Game& game) {
     if (m_maxAutoBackups < 1) return;
 
     std::vector<BackupMetadata> autosaveItems;
@@ -436,7 +436,7 @@ void BackupsModel::cleanupAutoBackups(const fsm::parse::Game& game) {
     deleteBackups(autosaveItems);
 }
 
-void BackupsModel::deleteBackupByIds(const fsm::parse::Game& game, const std::vector<QString>& backupIds) {
+void BackupsModel::deleteBackupByIds(const fssm::Game& game, const std::vector<QString>& backupIds) {
     std::unordered_set<std::string> backupIdsStd;
     for (auto& backupId: backupIds) {
         backupIdsStd.insert(backupId.toStdString());

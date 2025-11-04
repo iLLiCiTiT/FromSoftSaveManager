@@ -8,7 +8,7 @@
 // How UI receives information about available save files.
 // Each item contains game and save id. The combination can be used to receive available information about save.
 struct SaveFileItem {
-    fssm::parse::Game game;
+    fssm::Game game;
     QString saveId;
     QString savePath;
 };
@@ -114,7 +114,7 @@ public:
     std::vector<SaveFileItem> getSaveFileItems();
     std::optional<SaveFileItem> getSaveItem(const QString& saveId);
     QString getSavePathItem(const QString& saveId);
-    std::optional<QString> getSaveIdByGame(const fssm::parse::Game& game);
+    std::optional<QString> getSaveIdByGame(const fssm::Game& game);
 
     ConfigSettingsData getConfigSettingsData();
     void saveConfigData(const ConfigConfirmData& configData);
@@ -129,7 +129,7 @@ private:
     QString m_appBackupsDir = "";
     DefaultSavePathInfo m_defaultSavePath {};
     std::unordered_map<QString, SaveFileItem> m_saveInfoById {};
-    DefaultSavePathInfo p_getDefaultSavePath(const fssm::parse::Game& game);
+    DefaultSavePathInfo p_getDefaultSavePath(const fssm::Game& game);
     nlohmann::json p_configToJson();
     void p_updateInfoById();
     void p_loadConfig();
