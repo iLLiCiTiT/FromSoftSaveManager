@@ -26,6 +26,7 @@ public:
     explicit TabIconButton(const QIcon& icon, const QString& title, QWidget* parent);
     ~TabIconButton() override = default;
     void setSelected(const bool& selected);
+protected:
     void enterEvent(QEnterEvent *event) override;
     void leaveEvent(QEvent *event) override;
 

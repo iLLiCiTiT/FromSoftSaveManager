@@ -38,7 +38,6 @@ void TabIconButton::setSelected(const bool& selected) {
 };
 
 void TabIconButton::enterEvent(QEnterEvent* event) {
-    SquareButton::enterEvent(event);
     m_hint->show();
     int y_offset = (height() - m_hint->height()) / 2;
     QPoint pos = mapToGlobal(QPoint(width(), y_offset - 1));
@@ -46,7 +45,6 @@ void TabIconButton::enterEvent(QEnterEvent* event) {
 };
 
 void TabIconButton::leaveEvent(QEvent* event) {
-    QPushButton::leaveEvent(event);
     m_hint->hide();
 };
 

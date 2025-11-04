@@ -57,6 +57,7 @@ signals:
 public:
     explicit DSRInventoryCategoryButton(const QString& category, QWidget* parent);
     void setSelected(bool selected);
+protected:
     void enterEvent(QEnterEvent *event) override;
     void leaveEvent(QEvent *event) override;
 private:
