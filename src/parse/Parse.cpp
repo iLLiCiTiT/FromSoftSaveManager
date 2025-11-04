@@ -3,7 +3,6 @@
 #include <string>
 #include <stdexcept>
 #include <cstring>
-#include <codecvt>
 #include <iostream>
 #include <locale>
 
@@ -16,7 +15,6 @@ static const unsigned char DS2_KEY[16] = {0x59,0x9f,0x9b,0x69,0x96,0x40,0xa5,0x5
 static const unsigned char DS3_KEY[16] = {0xfd,0x46,0x4d,0x69,0x5e,0x69,0xa3,0x9a,0x10,0xe3,0x19,0xa7,0xac,0xe8,0xb7,0xfa};
 
 namespace fssm::parse {
-
 static Game detect_game(const BND4Header& header, const std::vector<uint8_t>& content) {
     Game game = Game::Unknown;
     if (header.files_count == 11) {
@@ -156,19 +154,4 @@ SL2File parse_sl2_file(const std::string& input_sl2_file) {
 
     return sl2;
 }
-
-ParsedFile parse_save_file(const std::string& filepath) {
-    SL2File sl2 = parse_sl2_file(filepath);
-    switch (sl2.game) {
-        // case Game::DSR: return parse_dsr_file(sl2);
-        // case Game::DS2_SOTFS: return parse_ds2_file(sl2);
-        // case Game::DS3: return parse_ds3_file(sl2);
-        // case Game::ER: return parse_er_file(sl2);
-        // case Game::Sekiro: return parse_sekiro_file(sl2);
-        case Game::Unknown:
-        default: {
-            ParsedFile pf; pf.game = Game::Unknown; pf.sl2 = sl2; return pf;
-        }
-    }
 }
-

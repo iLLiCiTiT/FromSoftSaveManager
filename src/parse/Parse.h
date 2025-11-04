@@ -128,13 +128,4 @@ struct ParsedFile {
 
 // Parse the .sl2 container and detect the game. Does not decrypt inner files yet.
 SL2File parse_sl2_file(const std::string& input_sl2_file);
-
-// Per-game parse functions (currently minimal wrappers, to be expanded later)
-ParsedFile parse_ds2_file(const SL2File& sl2);
-ParsedFile parse_ds3_file(const SL2File& sl2);
-ParsedFile parse_er_file(const SL2File& sl2);
-ParsedFile parse_sekiro_file(const SL2File& sl2);
-
-// Dispatch by detected game
-ParsedFile parse_save_file(const std::string& filepath);
 }
