@@ -44,8 +44,20 @@ QScrollBar:vertical {
     margin: 0px;
 }
 
+QScrollBar:horizontal {
+    background: #1E1F22;
+    height: 10px;
+    margin: 0px;
+}
+
 QScrollBar::handle:vertical {
     min-height: 5px;
+    border-radius: 5px;
+    margin: 0px 0px;
+}
+
+QScrollBar::handle:horizontal {
+    min-width: 5px;
     border-radius: 5px;
     margin: 0px 0px;
 }
@@ -57,6 +69,13 @@ QScrollBar::sub-line:vertical {
     subcontrol-origin: margin;
 }
 
+QScrollBar::sub-line:horizontal {
+    height: 10px;
+    width: 0px;
+    subcontrol-position: left;
+    subcontrol-origin: margin;
+}
+
 QScrollBar::add-line:vertical {
     height: 0px;
     width: 10px;
@@ -64,26 +83,34 @@ QScrollBar::add-line:vertical {
     subcontrol-origin: margin;
 }
 
-QScrollBar::sub-line:vertical:hover, QScrollBar::sub-line:vertical:on {
+QScrollBar::add-line:horizontal {
+    height: 10px;
+    width: 0px;
+    subcontrol-position: right;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::sub-line:vertical:hover, QScrollBar::sub-line:vertical:on, QScrollBar::sub-line:horizontal:hover, QScrollBar::sub-line:horizontal:on {
     border-image: none;
 }
 
-QScrollBar::add-line:vertical:hover, QScrollBar::add-line:vertical:on {
+QScrollBar::add-line:vertical:hover, QScrollBar::add-line:vertical:on, QScrollBar::add-line:horizontal:hover, QScrollBar::add-line:horizontal:on {
     border-image: none;
 }
 
-QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical {
-    background-color: none;
+QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical, QScrollBar::left-arrow:horizontal, QScrollBar::right-arrow:horizontal {
+    background: none;
 }
 
-QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
-    background-color: transparent;
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical, QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
+    background: transparent;
 }
 
 QAbstractItemView {
     background: #1E1F22;
-    border: none;
+    alternate-background-color: #121315;
     selection-background-color: transparent;
+    border: none;
     border-radius: 0px;
 }
 QAbstractItemView::item {
@@ -191,11 +218,11 @@ ERAttributesLabel QLabel {
 DSRWidget QWidget {
     background: transparent;
 }
-DSRWidget QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
+DSRWidget QScrollBar::handle:vertical, DSRWidget QScrollBar::handle:horizontal {
     background: #6B2E0E;
     border-radius: 0px;
 }
-DSRWidget QScrollBar::handle:vertical:hover, QScrollBar::handle:horizontal:hover {
+DSRWidget QScrollBar::handle:vertical:hover, DSRWidget QScrollBar::handle:horizontal:hover {
     background: #803711;
 }
 DSRWidget QScrollBar:vertical {
