@@ -15,7 +15,7 @@ MainWindow::MainWindow(Controller* controller, QWidget* parent)
     m_blurEffect = new QGraphicsBlurEffect(m_stack);
     m_blurEffect->setEnabled(false);
     m_blurEffect->setBlurHints(QGraphicsBlurEffect::QualityHint);
-    m_blurEffect->setBlurRadius(5);
+    m_blurEffect->setBlurRadius(0.0);
 
     m_stack->setGraphicsEffect(m_blurEffect);
 
@@ -25,6 +25,7 @@ MainWindow::MainWindow(Controller* controller, QWidget* parent)
     m_manageBackupsOverlay->setVisible(false);
 
     m_manageOpacityEffect = new QGraphicsOpacityEffect(m_manageBackupsOverlay);
+    m_manageOpacityEffect->setEnabled(false);
     m_manageOpacityEffect->setOpacity(0.0);
 
     m_manageBackupsOverlay->setGraphicsEffect(m_manageOpacityEffect);
@@ -171,6 +172,7 @@ void MainWindow::onPathsConfigChange() {
 
 void MainWindow::onShowBackupsRequest() {
     m_blurEffect->setEnabled(true);
+    m_manageOpacityEffect->setEnabled(true);
     m_manageBackupsOverlay->setVisible(true);
     if (m_manageOpacityAnim->direction() == QVariantAnimation::Backward)
         m_manageOpacityAnim->setDirection(QVariantAnimation::Forward);
@@ -187,10 +189,13 @@ void MainWindow::onHideBackupsRequest() {
 
     if (m_manageOpacityAnim->state() != QVariantAnimation::Running)
         m_manageOpacityAnim->start();
+    m_manageOpacityEffect->setEnabled(true);
 }
 
 void MainWindow::onOpacityAnimChange(const QVariant& value) {
-    m_manageOpacityEffect->setOpacity(value.toDouble());
+    double dValue = value.toDouble();
+    m_manageOpacityEffect->setOpacity(dValue);
+    m_blurEffect->setBlurRadius(5.0 * dValue);
 }
 
 void MainWindow::onOpacityAnimFinish() {
@@ -198,9 +203,14 @@ void MainWindow::onOpacityAnimFinish() {
     onOpacityAnimChange(value);
 
     if (m_manageOpacityEffect->opacity() == 0.0) {
+        // Overlay can be hidden and blur effect fully disabled
         m_manageBackupsOverlay->setVisible(false);
         m_blurEffect->setEnabled(false);
     } else {
         m_manageBackupsOverlay->refresh();
+        // Set last value of blue effect
+        m_blurEffect->setBlurRadius(5.0);
     }
+    // Always disable opacity effect on finished animation
+    m_manageOpacityEffect->setEnabled(false);
 }
