@@ -181,6 +181,8 @@ void MainWindow::onShowBackupsRequest() {
         m_manageOpacityAnim->start();
 
     updateOverlayGeo();
+
+    m_manageBackupsOverlay->refresh();
 }
 
 void MainWindow::onHideBackupsRequest() {
@@ -207,7 +209,6 @@ void MainWindow::onOpacityAnimFinish() {
         m_manageBackupsOverlay->setVisible(false);
         m_blurEffect->setEnabled(false);
     } else {
-        m_manageBackupsOverlay->refresh();
         // Set last value of blue effect
         m_blurEffect->setBlurRadius(5.0);
     }

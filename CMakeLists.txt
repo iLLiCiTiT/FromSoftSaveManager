@@ -13,6 +13,7 @@ find_package(Qt6 COMPONENTS
         Core
         Gui
         Widgets
+        Concurrent
         REQUIRED)
 
 # Add the vendor tiny-AES-c as a subdirectory (uses its own CMakeLists)
@@ -63,6 +64,7 @@ target_link_libraries(FromSoftSaveManager
         Qt::Core
         Qt::Gui
         Qt::Widgets
+        Qt::Concurrent
         tiny-aes
         resources_dsr
 )
@@ -97,6 +99,7 @@ if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
         Qt6Core
         Qt6Gui
         Qt6Widgets
+        Qt6Concurrent
         libgcc_s_seh-1
         libstdc++-6
         libwinpthread-1

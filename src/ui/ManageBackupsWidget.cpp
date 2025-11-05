@@ -4,6 +4,8 @@
 #include <QTreeView>
 #include <QGraphicsBlurEffect>
 #include <QStackedLayout>
+#include <QtConcurrent>
+#include <QFutureWatcher>
 
 #include "Utils.h"
 
@@ -207,9 +209,22 @@ void ManageBackupsOverlayWidget::showEvent(QShowEvent *event) {
 }
 
 void ManageBackupsOverlayWidget::refresh() {
-    auto backupItems = m_controller->getBackupItems();
-    m_backupsModel->setBackupItems(backupItems);
-    m_backupsView->resizeColumnToContents(0);
+    auto watcher = new QFutureWatcher<std::vector<BackupMetadata>>(this);
+
+    // Kick off background work
+    QFuture<std::vector<BackupMetadata>> future = QtConcurrent::run([this]() {
+        return m_controller->getBackupItems();  // must be thread-safe for reads
+    });
+
+    connect(watcher, &QFutureWatcher<std::vector<BackupMetadata>>::finished, this, [this, watcher]() {
+        // Back on the GUI thread here
+        auto items = watcher->result();
+        m_backupsModel->setBackupItems(items);
+        m_backupsView->resizeColumnToContents(0);
+        watcher->deleteLater();
+    });
+
+    watcher->setFuture(future);
 }
 
 void ManageBackupsOverlayWidget::onDeleteBackkups() {
