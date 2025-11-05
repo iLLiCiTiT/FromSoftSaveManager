@@ -154,8 +154,9 @@ InventoryProxyModel::InventoryProxyModel(QObject *parent): QSortFilterProxyModel
 
 void InventoryProxyModel::setCategory(QString category) {
     if (category == m_category) return;
+    beginFilterChange();
     m_category = category;
-    invalidateFilter();
+    endFilterChange(Direction::Rows);
 };
 
 bool InventoryProxyModel::lessThan(const QModelIndex &sourceLeft, const QModelIndex &sourceRight) const {
