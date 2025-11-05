@@ -24,6 +24,17 @@ MainWindow::MainWindow(Controller* controller, QWidget* parent)
     m_manageBackupsOverlay = new ManageBackupsOverlayWidget(controller, this);
     m_manageBackupsOverlay->setVisible(false);
 
+    m_manageOpacityEffect = new QGraphicsOpacityEffect(m_manageBackupsOverlay);
+    m_manageOpacityEffect->setOpacity(0.0);
+
+    m_manageBackupsOverlay->setGraphicsEffect(m_manageOpacityEffect);
+
+    m_manageOpacityAnim = new QVariantAnimation(m_manageBackupsOverlay);
+    m_manageOpacityAnim->setEasingCurve(QEasingCurve::OutCubic);
+    m_manageOpacityAnim->setDuration(200);
+    m_manageOpacityAnim->setStartValue(0.0);
+    m_manageOpacityAnim->setEndValue(1.0);
+
     m_stack->addWidget(m_settingsWidget);
 
     m_saveId = "";
@@ -39,6 +50,8 @@ MainWindow::MainWindow(Controller* controller, QWidget* parent)
     connect(m_controller, SIGNAL(saveIdChanged(QString)), this, SLOT(onSaveIdChange(QString)));
     connect(m_controller, SIGNAL(pathsConfigChanged()), this, SLOT(onPathsConfigChange()));
     connect(m_manageBackupsOverlay, SIGNAL(hideRequested()), this, SLOT(onHideBackupsRequest()));
+    connect(m_manageOpacityAnim, SIGNAL(valueChanged(const QVariant&)), this, SLOT(onOpacityAnimChange(const QVariant&)));
+    connect(m_manageOpacityAnim, SIGNAL(finished()), this, SLOT(onOpacityAnimFinish()));
 }
 
 void MainWindow::showEvent(QShowEvent *event) {
@@ -159,11 +172,35 @@ void MainWindow::onPathsConfigChange() {
 void MainWindow::onShowBackupsRequest() {
     m_blurEffect->setEnabled(true);
     m_manageBackupsOverlay->setVisible(true);
-    m_manageBackupsOverlay->refresh();
+    if (m_manageOpacityAnim->direction() == QVariantAnimation::Backward)
+        m_manageOpacityAnim->setDirection(QVariantAnimation::Forward);
+
+    if (m_manageOpacityAnim->state() != QVariantAnimation::Running)
+        m_manageOpacityAnim->start();
+
     updateOverlayGeo();
 }
 
 void MainWindow::onHideBackupsRequest() {
-    m_blurEffect->setEnabled(false);
-    m_manageBackupsOverlay->setVisible(false);
+    if (m_manageOpacityAnim->direction() == QVariantAnimation::Forward)
+        m_manageOpacityAnim->setDirection(QVariantAnimation::Backward);
+
+    if (m_manageOpacityAnim->state() != QVariantAnimation::Running)
+        m_manageOpacityAnim->start();
+}
+
+void MainWindow::onOpacityAnimChange(const QVariant& value) {
+    m_manageOpacityEffect->setOpacity(value.toDouble());
+}
+
+void MainWindow::onOpacityAnimFinish() {
+    QVariant value = m_manageOpacityAnim->currentValue();
+    onOpacityAnimChange(value);
+
+    if (m_manageOpacityEffect->opacity() == 0.0) {
+        m_manageBackupsOverlay->setVisible(false);
+        m_blurEffect->setEnabled(false);
+    } else {
+        m_manageBackupsOverlay->refresh();
+    }
 }

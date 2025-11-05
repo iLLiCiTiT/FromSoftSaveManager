@@ -24,6 +24,8 @@ private slots:
     void onPathsConfigChange();
     void onShowBackupsRequest();
     void onHideBackupsRequest();
+    void onOpacityAnimChange(const QVariant& value);
+    void onOpacityAnimFinish();
 private:
     QString m_saveId;
     Controller* m_controller = nullptr;
@@ -33,6 +35,7 @@ private:
     std::unordered_map<QString, BaseGameWidget*> m_widgetsMapping;
     ManageBackupsOverlayWidget* m_manageBackupsOverlay = nullptr;
     QGraphicsBlurEffect* m_blurEffect = nullptr;
-
+    QGraphicsOpacityEffect* m_manageOpacityEffect = nullptr;
+    QVariantAnimation* m_manageOpacityAnim = nullptr;
     void updateOverlayGeo();
 };
