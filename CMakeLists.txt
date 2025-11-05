@@ -26,6 +26,7 @@ add_executable(FromSoftSaveManager
         src/parse/DSR/SaveFile.cpp
 
         src/resources/resources.qrc
+        src/resources/dsr_images.qrc
         src/ui/SquareButton.h
         src/ui/Utils.cpp
         src/ui/ConfigModel.cpp
@@ -47,20 +48,16 @@ add_executable(FromSoftSaveManager
         src/ui/SekiroWidget/SekiroWidget.cpp
         src/ui/ERWidget/ERWidget.cpp
 )
-if ((WIN32) AND (CMAKE_BUILD_TYPE MATCHES "Release"))
-    set_target_properties(FromSoftSaveManager PROPERTIES WIN32_EXECUTABLE TRUE)
-endif()
-
-add_library(resources_dsr SHARED)
-set_source_files_properties(src/resources/dsr_images.qrc PROPERTIES
-    QT_RESOURCE_ALIAS "dsr_images"
+add_library(inv_resources_dsr SHARED)
+set_source_files_properties(src/resources/dsr_inventory_images.qrc PROPERTIES
+    QT_RESOURCE_ALIAS "dsr_inventory_images"
 )
-set_target_properties(resources_dsr PROPERTIES PREFIX "")
-target_sources(resources_dsr PRIVATE
-        src/resources/dsr_images.qrc
-        src/resources/dsr_images_init.h
+set_target_properties(inv_resources_dsr PROPERTIES PREFIX "")
+target_sources(inv_resources_dsr PRIVATE
+        src/resources/dsr_inventory_images.qrc
+        src/resources/dsr_inventory_images_init.h
 )
-target_link_libraries(resources_dsr PUBLIC Qt::Core)
+target_link_libraries(inv_resources_dsr PUBLIC Qt::Core)
 
 target_link_libraries(FromSoftSaveManager
         Qt::Core
@@ -68,12 +65,21 @@ target_link_libraries(FromSoftSaveManager
         Qt::Widgets
         Qt::Concurrent
         tiny-aes
-        resources_dsr
 )
+
+if ((WIN32) AND (CMAKE_BUILD_TYPE MATCHES "Release"))
+    set_target_properties(FromSoftSaveManager PROPERTIES WIN32_EXECUTABLE TRUE)
+endif()
 
 if ((MSVC) AND (MSVC_VERSION GREATER_EQUAL 1914))
     target_compile_options(FromSoftSaveManager PUBLIC "-Zc:__cplusplus" "-permissive-")
 endif()
+
+add_custom_command(TARGET FromSoftSaveManager POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:inv_resources_dsr>
+        $<TARGET_FILE_DIR:FromSoftSaveManager>
+)
 
 if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     set(DEBUG_SUFFIX)

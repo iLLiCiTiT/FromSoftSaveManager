@@ -1,7 +1,6 @@
 #include <QApplication>
 #include <QFile>
 #include <QFontDatabase>
-#include "resources/dsr_images_init.h"
 #include "ui/MainWindow.h"
 #include "ui/Controller.h"
 

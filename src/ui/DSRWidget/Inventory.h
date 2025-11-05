@@ -48,6 +48,7 @@ private:
     QPixmap m_standPix;
     QPixmap m_inventoryBagPix;
     QPixmap m_bottomlessBoxPix;
+    int paintIcon(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const;
 };
 
 class DSRInventoryCategoryButton: public BaseClickableFrame {

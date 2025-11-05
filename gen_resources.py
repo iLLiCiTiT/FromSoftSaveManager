@@ -4,84 +4,98 @@ from pathlib import Path
 from xml.etree import ElementTree as xmlET
 
 CURRENT_DIR = Path(__file__).parent
-INDENTATION = 4
-INDENT_SPACES = " " * INDENTATION
-SINGLE_INDENT = f"\n{INDENT_SPACES}"
-DOUBLE_INDENT = f"\n{INDENT_SPACES}{INDENT_SPACES}"
+INDENT_SPACES = " " * 4
 
+DSR_INVENTORY_DIRS = {
+    "ammunition",
+    "armor",
+    "consumables",
+    "infusions",
+    "key_items",
+    "materials",
+    "rings",
+    "spells",
+    "weapons_shields",
+}
 
-def fill_dsr_files(
-    root: xmlET.Element,
-    ui_dir: Path,
-    dsr_dir: Path,
+def _fill_files(
+    queue: collections.deque[Path],
+    relative_dir: Path,
+    dst_element: xmlET.Element,
 ) -> None:
-    prev_item: xmlET.Element = root
-    dsr_resource: xmlET.Element | None = None
-    for item in root:
-        prev_item = item
-        if item.tag != "qresource":
+    filepaths: set[str] = set()
+    while queue:
+        path = queue.popleft()
+        if path.is_file():
+            relative_path = str(path.relative_to(relative_dir))
+            filepaths.add(relative_path.replace("\\", "/"))
             continue
-        if item.attrib.get("prefix") == "/dsr_images":
-            dsr_resource = item
-            break
 
-    if dsr_resource is None:
-        prev_item.tail = SINGLE_INDENT
-        dsr_resource: xmlET.Element = xmlET.Element(
-            "qresource", prefix="/dsr_images"
-        )
-        dsr_resource.text = DOUBLE_INDENT
-        dsr_resource.tail = "\n"
-        root.append(dsr_resource)
+        for child in path.iterdir():
+            queue.append(child)
 
-    file_r_by_path: dict[str, xmlET.Element] = {
-        file_r.text: file_r
-        for file_r in dsr_resource
-    }
-    dsr_files: set[str] = set()
-    dirs_queue: collections.deque[Path] = collections.deque()
-    dirs_queue.append(dsr_dir)
-    while dirs_queue:
-        dir_path = dirs_queue.popleft()
-        for path in dir_path.iterdir():
-            if path.is_file():
-                relative_path = str(path.relative_to(ui_dir))
-                dsr_files.add(relative_path.replace("\\", "/"))
-            else:
-                dirs_queue.append(path)
-
-    existing_paths = set(file_r_by_path.keys())
-    for path in existing_paths - dsr_files:
-        item: xmlET.Element = file_r_by_path.pop(path)
-        dsr_resource.remove(item)
-        existing_paths.discard(path)
-
-    last_item = None
-    for path in dsr_files - existing_paths:
+    for path in filepaths:
         alias: str = os.path.basename(path)
         item: xmlET.Element = xmlET.Element("file", alias=alias)
         item.text = path
-        item.tail = DOUBLE_INDENT
-        last_item = item
-        dsr_resource.append(item)
+        dst_element.append(item)
 
-    if last_item is not None:
-        last_item.tail = SINGLE_INDENT
+
+def fill_dsr_files(
+    common_root: xmlET.Element,
+    inventory_root: xmlET.Element,
+    resources_dir: Path,
+    dsr_dir: Path,
+) -> None:
+    dsr_images_el: xmlET.Element = xmlET.Element(
+        "qresource", prefix="/dsr_images"
+    )
+    common_root.append(dsr_images_el)
+
+    dsr_inv_images_el: xmlET.Element = xmlET.Element(
+        "qresource", prefix="/dsr_inv_images"
+    )
+    inventory_root.append(dsr_inv_images_el)
+
+    common_res_dir_queue: collections.deque[Path] = collections.deque()
+    inventory_res_dir_queue: collections.deque[Path] = collections.deque()
+    for path in dsr_dir.iterdir():
+        if path.name in DSR_INVENTORY_DIRS:
+            inventory_res_dir_queue.append(path)
+        else:
+            common_res_dir_queue.append(path)
+
+    _fill_files(
+        common_res_dir_queue,
+        resources_dir,
+        dsr_images_el,
+    )
+    _fill_files(
+        inventory_res_dir_queue,
+        resources_dir,
+        dsr_inv_images_el,
+    )
 
 
 def main() -> None:
-    ui_dir = CURRENT_DIR / "src" / "ui"
-    resources_dir = ui_dir / "resources"
+    resources_dir = CURRENT_DIR / "src" / "resources"
     images_dir = resources_dir / "images"
     dsr_dir = images_dir / "dsr"
+    images_rsc_path = resources_dir / "dsr_images.qrc"
+    inv_images_rsc_path = resources_dir / "dsr_inventory_images.qrc"
 
-    resources_path = ui_dir / "resources.qrc"
-    tree = xmlET.parse(resources_path)
-    root = tree.getroot()
+    common_root = xmlET.Element("RCC")
+    common_tree: xmlET.ElementTree = xmlET.ElementTree(common_root)
 
-    fill_dsr_files(root, ui_dir, dsr_dir)
+    inventory_root = xmlET.Element("RCC")
+    inventory_tree: xmlET.ElementTree = xmlET.ElementTree(inventory_root)
 
-    tree.write(str(resources_path), encoding="utf-8")
+    fill_dsr_files(common_root, inventory_root, resources_dir, dsr_dir)
+
+    xmlET.indent(common_root, INDENT_SPACES)
+    xmlET.indent(inventory_root, INDENT_SPACES)
+    common_tree.write(str(images_rsc_path), encoding="utf-8")
+    inventory_tree.write(str(inv_images_rsc_path), encoding="utf-8")
 
 
 if __name__ == "__main__":

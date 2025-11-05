@@ -1,11 +1,25 @@
 #pragma once
 
 #include <qevent.h>
+#include <QLibrary>
 #include <QSpinBox>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QUuid>
+
+
+static bool tryLoadDsrResources() {
+    QLibrary lib("inv_resources_dsr");
+    return lib.load();
+}
+
+namespace {
+    bool g_dsrResourcesLoaded = tryLoadDsrResources();
+}
+
+inline bool hasDSRInventoryResources() {return g_dsrResourcesLoaded;}
+
 // TODO add path related helpers
 // - e.g. join using 'std::filesystem::path'
 

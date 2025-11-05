@@ -53,6 +53,48 @@ void InventoryModel::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* char
         rootItem->appendRows(newItems);
 };
 
+static QPixmap getInfusionIcon(const uint16_t& infusion, const uint8_t& upgradeLevel) {
+    if (!hasDSRInventoryResources()) return QPixmap{};
+    switch (infusion) {
+        case 100:
+            return QPixmap(":/dsr_inv_images/crystal.png");
+        case 200:
+            return QPixmap(":/dsr_inv_images/lightning.png");
+        case 300:
+            return QPixmap(":/dsr_inv_images/raw.png");
+        case 400:
+            if (upgradeLevel >= 5)
+                return QPixmap(":/dsr_inv_images/magic_2.png");
+            return QPixmap(":/dsr_inv_images/magic.png");
+        case 500:
+            return QPixmap(":/dsr_inv_images/enchanted.png");
+        case 600:
+            if (upgradeLevel >= 5)
+                return QPixmap(":/dsr_inv_images/divine_2.png");
+            return QPixmap(":/dsr_inv_images/divine.png");
+        case 700:
+            return QPixmap(":/dsr_inv_images/occult.png");
+        case 800:
+            if (upgradeLevel >= 5)
+                return QPixmap(":/dsr_inv_images/fire_2.png");
+            return QPixmap(":/dsr_inv_images/fire.png");
+
+        case 900:
+            return QPixmap(":/dsr_inv_images/chaos.png");
+        default:
+            return QPixmap{};
+    }
+}
+
+static QPixmap getItemImage(const std::string_view& image) {
+    if (!hasDSRInventoryResources()) return QPixmap{};
+
+    QString imagePath = QString::fromStdString(":/dsr_inv_images/");
+    imagePath.append(QString::fromStdString(image.data()));
+    imagePath.append(QString::fromStdString(".png"));
+    return QPixmap(imagePath);
+}
+
 QStandardItem* InventoryModel::createModelItem(fssm::parse::dsr::InventoryItem& inventoryItem) {
     if (!inventoryItem.knownItem) return createUnknownItem(inventoryItem);
     // Skip fist
@@ -70,51 +112,8 @@ QStandardItem* InventoryModel::createModelItem(fssm::parse::dsr::InventoryItem& 
         }
     }
 
-    QPixmap infusionPix;
-    switch (inventoryItem.infusion) {
-        case 100:
-            infusionPix = QPixmap(":/dsr_images/crystal.png");
-            break;
-        case 200:
-            infusionPix = QPixmap(":/dsr_images/lightning.png");
-            break;
-        case 300:
-            infusionPix = QPixmap(":/dsr_images/raw.png");
-            break;
-        case 400:
-            if (inventoryItem.upgradeLevel >= 5)
-                infusionPix = QPixmap(":/dsr_images/magic_2.png");
-            else
-                infusionPix = QPixmap(":/dsr_images/magic.png");
-            break;
-        case 500:
-            infusionPix = QPixmap(":/dsr_images/enchanted.png");
-            break;
-        case 600:
-            if (inventoryItem.upgradeLevel >= 5)
-                infusionPix = QPixmap(":/dsr_images/divine_2.png");
-            else
-                infusionPix = QPixmap(":/dsr_images/divine.png");
-            break;
-        case 700:
-            infusionPix = QPixmap(":/dsr_images/occult.png");
-            break;
-        case 800:
-            if (inventoryItem.upgradeLevel >= 5)
-                infusionPix = QPixmap(":/dsr_images/fire_2.png");
-            else
-                infusionPix = QPixmap(":/dsr_images/fire.png");
-            break;
-        case 900:
-            infusionPix = QPixmap(":/dsr_images/chaos.png");
-            break;
-        default:
-            break;
-    }
-
-    QString imagePath = QString::fromStdString(":/dsr_images/");
-    imagePath.append(QString::fromStdString(inventoryItem.baseItem.image.data()));
-    imagePath.append(QString::fromStdString(".png"));
+    QPixmap infusionPix = getInfusionIcon(inventoryItem.infusion, inventoryItem.upgradeLevel);
+    QPixmap itemImage = getItemImage(inventoryItem.baseItem.image);
 
     QStandardItem* item = new QStandardItem(QString::fromStdString(inventoryItem.baseItem.label.data()));
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
@@ -125,7 +124,7 @@ QStandardItem* InventoryModel::createModelItem(fssm::parse::dsr::InventoryItem& 
     item->setData(inventoryItem.durability, ITEM_DURABILITY_ROLE);
     item->setData(0, ITEM_AMOUNT_ROLE);
     item->setData(0, ITEM_BOTOMLESS_BOX_AMOUNT_ROLE);
-    item->setData(QPixmap(imagePath), ITEM_IMAGE_ROLE);
+    item->setData(itemImage, ITEM_IMAGE_ROLE);
     item->setData(QString::fromStdString(inventoryItem.baseItem.category.data()), ITEM_CATEGORY_ROLE);
     return item;
 };
@@ -178,13 +177,11 @@ InventoryDelegate::InventoryDelegate(QObject* parent): QStyledItemDelegate(paren
     m_standPix = QPixmap(":/dsr_images/inventory_stand.png");
     m_inventoryBagPix = QPixmap(":/dsr_images/inventory_bag.png");
     m_bottomlessBoxPix = QPixmap(":/dsr_images/bottomless_box.png");
-};
-void InventoryDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const {
-    QStyleOptionViewItem opt = option;
-    initStyleOption(&opt, index);
-    const QStyle* style = (option.widget ? option.widget->style() : QApplication::style())->proxy();
+}
 
-    style->drawPrimitive(QStyle::PE_PanelItemViewItem, &opt, painter, option.widget);
+int InventoryDelegate::paintIcon(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const {
+    int textOffset = 20;
+    if (!hasDSRInventoryResources()) return textOffset;
 
     QVariant pixmapValue = index.data(ITEM_IMAGE_ROLE);
     QPixmap pixmap;
@@ -211,7 +208,7 @@ void InventoryDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
 
     QRect iconRect = option.rect;
     iconRect.setWidth(pixmap.width());
-    int textOffset = iconRect.right() + 20;
+    textOffset += iconRect.right();
     iconRect.adjust(10, 10, 10, -10);
 
     QRect standRect = QRect(
@@ -245,6 +242,17 @@ void InventoryDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
         );
         painter->drawPixmap(infusionRect, infusionIcon);
     }
+    return textOffset;
+}
+
+void InventoryDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const {
+    QStyleOptionViewItem opt = option;
+    initStyleOption(&opt, index);
+    const QStyle* style = (option.widget ? option.widget->style() : QApplication::style())->proxy();
+
+    style->drawPrimitive(QStyle::PE_PanelItemViewItem, &opt, painter, option.widget);
+    
+    int textOffset = paintIcon(painter, option, index);
 
     QString label = index.data(Qt::DisplayRole).toString();
     QVariant levelValue = index.data(ITEM_LEVEL_ROLE);
