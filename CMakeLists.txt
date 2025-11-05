@@ -6,9 +6,6 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-include_directories(
-    vendor/nlohmann_json)
-
 find_package(Qt6 COMPONENTS
         Core
         Gui
@@ -16,15 +13,17 @@ find_package(Qt6 COMPONENTS
         Concurrent
         REQUIRED)
 
+
+include_directories(vendor/nlohmann_json)
 # Add the vendor tiny-AES-c as a subdirectory (uses its own CMakeLists)
 add_subdirectory(vendor/tiny-AES-c)
 
 add_executable(FromSoftSaveManager
         src/main.cpp
+        src/parse/Utils.cpp
         src/parse/SL2File.cpp
         src/parse/DSR/Items.cpp
         src/parse/DSR/SaveFile.cpp
-        src/parse/Utils.cpp
 
         src/resources/resources.qrc
         src/ui/SquareButton.h
@@ -48,6 +47,9 @@ add_executable(FromSoftSaveManager
         src/ui/SekiroWidget/SekiroWidget.cpp
         src/ui/ERWidget/ERWidget.cpp
 )
+if ((WIN32) AND (CMAKE_BUILD_TYPE MATCHES "Release"))
+    set_target_properties(FromSoftSaveManager PROPERTIES WIN32_EXECUTABLE TRUE)
+endif()
 
 add_library(resources_dsr SHARED)
 set_source_files_properties(src/resources/dsr_images.qrc PROPERTIES
