@@ -9,21 +9,28 @@
 #include <QUuid>
 
 
-static bool tryLoadDsrResources() {
+inline bool tryLoadDsrResources() {
     QLibrary lib("inv_resources_dsr");
+    return lib.load();
+}
+
+inline bool tryLoadDs3Resources() {
+    QLibrary lib("inv_resources_ds3");
     return lib.load();
 }
 
 namespace {
     bool g_dsrResourcesLoaded = tryLoadDsrResources();
+    bool g_ds3ResourcesLoaded = tryLoadDs3Resources();
 }
 
 inline bool hasDSRInventoryResources() {return g_dsrResourcesLoaded;}
+inline bool hasDS3InventoryResources() {return g_ds3ResourcesLoaded;}
 
 // TODO add path related helpers
 // - e.g. join using 'std::filesystem::path'
 
-static std::string generateUUID() {
+inline std::string generateUUID() {
     QUuid uuid = QUuid::createUuid();
     QString s = uuid.toString(QUuid::WithoutBraces);
     return s.toStdString();

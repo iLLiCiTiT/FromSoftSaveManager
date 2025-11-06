@@ -29,6 +29,7 @@ add_executable(FromSoftSaveManager
 
         src/resources/resources.qrc
         src/resources/dsr_images.qrc
+        src/resources/ds3_images.qrc
         src/ui/SquareButton.h
         src/ui/Utils.cpp
         src/ui/ConfigModel.cpp
@@ -50,16 +51,6 @@ add_executable(FromSoftSaveManager
         src/ui/SekiroWidget/SekiroWidget.cpp
         src/ui/ERWidget/ERWidget.cpp
 )
-add_library(inv_resources_dsr SHARED)
-set_source_files_properties(src/resources/dsr_inventory_images.qrc PROPERTIES
-    QT_RESOURCE_ALIAS "dsr_inventory_images"
-)
-set_target_properties(inv_resources_dsr PROPERTIES PREFIX "")
-target_sources(inv_resources_dsr PRIVATE
-        src/resources/dsr_inventory_images.qrc
-        src/resources/dsr_inventory_images_init.h
-)
-target_link_libraries(inv_resources_dsr PUBLIC Qt::Core)
 
 target_link_libraries(FromSoftSaveManager
         Qt::Core
@@ -68,6 +59,32 @@ target_link_libraries(FromSoftSaveManager
         Qt::Concurrent
         tiny-aes
 )
+
+# --- DSR inventory resources ---
+add_library(inv_resources_dsr SHARED)
+set_source_files_properties(src/resources/dsr_inventory_images.qrc PROPERTIES
+    QT_RESOURCE_ALIAS "dsr_inventory_images"
+)
+set_target_properties(inv_resources_dsr PROPERTIES PREFIX "")
+target_sources(inv_resources_dsr PRIVATE
+    src/resources/dsr_inventory_images.qrc
+    src/resources/dsr_inventory_images_init.h
+)
+target_link_libraries(inv_resources_dsr PUBLIC Qt::Core)
+# -------------------------------
+
+# --- DS3 inventory resources ---
+add_library(inv_resources_ds3 SHARED)
+set_source_files_properties(src/resources/ds3_inventory_images.qrc PROPERTIES
+    QT_RESOURCE_ALIAS "ds3_inventory_images"
+)
+set_target_properties(inv_resources_ds3 PROPERTIES PREFIX "")
+target_sources(inv_resources_ds3 PRIVATE
+    src/resources/ds3_inventory_images.qrc
+    src/resources/ds3_inventory_images_init.h
+)
+target_link_libraries(inv_resources_ds3 PUBLIC Qt::Core)
+# -------------------------------
 
 if ((WIN32) AND (CMAKE_BUILD_TYPE MATCHES "Release"))
     set_target_properties(FromSoftSaveManager PROPERTIES WIN32_EXECUTABLE TRUE)
