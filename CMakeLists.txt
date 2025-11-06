@@ -24,6 +24,8 @@ add_executable(FromSoftSaveManager
         src/parse/SL2File.cpp
         src/parse/DSR/Items.cpp
         src/parse/DSR/SaveFile.cpp
+        src/parse/DS3/Items.cpp
+        src/parse/DS3/SaveFile.cpp
 
         src/resources/resources.qrc
         src/resources/dsr_images.qrc
