@@ -251,7 +251,7 @@ void InventoryDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
     const QStyle* style = (option.widget ? option.widget->style() : QApplication::style())->proxy();
 
     style->drawPrimitive(QStyle::PE_PanelItemViewItem, &opt, painter, option.widget);
-    
+
     int textOffset = paintIcon(painter, option, index);
 
     QString label = index.data(Qt::DisplayRole).toString();

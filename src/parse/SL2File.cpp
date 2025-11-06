@@ -134,6 +134,7 @@ SL2File parse_sl2_file(const std::string& input_sl2_file) {
 
         int ns = static_cast<int>(eh.entry_name_offset);
         std::vector<uint8_t> name_b;
+        // TODO use u16 string all the time
         std::string name;
         name_b.assign(content.begin() + ns, content.begin() + ns + 26);
         if (utf16) {

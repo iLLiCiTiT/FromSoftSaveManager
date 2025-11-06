@@ -3,6 +3,7 @@
 #include <iostream>
 #include <locale>
 #include <optional>
+#include "../Utils.h"
 
 namespace fssm::parse::dsr {
     uint32_t bytes_to_u32(const std::vector<uint8_t>& b, const uint32_t& offset)
@@ -65,14 +66,7 @@ namespace fssm::parse::dsr {
             std::vector<uint8_t> name_b;
             name_b.assign(c.begin() + 244, c.begin() + 268);
 
-            std::u16string name;
-            for (size_t i = 0; i + 1 < name_b.size(); i += 2) {
-                char16_t ch = static_cast<char16_t>(name_b[i] | (static_cast<char16_t>(name_b[i + 1]) << 8));
-                if (ch == 0) break;
-                name.push_back(ch);
-            }
-
-            ci.name = name;
+            ci.name = parse_name(name_b);
 
             // uint32_t lRingSlotItemType = bytes_to_u32(c, 712);
             // uint32_t rRingSlotItemType = bytes_to_u32(c, 716);

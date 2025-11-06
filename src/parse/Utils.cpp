@@ -38,4 +38,14 @@ namespace fssm::parse {
         std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> conv;
         return conv.to_bytes(s);
     }
+
+    std::u16string parse_name(const std::vector<uint8_t>& name_b) {
+        std::u16string name;
+        for (size_t i = 0; i + 1 < name_b.size(); i += 2) {
+            char16_t ch = static_cast<char16_t>(name_b[i] | (static_cast<char16_t>(name_b[i + 1]) << 8));
+            if (ch == 0) break;
+            name.push_back(ch);
+        }
+        return name;
+    }
 }
