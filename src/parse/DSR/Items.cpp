@@ -1,7 +1,5 @@
 #include "Items.h"
 
-#include <cassert>
-
 namespace fssm::parse::dsr {
     const std::array<BaseItem, 708> ALL_ITEMS = {
         BaseItem{100, 536870912, 1, "rings", "havels_ring", "Havel's Ring"},
