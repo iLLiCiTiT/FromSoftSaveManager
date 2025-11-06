@@ -176,6 +176,26 @@ DSRCharInfoResult Controller::getDsrCharacters(const QString& saveId) const {
     };
 }
 
+DS3CharInfoResult Controller::getDs3Characters(const QString& saveId) const {
+    QString r_savePath = m_configModel->getSavePathItem(saveId);
+    if (r_savePath.isEmpty()) return {
+        "Save file path is not set.",
+        std::vector<fssm::parse::ds3::DS3CharacterInfo> {},
+    };
+    std::string savePath = r_savePath.toStdString();
+    if (!std::filesystem::exists(savePath)) return {
+        "Save file does not exist.",
+        std::vector<fssm::parse::ds3::DS3CharacterInfo> {},
+    };
+    fssm::parse::SL2File sl2_dsr = fssm::parse::parse_sl2_file(savePath);
+    fssm::parse::ds3::DS3SaveFile ds3 = fssm::parse::ds3::parse_ds3_file(sl2_dsr);
+
+    return {
+        "",
+        ds3.characters
+    };
+}
+
 void Controller::openBackupDir() {
     if (m_currentSaveId.isEmpty()) return;
     auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
