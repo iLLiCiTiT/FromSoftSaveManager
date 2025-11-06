@@ -10,10 +10,14 @@ namespace {
 
 namespace fssm::ui::dsr {
 CovenantsWidget::CovenantsWidget(QWidget* parent): QWidget(parent) {
+    setAttribute(Qt::WA_TranslucentBackground, true);
+
     QWidget* wrapperWidget = new QWidget(this);
+    wrapperWidget->setAttribute(Qt::WA_TranslucentBackground, true);
 
     QLabel* headerWidget = new QLabel("Covenant levels", wrapperWidget);
     headerWidget->setAlignment(Qt::AlignCenter);
+    headerWidget->setAttribute(Qt::WA_TranslucentBackground, true);
 
     QLabel* wosLabel = new QLabel("Warrior of Sunlight", wrapperWidget);
     m_wosWidget = new QLabel("0", wrapperWidget);
@@ -46,6 +50,8 @@ CovenantsWidget::CovenantsWidget(QWidget* parent): QWidget(parent) {
         int row = wrapperLayout->rowCount();
         labelW->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
         valueW->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        labelW->setAttribute(Qt::WA_TranslucentBackground, true);
+        valueW->setAttribute(Qt::WA_TranslucentBackground, true);
         wrapperLayout->addWidget(labelW, row, 0);
         wrapperLayout->addWidget(valueW, row, 1);
     }

@@ -309,10 +309,12 @@ QSize InventoryDelegate::sizeHint(const QStyleOptionViewItem& option, const QMod
 }
 
 DSRInventoryCategoryButton::DSRInventoryCategoryButton(const QString& category, QWidget* parent): BaseClickableFrame(parent), m_category(category) {
+    setAttribute(Qt::WA_TranslucentBackground, true);
     m_pix = QPixmap(":/dsr_images/inventory_" + category + ".png");
     m_hoverPix = QPixmap(":/dsr_images/inventory_" + category + "_hover.png");
     m_imageLabel = new PixmapLabel(m_pix, this);
     m_imageLabel->setObjectName("dsr_category_icon");
+    m_imageLabel->setAttribute(Qt::WA_TranslucentBackground, true);
 
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->setContentsMargins(5, 5, 5, 5);
@@ -355,6 +357,7 @@ void CategoryButtonOverlay::paintEvent(QPaintEvent* event) {
 }
 
 CategoryButtons::CategoryButtons(QWidget* parent): QWidget(parent) {
+    setAttribute(Qt::WA_TranslucentBackground, true);
     m_overlayWidget = new CategoryButtonOverlay(this);
 
     QHBoxLayout* layout = new QHBoxLayout(this);
@@ -419,6 +422,7 @@ void CategoryButtons::onAnimfinished() {
 }
 
 InventoryWidget::InventoryWidget(QWidget* parent): QWidget(parent) {
+    setAttribute(Qt::WA_TranslucentBackground, true);
     m_categoryBtns = new CategoryButtons(this);
 
     m_view = new QListView(this);
@@ -426,6 +430,7 @@ InventoryWidget::InventoryWidget(QWidget* parent): QWidget(parent) {
     m_view->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_view->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     m_view->verticalScrollBar()->setSingleStep(15);
+    m_view->setAttribute(Qt::WA_TranslucentBackground, true);
 
     m_delegate = new InventoryDelegate(this);
     m_view->setItemDelegate(m_delegate);

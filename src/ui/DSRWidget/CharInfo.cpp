@@ -13,10 +13,14 @@ struct WidgetsHelper {
 namespace fssm::ui::dsr {
 
 CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
+    setAttribute(Qt::WA_TranslucentBackground, true);
+
     QWidget* attributesWidget = new QWidget(this);
+    attributesWidget->setAttribute(Qt::WA_TranslucentBackground, true);
 
     m_nameValueWidget = new QLabel("< Empty >", attributesWidget);
     m_nameValueWidget->setAlignment(Qt::AlignCenter);
+    m_nameValueWidget->setAttribute(Qt::WA_TranslucentBackground, true);
 
     QLabel* covenantLabelWidget = new QLabel("Covenant", attributesWidget);
     m_covenantValueWidget = new QLabel(attributesWidget);
@@ -87,7 +91,10 @@ CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
         int row = attributesLayout->rowCount();
         labelW->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
         valueW->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        labelW->setAttribute(Qt::WA_TranslucentBackground, true);
+        valueW->setAttribute(Qt::WA_TranslucentBackground, true);
         if (iconW != nullptr) {
+            iconW->setAttribute(Qt::WA_TranslucentBackground, true);
             attributesLayout->addWidget(iconW, row, 0);
         }
         attributesLayout->addWidget(labelW, row, 1, 1, (iconW == nullptr) ? 2 : 1);
@@ -100,6 +107,7 @@ CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
     attributesLayout->setColumnStretch(2, 1);
 
     QWidget* statsWidget = new QWidget(this);
+    statsWidget->setAttribute(Qt::WA_TranslucentBackground, true);
 
     QLabel* hollowLabel = new QLabel("State", statsWidget);
     m_hollowValueWidget = new QLabel(statsWidget);
@@ -154,7 +162,10 @@ CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
         int row = statsLayout->rowCount();
         labelW->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
         valueW->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        labelW->setAttribute(Qt::WA_TranslucentBackground, true);
+        valueW->setAttribute(Qt::WA_TranslucentBackground, true);
         if (iconW != nullptr) {
+            iconW->setAttribute(Qt::WA_TranslucentBackground, true);
             statsLayout->addWidget(iconW, row, 0);
         }
         statsLayout->addWidget(labelW, row, (iconW == nullptr) ? 0 : 1, 1, (iconW == nullptr) ? 2 : 1);

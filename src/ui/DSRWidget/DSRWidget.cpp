@@ -71,6 +71,7 @@ DSRWidget::DSRWidget(Controller* controller, const QString& saveId, QWidget* par
     : BaseGameWidget(controller, saveId, parent)
 {
     QWidget* viewWrap = new QWidget(this);
+    viewWrap->setAttribute(Qt::WA_TranslucentBackground, true);
 
     m_view = new QListView(viewWrap);
     m_view->setObjectName("ds_list_view");

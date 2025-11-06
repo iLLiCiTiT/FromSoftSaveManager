@@ -215,9 +215,6 @@ ERAttributesLabel QLabel {
 }
 
 /* Dark Souls: Remastered specific styles */
-DSRWidget QWidget {
-    background: transparent;
-}
 DSRWidget QScrollBar::handle:vertical, DSRWidget QScrollBar::handle:horizontal {
     background: #6B2E0E;
     border-radius: 0px;
