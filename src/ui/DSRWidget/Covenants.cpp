@@ -1,12 +1,14 @@
 #include "Covenants.h"
 #include <QGridLayout>
 
-namespace fssm::ui::dsr {
-struct WidgetsHelper {
-    QLabel* labelW;
-    QLabel* valueW;
-};
+namespace {
+    struct WidgetsHelper {
+        QLabel* labelW;
+        QLabel* valueW;
+    };
+}
 
+namespace fssm::ui::dsr {
 CovenantsWidget::CovenantsWidget(QWidget* parent): QWidget(parent) {
     QWidget* wrapperWidget = new QWidget(this);
 

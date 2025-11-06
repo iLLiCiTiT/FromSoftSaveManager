@@ -2,13 +2,15 @@
 
 #include "../Utils.h"
 #include "../../parse/Parse.h"
-
-namespace fssm::ui::dsr {
+namespace {
 struct WidgetsHelper {
     QLabel* labelW;
     QLabel* valueW;
     PixmapLabel* iconW;
 };
+}
+
+namespace fssm::ui::dsr {
 
 CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
     QWidget* attributesWidget = new QWidget(this);
