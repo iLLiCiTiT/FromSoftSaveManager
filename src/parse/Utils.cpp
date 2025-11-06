@@ -7,6 +7,12 @@
 #include "Utils.h"
 
 namespace fssm::parse {
+    uint8_t read_u8_le(const uint8_t* p) {
+        uint8_t v;
+        std::memcpy(&v, p, sizeof(v));
+        return v;
+    }
+
     uint32_t read_u32_le(const uint8_t* p) {
         uint32_t v;
         std::memcpy(&v, p, sizeof(v));
