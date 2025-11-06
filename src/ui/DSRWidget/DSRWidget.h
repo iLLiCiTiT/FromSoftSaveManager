@@ -8,9 +8,9 @@
 #include "../Utils.h"
 #include "../../parse/Parse.h"
 
+namespace fssm::ui::dsr{
 const int CHAR_ID_ROLE = Qt::UserRole + 1;
 const int CHAR_NAME_ROLE = Qt::UserRole + 2;
-
 
 class CharsListModel: public QStandardItemModel {
     Q_OBJECT
@@ -26,7 +26,7 @@ private:
     QString m_saveId;
     Controller* m_controller;
 };
-
+}
 
 class DSRWidget: public BaseGameWidget {
     Q_OBJECT
@@ -39,10 +39,10 @@ private slots:
     void onSelectionChange(const QItemSelection &selected, const QItemSelection &deselected);
 private:
     QPixmap m_bgPix;
-    CharsListModel* m_model;
+    fssm::ui::dsr::CharsListModel* m_model;
     QListView* m_view;
     TabWidget* m_charTabs;
-    CovenantsWidget* m_covenantsWidget;
-    CharacterInfoWidget* m_charInfoWidget;
-    InventoryWidget* m_inventoryWidget;
+    fssm::ui::dsr::CovenantsWidget* m_covenantsWidget;
+    fssm::ui::dsr::CharacterInfoWidget* m_charInfoWidget;
+    fssm::ui::dsr::InventoryWidget* m_inventoryWidget;
 };

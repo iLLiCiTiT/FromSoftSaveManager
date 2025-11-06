@@ -1,12 +1,11 @@
 #include "Covenants.h"
 #include <QGridLayout>
 
-namespace {
-    struct WidgetsHelper {
-        QLabel* labelW;
-        QLabel* valueW;
-    };
-}
+namespace fssm::ui::dsr {
+struct WidgetsHelper {
+    QLabel* labelW;
+    QLabel* valueW;
+};
 
 CovenantsWidget::CovenantsWidget(QWidget* parent): QWidget(parent) {
     QWidget* wrapperWidget = new QWidget(this);
@@ -55,7 +54,7 @@ CovenantsWidget::CovenantsWidget(QWidget* parent): QWidget(parent) {
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(wrapperWidget, 1);
     layout->addStretch(1);
-};
+}
 
 void CovenantsWidget::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo) {
     // Skip 3 covenants that don't have a way how to level
@@ -74,5 +73,5 @@ void CovenantsWidget::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* cha
         valueW->setText(value);
         idx += 1;
     }
-};
-
+}
+}

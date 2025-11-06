@@ -3,6 +3,7 @@
 #include <QLabel>
 #include "../../parse/Parse.h"
 
+namespace fssm::ui::dsr {
 class CharacterStatusWidget: public QWidget {
     Q_OBJECT
 public:
@@ -44,3 +45,4 @@ public:
 private:
     CharacterStatusWidget* m_statusWidget = nullptr;
 };
+}

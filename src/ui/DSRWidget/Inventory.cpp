@@ -12,8 +12,8 @@
 #include "../Utils.h"
 #include "../../parse/Parse.h"
 
-InventoryModel::InventoryModel(QObject* parent): QStandardItemModel(parent) {};
-
+namespace fssm::ui::dsr {
+InventoryModel::InventoryModel(QObject* parent): QStandardItemModel(parent) {}
 
 void InventoryModel::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo) {
     QStandardItem* rootItem = invisibleRootItem();
@@ -51,7 +51,7 @@ void InventoryModel::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* char
 
     if (!newItems.isEmpty())
         rootItem->appendRows(newItems);
-};
+}
 
 static QPixmap getInfusionIcon(const uint16_t& infusion, const uint8_t& upgradeLevel) {
     if (!hasDSRInventoryResources()) return QPixmap{};
@@ -127,7 +127,7 @@ QStandardItem* InventoryModel::createModelItem(fssm::parse::dsr::InventoryItem& 
     item->setData(itemImage, ITEM_IMAGE_ROLE);
     item->setData(QString::fromStdString(inventoryItem.baseItem.category.data()), ITEM_CATEGORY_ROLE);
     return item;
-};
+}
 QStandardItem* InventoryModel::createUnknownItem(fssm::parse::dsr::InventoryItem& inventoryItem) {
     QStandardItem* item = new QStandardItem();
     QString label;
@@ -143,34 +143,34 @@ QStandardItem* InventoryModel::createUnknownItem(fssm::parse::dsr::InventoryItem
     item->setData(QVariant(QString::fromStdString(inventoryItem.baseItem.category.data())), ITEM_CATEGORY_ROLE);
     item->setData(QPixmap(":/dsr_images/unknown.png"), ITEM_IMAGE_ROLE);
     return item;
-};
+}
 
 
 InventoryProxyModel::InventoryProxyModel(QObject *parent): QSortFilterProxyModel(parent) {
     setSortCaseSensitivity(Qt::CaseInsensitive);
     setFilterCaseSensitivity(Qt::CaseInsensitive);
-};
+}
 
 void InventoryProxyModel::setCategory(QString category) {
     if (category == m_category) return;
     beginFilterChange();
     m_category = category;
     endFilterChange(Direction::Rows);
-};
+}
 
 bool InventoryProxyModel::lessThan(const QModelIndex &sourceLeft, const QModelIndex &sourceRight) const {
     int left = sourceLeft.data(ITEM_ORDER_ROLE).toInt();
     int right = sourceRight.data(ITEM_ORDER_ROLE).toInt();
     if (left != right) return left < right;
     return QSortFilterProxyModel::lessThan(sourceLeft, sourceRight);
-};
+}
 
 bool InventoryProxyModel::filterAcceptsRow(int source_row, const QModelIndex &source_parent) const {
     if (m_category.isEmpty()) return true;
     QModelIndex index = sourceModel()->index(source_row, 0, source_parent);
     QString category = index.data(ITEM_CATEGORY_ROLE).toString();
     return category == m_category;
-};
+}
 
 
 InventoryDelegate::InventoryDelegate(QObject* parent): QStyledItemDelegate(parent) {
@@ -302,12 +302,11 @@ void InventoryDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
 
     amountRect.moveLeft(pos.x());
     painter->drawText(amountRect, Qt::AlignLeft | Qt::AlignVCenter, bottomlessBoxText);
-};
+}
 
 QSize InventoryDelegate::sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const {
     return QSize(260, 80);
-};
-
+}
 
 DSRInventoryCategoryButton::DSRInventoryCategoryButton(const QString& category, QWidget* parent): BaseClickableFrame(parent), m_category(category) {
     m_pix = QPixmap(":/dsr_images/inventory_" + category + ".png");
@@ -318,7 +317,7 @@ DSRInventoryCategoryButton::DSRInventoryCategoryButton(const QString& category, 
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->setContentsMargins(5, 5, 5, 5);
     layout->addWidget(m_imageLabel, 1);
-};
+}
 void DSRInventoryCategoryButton::setSelected(bool selected) {
     if (selected == m_isSelected) return;
     m_isSelected = selected;
@@ -327,33 +326,33 @@ void DSRInventoryCategoryButton::setSelected(bool selected) {
     } else {
         m_imageLabel->setSourcePixmap(m_pix);
     }
-};
+}
 void DSRInventoryCategoryButton::enterEvent(QEnterEvent *event) {
     m_isHovered = true;
     if (!m_isSelected) {
         m_imageLabel->setSourcePixmap(m_hoverPix);
     }
-};
+}
 void DSRInventoryCategoryButton::leaveEvent(QEvent *event) {
     m_isHovered = false;
     if (!m_isSelected) {
         m_imageLabel->setSourcePixmap(m_pix);
     }
 
-};
+}
 void DSRInventoryCategoryButton::onMouseRelease() {
     emit clicked(m_category);
-};
+}
 
 CategoryButtonOverlay::CategoryButtonOverlay(QWidget* parent): QWidget(parent) {
     m_bgPix = QPixmap(":/dsr_images/inventory_overlay.png");
 
-};
+}
 void CategoryButtonOverlay::paintEvent(QPaintEvent* event) {
     QPainter painter = QPainter(this);
     painter.setRenderHint(QPainter::Antialiasing);
     painter.drawPixmap(0, 0, m_bgPix.scaled(width(), height(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-};
+}
 
 CategoryButtons::CategoryButtons(QWidget* parent): QWidget(parent) {
     m_overlayWidget = new CategoryButtonOverlay(this);
@@ -387,10 +386,10 @@ CategoryButtons::CategoryButtons(QWidget* parent): QWidget(parent) {
     m_overlayAnim->setDuration(100);
     connect(m_overlayAnim, SIGNAL(valueChanged(QVariant)), this, SLOT(onAnimValueChange(QVariant)));
     connect(m_overlayAnim, SIGNAL(finished()), this, SLOT(onAnimfinished()));
-};
+}
 QString CategoryButtons::getCategory() {
     return m_category;
-};
+}
 void CategoryButtons::setCategory(QString category) {
     if (m_category == category) return;
     m_categoryMapping[m_category]->setSelected(false);
@@ -403,22 +402,21 @@ void CategoryButtons::setCategory(QString category) {
     m_overlayAnim->setStartValue(m_overlayWidget->pos());
     m_overlayAnim->setEndValue(m_categoryMapping[m_category]->pos());
     m_overlayAnim->start();
-
-};
+}
 void CategoryButtons::showEvent(QShowEvent* event) {
     m_overlayWidget->setGeometry(m_categoryMapping[m_category]->geometry());
     m_overlayWidget->raise();
-};
+}
 void CategoryButtons::resizeEvent(QResizeEvent *event) {
     QWidget::resizeEvent(event);
     m_overlayWidget->resize(m_categoryMapping[m_category]->size());
-};
+}
 void CategoryButtons::onAnimValueChange(QVariant posValue) {
     m_overlayWidget->move(posValue.toPoint());
-};
+}
 void CategoryButtons::onAnimfinished() {
     m_overlayWidget->move(m_overlayAnim->endValue().toPoint());
-};
+}
 
 InventoryWidget::InventoryWidget(QWidget* parent): QWidget(parent) {
     m_categoryBtns = new CategoryButtons(this);
@@ -444,13 +442,14 @@ InventoryWidget::InventoryWidget(QWidget* parent): QWidget(parent) {
     connect(m_categoryBtns, SIGNAL(categoryChanged(QString)), this, SLOT(onCategoryChange(QString)));
 
     m_proxy->setCategory(m_categoryBtns->getCategory());
-};
+}
 
 void InventoryWidget::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo) {
     m_model->setCharacter(charInfo);
     m_proxy->sort(0, Qt::AscendingOrder);
-};
+}
 
 void InventoryWidget::onCategoryChange(QString category) {
     m_proxy->setCategory(category);
-};
+}
+}

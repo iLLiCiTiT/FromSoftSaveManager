@@ -3,13 +3,12 @@
 #include "../Utils.h"
 #include "../../parse/Parse.h"
 
-namespace {
-    struct WidgetsHelper {
-        QLabel* labelW;
-        QLabel* valueW;
-        PixmapLabel* iconW;
-    };
-}
+namespace fssm::ui::dsr {
+struct WidgetsHelper {
+    QLabel* labelW;
+    QLabel* valueW;
+    PixmapLabel* iconW;
+};
 
 CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
     QWidget* attributesWidget = new QWidget(this);
@@ -209,7 +208,7 @@ void CharacterStatusWidget::setCharacter(const fssm::parse::dsr::DSRCharacterInf
     m_bleedResValueWidget->setText(QString::number(charInfo->bleedRes));
     m_poisonResValueWidget->setText(QString::number(charInfo->poisonRes));
     m_curseResValueWidget->setText(QString::number(charInfo->curseRes));
-};
+}
 
 void CharacterStatusWidget::setEmpty() {
     m_nameValueWidget->setText("< Empty >");
@@ -235,8 +234,7 @@ void CharacterStatusWidget::setEmpty() {
     m_bleedResValueWidget->setText("");
     m_poisonResValueWidget->setText("");
     m_curseResValueWidget->setText("");
-
-};
+}
 
 CharacterInfoWidget::CharacterInfoWidget(QWidget* parent): QWidget(parent) {
     m_statusWidget = new CharacterStatusWidget(this);
@@ -247,4 +245,5 @@ CharacterInfoWidget::CharacterInfoWidget(QWidget* parent): QWidget(parent) {
 
 void CharacterInfoWidget::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo) {
     m_statusWidget->setCharacter(charInfo);
-};
+}
+}

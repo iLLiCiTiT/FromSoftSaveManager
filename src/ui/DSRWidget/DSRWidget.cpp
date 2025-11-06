@@ -6,7 +6,7 @@
 
 #include "../ManageBackupsWidget.h"
 
-
+namespace fssm::ui::dsr {
 CharsListModel::CharsListModel(Controller* controller, const QString& saveId, QObject* parent)
     : QStandardItemModel(parent),
     m_saveId(saveId),
@@ -65,7 +65,7 @@ fssm::parse::dsr::DSRCharacterInfo* CharsListModel::getCharByIdx(const int& inde
     }
     return nullptr;
 }
-
+}
 
 DSRWidget::DSRWidget(Controller* controller, const QString& saveId, QWidget* parent)
     : BaseGameWidget(controller, saveId, parent)
@@ -80,7 +80,7 @@ DSRWidget::DSRWidget(Controller* controller, const QString& saveId, QWidget* par
 
     ManageBackupsButtonsWidget* manageBackupsBtnsWidget = new ManageBackupsButtonsWidget(controller, viewWrap);
 
-    m_model = new CharsListModel(controller, saveId, m_view);
+    m_model = new fssm::ui::dsr::CharsListModel(controller, saveId, m_view);
     m_view->setModel(m_model);
 
     QVBoxLayout* viewWrapLayout = new QVBoxLayout(viewWrap);
@@ -91,9 +91,9 @@ DSRWidget::DSRWidget(Controller* controller, const QString& saveId, QWidget* par
 
     m_charTabs = new TabWidget(this);
 
-    m_covenantsWidget = new CovenantsWidget(m_charTabs);
-    m_charInfoWidget = new CharacterInfoWidget(m_charTabs);
-    m_inventoryWidget = new InventoryWidget(m_charTabs);
+    m_covenantsWidget = new fssm::ui::dsr::CovenantsWidget(m_charTabs);
+    m_charInfoWidget = new fssm::ui::dsr::CharacterInfoWidget(m_charTabs);
+    m_inventoryWidget = new fssm::ui::dsr::InventoryWidget(m_charTabs);
     // m_charEquipWidget = new QWidget(m_charTabs);
 
     m_charTabs->addTab(
@@ -160,7 +160,7 @@ void DSRWidget::paintEvent(QPaintEvent* event) {
 void DSRWidget::onRefresh() {
     QItemSelectionModel* selModel = m_view->selectionModel();
     for (auto& index: selModel->selectedIndexes()) {
-        QVariant charId = index.data(CHAR_ID_ROLE);
+        QVariant charId = index.data(fssm::ui::dsr::CHAR_ID_ROLE);
         if (!charId.isValid() || charId.isNull()) continue;
         fssm::parse::dsr::DSRCharacterInfo* charInfo = m_model->getCharByIdx(charId.toInt());
         m_charInfoWidget->setCharacter(charInfo);
@@ -180,7 +180,7 @@ void DSRWidget::onRefresh() {
 
 void DSRWidget::onSelectionChange(const QItemSelection &selected, const QItemSelection &deselected) {
     for (auto& index: selected.indexes()) {
-        QVariant charId = index.data(CHAR_ID_ROLE);
+        QVariant charId = index.data(fssm::ui::dsr::CHAR_ID_ROLE);
         if (!charId.isValid() || charId.isNull()) continue;
         const fssm::parse::dsr::DSRCharacterInfo* charInfo = m_model->getCharByIdx(charId.toInt());
 
@@ -192,4 +192,4 @@ void DSRWidget::onSelectionChange(const QItemSelection &selected, const QItemSel
     m_charInfoWidget->setCharacter(nullptr);
     m_inventoryWidget->setCharacter(nullptr);
     m_covenantsWidget->setCharacter(nullptr);
-};
+}

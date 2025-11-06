@@ -2,6 +2,7 @@
 #include <QLabel>
 #include "../../parse/Parse.h"
 
+namespace fssm::ui::dsr {
 class CovenantsWidget: public QWidget {
     Q_OBJECT
 public:
@@ -16,3 +17,4 @@ private:
     QLabel* m_dmbWidget;
     QLabel* m_csWidget;
 };
+}
