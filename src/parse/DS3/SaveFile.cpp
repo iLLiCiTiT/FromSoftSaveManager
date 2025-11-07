@@ -88,7 +88,7 @@ namespace fssm::parse::ds3 {
         } else if (1000000 < itemId && itemId <= 23020000) {
             upgradeLevel = itemId % 100;
             itemId -= upgradeLevel;
-            infusion = itemId % 1000;
+            infusion = itemId % 10000;
             itemId -= infusion;
         }
         Infusion infusionEnum = infusionFromInt(infusion);
