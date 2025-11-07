@@ -67,7 +67,6 @@ protected:
     void paintEvent(QPaintEvent *) override;
 private:
     void onMouseRelease() override;
-    PixmapLabel* m_imageLabel = nullptr;
     parse::ds3::ItemCategory m_category;
     QPixmap m_pix;
     QPixmap m_bg1;

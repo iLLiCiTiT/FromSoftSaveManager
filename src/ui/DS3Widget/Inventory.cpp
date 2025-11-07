@@ -421,13 +421,6 @@ DS3InventoryCategoryButton::DS3InventoryCategoryButton(const fssm::parse::ds3::I
     m_pix = QPixmap(":/ds3_images/" + getCategoryIcon(category));
     m_bg1 = QPixmap(":/ds3_images/inv_bg_1");
     m_bg2 = QPixmap(":/ds3_images/inv_bg_2");
-    m_imageLabel = new PixmapLabel(m_pix, this);
-    m_imageLabel->setObjectName("ds3_category_icon");
-    m_imageLabel->setAttribute(Qt::WA_TranslucentBackground, true);
-
-    QHBoxLayout* layout = new QHBoxLayout(this);
-    layout->setContentsMargins(5, 5, 5, 5);
-    layout->addWidget(m_imageLabel, 1);
 };
 
 void DS3InventoryCategoryButton::setSelected(bool selected) {
@@ -472,9 +465,10 @@ void DS3InventoryCategoryButton::paintEvent(QPaintEvent *)  {
         painter.drawPixmap(0, 0, m_bg2.scaled(width(), height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
     }
     QPixmap scaled = m_pix.scaled(size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    // center vertically
+    // center
+    const int x = (width() - scaled.width()) / 2;
     const int y = (height() - scaled.height()) / 2;
-    painter.drawPixmap(0, y, scaled);
+    painter.drawPixmap(x, y, scaled);
 }
 
 CategoryButtons::CategoryButtons(QWidget* parent): QWidget(parent) {
