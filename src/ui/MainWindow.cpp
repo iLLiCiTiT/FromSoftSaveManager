@@ -68,7 +68,6 @@ void MainWindow::resizeEvent(QResizeEvent *event) {
 void MainWindow::refresh() {
     std::unordered_set<QString> availableIds;
     QString firstId;
-    bool wasEmpty = m_widgetsMapping.empty();
     for (const auto&[game, saveId, _savePath]: m_controller->getSaveFileItems()) {
         BaseGameWidget* gameWidget = nullptr;
         if (firstId.isEmpty()) firstId = saveId;
@@ -123,11 +122,12 @@ void MainWindow::refresh() {
         it = m_widgetsMapping.erase(it);
     }
 
-    // Jump to a game tab only if there were not any before
-    if (!wasEmpty) return;
-    if (m_widgetsMapping.find(m_saveId) == m_widgetsMapping.end()) {
-        m_sideBar->setCurrentTab(firstId);
-    }
+    QString saveId = m_controller->getLastSelectedSaveId();
+    if (availableIds.find(saveId) == availableIds.end())
+        saveId = firstId;
+
+    if (saveId != m_saveId)
+        m_sideBar->setCurrentTab(saveId);
 }
 
 void MainWindow::updateOverlayGeo() {

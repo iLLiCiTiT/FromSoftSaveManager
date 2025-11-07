@@ -98,9 +98,6 @@ void SideBarWidget::addTab(const fssm::Game& game, const QString& saveId) {
     m_gameTabs[saveId] = tab_btn;
     connect(tab_btn, SIGNAL(requested(QString)), this, SLOT(setCurrentTab(QString)));
     m_layout->insertWidget(m_layout->count() - 2, tab_btn, 0);
-    if (m_currentTab.isEmpty()) {
-        setCurrentTab(saveId);
-    }
 };
 
 void SideBarWidget::removeTab(const QString& saveId) {
