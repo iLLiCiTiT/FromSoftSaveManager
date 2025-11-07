@@ -437,21 +437,21 @@ void ConfigModel::p_updateInfoById() {
     }
     if (ds2SavePath.isSet) {
         m_saveInfoById[ds2SavePath.saveId] = {
-            .game = fssm::Game::DSR,
+            .game = fssm::Game::DS2_SOTFS,
             .saveId = ds2SavePath.saveId,
             .savePath = ds2SavePath.savePath
         };
     }
     if (ds3SavePath.isSet) {
         m_saveInfoById[ds3SavePath.saveId] = {
-            .game = fssm::Game::DS2_SOTFS,
+            .game = fssm::Game::DS3,
             .saveId = ds3SavePath.saveId,
             .savePath = ds3SavePath.savePath
         };
     }
     if (erSavePath.isSet) {
         m_saveInfoById[erSavePath.saveId] = {
-            .game = fssm::Game::DS3,
+            .game = fssm::Game::ER,
             .saveId = erSavePath.saveId,
             .savePath = erSavePath.savePath
         };
