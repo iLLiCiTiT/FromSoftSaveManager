@@ -92,7 +92,6 @@ static QPixmap getItemImage(const std::string_view& image) {
 
     QString imagePath = QString::fromStdString(":/ds3_inv_images/");
     imagePath.append(QString::fromStdString(image.data()));
-    imagePath.append(QString::fromStdString(".png"));
     return QPixmap(imagePath);
 }
 
@@ -150,7 +149,7 @@ InventoryProxyModel::InventoryProxyModel(QObject *parent): QSortFilterProxyModel
     setFilterCaseSensitivity(Qt::CaseInsensitive);
 }
 
-void InventoryProxyModel::setCategory(QString category) {
+void InventoryProxyModel::setCategory(parse::ds3::ItemCategory category) {
     if (category == m_category) return;
     beginFilterChange();
     m_category = category;
@@ -165,9 +164,8 @@ bool InventoryProxyModel::lessThan(const QModelIndex &sourceLeft, const QModelIn
 }
 
 bool InventoryProxyModel::filterAcceptsRow(int source_row, const QModelIndex &source_parent) const {
-    if (m_category.isEmpty()) return true;
     QModelIndex index = sourceModel()->index(source_row, 0, source_parent);
-    QString category = index.data(ITEM_CATEGORY_ROLE).toString();
+    parse::ds3::ItemCategory category = index.data(ITEM_CATEGORY_ROLE).value<parse::ds3::ItemCategory>();
     return category == m_category;
 }
 
@@ -306,123 +304,109 @@ QSize InventoryDelegate::sizeHint(const QStyleOptionViewItem& option, const QMod
     return QSize(260, 80);
 }
 
-DS3InventoryCategoryButton::DS3InventoryCategoryButton(const QString& category, QWidget* parent): BaseClickableFrame(parent), m_category(category) {
-    m_pix = QPixmap(":/ds3_images/inventory_" + category + ".png");
-    m_hoverPix = QPixmap(":/ds3_images/inventory_" + category + "_hover.png");
+DS3InventoryCategoryButton::DS3InventoryCategoryButton(const fssm::parse::ds3::ItemCategory& category, QWidget* parent): BaseClickableFrame(parent), m_category(category) {
+    setAttribute(Qt::WA_TranslucentBackground, true);
+    m_pix = QPixmap(":/ds3_images/" + getCategoryIcon(category));
+    m_bg1 = QPixmap(":/ds3_images/inv_bg_1");
+    m_bg2 = QPixmap(":/ds3_images/inv_bg_2");
     m_imageLabel = new PixmapLabel(m_pix, this);
     m_imageLabel->setObjectName("ds3_category_icon");
+    m_imageLabel->setAttribute(Qt::WA_TranslucentBackground, true);
 
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->setContentsMargins(5, 5, 5, 5);
     layout->addWidget(m_imageLabel, 1);
 };
+
 void DS3InventoryCategoryButton::setSelected(bool selected) {
     if (selected == m_isSelected) return;
     m_isSelected = selected;
-    if (selected || m_isHovered) {
-        m_imageLabel->setSourcePixmap(m_hoverPix);
-    } else {
-        m_imageLabel->setSourcePixmap(m_pix);
-    }
-}
-void DS3InventoryCategoryButton::enterEvent(QEnterEvent *event) {
-    m_isHovered = true;
-    if (!m_isSelected) {
-        m_imageLabel->setSourcePixmap(m_hoverPix);
-    }
-}
-void DS3InventoryCategoryButton::leaveEvent(QEvent *event) {
-    m_isHovered = false;
-    if (!m_isSelected) {
-        m_imageLabel->setSourcePixmap(m_pix);
-    }
-
+    updateGeometry();
+    repaint();
 }
 
 void DS3InventoryCategoryButton::onMouseRelease() {
     emit clicked(m_category);
 }
 
-CategoryButtonOverlay::CategoryButtonOverlay(QWidget* parent): QWidget(parent) {
-    m_bgPix = QPixmap(":/ds3_images/inventory_overlay.png");
+QSize DS3InventoryCategoryButton::sizeHint() const {
+    return minimumSizeHint();
+};
 
+QSize DS3InventoryCategoryButton::minimumSizeHint() const {
+    if (m_isSelected) return QSize(60, 60);
+    return QSize(30, 60);
+};
+
+void DS3InventoryCategoryButton::enterEvent(QEnterEvent *event) {
+    m_isHovered = true;
+    repaint();
 }
 
-void CategoryButtonOverlay::paintEvent(QPaintEvent* event) {
+void DS3InventoryCategoryButton::leaveEvent(QEvent *event) {
+    m_isHovered = false;
+    repaint();
+}
+
+void DS3InventoryCategoryButton::paintEvent(QPaintEvent *)  {
     QPainter painter = QPainter(this);
     painter.setRenderHint(QPainter::Antialiasing);
-    painter.drawPixmap(0, 0, m_bgPix.scaled(width(), height(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(Qt::NoBrush);
+    painter.setClipRect(rect());
+    if (m_isSelected) {
+        painter.drawPixmap(0, 0, m_bg1.scaled(width(), height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
+    } else if (m_isHovered) {
+        painter.drawPixmap(0, 0, m_bg2.scaled(width(), height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
+    }
+    QPixmap scaled = m_pix.scaled(size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    // center vertically
+    const int y = (height() - scaled.height()) / 2;
+    painter.drawPixmap(0, y, scaled);
 }
 
 CategoryButtons::CategoryButtons(QWidget* parent): QWidget(parent) {
-    m_overlayWidget = new CategoryButtonOverlay(this);
+    setAttribute(Qt::WA_TranslucentBackground, true);
 
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
-    for (auto category : std::initializer_list<QString> {
-        "consumables",
-        "materials",
-        "key_items",
-        "spells",
-        "weapons_shields",
-        "ammunition",
-        "armor",
-        "rings"
+    for (auto category : std::initializer_list {
+        parse::ds3::ItemCategory::Tools,
+        parse::ds3::ItemCategory::Materials,
+        parse::ds3::ItemCategory::KeyItems,
+        parse::ds3::ItemCategory::Spells,
+        parse::ds3::ItemCategory::MeleeWeapons,
+        parse::ds3::ItemCategory::RangedWeapons,
+        parse::ds3::ItemCategory::Catalysts,
+        parse::ds3::ItemCategory::Shields,
+        parse::ds3::ItemCategory::HeadArmor,
+        parse::ds3::ItemCategory::ChestArmor,
+        parse::ds3::ItemCategory::HandsArmor,
+        parse::ds3::ItemCategory::LegsArmor,
+        parse::ds3::ItemCategory::ArrowsBolts,
+        parse::ds3::ItemCategory::Rings,
+        parse::ds3::ItemCategory::CovenantItem,
     }) {
         DS3InventoryCategoryButton* btn = new DS3InventoryCategoryButton(category, this);
-        btn->stackUnder(m_overlayWidget);
-        connect(btn, SIGNAL(clicked(QString)), this, SLOT(setCategory(QString)));
-        if (m_category.isEmpty()) {
-            m_category = category;
-            btn->setSelected(true);
-        };
+        connect(btn, SIGNAL(clicked(parse::ds3::ItemCategory)), this, SLOT(setCategory(parse::ds3::ItemCategory)));
+        if (m_category == category) btn->setSelected(true);
         m_categoryMapping[category] = btn;
         layout->addWidget(btn, 0);
     }
     layout->addStretch(1);
-
-    m_overlayAnim = new QVariantAnimation();
-    m_overlayAnim->setDuration(100);
-    connect(m_overlayAnim, SIGNAL(valueChanged(QVariant)), this, SLOT(onAnimValueChange(QVariant)));
-    connect(m_overlayAnim, SIGNAL(finished()), this, SLOT(onAnimfinished()));
 }
 
-QString CategoryButtons::getCategory() {
+parse::ds3::ItemCategory CategoryButtons::getCategory() {
     return m_category;
 }
 
-void CategoryButtons::setCategory(QString category) {
+void CategoryButtons::setCategory(parse::ds3::ItemCategory category) {
     if (m_category == category) return;
     m_categoryMapping[m_category]->setSelected(false);
     m_category = category;
     m_categoryMapping[m_category]->setSelected(true);
     emit categoryChanged(category);
-    if (m_overlayAnim->state() == QVariantAnimation::Running) {
-        m_overlayAnim->stop();
-    }
-    m_overlayAnim->setStartValue(m_overlayWidget->pos());
-    m_overlayAnim->setEndValue(m_categoryMapping[m_category]->pos());
-    m_overlayAnim->start();
-
-}
-
-void CategoryButtons::showEvent(QShowEvent* event) {
-    m_overlayWidget->setGeometry(m_categoryMapping[m_category]->geometry());
-    m_overlayWidget->raise();
-}
-
-void CategoryButtons::resizeEvent(QResizeEvent *event) {
-    QWidget::resizeEvent(event);
-    m_overlayWidget->resize(m_categoryMapping[m_category]->size());
-}
-
-void CategoryButtons::onAnimValueChange(QVariant posValue) {
-    m_overlayWidget->move(posValue.toPoint());
-}
-
-void CategoryButtons::onAnimfinished() {
-    m_overlayWidget->move(m_overlayAnim->endValue().toPoint());
 }
 
 InventoryWidget::InventoryWidget(QWidget* parent): QWidget(parent) {
@@ -446,7 +430,7 @@ InventoryWidget::InventoryWidget(QWidget* parent): QWidget(parent) {
     layout->addWidget(m_categoryBtns, 0);
     layout->addWidget(m_view, 1);
 
-    connect(m_categoryBtns, SIGNAL(categoryChanged(QString)), this, SLOT(onCategoryChange(QString)));
+    connect(m_categoryBtns, SIGNAL(categoryChanged(parse::ds3::ItemCategory)), this, SLOT(onCategoryChange(parse::ds3::ItemCategory)));
 
     m_proxy->setCategory(m_categoryBtns->getCategory());
 }
@@ -456,7 +440,7 @@ void InventoryWidget::setCharacter(const fssm::parse::ds3::DS3CharacterInfo* cha
     m_proxy->sort(0, Qt::AscendingOrder);
 }
 
-void InventoryWidget::onCategoryChange(QString category) {
+void InventoryWidget::onCategoryChange(parse::ds3::ItemCategory category) {
     m_proxy->setCategory(category);
 }
 }

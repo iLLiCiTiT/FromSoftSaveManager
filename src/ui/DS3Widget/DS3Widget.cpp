@@ -94,16 +94,16 @@ DS3Widget::DS3Widget(Controller* controller, const QString& saveId, QWidget* par
     m_charTabs = new TabWidget(this);
 
     m_charInfoWidget = new fssm::ui::ds3::CharacterInfoWidget(m_charTabs);
-    // m_inventoryWidget = new fssm::ui::ds3::InventoryWidget(m_charTabs);
+    m_inventoryWidget = new fssm::ui::ds3::InventoryWidget(m_charTabs);
 
     m_charTabs->addTab(
         "Character Info",
         m_charInfoWidget
     );
-    // m_charTabs->addTab(
-    //     "Inventory",
-    //     m_inventoryWidget
-    // );
+    m_charTabs->addTab(
+        "Inventory",
+        m_inventoryWidget
+    );
 
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->setContentsMargins(20, 20, 20, 20);
@@ -128,8 +128,6 @@ void DS3Widget::paintEvent(QPaintEvent* event) {
     painter.drawRect(targetRect);
     QPixmap pix = QPixmap(":/ds3_images/bg");
     QPixmap scaled = pix.scaled(size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
-    // center vertically
-    // const int y = (height() - scaled.height()) / 2;
     painter.drawPixmap(0, 0, scaled);
 };
 
@@ -140,7 +138,7 @@ void DS3Widget::onRefresh() {
         if (!charId.isValid() || charId.isNull()) continue;
         fssm::parse::ds3::DS3CharacterInfo* charInfo = m_model->getCharByIdx(charId.toInt());
         m_charInfoWidget->setCharacter(charInfo);
-        // m_inventoryWidget->setCharacter(charInfo);
+        m_inventoryWidget->setCharacter(charInfo);
         return;
     }
     for (int row = 0; row < m_model->rowCount(); ++row) {
@@ -160,9 +158,9 @@ void DS3Widget::onSelectionChange(const QItemSelection &selected, const QItemSel
         const fssm::parse::ds3::DS3CharacterInfo* charInfo = m_model->getCharByIdx(charId.toInt());
 
         m_charInfoWidget->setCharacter(charInfo);
-        // m_inventoryWidget->setCharacter(charInfo);
+        m_inventoryWidget->setCharacter(charInfo);
         return;
     }
     m_charInfoWidget->setCharacter(nullptr);
-    // m_inventoryWidget->setCharacter(nullptr);
+    m_inventoryWidget->setCharacter(nullptr);
 };

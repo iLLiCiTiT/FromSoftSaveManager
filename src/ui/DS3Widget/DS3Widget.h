@@ -45,5 +45,5 @@ private:
     QListView* m_view;
     TabWidget* m_charTabs;
     fssm::ui::ds3::CharacterInfoWidget* m_charInfoWidget;
-    // fssm::ui::ds3::InventoryWidget* m_inventoryWidget;
+    fssm::ui::ds3::InventoryWidget* m_inventoryWidget;
 };
