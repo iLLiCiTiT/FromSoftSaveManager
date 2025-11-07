@@ -1,13 +1,6 @@
 #include "Covenants.h"
 #include <QGridLayout>
 
-namespace {
-    struct WidgetsHelper {
-        QLabel* labelW;
-        QLabel* valueW;
-    };
-}
-
 namespace fssm::ui::dsr {
 CovenantsWidget::CovenantsWidget(QWidget* parent): QWidget(parent) {
     setAttribute(Qt::WA_TranslucentBackground, true);
@@ -38,15 +31,7 @@ CovenantsWidget::CovenantsWidget(QWidget* parent): QWidget(parent) {
     wrapperLayout->setContentsMargins(0, 0, 0, 0);
     wrapperLayout->addWidget(headerWidget, 0, 0, 1, 2);
 
-    for (auto [labelW, valueW] : std::initializer_list<WidgetsHelper> {
-        {wosLabel, m_wosWidget},
-        {dwLabel, m_dwWidget},
-        {potdLabel, m_potdWidget},
-        {glsLabel, m_glsWidget},
-        {fhLabel, m_fhWidget},
-        {dmbLabel, m_dmbWidget},
-        {csLabel, m_csWidget},
-    }) {
+    const auto addGridRow = [&](QLabel* labelW, QLabel* valueW) {
         int row = wrapperLayout->rowCount();
         labelW->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
         valueW->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
@@ -54,7 +39,16 @@ CovenantsWidget::CovenantsWidget(QWidget* parent): QWidget(parent) {
         valueW->setAttribute(Qt::WA_TranslucentBackground, true);
         wrapperLayout->addWidget(labelW, row, 0);
         wrapperLayout->addWidget(valueW, row, 1);
-    }
+    };
+
+    addGridRow(wosLabel, m_wosWidget);
+    addGridRow(dwLabel, m_dwWidget);
+    addGridRow(potdLabel, m_potdWidget);
+    addGridRow(glsLabel, m_glsWidget);
+    addGridRow(fhLabel, m_fhWidget);
+    addGridRow(dmbLabel, m_dmbWidget);
+    addGridRow(csLabel, m_csWidget);
+
     int row = wrapperLayout->rowCount();
     wrapperLayout->setRowStretch(row, 1);
 
@@ -65,21 +59,18 @@ CovenantsWidget::CovenantsWidget(QWidget* parent): QWidget(parent) {
 }
 
 void CovenantsWidget::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo) {
-    // Skip 3 covenants that don't have a way how to level
-    int idx = 3;
-    for (auto valueW : std::initializer_list {
-        m_wosWidget,
-        m_dwWidget,
-        m_potdWidget,
-        m_glsWidget,
-        m_fhWidget,
-        m_dmbWidget,
-        m_csWidget,
-    }) {
+    const auto setCovenant = [&](QLabel* valueW, int idx) {
         QString value = "0";
         if (charInfo != nullptr) value = QString::number(charInfo->covenantLevels[idx]);
         valueW->setText(value);
-        idx += 1;
-    }
+    };
+    // 3 covenants don't have a way how to level up
+    setCovenant(m_wosWidget, 3);
+    setCovenant(m_dwWidget, 4);
+    setCovenant(m_potdWidget, 5);
+    setCovenant(m_glsWidget, 6);
+    setCovenant(m_fhWidget, 7);
+    setCovenant(m_dmbWidget, 8);
+    setCovenant(m_csWidget, 9);
 }
 }

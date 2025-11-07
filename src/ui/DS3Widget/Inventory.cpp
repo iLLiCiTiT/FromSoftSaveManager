@@ -477,29 +477,30 @@ CategoryButtons::CategoryButtons(QWidget* parent): QWidget(parent) {
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
-    for (auto category : std::initializer_list {
-        parse::ds3::ItemCategory::Tools,
-        parse::ds3::ItemCategory::Materials,
-        parse::ds3::ItemCategory::KeyItems,
-        parse::ds3::ItemCategory::Spells,
-        parse::ds3::ItemCategory::MeleeWeapons,
-        parse::ds3::ItemCategory::RangedWeapons,
-        parse::ds3::ItemCategory::Catalysts,
-        parse::ds3::ItemCategory::Shields,
-        parse::ds3::ItemCategory::HeadArmor,
-        parse::ds3::ItemCategory::ChestArmor,
-        parse::ds3::ItemCategory::HandsArmor,
-        parse::ds3::ItemCategory::LegsArmor,
-        parse::ds3::ItemCategory::ArrowsBolts,
-        parse::ds3::ItemCategory::Rings,
-        parse::ds3::ItemCategory::CovenantItem,
-    }) {
+
+    const auto addCategory = [&](const fssm::parse::ds3::ItemCategory& category) {
         DS3InventoryCategoryButton* btn = new DS3InventoryCategoryButton(category, this);
         connect(btn, SIGNAL(clicked(parse::ds3::ItemCategory)), this, SLOT(setCategory(parse::ds3::ItemCategory)));
         if (m_category == category) btn->setSelected(true);
         m_categoryMapping[category] = btn;
         layout->addWidget(btn, 0);
-    }
+    };
+
+    addCategory(parse::ds3::ItemCategory::Tools);
+    addCategory(parse::ds3::ItemCategory::Materials);
+    addCategory(parse::ds3::ItemCategory::KeyItems);
+    addCategory(parse::ds3::ItemCategory::Spells);
+    addCategory(parse::ds3::ItemCategory::MeleeWeapons);
+    addCategory(parse::ds3::ItemCategory::RangedWeapons);
+    addCategory(parse::ds3::ItemCategory::Catalysts);
+    addCategory(parse::ds3::ItemCategory::Shields);
+    addCategory(parse::ds3::ItemCategory::HeadArmor);
+    addCategory(parse::ds3::ItemCategory::ChestArmor);
+    addCategory(parse::ds3::ItemCategory::HandsArmor);
+    addCategory(parse::ds3::ItemCategory::LegsArmor);
+    addCategory(parse::ds3::ItemCategory::ArrowsBolts);
+    addCategory(parse::ds3::ItemCategory::Rings);
+    addCategory(parse::ds3::ItemCategory::CovenantItem);
     layout->addStretch(1);
 }
 

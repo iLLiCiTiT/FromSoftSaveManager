@@ -363,16 +363,7 @@ CategoryButtons::CategoryButtons(QWidget* parent): QWidget(parent) {
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
-    for (auto category : std::initializer_list<QString> {
-        "consumables",
-        "materials",
-        "key_items",
-        "spells",
-        "weapons_shields",
-        "ammunition",
-        "armor",
-        "rings"
-    }) {
+    const auto addCategory = [&](QString category) {
         DSRInventoryCategoryButton* btn = new DSRInventoryCategoryButton(category, this);
         btn->stackUnder(m_overlayWidget);
         connect(btn, SIGNAL(clicked(QString)), this, SLOT(setCategory(QString)));
@@ -382,7 +373,16 @@ CategoryButtons::CategoryButtons(QWidget* parent): QWidget(parent) {
         };
         m_categoryMapping[category] = btn;
         layout->addWidget(btn, 0);
-    }
+    };
+    addCategory("consumables");
+    addCategory("materials");
+    addCategory("key_items");
+    addCategory("spells");
+    addCategory("weapons_shields");
+    addCategory("ammunition");
+    addCategory("armor");
+    addCategory("rings");
+
     layout->addStretch(1);
 
     m_overlayAnim = new QVariantAnimation();

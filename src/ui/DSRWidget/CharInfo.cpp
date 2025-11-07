@@ -2,13 +2,6 @@
 
 #include "../Utils.h"
 #include "../../parse/Parse.h"
-namespace {
-struct WidgetsHelper {
-    QLabel* labelW;
-    QLabel* valueW;
-    PixmapLabel* iconW;
-};
-}
 
 namespace fssm::ui::dsr {
 
@@ -74,32 +67,32 @@ CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
 
     attributesLayout->addWidget(m_nameValueWidget, 0, 0, 1, 3);
 
-    for (auto [labelW, valueW, iconW] : std::initializer_list<WidgetsHelper> {
-        {covenantLabelWidget, m_covenantValueWidget, nullptr},
-        {levelLabelWidget, m_levelValueWidget, levelIconWidget},
-        {soulsLabelWidget, m_soulsValueWidget, soulsIconWidget},
-        {vitalityLabelWidget, m_vitalityValueWidget, vitalityIconWidget},
-        {attunementLabelWidget, m_attunementValueWidget, attunementIconWidget},
-        {enduranceLabelWidget, m_enduranceValueWidget, enduranceIconWidget},
-        {strengthLabelWidget, m_strengthValueWidget, strengthIconWidget},
-        {dexterityLabelWidget, m_dexterityValueWidget, dexterityIconWidget},
-        {resistanceLabelWidget, m_resistanceValueWidget, resistanceIconWidget},
-        {intelligenceLabelWidget, m_intelligenceValueWidget, intelligenceIconWidget},
-        {faithLabelWidget, m_faithValueWidget, faithIconWidget},
-        {humanityLabelWidget, m_humanityValueWidget, humanityIconWidget},
-    }) {
-        int row = attributesLayout->rowCount();
+    const auto addGridRow = [](QGridLayout* layout, QLabel* labelW, QLabel* valueW, PixmapLabel* iconW = nullptr) {
+        int row = layout->rowCount();
         labelW->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
         valueW->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
         labelW->setAttribute(Qt::WA_TranslucentBackground, true);
         valueW->setAttribute(Qt::WA_TranslucentBackground, true);
         if (iconW != nullptr) {
             iconW->setAttribute(Qt::WA_TranslucentBackground, true);
-            attributesLayout->addWidget(iconW, row, 0);
+            layout->addWidget(iconW, row, 0);
         }
-        attributesLayout->addWidget(labelW, row, 1, 1, (iconW == nullptr) ? 2 : 1);
-        attributesLayout->addWidget(valueW, row, 2);
-    }
+        layout->addWidget(labelW, row, 1, 1, (iconW == nullptr) ? 2 : 1);
+        layout->addWidget(valueW, row, 2);
+    };
+
+    addGridRow(attributesLayout, covenantLabelWidget, m_covenantValueWidget);
+    addGridRow(attributesLayout, levelLabelWidget, m_levelValueWidget, levelIconWidget);
+    addGridRow(attributesLayout, soulsLabelWidget, m_soulsValueWidget, soulsIconWidget);
+    addGridRow(attributesLayout, vitalityLabelWidget, m_vitalityValueWidget, vitalityIconWidget);
+    addGridRow(attributesLayout, attunementLabelWidget, m_attunementValueWidget, attunementIconWidget);
+    addGridRow(attributesLayout, enduranceLabelWidget, m_enduranceValueWidget, enduranceIconWidget);
+    addGridRow(attributesLayout, strengthLabelWidget, m_strengthValueWidget, strengthIconWidget);
+    addGridRow(attributesLayout, dexterityLabelWidget, m_dexterityValueWidget, dexterityIconWidget);
+    addGridRow(attributesLayout, resistanceLabelWidget, m_resistanceValueWidget, resistanceIconWidget);
+    addGridRow(attributesLayout, intelligenceLabelWidget, m_intelligenceValueWidget, intelligenceIconWidget);
+    addGridRow(attributesLayout, faithLabelWidget, m_faithValueWidget, faithIconWidget);
+    addGridRow(attributesLayout, humanityLabelWidget, m_humanityValueWidget, humanityIconWidget);
 
     attributesLayout->setRowStretch(attributesLayout->rowCount(), 1);
     attributesLayout->setColumnStretch(0, 0);
@@ -147,30 +140,17 @@ CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
     QGridLayout* statsLayout = new QGridLayout(statsWidget);
     statsLayout->setContentsMargins(0, 0, 0, 0);
 
-    for (auto [labelW, valueW, iconW] : std::initializer_list<WidgetsHelper> {
-        {hollowLabel, m_hollowValueWidget, nullptr},
-        {sexLabel, m_sexValueWidget, nullptr},
-        {classLabel, m_classValueWidget, nullptr},
-        {physiqueLabel, m_physiqueValueWidget, nullptr},
-        {giftLabel, m_giftValueWidget, nullptr},
-        {hpLabel, m_hpValueWidget, hpIconWidget},
-        {staminaLabel, m_staminaValueWidget, staminaIconWidget},
-        {bleedResLabel, m_bleedResValueWidget, bleedResIconWidget},
-        {poisonResLabel, m_poisonResValueWidget, poisonResIconWidget},
-        {curseResLabel, m_curseResValueWidget, curseResIconWidget},
-    }) {
-        int row = statsLayout->rowCount();
-        labelW->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-        valueW->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-        labelW->setAttribute(Qt::WA_TranslucentBackground, true);
-        valueW->setAttribute(Qt::WA_TranslucentBackground, true);
-        if (iconW != nullptr) {
-            iconW->setAttribute(Qt::WA_TranslucentBackground, true);
-            statsLayout->addWidget(iconW, row, 0);
-        }
-        statsLayout->addWidget(labelW, row, (iconW == nullptr) ? 0 : 1, 1, (iconW == nullptr) ? 2 : 1);
-        statsLayout->addWidget(valueW, row, 2);
-    }
+    addGridRow(statsLayout, hollowLabel, m_hollowValueWidget);
+    addGridRow(statsLayout, sexLabel, m_sexValueWidget);
+    addGridRow(statsLayout, classLabel, m_classValueWidget);
+    addGridRow(statsLayout, physiqueLabel, m_physiqueValueWidget);
+    addGridRow(statsLayout, giftLabel, m_giftValueWidget);
+    addGridRow(statsLayout, hpLabel, m_hpValueWidget, hpIconWidget);
+    addGridRow(statsLayout, staminaLabel, m_staminaValueWidget, staminaIconWidget);
+    addGridRow(statsLayout, bleedResLabel, m_bleedResValueWidget, bleedResIconWidget);
+    addGridRow(statsLayout, poisonResLabel, m_poisonResValueWidget, poisonResIconWidget);
+    addGridRow(statsLayout, curseResLabel, m_curseResValueWidget, curseResIconWidget);
+
     statsLayout->setRowStretch(attributesLayout->rowCount(), 1);
     statsLayout->setColumnStretch(0, 0);
     statsLayout->setColumnStretch(1, 1);
@@ -182,7 +162,7 @@ CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
     layout->addWidget(statsWidget, 1);
 }
 
-void CharacterStatusWidget::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo) {
+void CharacterStatusWidget::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo) const {
     if (charInfo == nullptr) return setEmpty();
 
     QString covenentValue = QString::fromStdString(fssm::parse::dsr::DSR_COVENANT_LABELS[charInfo->covenantId].data());
@@ -223,7 +203,7 @@ void CharacterStatusWidget::setCharacter(const fssm::parse::dsr::DSRCharacterInf
     m_curseResValueWidget->setText(QString::number(charInfo->curseRes));
 }
 
-void CharacterStatusWidget::setEmpty() {
+void CharacterStatusWidget::setEmpty() const {
     m_nameValueWidget->setText("< Empty >");
     m_covenantValueWidget->setText("None");
     m_levelValueWidget->setText("");
@@ -256,7 +236,7 @@ CharacterInfoWidget::CharacterInfoWidget(QWidget* parent): QWidget(parent) {
     layout->addWidget(m_statusWidget, 1);
 }
 
-void CharacterInfoWidget::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo) {
+void CharacterInfoWidget::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo) const {
     m_statusWidget->setCharacter(charInfo);
 }
 }

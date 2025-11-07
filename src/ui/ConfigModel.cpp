@@ -287,22 +287,24 @@ void ConfigModel::p_loadConfig() {
         data["game_save_files"] = json::object();
     }
     auto& jsonGameSaveFile = data["game_save_files"];
-    for (auto& game: std::initializer_list<fssm::Game>{
-        fssm::Game::DSR,
-        fssm::Game::DS2_SOTFS,
-        fssm::Game::DS3,
-        fssm::Game::ER,
-        fssm::Game::Sekiro,
-    }) {
+
+    const auto fillDefaultGameSaveFile = [&](fssm::Game game) {
         std::string gameName = game.toString();
-        if (jsonGameSaveFile.contains(gameName)) continue;
+        if (jsonGameSaveFile.contains(gameName)) return;
         auto defaultPathInfo = p_getDefaultSavePath(game);
-        if (!defaultPathInfo.saveFileExists) continue;
+        if (!defaultPathInfo.saveFileExists) return;
         json gameInfo = json::object();
         gameInfo["path"] = defaultPathInfo.savePath.toStdString();
         gameInfo["save_id"] = generateUUID();
         jsonGameSaveFile[gameName] = gameInfo;
-    }
+    };
+
+    fillDefaultGameSaveFile(fssm::Game::DSR);
+    fillDefaultGameSaveFile(fssm::Game::DS2_SOTFS);
+    fillDefaultGameSaveFile(fssm::Game::DS3);
+    fillDefaultGameSaveFile(fssm::Game::ER);
+    fillDefaultGameSaveFile(fssm::Game::Sekiro);
+
     auto& gameSaveFiles = m_configData.gameSaveFiles;
     for (auto& el: jsonGameSaveFile.items()) {
         json& info = el.value();
@@ -422,47 +424,22 @@ DefaultSavePathInfo ConfigModel::p_getDefaultSavePath(const fssm::Game& game) {
 }
 
 void ConfigModel::p_updateInfoById() {
+    const auto addSave = [&](ConfigSavePathData& spd, fssm::Game game) {
+        if (spd.isSet) {
+            m_saveInfoById[spd.saveId] = {
+                .game = game,
+                .saveId = spd.saveId,
+                .savePath = spd.savePath
+            };
+        }
+    };
+
     m_saveInfoById.clear();
-    auto& dsrSavePath = m_configData.gameSaveFiles.dsrSavePath;
-    auto& ds2SavePath = m_configData.gameSaveFiles.ds2SavePath;
-    auto& ds3SavePath = m_configData.gameSaveFiles.ds3SavePath;
-    auto& erSavePath = m_configData.gameSaveFiles.erSavePath;
-    auto& sekiroSavePath = m_configData.gameSaveFiles.sekiroSavePath;
-    if (dsrSavePath.isSet) {
-        m_saveInfoById[dsrSavePath.saveId] = {
-            .game = fssm::Game::DSR,
-            .saveId = dsrSavePath.saveId,
-            .savePath = dsrSavePath.savePath
-        };
-    }
-    if (ds2SavePath.isSet) {
-        m_saveInfoById[ds2SavePath.saveId] = {
-            .game = fssm::Game::DS2_SOTFS,
-            .saveId = ds2SavePath.saveId,
-            .savePath = ds2SavePath.savePath
-        };
-    }
-    if (ds3SavePath.isSet) {
-        m_saveInfoById[ds3SavePath.saveId] = {
-            .game = fssm::Game::DS3,
-            .saveId = ds3SavePath.saveId,
-            .savePath = ds3SavePath.savePath
-        };
-    }
-    if (erSavePath.isSet) {
-        m_saveInfoById[erSavePath.saveId] = {
-            .game = fssm::Game::ER,
-            .saveId = erSavePath.saveId,
-            .savePath = erSavePath.savePath
-        };
-    }
-    if (sekiroSavePath.isSet) {
-        m_saveInfoById[sekiroSavePath.saveId] = {
-            .game = fssm::Game::Sekiro,
-            .saveId = sekiroSavePath.saveId,
-            .savePath = sekiroSavePath.savePath
-        };
-    }
+    addSave(m_configData.gameSaveFiles.dsrSavePath, fssm::Game::DSR);
+    addSave(m_configData.gameSaveFiles.ds2SavePath, fssm::Game::DS2_SOTFS);
+    addSave(m_configData.gameSaveFiles.ds3SavePath, fssm::Game::DS3);
+    addSave(m_configData.gameSaveFiles.erSavePath, fssm::Game::ER);
+    addSave(m_configData.gameSaveFiles.sekiroSavePath, fssm::Game::Sekiro);
 }
 
 DefaultSavePathInfo ConfigModel::p_getDefaultDSRSavePath() {
