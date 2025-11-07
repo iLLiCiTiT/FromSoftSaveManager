@@ -14,7 +14,7 @@ inline int ITEM_INFUSION_ICON_ROLE = Qt::UserRole + 2;
 inline int ITEM_ORDER_ROLE = Qt::UserRole + 3;
 inline int ITEM_AMOUNT_ROLE = Qt::UserRole + 4;
 inline int ITEM_DURABILITY_ROLE = Qt::UserRole + 5;
-inline int ITEM_BOTOMLESS_BOX_AMOUNT_ROLE = Qt::UserRole + 6;
+inline int ITEM_STORAGE_BOX_AMOUNT_ROLE = Qt::UserRole + 6;
 inline int ITEM_IMAGE_ROLE = Qt::UserRole + 7;
 inline int ITEM_CATEGORY_ROLE = Qt::UserRole + 8;
 
@@ -24,7 +24,7 @@ public:
     explicit InventoryModel(QObject* parent = nullptr);
     void setCharacter(const parse::ds3::DS3CharacterInfo* charInfo);
 private:
-    QStandardItem* createModelItem(parse::ds3::InventoryItem& inventoryItem);
+    QStandardItem* createModelItem(const parse::ds3::DS3CharacterInfo* charInfo, parse::ds3::InventoryItem& inventoryItem);
     QStandardItem* createUnknownItem(parse::ds3::InventoryItem& inventoryItem);
 };
 
