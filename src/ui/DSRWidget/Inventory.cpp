@@ -411,7 +411,6 @@ void CategoryButtons::showEvent(QShowEvent* event) {
     m_overlayWidget->raise();
 }
 void CategoryButtons::resizeEvent(QResizeEvent *event) {
-    QWidget::resizeEvent(event);
     m_overlayWidget->resize(m_categoryMapping[m_category]->size());
 }
 void CategoryButtons::onAnimValueChange(QVariant posValue) {
