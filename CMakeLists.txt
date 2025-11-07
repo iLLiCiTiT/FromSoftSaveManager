@@ -97,9 +97,15 @@ if ((MSVC) AND (MSVC_VERSION GREATER_EQUAL 1914))
 endif()
 
 add_custom_command(TARGET FromSoftSaveManager POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_FILE:inv_resources_dsr>
-        $<TARGET_FILE_DIR:FromSoftSaveManager>
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    $<TARGET_FILE:inv_resources_dsr>
+    $<TARGET_FILE_DIR:FromSoftSaveManager>
+)
+
+add_custom_command(TARGET FromSoftSaveManager POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    $<TARGET_FILE:inv_resources_ds3>
+    $<TARGET_FILE_DIR:FromSoftSaveManager>
 )
 
 if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
