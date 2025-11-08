@@ -20,17 +20,20 @@ add_subdirectory(vendor/tiny-AES-c)
 
 add_executable(FromSoftSaveManager
         src/main.cpp
+
         src/parse/Utils.cpp
         src/parse/SL2File.cpp
         src/parse/DSR/Items.cpp
         src/parse/DSR/SaveFile.cpp
         src/parse/DS3/Items.cpp
         src/parse/DS3/SaveFile.cpp
+        src/parse/EldenRing/SaveFile.cpp
 
         src/resources/resources.qrc
         src/resources/dsr_images.qrc
         src/resources/ds3_images.qrc
         src/resources/er_images.qrc
+
         src/ui/SquareButton.h
         src/ui/Utils.cpp
         src/ui/ConfigModel.cpp
