@@ -6,4 +6,6 @@ class ERWidget: public BaseGameWidget {
 public:
     explicit ERWidget(Controller* controller, const QString& saveId, QWidget* parent);
     void refresh() override;
+protected:
+    void paintEvent(QPaintEvent* event) override;
 };
