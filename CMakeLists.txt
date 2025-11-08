@@ -65,13 +65,13 @@ target_link_libraries(FromSoftSaveManager
 
 # --- DSR inventory resources ---
 add_library(inv_resources_dsr SHARED)
-set_source_files_properties(src/resources/dsr_inventory_images.qrc PROPERTIES
-    QT_RESOURCE_ALIAS "dsr_inventory_images"
+set_source_files_properties(src/resources/dsr_inv_images.qrc PROPERTIES
+    QT_RESOURCE_ALIAS "dsr_inv_images"
 )
 set_target_properties(inv_resources_dsr PROPERTIES PREFIX "")
 target_sources(inv_resources_dsr PRIVATE
-    src/resources/dsr_inventory_images.qrc
-    src/resources/dsr_inventory_images_init.h
+    src/resources/dsr_inv_images.qrc
+    src/resources/dsr_inv_images_init.h
 )
 target_link_libraries(inv_resources_dsr PUBLIC Qt::Core)
 # -------------------------------

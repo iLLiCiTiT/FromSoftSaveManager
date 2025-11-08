@@ -18,47 +18,47 @@ CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
     QLabel* covenantLabelWidget = new QLabel("Covenant", attributesWidget);
     m_covenantValueWidget = new QLabel(attributesWidget);
 
-    PixmapLabel* levelIconWidget = new PixmapLabel(QPixmap(":/dsr_images/attr_level.png"), attributesWidget);
+    PixmapLabel* levelIconWidget = new PixmapLabel(QPixmap(":/dsr_images/attr_level"), attributesWidget);
     QLabel* levelLabelWidget = new QLabel("Level", attributesWidget);
     m_levelValueWidget = new QLabel(attributesWidget);
 
-    PixmapLabel* soulsIconWidget = new PixmapLabel(QPixmap(":/dsr_images/attr_souls.png"), attributesWidget);
+    PixmapLabel* soulsIconWidget = new PixmapLabel(QPixmap(":/dsr_images/attr_souls"), attributesWidget);
     QLabel* soulsLabelWidget = new QLabel("Souls", attributesWidget);
     m_soulsValueWidget = new QLabel(attributesWidget);
 
-    PixmapLabel* vitalityIconWidget = new PixmapLabel(QPixmap(":/dsr_images/attr_vitality.png"), attributesWidget);
+    PixmapLabel* vitalityIconWidget = new PixmapLabel(QPixmap(":/dsr_images/attr_vitality"), attributesWidget);
     QLabel* vitalityLabelWidget = new QLabel("Vitality", attributesWidget);
     m_vitalityValueWidget = new QLabel(attributesWidget);
 
-    PixmapLabel* attunementIconWidget = new PixmapLabel(QPixmap(":/dsr_images/attr_attunement.png"), attributesWidget);
+    PixmapLabel* attunementIconWidget = new PixmapLabel(QPixmap(":/dsr_images/attr_attunement"), attributesWidget);
     QLabel* attunementLabelWidget = new QLabel("Attunement", attributesWidget);
     m_attunementValueWidget = new QLabel(attributesWidget);
 
-    PixmapLabel* enduranceIconWidget = new PixmapLabel(QPixmap(":/dsr_images/attr_endurance.png"), attributesWidget);
+    PixmapLabel* enduranceIconWidget = new PixmapLabel(QPixmap(":/dsr_images/attr_endurance"), attributesWidget);
     QLabel* enduranceLabelWidget = new QLabel("Endurance", attributesWidget);
     m_enduranceValueWidget = new QLabel(attributesWidget);
 
-    PixmapLabel* strengthIconWidget = new PixmapLabel(QPixmap(":/dsr_images/attr_strength.png"), attributesWidget);
+    PixmapLabel* strengthIconWidget = new PixmapLabel(QPixmap(":/dsr_images/attr_strength"), attributesWidget);
     QLabel* strengthLabelWidget = new QLabel("Strength", attributesWidget);
     m_strengthValueWidget = new QLabel(attributesWidget);
 
-    PixmapLabel* dexterityIconWidget = new PixmapLabel(QPixmap(":/dsr_images/attr_dexterity.png"), attributesWidget);
+    PixmapLabel* dexterityIconWidget = new PixmapLabel(QPixmap(":/dsr_images/attr_dexterity"), attributesWidget);
     QLabel* dexterityLabelWidget = new QLabel("Dexterity", attributesWidget);
     m_dexterityValueWidget = new QLabel(attributesWidget);
 
-    PixmapLabel* resistanceIconWidget = new PixmapLabel(QPixmap(":/dsr_images/attr_resistance.png"), attributesWidget);
+    PixmapLabel* resistanceIconWidget = new PixmapLabel(QPixmap(":/dsr_images/attr_resistance"), attributesWidget);
     QLabel* resistanceLabelWidget = new QLabel("Resistance", attributesWidget);
     m_resistanceValueWidget = new QLabel(attributesWidget);
 
-    PixmapLabel* intelligenceIconWidget = new PixmapLabel(QPixmap(":/dsr_images/attr_intelligence.png"), attributesWidget);
+    PixmapLabel* intelligenceIconWidget = new PixmapLabel(QPixmap(":/dsr_images/attr_intelligence"), attributesWidget);
     QLabel* intelligenceLabelWidget = new QLabel("Intelligence", attributesWidget);
     m_intelligenceValueWidget = new QLabel(attributesWidget);
 
-    PixmapLabel* faithIconWidget = new PixmapLabel(QPixmap(":/dsr_images/attr_faith.png"), attributesWidget);
+    PixmapLabel* faithIconWidget = new PixmapLabel(QPixmap(":/dsr_images/attr_faith"), attributesWidget);
     QLabel* faithLabelWidget = new QLabel("Faith", attributesWidget);
     m_faithValueWidget = new QLabel(attributesWidget);
 
-    PixmapLabel* humanityIconWidget =new PixmapLabel(QPixmap(":/dsr_images/attr_humanity.png"), attributesWidget);
+    PixmapLabel* humanityIconWidget =new PixmapLabel(QPixmap(":/dsr_images/attr_humanity"), attributesWidget);
     QLabel* humanityLabelWidget = new QLabel("Humanity", attributesWidget);
     m_humanityValueWidget = new QLabel(attributesWidget);
 

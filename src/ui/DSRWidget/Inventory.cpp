@@ -57,30 +57,30 @@ static QPixmap getInfusionIcon(const uint16_t& infusion, const uint8_t& upgradeL
     if (!hasDSRInventoryResources()) return QPixmap{};
     switch (infusion) {
         case 100:
-            return QPixmap(":/dsr_inv_images/crystal.png");
+            return QPixmap(":/dsr_inv_images/crystal");
         case 200:
-            return QPixmap(":/dsr_inv_images/lightning.png");
+            return QPixmap(":/dsr_inv_images/lightning");
         case 300:
-            return QPixmap(":/dsr_inv_images/raw.png");
+            return QPixmap(":/dsr_inv_images/raw");
         case 400:
             if (upgradeLevel >= 5)
-                return QPixmap(":/dsr_inv_images/magic_2.png");
-            return QPixmap(":/dsr_inv_images/magic.png");
+                return QPixmap(":/dsr_inv_images/magic_2");
+            return QPixmap(":/dsr_inv_images/magic");
         case 500:
-            return QPixmap(":/dsr_inv_images/enchanted.png");
+            return QPixmap(":/dsr_inv_images/enchanted");
         case 600:
             if (upgradeLevel >= 5)
-                return QPixmap(":/dsr_inv_images/divine_2.png");
-            return QPixmap(":/dsr_inv_images/divine.png");
+                return QPixmap(":/dsr_inv_images/divine_2");
+            return QPixmap(":/dsr_inv_images/divine");
         case 700:
-            return QPixmap(":/dsr_inv_images/occult.png");
+            return QPixmap(":/dsr_inv_images/occult");
         case 800:
             if (upgradeLevel >= 5)
-                return QPixmap(":/dsr_inv_images/fire_2.png");
-            return QPixmap(":/dsr_inv_images/fire.png");
+                return QPixmap(":/dsr_inv_images/fire_2");
+            return QPixmap(":/dsr_inv_images/fire");
 
         case 900:
-            return QPixmap(":/dsr_inv_images/chaos.png");
+            return QPixmap(":/dsr_inv_images/chaos");
         default:
             return QPixmap{};
     }
@@ -91,7 +91,7 @@ static QPixmap getItemImage(const std::string_view& image) {
 
     QString imagePath = QString::fromStdString(":/dsr_inv_images/");
     imagePath.append(QString::fromStdString(image.data()));
-    imagePath.append(QString::fromStdString(".png"));
+    imagePath.append(QString::fromStdString(""));
     return QPixmap(imagePath);
 }
 
@@ -141,7 +141,7 @@ QStandardItem* InventoryModel::createUnknownItem(fssm::parse::dsr::InventoryItem
     item->setData(inventoryItem.order, ITEM_ORDER_ROLE);
     item->setData(inventoryItem.durability, ITEM_DURABILITY_ROLE);
     item->setData(QVariant(QString::fromStdString(inventoryItem.baseItem.category.data())), ITEM_CATEGORY_ROLE);
-    item->setData(QPixmap(":/dsr_images/unknown.png"), ITEM_IMAGE_ROLE);
+    item->setData(QPixmap(":/dsr_images/unknown"), ITEM_IMAGE_ROLE);
     return item;
 }
 
@@ -174,9 +174,9 @@ bool InventoryProxyModel::filterAcceptsRow(int source_row, const QModelIndex &so
 
 
 InventoryDelegate::InventoryDelegate(QObject* parent): QStyledItemDelegate(parent) {
-    m_standPix = QPixmap(":/dsr_images/inventory_stand.png");
-    m_inventoryBagPix = QPixmap(":/dsr_images/inventory_bag.png");
-    m_bottomlessBoxPix = QPixmap(":/dsr_images/bottomless_box.png");
+    m_standPix = QPixmap(":/dsr_images/inventory_stand");
+    m_inventoryBagPix = QPixmap(":/dsr_images/inventory_bag");
+    m_bottomlessBoxPix = QPixmap(":/dsr_images/bottomless_box");
 }
 
 int InventoryDelegate::paintIcon(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const {
@@ -195,7 +195,7 @@ int InventoryDelegate::paintIcon(QPainter* painter, const QStyleOptionViewItem& 
         }
     }
     if (pixmap.isNull())
-        pixmap = QPixmap(":/dsr_images/unknown.png");
+        pixmap = QPixmap(":/dsr_images/unknown");
     int imgSize = option.rect.height() - 20;
     pixmap = pixmap.scaled(
         imgSize, imgSize,
@@ -310,8 +310,8 @@ QSize InventoryDelegate::sizeHint(const QStyleOptionViewItem& option, const QMod
 
 DSRInventoryCategoryButton::DSRInventoryCategoryButton(const QString& category, QWidget* parent): BaseClickableFrame(parent), m_category(category) {
     setAttribute(Qt::WA_TranslucentBackground, true);
-    m_pix = QPixmap(":/dsr_images/inventory_" + category + ".png");
-    m_hoverPix = QPixmap(":/dsr_images/inventory_" + category + "_hover.png");
+    m_pix = QPixmap(":/dsr_images/inventory_" + category + "");
+    m_hoverPix = QPixmap(":/dsr_images/inventory_" + category + "_hover");
     m_imageLabel = new PixmapLabel(m_pix, this);
     m_imageLabel->setObjectName("dsr_category_icon");
     m_imageLabel->setAttribute(Qt::WA_TranslucentBackground, true);
@@ -347,7 +347,7 @@ void DSRInventoryCategoryButton::onMouseRelease() {
 }
 
 CategoryButtonOverlay::CategoryButtonOverlay(QWidget* parent): QWidget(parent) {
-    m_bgPix = QPixmap(":/dsr_images/inventory_overlay.png");
+    m_bgPix = QPixmap(":/dsr_images/inventory_overlay");
 
 }
 void CategoryButtonOverlay::paintEvent(QPaintEvent* event) {

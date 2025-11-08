@@ -8,9 +8,9 @@ class CharacterStatusWidget: public QWidget {
     Q_OBJECT
 public:
     explicit CharacterStatusWidget(QWidget* parent);
-    void setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo);
+    void setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo) const;
 private:
-    void setEmpty();
+    void setEmpty() const;
     QLabel* m_nameValueWidget = nullptr;
     QLabel* m_covenantValueWidget = nullptr;
     QLabel* m_levelValueWidget = nullptr;
@@ -41,7 +41,7 @@ class CharacterInfoWidget: public QWidget {
     Q_OBJECT
 public:
     explicit CharacterInfoWidget(QWidget* parent);
-    void setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo);
+    void setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo) const;
 private:
     CharacterStatusWidget* m_statusWidget = nullptr;
 };

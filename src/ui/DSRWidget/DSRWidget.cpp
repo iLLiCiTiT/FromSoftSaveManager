@@ -135,7 +135,7 @@ void DSRWidget::paintEvent(QPaintEvent* event) {
     painter.setBrush(QColor(6, 5, 7));
     const QRect targetRect = rect();
     painter.drawRect(targetRect);
-    QPixmap pix = QPixmap(":/dsr_images/bg.png");
+    QPixmap pix = QPixmap(":/dsr_images/bg");
     QPixmap scaled = pix.scaled(size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
     // center vertically
     const int y = (height() - scaled.height()) / 2;

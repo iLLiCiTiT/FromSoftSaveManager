@@ -50,62 +50,6 @@ def _fill_files(
         dst_element.append(item)
 
 
-def fill_dsr_files(
-    common_root: xmlET.Element,
-    inventory_root: xmlET.Element,
-    resources_dir: Path,
-    dsr_dir: Path,
-) -> None:
-    dsr_images_el: xmlET.Element = xmlET.Element(
-        "qresource", prefix="/dsr_images"
-    )
-    common_root.append(dsr_images_el)
-
-    dsr_inv_images_el: xmlET.Element = xmlET.Element(
-        "qresource", prefix="/dsr_inv_images"
-    )
-    inventory_root.append(dsr_inv_images_el)
-
-    common_res_dir_queue: collections.deque[Path] = collections.deque()
-    inventory_res_dir_queue: collections.deque[Path] = collections.deque()
-    for path in dsr_dir.iterdir():
-        if path.name in DSR_INVENTORY_DIRS:
-            inventory_res_dir_queue.append(path)
-        else:
-            common_res_dir_queue.append(path)
-
-    _fill_files(
-        common_res_dir_queue,
-        resources_dir,
-        dsr_images_el,
-    )
-    _fill_files(
-        inventory_res_dir_queue,
-        resources_dir,
-        dsr_inv_images_el,
-    )
-
-
-def create_dsr_resources(resources_dir: Path) -> None:
-    images_dir = resources_dir / "images"
-    dsr_dir = images_dir / "dsr"
-    dsr_images_rsc_path = resources_dir / "dsr_images.qrc"
-    dsr_inv_images_rsc_path = resources_dir / "dsr_inventory_images.qrc"
-
-    common_root = xmlET.Element("RCC")
-    common_tree: xmlET.ElementTree = xmlET.ElementTree(common_root)
-
-    inventory_root = xmlET.Element("RCC")
-    inventory_tree: xmlET.ElementTree = xmlET.ElementTree(inventory_root)
-
-    fill_dsr_files(common_root, inventory_root, resources_dir, dsr_dir)
-
-    xmlET.indent(common_root, INDENT_SPACES)
-    xmlET.indent(inventory_root, INDENT_SPACES)
-    common_tree.write(str(dsr_images_rsc_path), encoding="utf-8")
-    inventory_tree.write(str(dsr_inv_images_rsc_path), encoding="utf-8")
-
-
 def fill_files(
     images_el: xmlET.Element,
     inv_images_el: xmlET.Element,
@@ -179,6 +123,17 @@ def create_resources(
         tree.write(str(path), encoding="utf-8")
 
 
+def create_dsr_resources(resources_dir: Path) -> None:
+    dsr_dir = resources_dir / "images" / "dsr"
+    create_resources(
+        resources_dir,
+        dsr_dir,
+        "dsr_images",
+        "dsr_inv_images",
+        DSR_INVENTORY_DIRS,
+    )
+
+
 def create_ds3_resources(resources_dir: Path) -> None:
     images_dir = resources_dir / "images"
     ds3_dir = images_dir / "ds3"
@@ -204,7 +159,7 @@ def create_er_resources(resources_dir: Path) -> None:
 
 def main() -> None:
     resources_dir = CURRENT_DIR / "src" / "resources"
-    # create_dsr_resources(resources_dir)
+    create_dsr_resources(resources_dir)
     create_ds3_resources(resources_dir)
     create_er_resources(resources_dir)
 
