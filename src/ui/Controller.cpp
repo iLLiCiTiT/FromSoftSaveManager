@@ -122,13 +122,16 @@ Controller::Controller(QObject* parent): QObject(parent) {
 }
 
 Controller::~Controller() {
-    delete m_configModel;
     m_hotkeysThread->stop();
     m_hotkeysThread->wait();
     m_hotkeysThread->deleteLater();
+
     m_saveChangesThread->stop();
     m_saveChangesThread->wait();
     m_saveChangesThread->deleteLater();
+
+    m_configModel->saveConfig();
+    delete m_configModel;
 }
 
 QString Controller::getLastSelectedSaveId() const {
