@@ -1,18 +1,22 @@
 <RCC>
+    <qresource prefix="/audio">
+        <file alias="ember_restored">audio/ember_restored.wav</file>
+        <file alias="soul_suck">audio/soul_suck.wav</file>
+    </qresource>
     <qresource prefix="/fonts">
         <file alias="NotoSans-Regular.ttf">fonts/Noto_Sans/NotoSans-Regular.ttf</file>
     </qresource>
-    <qresource prefix="/stylesheet">
-        <file alias="app.qss">style/app.qss</file>
-    </qresource>
     <qresource prefix="/icons">
-        <file alias="icon.png">icons/icon.png</file>
         <file alias="DSR_256x256.png">icons/DSR_256x256.png</file>
         <file alias="DS2-SOTFS_256x256.png">icons/DS2-SOTFS_256x256.png</file>
         <file alias="DS3_256x256.png">icons/DS3_256x256.png</file>
         <file alias="ER_256x256.png">icons/ER_256x256.png</file>
+        <file alias="folder_256x256.png">icons/folder_256x256.png</file>
+        <file alias="icon.png">icons/icon.png</file>
         <file alias="Sekiro_256x256.png">icons/Sekiro_256x256.png</file>
         <file alias="settings_256x256.png">icons/settings_256x256.png</file>
-        <file alias="folder_256x256.png">icons/folder_256x256.png</file>
+    </qresource>
+    <qresource prefix="/stylesheet">
+        <file alias="app.qss">style/app.qss</file>
     </qresource>
 </RCC>
