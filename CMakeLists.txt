@@ -77,13 +77,13 @@ target_link_libraries(inv_resources_dsr PUBLIC Qt::Core)
 
 # --- DS3 inventory resources ---
 add_library(inv_resources_ds3 SHARED)
-set_source_files_properties(src/resources/ds3_inventory_images.qrc PROPERTIES
-    QT_RESOURCE_ALIAS "ds3_inventory_images"
+set_source_files_properties(src/resources/ds3_inv_images.qrc PROPERTIES
+    QT_RESOURCE_ALIAS "ds3_inv_images"
 )
 set_target_properties(inv_resources_ds3 PROPERTIES PREFIX "")
 target_sources(inv_resources_ds3 PRIVATE
-    src/resources/ds3_inventory_images.qrc
-    src/resources/ds3_inventory_images_init.h
+    src/resources/ds3_inv_images.qrc
+    src/resources/ds3_inv_images_init.h
 )
 target_link_libraries(inv_resources_ds3 PUBLIC Qt::Core)
 # -------------------------------
