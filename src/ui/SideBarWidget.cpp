@@ -66,9 +66,9 @@ ButtonGameInfo GameSaveTabButton::getGameInfo(fssm::Game game) {
         case fssm::Game::DS3:
             return {"Dark Souls III", QIcon(":/icons/DS3_256x256.png")};
         case fssm::Game::Sekiro:
-            return {"Sekiro: Shadows Die Twice", QIcon(":/icons/ER_256x256.png")};
+            return {"Sekiro: Shadows Die Twice", QIcon(":/icons/Sekiro_256x256.png")};
         case fssm::Game::ER:
-            return {"Elden Ring", QIcon(":/icons/Sekiro_256x256.png")};
+            return {"Elden Ring", QIcon(":/icons/ER_256x256.png")};
         default:
             return {"Unknown", QIcon()};
     }

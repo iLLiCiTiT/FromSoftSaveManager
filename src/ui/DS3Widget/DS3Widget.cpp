@@ -113,11 +113,11 @@ DS3Widget::DS3Widget(Controller* controller, const QString& saveId, QWidget* par
     connect(m_view->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)), this, SLOT(onSelectionChange(const QItemSelection&, const QItemSelection&)));
     connect(m_model, SIGNAL(refreshed()), this, SLOT(onRefresh()));
     connect(manageBackupsBtnsWidget, SIGNAL(showBackupsRequested()), this, SIGNAL(showBackupsRequested()));
-};
+}
 
 void DS3Widget::refresh() {
     m_model->refresh();
-};
+}
 
 void DS3Widget::paintEvent(QPaintEvent* event) {
     QPainter painter = QPainter(this);
@@ -127,9 +127,8 @@ void DS3Widget::paintEvent(QPaintEvent* event) {
     const QRect targetRect = rect();
     painter.drawRect(targetRect);
     QPixmap pix = QPixmap(":/ds3_images/bg");
-    QPixmap scaled = pix.scaled(size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
-    painter.drawPixmap(0, 0, scaled);
-};
+    painter.drawPixmap(0, 0, pix.scaled(size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation));
+}
 
 void DS3Widget::onRefresh() {
     QItemSelectionModel* selModel = m_view->selectionModel();
@@ -163,4 +162,4 @@ void DS3Widget::onSelectionChange(const QItemSelection &selected, const QItemSel
     }
     m_charInfoWidget->setCharacter(nullptr);
     m_inventoryWidget->setCharacter(nullptr);
-};
+}

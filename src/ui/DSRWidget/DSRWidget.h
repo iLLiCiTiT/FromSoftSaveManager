@@ -33,6 +33,7 @@ class DSRWidget: public BaseGameWidget {
 public:
     explicit DSRWidget(Controller* controller, const QString& saveId, QWidget* parent);
     void refresh() override;
+protected:
     void paintEvent(QPaintEvent* event) override;
 private slots:
     void onRefresh();
