@@ -61,6 +61,12 @@ struct DS3CharInfoResult {
     std::vector<fssm::parse::ds3::DS3CharacterInfo> characters;
 };
 
+// Result to receive characters of ER save file
+struct ERCharInfoResult {
+    QString error;
+    std::vector<fssm::parse::er::ERCharacterInfo> characters;
+};
+
 // Controller wrapping backend logic allowing UI to access data it needs
 class Controller: public QObject {
     Q_OBJECT
@@ -87,7 +93,7 @@ public:
     // DS2CharInfoResult getDs2Characters(const QString& saveId) const;
     DS3CharInfoResult getDs3Characters(const QString& saveId) const;
     // SekiroCharInfoResult getSekiroCharacters(const QString& saveId) const;
-    // ERCharInfoResult getERCharacters(const QString& saveId) const;
+    ERCharInfoResult getERCharacters(const QString& saveId) const;
 
     std::vector<BackupMetadata> getBackupItems();
     void createManualBackup(const QString& label);
