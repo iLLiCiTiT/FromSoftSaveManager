@@ -25,6 +25,8 @@ UserData10 parseUserData10(const BND4Entry& entry) {
 
 ERCharacterInfo parseERCharacter(const BND4Entry& entry, const UserData10& userData10, const uint8_t& index) {
     ERCharacterInfo output;
+    output.index = index;
+
     ContentReader reader = ContentReader(entry.content);
     output.version = reader.read_u32_le();
     output.mapId = reader.read_u32_le();
