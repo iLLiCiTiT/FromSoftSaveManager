@@ -56,6 +56,7 @@ add_executable(FromSoftSaveManager
         src/ui/DS3Widget/CharInfo.cpp
         src/ui/SekiroWidget/SekiroWidget.cpp
         src/ui/ERWidget/ERWidget.cpp
+        src/ui/ERWidget/CharInfo.cpp
 )
 
 target_link_libraries(FromSoftSaveManager
