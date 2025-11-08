@@ -30,6 +30,7 @@ add_executable(FromSoftSaveManager
         src/resources/resources.qrc
         src/resources/dsr_images.qrc
         src/resources/ds3_images.qrc
+        src/resources/er_images.qrc
         src/ui/SquareButton.h
         src/ui/Utils.cpp
         src/ui/ConfigModel.cpp
