@@ -10,6 +10,8 @@ find_package(Qt6 COMPONENTS
         Core
         Gui
         Widgets
+        Multimedia
+        Network
         Concurrent
         REQUIRED)
 
@@ -64,6 +66,8 @@ target_link_libraries(FromSoftSaveManager
         Qt::Gui
         Qt::Widgets
         Qt::Concurrent
+        Qt::Multimedia
+        Qt::Network
         tiny-aes
 )
 
@@ -139,7 +143,9 @@ if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
         Qt6Core
         Qt6Gui
         Qt6Widgets
+        Qt6Multimedia
         Qt6Concurrent
+        Qt6Network
         libgcc_s_seh-1
         libstdc++-6
         libwinpthread-1

@@ -102,6 +102,14 @@ void SaveChangesThread::run() {
 
 // --- Controller ---
 Controller::Controller(QObject* parent): QObject(parent) {
+    m_saveSound = new QSoundEffect(this);
+    m_saveSound->setSource(QUrl(":/audio/soul_suck"));
+    m_saveSound->setVolume(0.5);
+
+    m_loadSound = new QSoundEffect(this);
+    m_loadSound->setSource(QUrl(":/audio/ember_restored"));
+    m_loadSound->setVolume(0.5);
+
     m_configModel = new ConfigModel(this);
     auto saveFileItems = m_configModel->getSaveFileItems();
     m_backupsModel = new BackupsModel(saveFileItems, m_configModel->getAutosaveConfig(), m_configModel->getBackupDirPath(), this);
@@ -116,6 +124,9 @@ Controller::Controller(QObject* parent): QObject(parent) {
     connect(m_hotkeysThread, SIGNAL(quickLoadRequested()), this, SLOT(onQuickLoadRequest()));
 
     connect(m_saveChangesThread, SIGNAL(saveFileChanged(QString)), this, SLOT(onSaveFileChange(QString)));
+
+    connect(m_backupsModel, SIGNAL(createBackupFinished(bool, BackupType)), this, SLOT(onBackupCreate(bool, BackupType)));
+    connect(m_backupsModel, SIGNAL(loadBackupFinished(bool)), this, SLOT(onBackupLoad(bool)));
 
     m_hotkeysThread->start();
     m_saveChangesThread->start();
@@ -285,4 +296,14 @@ void Controller::onAutobackupChange() {
 void Controller::onSaveFileChange(const QString& saveId) {
     m_backupsModel->saveGameChanged(saveId);
     emit saveIdChanged(saveId);
+}
+
+void Controller::onBackupCreate(bool success, BackupType backupType) {
+    if (success && backupType != BackupType::AUTOSAVE)
+        m_saveSound->play();
+}
+
+void Controller::onBackupLoad(bool success) {
+    if (success)
+        m_loadSound->play();
 }

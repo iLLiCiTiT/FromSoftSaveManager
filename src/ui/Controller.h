@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QThread>
+#include <QSoundEffect>
 #include <unordered_set>
 
 #include "KeysWindows.h"
@@ -108,8 +109,12 @@ private slots:
     void onHotkeysChange();
     void onAutobackupChange();
     void onSaveFileChange(const QString& saveId);
+    void onBackupCreate(bool success, BackupType backupType);
+    void onBackupLoad(bool success);
 
 private:
+    QSoundEffect* m_saveSound = nullptr;
+    QSoundEffect* m_loadSound = nullptr;
     QString m_currentSaveId = "";
     ConfigModel* m_configModel;
     BackupsModel* m_backupsModel;
