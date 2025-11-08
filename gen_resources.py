@@ -21,6 +21,8 @@ DS3_INVENTORY_DIRS = {
     "infusion_icons",
     "item_icons",
 }
+ER_INVENTORY_DIRS = set()
+
 
 def _fill_files(
     queue: collections.deque[Path],
@@ -104,26 +106,17 @@ def create_dsr_resources(resources_dir: Path) -> None:
     inventory_tree.write(str(dsr_inv_images_rsc_path), encoding="utf-8")
 
 
-def fill_ds3_files(
-    common_root: xmlET.Element,
-    inventory_root: xmlET.Element,
+def fill_files(
+    images_el: xmlET.Element,
+    inv_images_el: xmlET.Element,
     resources_dir: Path,
-    ds3_dir: Path,
+    game_dir: Path,
+    inv_dirs: set[str],
 ) -> None:
-    ds3_images_el: xmlET.Element = xmlET.Element(
-        "qresource", prefix="/ds3_images"
-    )
-    common_root.append(ds3_images_el)
-
-    ds3_inv_images_el: xmlET.Element = xmlET.Element(
-        "qresource", prefix="/ds3_inv_images"
-    )
-    inventory_root.append(ds3_inv_images_el)
-
     common_res_dir_queue: collections.deque[Path] = collections.deque()
     inventory_res_dir_queue: collections.deque[Path] = collections.deque()
-    for path in ds3_dir.iterdir():
-        if path.name in DS3_INVENTORY_DIRS:
+    for path in game_dir.iterdir():
+        if path.name in inv_dirs:
             inventory_res_dir_queue.append(path)
         else:
             common_res_dir_queue.append(path)
@@ -131,41 +124,89 @@ def fill_ds3_files(
     _fill_files(
         common_res_dir_queue,
         resources_dir,
-        ds3_images_el,
+        images_el,
         remove_ext=True,
     )
     _fill_files(
         inventory_res_dir_queue,
         resources_dir,
-        ds3_inv_images_el,
+        inv_images_el,
         remove_ext=True,
     )
+
+
+def create_resources(
+    resources_dir: Path,
+    game_dir: Path,
+    common_prefix: str,
+    inventory_prefix: str,
+    inventory_dirs: set[str],
+) -> None:
+    images_rsc_path = resources_dir / f"{common_prefix}.qrc"
+    inv_images_rsc_path = resources_dir / f"{inventory_prefix}.qrc"
+
+    images_el: xmlET.Element = xmlET.Element(
+        "qresource", prefix=f"/{common_prefix}"
+    )
+    inv_images_el: xmlET.Element = xmlET.Element(
+        "qresource", prefix=f"/{inventory_prefix}"
+    )
+
+    common_root = xmlET.Element("RCC")
+    common_root.append(images_el)
+
+    inventory_root = xmlET.Element("RCC")
+    inventory_root.append(inv_images_el)
+
+    fill_files(
+        images_el,
+        inv_images_el,
+        resources_dir,
+        game_dir,
+        inventory_dirs,
+    )
+    for (root, element, path) in (
+        (common_root, images_el, images_rsc_path),
+        (inventory_root, inv_images_el, inv_images_rsc_path),
+    ):
+        if len(element) == 0:
+            if path.exists():
+                path.unlink()
+            continue
+        element[:] = sorted(element, key=lambda x: x.attrib["alias"])
+        tree: xmlET.ElementTree = xmlET.ElementTree(root)
+        xmlET.indent(tree, INDENT_SPACES)
+        tree.write(str(path), encoding="utf-8")
 
 
 def create_ds3_resources(resources_dir: Path) -> None:
     images_dir = resources_dir / "images"
     ds3_dir = images_dir / "ds3"
-    ds3_images_rsc_path = resources_dir / "ds3_images.qrc"
-    ds3_inv_images_rsc_path = resources_dir / "ds3_inventory_images.qrc"
+    create_resources(
+        resources_dir,
+        ds3_dir,
+        "ds3_images",
+        "ds3_inv_images",
+        DS3_INVENTORY_DIRS,
+    )
 
-    common_root = xmlET.Element("RCC")
-    common_tree: xmlET.ElementTree = xmlET.ElementTree(common_root)
 
-    inventory_root = xmlET.Element("RCC")
-    inventory_tree: xmlET.ElementTree = xmlET.ElementTree(inventory_root)
-
-    fill_ds3_files(common_root, inventory_root, resources_dir, ds3_dir)
-
-    xmlET.indent(common_root, INDENT_SPACES)
-    xmlET.indent(inventory_root, INDENT_SPACES)
-    common_tree.write(str(ds3_images_rsc_path), encoding="utf-8")
-    inventory_tree.write(str(ds3_inv_images_rsc_path), encoding="utf-8")
+def create_er_resources(resources_dir: Path) -> None:
+    er_dir = resources_dir / "images" / "er"
+    create_resources(
+        resources_dir,
+        er_dir,
+        "er_images",
+        "er_inv_images",
+        ER_INVENTORY_DIRS,
+    )
 
 
 def main() -> None:
     resources_dir = CURRENT_DIR / "src" / "resources"
     # create_dsr_resources(resources_dir)
     create_ds3_resources(resources_dir)
+    create_er_resources(resources_dir)
 
 
 if __name__ == "__main__":
