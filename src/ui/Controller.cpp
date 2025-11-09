@@ -269,6 +269,13 @@ void Controller::createManualBackup(const QString& label) {
     m_backupsModel->createManualBackup(itemOpt.value().savePath, itemOpt.value().game, label);
 }
 
+void Controller::restoreBackupById(const QString& backupId) {
+    if (m_currentSaveId.isEmpty()) return;
+    auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
+    if (!itemOpt.has_value()) return;
+    m_backupsModel->restoreBackupById(itemOpt.value().savePath, itemOpt.value().game, backupId);
+}
+
 void Controller::deleteBackupByIds(const std::vector<QString>& backupIds) {
     if (m_currentSaveId.isEmpty()) return;
     auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);

@@ -98,6 +98,7 @@ public:
 
     std::vector<BackupMetadata> getBackupItems();
     void createManualBackup(const QString& label);
+    void restoreBackupById(const QString& backupId);
     void deleteBackupByIds(const std::vector<QString>& backupIds);
 
     void openBackupDir();

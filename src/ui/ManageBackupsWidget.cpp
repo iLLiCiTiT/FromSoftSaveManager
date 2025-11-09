@@ -261,6 +261,7 @@ ManageBackupsOverlayWidget::ManageBackupsOverlayWidget(Controller* controller, Q
     connect(createBackupBtn, SIGNAL(clicked()), this, SLOT(onCreateBackup()));
     connect(openBackupDirBtn, SIGNAL(clicked()), this, SLOT(onOpenBackupDir()));
     connect(m_deleteBackupsBtn, SIGNAL(clicked()), this, SLOT(onDeleteBackups()));
+    connect(m_backupsView, SIGNAL(doubleClicked(const QModelIndex &)), this, SLOT(onDoubleClick(const QModelIndex &)));
     connect(m_backupsView->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)), this, SLOT(onSelectionChange(const QItemSelection&, const QItemSelection&)));
 }
 
@@ -313,6 +314,12 @@ void ManageBackupsOverlayWidget::onOpenBackupDir() {
 
 void ManageBackupsOverlayWidget::onSelectionChange(const QItemSelection &selected, const QItemSelection &deselected) {
      m_deleteBackupsBtn->setEnabled(selected.indexes().length());
+}
+
+void ManageBackupsOverlayWidget::onDoubleClick(const QModelIndex &index) {
+    QString backupId = index.data(BackupIdRole).toString();
+    m_controller->restoreBackupById(backupId);
+    emit hideRequested();
 }
 
 // Common UI widget for all games

@@ -49,6 +49,7 @@ private slots:
     void onDeleteBackups();
     void onCreateBackup();
     void onOpenBackupDir();
+    void onDoubleClick(const QModelIndex &index);
     void onSelectionChange(const QItemSelection& selected, const QItemSelection& deselected);
 private:
     Controller* m_controller = nullptr;
