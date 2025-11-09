@@ -377,9 +377,11 @@ bool BackupsModel::restoreBackupSave(const QString& dstSavePath, const BackupMet
         }
         dstFile.write(buffer.data(), buffer.size());
         dstFile.close();
+        emit loadBackupFinished(true);
         return true;
     }
 
+    emit loadBackupFinished(false);
     return false;
 }
 
