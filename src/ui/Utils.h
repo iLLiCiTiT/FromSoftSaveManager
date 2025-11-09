@@ -32,7 +32,7 @@ inline bool hasDS3InventoryResources() {return g_ds3ResourcesLoaded;}
 
 inline std::string generateUUID() {
     QUuid uuid = QUuid::createUuid();
-    QString s = uuid.toString(QUuid::WithoutBraces);
+    QString s = uuid.toString(QUuid::Id128);
     return s.toStdString();
 }
 
