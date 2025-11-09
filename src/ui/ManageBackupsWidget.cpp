@@ -6,6 +6,7 @@
 #include <QStackedLayout>
 #include <QtConcurrent>
 #include <QFutureWatcher>
+#include <QPainter>
 
 #include "Utils.h"
 
@@ -13,6 +14,23 @@ namespace {
 const int BackupIdRole = Qt::UserRole + 1;
 const int BackupDateRole = Qt::UserRole + 2;
 const int BackupSortRole = Qt::UserRole + 3;
+}
+
+
+CloseButton::CloseButton(QWidget* parent): ClickableFrame(parent) {
+    setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    m_pix = QPixmap(":/images/common/close.png");
+}
+
+void CloseButton::paintEvent(QPaintEvent* event) {
+    QPainter painter = QPainter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setPen(Qt::NoPen);
+    painter.setClipRect(event->rect());
+    if (underMouse())
+        painter.setBrush(QColor(255, 255, 255, 40));
+    painter.drawEllipse(rect());
+    painter.drawPixmap(rect(), m_pix.scaled(width(), height(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
 }
 
 
@@ -148,8 +166,17 @@ ManageBackupsOverlayWidget::ManageBackupsOverlayWidget(Controller* controller, Q
 
     QWidget* wrapWidget = new QWidget(splitter);
 
-    QLabel* headerWidget = new QLabel("Backups", wrapWidget);
-    headerWidget->setAlignment(Qt::AlignCenter);
+    QWidget* headerWidget = new QWidget(wrapWidget);
+    QLabel* headerLabel = new QLabel("Backups", headerWidget);
+    headerLabel->setAlignment(Qt::AlignCenter);
+
+    CloseButton* closeBackupBtn = new CloseButton(headerWidget);
+    closeBackupBtn->setToolTip("Close overlay");
+
+    QHBoxLayout* headerLayout = new QHBoxLayout(headerWidget);
+    headerLayout->setContentsMargins(0, 0, 0, 0);
+    headerLayout->addWidget(headerLabel, 1);
+    headerLayout->addWidget(closeBackupBtn, 0);
 
     m_backupsView = new QTreeView(wrapWidget);
     m_backupsView->setSortingEnabled(true);
@@ -179,22 +206,27 @@ ManageBackupsOverlayWidget::ManageBackupsOverlayWidget(Controller* controller, Q
     m_backupsView->setModel(m_proxyModel);
 
     QWidget* btnsWidget = new QWidget(wrapWidget);
-    QPushButton* closeBackupBtn = new QPushButton("Close", btnsWidget);
-    closeBackupBtn->setToolTip("Closes this overlay");
-    QPushButton* createBackupBtn = new QPushButton("Create", btnsWidget);
+
+    QPixmap createIcon = QPixmap(":/images/common/add.png");
+    QPushButton* createBackupBtn = new QPushButton(createIcon, "Create", btnsWidget);
     createBackupBtn->setToolTip("Create a backup of the current save");
-    // TODO implement
-    createBackupBtn->setVisible(false);
-    QPushButton* deleteBackupsBtn = new QPushButton("Delete", btnsWidget);
-    deleteBackupsBtn->setToolTip("Delete selected backups");
+
+    QPixmap browseIcon = QPixmap(":/images/common/folder_open.png");
+    QPushButton* openBackupDirBtn = new QPushButton(browseIcon, "Browse", btnsWidget);
+    openBackupDirBtn->setToolTip("Open Backup directory");
+
+    QPixmap deleteIcon = QPixmap(":/images/common/delete.png");
+    m_deleteBackupsBtn = new QPushButton(deleteIcon, "Delete", btnsWidget);
+    m_deleteBackupsBtn->setToolTip("Delete selected backups");
+    m_deleteBackupsBtn->setEnabled(false);
 
     QHBoxLayout* btnsLayout = new QHBoxLayout(btnsWidget);
     btnsLayout->setContentsMargins(0, 0, 0, 0);
     btnsLayout->setSpacing(10);
-    btnsLayout->addWidget(closeBackupBtn, 0);
-    btnsLayout->addStretch(1);
     btnsLayout->addWidget(createBackupBtn, 0);
-    btnsLayout->addWidget(deleteBackupsBtn, 0);
+    btnsLayout->addWidget(openBackupDirBtn, 0);
+    btnsLayout->addStretch(1);
+    btnsLayout->addWidget(m_deleteBackupsBtn, 0);
 
     QVBoxLayout* wrapLayout = new QVBoxLayout(wrapWidget);
     wrapLayout->setContentsMargins(5, 5, 5, 5);
@@ -226,7 +258,10 @@ ManageBackupsOverlayWidget::ManageBackupsOverlayWidget(Controller* controller, Q
 
     connect(fillupWidget, SIGNAL(clicked()), this, SIGNAL(hideRequested()));
     connect(closeBackupBtn, SIGNAL(clicked()), this, SIGNAL(hideRequested()));
-    connect(deleteBackupsBtn, SIGNAL(clicked()), this, SLOT(onDeleteBackkups()));
+    connect(createBackupBtn, SIGNAL(clicked()), this, SLOT(onCreateBackup()));
+    connect(openBackupDirBtn, SIGNAL(clicked()), this, SLOT(onOpenBackupDir()));
+    connect(m_deleteBackupsBtn, SIGNAL(clicked()), this, SLOT(onDeleteBackups()));
+    connect(m_backupsView->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)), this, SLOT(onSelectionChange(const QItemSelection&, const QItemSelection&)));
 }
 
 void ManageBackupsOverlayWidget::showEvent(QShowEvent *event) {
@@ -252,7 +287,7 @@ void ManageBackupsOverlayWidget::refresh() {
     watcher->setFuture(future);
 }
 
-void ManageBackupsOverlayWidget::onDeleteBackkups() {
+void ManageBackupsOverlayWidget::onDeleteBackups() {
     std::vector<QString> backupIds;
     for (auto& index: m_backupsView->selectionModel()->selectedIndexes()) {
         QVariant backupId = index.data(BackupIdRole);
@@ -264,6 +299,22 @@ void ManageBackupsOverlayWidget::onDeleteBackkups() {
     refresh();
 }
 
+void ManageBackupsOverlayWidget::onCreateBackup() {
+    CreateBackupDialog dialog = CreateBackupDialog(this);
+    if (dialog.exec() == QDialog::Accepted) {
+        QString label = dialog.getBackupName();
+        m_controller->createManualBackup(label);
+    }
+}
+
+void ManageBackupsOverlayWidget::onOpenBackupDir() {
+    m_controller->openBackupDir();
+}
+
+void ManageBackupsOverlayWidget::onSelectionChange(const QItemSelection &selected, const QItemSelection &deselected) {
+     m_deleteBackupsBtn->setEnabled(selected.indexes().length());
+}
+
 // Common UI widget for all games
 ManageBackupsButtonsWidget::ManageBackupsButtonsWidget(Controller* controller, QWidget* parent): QFrame(parent), m_controller(controller)
 {
@@ -271,21 +322,15 @@ ManageBackupsButtonsWidget::ManageBackupsButtonsWidget(Controller* controller, Q
     m_hotkeysLabel->setAlignment(Qt::AlignCenter);
 
     QWidget* btnsWidget = new QWidget(this);
-    QPushButton* createBackupBtn = new QPushButton("Create backup", btnsWidget);
-    createBackupBtn->setToolTip("Create a backup of the current save");
 
-    QPushButton* showBackupsBtn = new QPushButton("Show backups", btnsWidget);
+    QPixmap showIcon = QPixmap(":/images/common/menu.png");
+    QPushButton* showBackupsBtn = new QPushButton(showIcon, "Backups", btnsWidget);
     showBackupsBtn->setToolTip("Show available backups");
-
-    QPushButton* openBackupDirBtn = new QPushButton("Open Backup dir", btnsWidget);
-    openBackupDirBtn->setToolTip("Open Backup directory");
 
     QHBoxLayout* btnsLayout = new QHBoxLayout(btnsWidget);
     btnsLayout->setContentsMargins(0, 0, 0, 0);
     btnsLayout->addStretch(1);
-    btnsLayout->addWidget(createBackupBtn, 0);
     btnsLayout->addWidget(showBackupsBtn, 0);
-    btnsLayout->addWidget(openBackupDirBtn, 0);
     btnsLayout->addStretch(1);
 
     QVBoxLayout* layout = new QVBoxLayout(this);
@@ -297,29 +342,14 @@ ManageBackupsButtonsWidget::ManageBackupsButtonsWidget(Controller* controller, Q
     this->setAttribute(Qt::WA_TranslucentBackground, true);
     m_hotkeysLabel->setAttribute(Qt::WA_TranslucentBackground, true);
     btnsWidget->setAttribute(Qt::WA_TranslucentBackground, true);
-
-    connect(createBackupBtn, SIGNAL(clicked()), this, SLOT(onCreateBackup()));
     connect(showBackupsBtn, SIGNAL(clicked()), this, SLOT(onShowBackups()));
-    connect(openBackupDirBtn, SIGNAL(clicked()), this, SLOT(onOpenBackupDir()));
     connect(m_controller, SIGNAL(hotkeysConfigChanged()), this, SLOT(onHotkeysChange()));
 
     onHotkeysChange();
-};
-
-void ManageBackupsButtonsWidget::onCreateBackup() {
-    CreateBackupDialog dialog = CreateBackupDialog(this);
-    if (dialog.exec() == QDialog::Accepted) {
-        QString label = dialog.getBackupName();
-        m_controller->createManualBackup(label);
-    }
 }
 
 void ManageBackupsButtonsWidget::onShowBackups() {
     emit showBackupsRequested();
-}
-
-void ManageBackupsButtonsWidget::onOpenBackupDir() {
-    m_controller->openBackupDir();
 }
 
 void ManageBackupsButtonsWidget::onHotkeysChange() {

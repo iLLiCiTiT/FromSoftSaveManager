@@ -25,6 +25,11 @@ QPushButton:hover {
     background: #4B4C4F;
 }
 
+QPushButton:disabled {
+    background: #77787a;
+    color: #aaaaaa;
+}
+
 QAbstractScrollArea::corner {
     border: none;
     background: transparent;

@@ -8,6 +8,24 @@
 #include <QSortFilterProxyModel>
 
 #include "Controller.h"
+#include "Utils.h"
+
+
+class CloseButton: public ClickableFrame {
+    Q_OBJECT
+public:
+    explicit CloseButton(QWidget* parent = nullptr);
+protected:
+    QSize sizeHint() const override {
+        QFontMetrics fm(font());
+        return QSize(fm.height(), fm.height());
+    }
+    void enterEvent(QEnterEvent *event) override { repaint(); }
+    void leaveEvent(QEvent *event) override{ repaint(); }
+    void paintEvent(QPaintEvent* event) override;
+private:
+    QPixmap m_pix;
+};
 
 class BackupsOverlayModel: public QStandardItemModel {
     Q_OBJECT
@@ -28,12 +46,16 @@ public:
 protected:
     void showEvent(QShowEvent *event) override;
 private slots:
-    void onDeleteBackkups();
+    void onDeleteBackups();
+    void onCreateBackup();
+    void onOpenBackupDir();
+    void onSelectionChange(const QItemSelection& selected, const QItemSelection& deselected);
 private:
     Controller* m_controller = nullptr;
     BackupsOverlayModel* m_backupsModel = nullptr;
     QSortFilterProxyModel* m_proxyModel = nullptr;
     QTreeView* m_backupsView = nullptr;
+    QPushButton* m_deleteBackupsBtn = nullptr;
 };
 
 class CreateBackupDialog: public QDialog {
@@ -53,9 +75,7 @@ signals:
 public:
     explicit ManageBackupsButtonsWidget(Controller* m_controller, QWidget* parent);
 private slots:
-    void onCreateBackup();
     void onShowBackups();
-    void onOpenBackupDir();
     void onHotkeysChange();
 private:
     Controller* m_controller = nullptr;

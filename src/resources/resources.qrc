@@ -17,8 +17,13 @@
         <file alias="settings_256x256.png">icons/settings_256x256.png</file>
     </qresource>
     <qresource prefix="/images/common">
+        <file alias="add.png">images/common/add.png</file>
         <file alias="arrow_down.png">images/common/arrow_down.png</file>
         <file alias="arrow_up.png">images/common/arrow_up.png</file>
+        <file alias="close.png">images/common/close.png</file>
+        <file alias="delete.png">images/common/delete.png</file>
+        <file alias="folder_open.png">images/common/folder_open.png</file>
+        <file alias="menu.png">images/common/menu.png</file>
     </qresource>
     <qresource prefix="/stylesheet">
         <file alias="app.qss">style/app.qss</file>
