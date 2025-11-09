@@ -16,6 +16,10 @@
         <file alias="Sekiro_256x256.png">icons/Sekiro_256x256.png</file>
         <file alias="settings_256x256.png">icons/settings_256x256.png</file>
     </qresource>
+    <qresource prefix="/images/common">
+        <file alias="arrow_down.png">images/common/arrow_down.png</file>
+        <file alias="arrow_up.png">images/common/arrow_up.png</file>
+    </qresource>
     <qresource prefix="/stylesheet">
         <file alias="app.qss">style/app.qss</file>
     </qresource>
