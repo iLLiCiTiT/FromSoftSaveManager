@@ -70,6 +70,8 @@ fssm::parse::ds3::DS3CharacterInfo* CharsListModel::getCharByIdx(const int& inde
 DS3Widget::DS3Widget(Controller* controller, const QString& saveId, QWidget* parent)
     : BaseGameWidget(controller, saveId, parent)
 {
+    m_bgPix = QPixmap(":/ds3_images/bg");
+
     QWidget* viewWrap = new QWidget(this);
     viewWrap->setAttribute(Qt::WA_TranslucentBackground, true);
 
@@ -126,8 +128,7 @@ void DS3Widget::paintEvent(QPaintEvent* event) {
     painter.setBrush(QColor(6, 5, 7));
     const QRect targetRect = rect();
     painter.drawRect(targetRect);
-    QPixmap pix = QPixmap(":/ds3_images/bg");
-    painter.drawPixmap(0, 0, pix.scaled(size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation));
+    painter.drawPixmap(0, 0, m_bgPix.scaled(size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation));
 }
 
 void DS3Widget::onRefresh() {

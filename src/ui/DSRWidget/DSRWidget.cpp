@@ -70,6 +70,8 @@ fssm::parse::dsr::DSRCharacterInfo* CharsListModel::getCharByIdx(const int& inde
 DSRWidget::DSRWidget(Controller* controller, const QString& saveId, QWidget* parent)
     : BaseGameWidget(controller, saveId, parent)
 {
+    m_bgPix = QPixmap(":/dsr_images/bg");
+
     QWidget* viewWrap = new QWidget(this);
     viewWrap->setAttribute(Qt::WA_TranslucentBackground, true);
 
@@ -135,8 +137,7 @@ void DSRWidget::paintEvent(QPaintEvent* event) {
     painter.setBrush(QColor(6, 5, 7));
     const QRect targetRect = rect();
     painter.drawRect(targetRect);
-    QPixmap pix = QPixmap(":/dsr_images/bg");
-    QPixmap scaled = pix.scaled(size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+    QPixmap scaled = m_bgPix.scaled(size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
     // center vertically
     const int y = (height() - scaled.height()) / 2;
     painter.drawPixmap(0, y, scaled);
