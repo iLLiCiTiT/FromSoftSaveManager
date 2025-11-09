@@ -1,7 +1,7 @@
 <RCC>
     <qresource prefix="/audio">
-        <file alias="ember_restored">audio/ember_restored.wav</file>
-        <file alias="soul_suck">audio/soul_suck.wav</file>
+        <file alias="ember_restored.wav">audio/ember_restored.wav</file>
+        <file alias="soul_suck.wav">audio/soul_suck.wav</file>
     </qresource>
     <qresource prefix="/fonts">
         <file alias="NotoSans-Regular.ttf">fonts/Noto_Sans/NotoSans-Regular.ttf</file>

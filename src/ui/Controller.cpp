@@ -103,11 +103,11 @@ void SaveChangesThread::run() {
 // --- Controller ---
 Controller::Controller(QObject* parent): QObject(parent) {
     m_saveSound = new QSoundEffect(this);
-    m_saveSound->setSource(QUrl(":/audio/soul_suck"));
+    m_saveSound->setSource(QUrl("qrc:/audio/soul_suck.wav"));
     m_saveSound->setVolume(0.5);
 
     m_loadSound = new QSoundEffect(this);
-    m_loadSound->setSource(QUrl(":/audio/ember_restored"));
+    m_loadSound->setSource(QUrl("qrc:/audio/ember_restored.wav"));
     m_loadSound->setVolume(0.5);
 
     m_configModel = new ConfigModel(this);
