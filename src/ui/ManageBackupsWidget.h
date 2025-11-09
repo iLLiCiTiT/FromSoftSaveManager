@@ -5,6 +5,7 @@
 #include <QLineEdit>
 #include <QStandardItemModel>
 #include <QTreeView>
+#include <QSortFilterProxyModel>
 
 #include "Controller.h"
 
@@ -31,6 +32,7 @@ private slots:
 private:
     Controller* m_controller = nullptr;
     BackupsOverlayModel* m_backupsModel = nullptr;
+    QSortFilterProxyModel* m_proxyModel = nullptr;
     QTreeView* m_backupsView = nullptr;
 };
 

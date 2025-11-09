@@ -9,8 +9,11 @@
 
 #include "Utils.h"
 
-static int BACKUP_ID_ROLE = Qt::UserRole + 1;
-static int BACKUP_DATE_ROLE = Qt::UserRole + 2;
+namespace {
+const int BackupIdRole = Qt::UserRole + 1;
+const int BackupDateRole = Qt::UserRole + 2;
+const int BackupSortRole = Qt::UserRole + 3;
+}
 
 
 // Dialog asking for backup name
@@ -68,7 +71,9 @@ Qt::ItemFlags BackupsOverlayModel::flags(const QModelIndex &index) const {
 QVariant BackupsOverlayModel::data(const QModelIndex &index, int role) const {
     if (!index.isValid()) return QVariant();
     if (role == Qt::DisplayRole && index.column() == 1)
-        role = BACKUP_DATE_ROLE;
+        role = BackupDateRole;
+    else if (role == BackupSortRole && index.column() == 0)
+        role = Qt::DisplayRole;
 
     QModelIndex newIndex = index;
     if (index.column() != 0)
@@ -86,6 +91,18 @@ void BackupsOverlayModel::setBackupItems(std::vector<BackupMetadata>& backupItem
     QList<QStandardItem*> newItems;
     for (auto& backupItem: backupItems) {
         QString label = QString::fromStdString(backupItem.label);
+
+        QString datetimeStd = QString::fromStdString(backupItem.datetime);
+        if (datetimeStd.size() > 10 && datetimeStd[10] == QLatin1Char(' '))
+            datetimeStd[10] = QLatin1Char('T');
+
+        QDateTime dt = QDateTime::fromString(datetimeStd, Qt::ISODate);
+        if (!dt.isValid()) {
+            // Optional fallback if the string might include milliseconds
+            dt = QDateTime::fromString(datetimeStd, Qt::ISODateWithMs);
+        }
+        QDateTime datetime = dt.toLocalTime();
+        QString datetimeLabel = datetime.toString("yyyy-MM-dd HH:mm:ss");
         if (label.isEmpty()) {
             switch (backupItem.backupType) {
                 case BackupType::AUTOSAVE:
@@ -103,15 +120,16 @@ void BackupsOverlayModel::setBackupItems(std::vector<BackupMetadata>& backupItem
                     break;
 
                 default:
-                    label = QString::fromStdString(backupItem.datetime);
+                    label = datetimeLabel;
                     break;
             }
         };
         QStandardItem* item = new QStandardItem(label);
         item->setColumnCount(columnCount());
         item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
-        item->setData(QVariant(QString::fromStdString(backupItem.id)), BACKUP_ID_ROLE);
-        item->setData(QVariant(QString::fromStdString(backupItem.datetime)), BACKUP_DATE_ROLE);
+        item->setData(QVariant(QString::fromStdString(backupItem.id)), BackupIdRole);
+        item->setData(QVariant(datetimeLabel), BackupDateRole);
+        item->setData(QVariant(datetime), BackupSortRole);
         newItems.append(item);
     }
     if (!newItems.isEmpty())
@@ -139,7 +157,7 @@ ManageBackupsOverlayWidget::ManageBackupsOverlayWidget(Controller* controller, Q
     m_backupsView->setAlternatingRowColors(true);
     m_backupsView->setIndentation(0);
     m_backupsView->setTextElideMode(Qt::ElideLeft);
-    m_backupsView->sortByColumn(1, Qt::AscendingOrder);
+    m_backupsView->sortByColumn(1, Qt::DescendingOrder);
     m_backupsView->setEditTriggers(
         QAbstractItemView::NoEditTriggers
     );
@@ -151,7 +169,14 @@ ManageBackupsOverlayWidget::ManageBackupsOverlayWidget(Controller* controller, Q
     );
 
     m_backupsModel = new BackupsOverlayModel(m_backupsView);
-    m_backupsView->setModel(m_backupsModel);
+
+    m_proxyModel = new QSortFilterProxyModel(m_backupsView);
+    m_proxyModel->setSourceModel(m_backupsModel);
+    m_proxyModel->setSortCaseSensitivity(Qt::CaseInsensitive);
+    m_proxyModel->setSortRole(BackupSortRole);
+    m_proxyModel->setDynamicSortFilter(true);
+
+    m_backupsView->setModel(m_proxyModel);
 
     QWidget* btnsWidget = new QWidget(wrapWidget);
     QPushButton* closeBackupBtn = new QPushButton("Close", btnsWidget);
@@ -230,7 +255,7 @@ void ManageBackupsOverlayWidget::refresh() {
 void ManageBackupsOverlayWidget::onDeleteBackkups() {
     std::vector<QString> backupIds;
     for (auto& index: m_backupsView->selectionModel()->selectedIndexes()) {
-        QVariant backupId = index.data(BACKUP_ID_ROLE);
+        QVariant backupId = index.data(BackupIdRole);
         if (!backupId.isValid() || backupId.isNull()) continue;
         backupIds.push_back(backupId.toString());
     }
