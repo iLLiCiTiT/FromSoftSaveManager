@@ -99,6 +99,10 @@ target_sources(inv_resources_ds3 PRIVATE
 target_link_libraries(inv_resources_ds3 PUBLIC Qt::Core)
 # -------------------------------
 
+if (WIN32)
+    target_sources(FromSoftSaveManager PRIVATE
+            src/app.rc)
+endif()
 if ((WIN32) AND (CMAKE_BUILD_TYPE MATCHES "Release"))
     set_target_properties(FromSoftSaveManager PROPERTIES WIN32_EXECUTABLE TRUE)
 endif()
