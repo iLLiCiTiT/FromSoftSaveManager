@@ -1,10 +1,10 @@
 #pragma once
 
-#include <QCheckBox>
 #include <QLineEdit>
 
 #include "Controller.h"
 #include "SquareButton.h"
+#include "NiceCheckbox.h"
 #include "Utils.h"
 
 class SavePathInput: public QFrame {
@@ -79,7 +79,7 @@ public:
     void updateConfigInfo(const ConfigSettingsData& configData);
     void applyChanges(const ConfigSettingsData& configData, ConfigConfirmData& confirmData);
 private:
-    QCheckBox* m_enabledInput;
+    NiceCheckbox* m_enabledInput;
     FocusSpinBox* m_frequencyInput;
     FocusSpinBox* m_maxAutobackupInput;
 };

@@ -286,7 +286,7 @@ void HotkeysWidget::applyChanges(const ConfigSettingsData& configData, ConfigCon
 AutoBackupWidget::AutoBackupWidget(const ConfigSettingsData& configData, QWidget* parent): QWidget(parent) {
     QLabel* enabledLabel = new QLabel("Enabled", this);
 
-    m_enabledInput = new QCheckBox(this);
+    m_enabledInput = new NiceCheckbox(this);
 
     QLabel* frequencyLabel = new QLabel("Frequency", this);
     QLabel* frequencyInputLabel = new QLabel("seconds", this);
