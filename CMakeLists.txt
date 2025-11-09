@@ -37,6 +37,7 @@ add_executable(FromSoftSaveManager
         src/resources/er_images.qrc
 
         src/ui/SquareButton.h
+        src/ui/NiceCheckbox.cpp
         src/ui/Utils.cpp
         src/ui/ConfigModel.cpp
         src/ui/BackupsModel.cpp
