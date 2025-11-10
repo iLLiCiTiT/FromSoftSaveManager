@@ -168,18 +168,11 @@ ManageBackupsOverlayWidget::ManageBackupsOverlayWidget(Controller* controller, Q
     m_backupsView->setAllColumnsShowFocus(true);
     m_backupsView->setAlternatingRowColors(true);
     m_backupsView->setIndentation(0);
-    m_backupsView->setEditTriggers(QTreeView::EditKeyPressed);
+    m_backupsView->setEditTriggers(QTreeView::NoEditTriggers);
     m_backupsView->setTextElideMode(Qt::ElideLeft);
     m_backupsView->sortByColumn(1, Qt::DescendingOrder);
-    m_backupsView->setEditTriggers(
-        QAbstractItemView::NoEditTriggers
-    );
-    m_backupsView->setSelectionMode(
-        QAbstractItemView::ExtendedSelection
-    );
-    m_backupsView->setVerticalScrollMode(
-        QAbstractItemView::ScrollPerPixel
-    );
+    m_backupsView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    m_backupsView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     m_backupsView->setContextMenuPolicy(Qt::CustomContextMenu);
 
     m_backupsModel = new BackupsOverlayModel(m_controller, m_backupsView);
@@ -191,6 +184,7 @@ ManageBackupsOverlayWidget::ManageBackupsOverlayWidget(Controller* controller, Q
     m_proxyModel->setDynamicSortFilter(true);
 
     m_backupsView->setModel(m_proxyModel);
+    m_backupsView->setColumnWidth(0, 200);
 
     QWidget* btnsWidget = new QWidget(wrapWidget);
 
@@ -274,7 +268,6 @@ void ManageBackupsOverlayWidget::refresh() {
         // Back on the GUI thread here
         auto items = watcher->result();
         m_backupsModel->setBackupItems(items);
-        m_backupsView->resizeColumnToContents(0);
         watcher->deleteLater();
     });
 
