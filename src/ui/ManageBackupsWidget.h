@@ -56,6 +56,7 @@ private slots:
     void onCreateBackup();
     void onOpenBackupDir();
     void onDoubleClick(const QModelIndex &index);
+    void onCustomContextMenu(const QPoint &point);
     void onSelectionChange(const QItemSelection& selected, const QItemSelection& deselected);
 private:
     Controller* m_controller = nullptr;
@@ -63,6 +64,7 @@ private:
     QSortFilterProxyModel* m_proxyModel = nullptr;
     QTreeView* m_backupsView = nullptr;
     QPushButton* m_deleteBackupsBtn = nullptr;
+    void p_loadBackup(const QString& backupId);
 };
 
 class ManageBackupsButtonsWidget: public QFrame {

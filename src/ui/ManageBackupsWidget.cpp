@@ -4,9 +4,10 @@
 #include <QTreeView>
 #include <QGraphicsBlurEffect>
 #include <QStackedLayout>
+#include <QPainter>
+#include <QMenu>
 #include <QtConcurrent>
 #include <QFutureWatcher>
-#include <QPainter>
 
 #include "Utils.h"
 
@@ -57,17 +58,19 @@ QVariant BackupsOverlayModel::data(const QModelIndex &index, int role) const {
     return QStandardItemModel::data(newIndex, role);
 }
 
-bool BackupsOverlayModel::setData(const QModelIndex &index, const QVariant &value, int role) {
+bool BackupsOverlayModel::setData(const QModelIndex& index, const QVariant& value, int role) {
     if (!index.isValid() || index.column() != 0) return false;
     if (role != Qt::EditRole) return false;
 
+    QString newLabel = value.toString();
     auto* item = itemFromIndex(index);
+    if (item->text() == newLabel) return false;
+
     QString backupId = item->data(BackupIdRole).toString();
-    if (m_controller->changeBackupLabel(backupId, value.toString())) {
-        item->setText(value.toString());
-        return true;
-    }
-    return false;
+    if (!m_controller->changeBackupLabel(backupId, newLabel)) return false;
+
+    item->setText(newLabel);
+    return true;
 }
 
 QStandardItem* BackupsOverlayModel::createModelItem(BackupMetadata& backupItem, int& autosaveCount, int& quicksaveCount) {
@@ -177,6 +180,7 @@ ManageBackupsOverlayWidget::ManageBackupsOverlayWidget(Controller* controller, Q
     m_backupsView->setVerticalScrollMode(
         QAbstractItemView::ScrollPerPixel
     );
+    m_backupsView->setContextMenuPolicy(Qt::CustomContextMenu);
 
     m_backupsModel = new BackupsOverlayModel(m_controller, m_backupsView);
 
@@ -245,6 +249,7 @@ ManageBackupsOverlayWidget::ManageBackupsOverlayWidget(Controller* controller, Q
     connect(openBackupDirBtn, SIGNAL(clicked()), this, SLOT(onOpenBackupDir()));
     connect(m_deleteBackupsBtn, SIGNAL(clicked()), this, SLOT(onDeleteBackups()));
     connect(m_backupsView, SIGNAL(doubleClicked(const QModelIndex &)), this, SLOT(onDoubleClick(const QModelIndex &)));
+    connect(m_backupsView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(onCustomContextMenu(const QPoint &)));
     connect(m_backupsView->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)), this, SLOT(onSelectionChange(const QItemSelection&, const QItemSelection&)));
 }
 
@@ -295,14 +300,69 @@ void ManageBackupsOverlayWidget::onOpenBackupDir() {
     m_controller->openBackupDir();
 }
 
-void ManageBackupsOverlayWidget::onSelectionChange(const QItemSelection &selected, const QItemSelection &deselected) {
+void ManageBackupsOverlayWidget::onSelectionChange(const QItemSelection& selected, const QItemSelection& deselected) {
      m_deleteBackupsBtn->setEnabled(selected.indexes().length());
 }
 
-void ManageBackupsOverlayWidget::onDoubleClick(const QModelIndex &index) {
+void ManageBackupsOverlayWidget::onDoubleClick(const QModelIndex& index) {
     QString backupId = index.data(BackupIdRole).toString();
+    p_loadBackup(backupId);
+}
+
+void ManageBackupsOverlayWidget::p_loadBackup(const QString& backupId) {
     m_controller->restoreBackupById(backupId);
     emit hideRequested();
+}
+
+void ManageBackupsOverlayWidget::onCustomContextMenu(const QPoint& point) {
+    QModelIndex posIndex = m_backupsView->indexAt(point);
+    if (!posIndex.isValid()) return;
+    QString posBackupId = posIndex.data(BackupIdRole).toString();
+    bool found = false;
+    QList<QModelIndex> indexes;
+    for (auto& index: m_backupsView->selectionModel()->selectedRows()) {
+        QString backupId = posIndex.data(BackupIdRole).toString();
+        if (backupId == index.data(BackupIdRole).toString()) {
+            found = true;
+        }
+        indexes.append(index);
+    }
+    if (!found) indexes.clear();
+    if (indexes.isEmpty()) indexes.append(posIndex);
+
+    QMenu* contextMenu = new QMenu(this);
+
+    QAction* loadAction = new QAction("Load..", contextMenu);
+    loadAction->setEnabled(indexes.length() == 1);
+
+    QAction* renameAction = new QAction("Rename..", contextMenu);
+    renameAction->setEnabled(indexes.length() == 1);
+
+    QAction* deleteAction = new QAction("Delete..", contextMenu);
+
+    contextMenu->addAction(loadAction);
+    contextMenu->addAction(renameAction);
+    contextMenu->addAction(deleteAction);
+
+    auto globPoint = m_backupsView->viewport()->mapToGlobal(point);
+    auto* triggered = contextMenu->exec(globPoint);
+    if (triggered == loadAction) {
+        p_loadBackup(posBackupId);
+    } else if (triggered == renameAction) {
+        m_backupsView->edit(posIndex);
+    } else if (triggered == deleteAction) {
+        std::vector<QString> backupIds;
+        for (auto& index: indexes) {
+            QString backupId = index.data(BackupIdRole).toString();
+            backupIds.push_back(backupId);
+        }
+        m_controller->deleteBackupByIds(backupIds);
+        refresh();
+    }
+    delete loadAction;
+    delete renameAction;
+    delete deleteAction;
+    delete contextMenu;
 }
 
 // Common UI widget for all games

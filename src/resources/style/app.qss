@@ -30,6 +30,23 @@ QPushButton:disabled {
     color: #aaaaaa;
 }
 
+QMenu {
+    background: #21252B;
+}
+
+QMenu::item:disabled {
+    color: #4b5463;
+    background: transparent;
+}
+
+QMenu::item:selected, QMenu::item:selected:hover {
+    background: rgba(168, 175, 189, .3);
+}
+
+QMenu::item:disabled:selected, QMenu::item:disabled:selected:hover {
+    background: transparent;
+}
+
 QAbstractScrollArea::corner {
     border: none;
     background: transparent;
