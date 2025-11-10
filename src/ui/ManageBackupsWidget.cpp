@@ -253,8 +253,13 @@ ManageBackupsOverlayWidget::ManageBackupsOverlayWidget(Controller* controller, Q
     connect(m_backupsView->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)), this, SLOT(onSelectionChange(const QItemSelection&, const QItemSelection&)));
 }
 
-void ManageBackupsOverlayWidget::showEvent(QShowEvent *event) {
-    m_backupsView->resizeColumnToContents(0);
+void ManageBackupsOverlayWidget::keyPressEvent(QKeyEvent *event) {
+    if (event->key() == Qt::Key_F2) {
+        QModelIndex index = m_backupsView->currentIndex();
+        if (index.isValid())
+            m_backupsView->edit(m_proxyModel->index(index.row(), 0, index.parent()));
+        event->accept();
+    }
 }
 
 void ManageBackupsOverlayWidget::refresh() {
