@@ -73,10 +73,12 @@ public:
 
     void updateAutobackupConfig(const ConfigAutobackup& autobackupConfig);
 
-    void createBackup(const QString& savePath, const fssm::Game& game, const BackupType& backupType);
-    void createBackup(const QString& savePath, const fssm::Game& game, const BackupType& backupType, const QString& label);
+    std::optional<BackupMetadata> createBackup(const QString& savePath, const fssm::Game& game, const BackupType& backupType);
+    std::optional<BackupMetadata> createBackup(const QString& savePath, const fssm::Game& game, const BackupType& backupType, const QString& label);
     void createQuickSaveBackup(const QString& savePath, const fssm::Game& game);
-    void createManualBackup(const QString& savePath, const fssm::Game& game, const QString& label);
+    std::optional<BackupMetadata> createManualBackup(const QString& savePath, const fssm::Game& game, const QString& label);
+    void saveBackupMetadata(const BackupMetadata& metadata);
+    bool changeBackupLabel(const fssm::Game& game, const QString& backupId, const QString& label);
 
     std::string getGameBackupDir(const fssm::Game& game);
     std::vector<BackupMetadata> getBackupItems(const fssm::Game& game);

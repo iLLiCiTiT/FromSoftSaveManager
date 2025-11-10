@@ -276,14 +276,14 @@ void BackupsModel::updateAutobackupConfig(const ConfigAutobackup& autobackupConf
     m_autoBackupHandler->updateAutobackupConfig(autobackupConfig);
 }
 
-void BackupsModel::createBackup(const QString& savePath, const fssm::Game& game, const BackupType& backupType, const QString& label) {
+std::optional<BackupMetadata> BackupsModel::createBackup(const QString& savePath, const fssm::Game& game, const BackupType& backupType, const QString& label) {
     // Skip empty save path
-    if (savePath.isEmpty()) return;
+    if (savePath.isEmpty()) return std::nullopt;
     std::string stdSavePath = savePath.toStdString();
     // Check if path to backup exists
-    if (!std::filesystem::exists(stdSavePath)) return;
-
-    std::string timestamp = QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss").toStdString();
+    if (!std::filesystem::exists(stdSavePath)) return std::nullopt;
+    QDateTime curTime = QDateTime::currentDateTime();
+    std::string timestamp = curTime.toString("yyyyMMdd_hhmmss").toStdString();
     std::string backupDir = getGameBackupDir(game) + "\\" + timestamp;
     std::string filename = getFilename(stdSavePath);
     backupDir = indexExistingPath(backupDir);
@@ -292,11 +292,16 @@ void BackupsModel::createBackup(const QString& savePath, const fssm::Game& game,
     std::filesystem::copy_file(stdSavePath, dstPath);
     std::string metadataPath = backupDir + "\\metadata.json";
 
+    std::string labelStd = label.toStdString();
+    if (labelStd.empty() && backupType == BackupType::MANUAL) {
+        labelStd = curTime.toString("yyyy-MM-dd hh:mm:ss").toStdString();
+    }
+
     BackupMetadata metadata = createBackupMetadata(
         game,
         backupType,
         filename,
-        label.toStdString(),
+        labelStd,
         backupDir
     );
     json jsonMetadata = backupMetadataToJson(metadata);
@@ -304,10 +309,11 @@ void BackupsModel::createBackup(const QString& savePath, const fssm::Game& game,
     o << jsonMetadata.dump(4) << std::endl;
     o.close();
     emit createBackupFinished(true, backupType);
+    return metadata;
 }
 
-void BackupsModel::createBackup(const QString& savePath, const fssm::Game& game, const BackupType& backupType) {
-    createBackup(savePath, game, backupType, "");
+std::optional<BackupMetadata> BackupsModel::createBackup(const QString& savePath, const fssm::Game& game, const BackupType& backupType) {
+    return createBackup(savePath, game, backupType, "");
 }
 
 void BackupsModel::createAutoBackup(const QString& savePath, const fssm::Game& game) {
@@ -319,9 +325,29 @@ void BackupsModel::createQuickSaveBackup(const QString& savePath, const fssm::Ga
     createBackup(savePath, game, BackupType::QUICKSAVE, "");
 }
 
-void BackupsModel::createManualBackup(const QString& savePath, const fssm::Game& game, const QString& label) {
-    if (label.isEmpty()) return;
-    createBackup(savePath, game, BackupType::MANUAL, label);
+std::optional<BackupMetadata> BackupsModel::createManualBackup(const QString& savePath, const fssm::Game& game, const QString& label) {
+    return createBackup(savePath, game, BackupType::MANUAL, label);
+}
+
+void BackupsModel::saveBackupMetadata(const BackupMetadata& metadata) {
+    // Check if path to backup exists
+    std::string metadataPath = metadata.backupDir + "\\metadata.json";
+    if (!std::filesystem::exists(metadataPath)) return;
+    json jsonMetadata = backupMetadataToJson(metadata);
+    std::ofstream o(metadataPath);
+    o << jsonMetadata.dump(4) << std::endl;
+    o.close();
+}
+
+bool BackupsModel::changeBackupLabel(const fssm::Game& game, const QString& backupId, const QString& label) {
+    for (auto& item: getBackupItems(game)) {
+        if (item.id == backupId) {
+            item.label = label.toStdString();
+            saveBackupMetadata(item);
+            return true;
+        }
+    }
+    return false;
 }
 
 std::string BackupsModel::getGameBackupDir(const fssm::Game& game) {

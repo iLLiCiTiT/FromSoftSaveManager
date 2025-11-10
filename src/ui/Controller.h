@@ -97,9 +97,10 @@ public:
     ERCharInfoResult getERCharacters(const QString& saveId) const;
 
     std::vector<BackupMetadata> getBackupItems();
-    void createManualBackup(const QString& label);
+    std::optional<BackupMetadata> createManualBackup();
     void restoreBackupById(const QString& backupId);
     void deleteBackupByIds(const std::vector<QString>& backupIds);
+    bool changeBackupLabel(const QString& backupId, const QString& label);
 
     void openBackupDir();
 

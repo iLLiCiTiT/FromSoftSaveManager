@@ -262,11 +262,11 @@ std::vector<BackupMetadata> Controller::getBackupItems() {
     return m_backupsModel->getBackupItems(itemOpt.value().game);
 }
 
-void Controller::createManualBackup(const QString& label) {
-    if (m_currentSaveId.isEmpty()) return;
+std::optional<BackupMetadata> Controller::createManualBackup() {
+    if (m_currentSaveId.isEmpty()) return std::nullopt;
     auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
-    if (!itemOpt.has_value()) return;
-    m_backupsModel->createManualBackup(itemOpt.value().savePath, itemOpt.value().game, label);
+    if (!itemOpt.has_value()) return std::nullopt;
+    return m_backupsModel->createManualBackup(itemOpt.value().savePath, itemOpt.value().game, "");
 }
 
 void Controller::restoreBackupById(const QString& backupId) {
@@ -281,6 +281,13 @@ void Controller::deleteBackupByIds(const std::vector<QString>& backupIds) {
     auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
     if (!itemOpt.has_value()) return;
     m_backupsModel->deleteBackupByIds(itemOpt.value().game, backupIds);
+}
+
+bool Controller::changeBackupLabel(const QString& backupId, const QString& label) {
+    if (m_currentSaveId.isEmpty()) return false;
+    auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
+    if (!itemOpt.has_value()) return false;
+    return m_backupsModel->changeBackupLabel(itemOpt.value().game, backupId, label);
 }
 
 // Config changed slots

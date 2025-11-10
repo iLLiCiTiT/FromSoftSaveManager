@@ -1,7 +1,5 @@
 #pragma once
 
-#include <QDialog>
-#include <QLabel>
 #include <QLineEdit>
 #include <QStandardItemModel>
 #include <QTreeView>
@@ -30,10 +28,18 @@ private:
 class BackupsOverlayModel: public QStandardItemModel {
     Q_OBJECT
 public:
-    explicit BackupsOverlayModel(QObject* parent = nullptr);
+    explicit BackupsOverlayModel(Controller* controller, QObject* parent = nullptr);
+    QModelIndex addBackupItem(BackupMetadata& backupItem);
     void setBackupItems(std::vector<BackupMetadata>& backupItems);
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+    bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
     Qt::ItemFlags flags(const QModelIndex &index) const override;
+private:
+    Controller* m_controller = nullptr;
+    int m_autosaveCount = 0;
+    int m_quicksaveCount = 0;
+
+    QStandardItem* createModelItem(BackupMetadata& backupItem, int& autosaveCount, int& quicksaveCount);
 };
 
 class ManageBackupsOverlayWidget: public QWidget {
@@ -57,15 +63,6 @@ private:
     QSortFilterProxyModel* m_proxyModel = nullptr;
     QTreeView* m_backupsView = nullptr;
     QPushButton* m_deleteBackupsBtn = nullptr;
-};
-
-class CreateBackupDialog: public QDialog {
-    Q_OBJECT
-public:
-    explicit CreateBackupDialog(QWidget* parent);
-    QString getBackupName();
-private:
-    QLineEdit* m_backupNameinput = nullptr;
 };
 
 class ManageBackupsButtonsWidget: public QFrame {

@@ -33,57 +33,15 @@ void CloseButton::paintEvent(QPaintEvent* event) {
     painter.drawPixmap(rect(), m_pix.scaled(width(), height(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
 }
 
-
-// Dialog asking for backup name
-CreateBackupDialog::CreateBackupDialog(QWidget* parent): QDialog(parent) {
-    setWindowTitle("Create save backup");
-    setModal(true);
-
-    m_backupNameinput = new QLineEdit(this);
-    m_backupNameinput->setPlaceholderText("Backup name..");
-    m_backupNameinput->setToolTip(
-        "Label for the backup, leave empty to use default"
-    );
-
-    QWidget* btnsWidget = new QWidget(this);
-
-    QPushButton* createBtn = new QPushButton("Create", btnsWidget);
-    createBtn->setDefault(true);
-    createBtn->setToolTip("Create backup");
-
-    QPushButton* cancelBtn = new QPushButton("Cancel", btnsWidget);
-    cancelBtn->setToolTip("Cancel");
-
-    QHBoxLayout* btnsLayout = new QHBoxLayout(btnsWidget);
-    btnsLayout->setContentsMargins(0, 0, 0, 0);
-    btnsLayout->addStretch(1);
-    btnsLayout->addWidget(createBtn, 0);
-    btnsLayout->addWidget(cancelBtn, 0);
-
-    QVBoxLayout* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(10, 10, 10, 10);
-    layout->addWidget(m_backupNameinput, 0);
-    layout->addStretch(1);
-    layout->addWidget(btnsWidget, 0);
-
-    connect(createBtn, SIGNAL(clicked()), this, SLOT(accept()));
-    connect(cancelBtn, SIGNAL(clicked()), this, SLOT(reject()));
-}
-
-QString CreateBackupDialog::getBackupName() {
-    return m_backupNameinput->text();
-}
-
-BackupsOverlayModel::BackupsOverlayModel(QObject* parent): QStandardItemModel(parent) {
+BackupsOverlayModel::BackupsOverlayModel(Controller* controller, QObject* parent): QStandardItemModel(parent), m_controller(controller) {
     setColumnCount(2);
     setHorizontalHeaderLabels({"Title", "Date"});
 }
 
 Qt::ItemFlags BackupsOverlayModel::flags(const QModelIndex &index) const {
-    QModelIndex newIndex = index;
     if (index.column() != 0)
-        newIndex = this->index(index.row(), 0);
-    return QStandardItemModel::flags(newIndex);
+        return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+    return QStandardItemModel::flags(index);
 }
 
 QVariant BackupsOverlayModel::data(const QModelIndex &index, int role) const {
@@ -99,56 +57,80 @@ QVariant BackupsOverlayModel::data(const QModelIndex &index, int role) const {
     return QStandardItemModel::data(newIndex, role);
 }
 
+bool BackupsOverlayModel::setData(const QModelIndex &index, const QVariant &value, int role) {
+    if (!index.isValid() || index.column() != 0) return false;
+    if (role != Qt::EditRole) return false;
+
+    auto* item = itemFromIndex(index);
+    QString backupId = item->data(BackupIdRole).toString();
+    if (m_controller->changeBackupLabel(backupId, value.toString())) {
+        item->setText(value.toString());
+        return true;
+    }
+    return false;
+}
+
+QStandardItem* BackupsOverlayModel::createModelItem(BackupMetadata& backupItem, int& autosaveCount, int& quicksaveCount) {
+    QString label = QString::fromStdString(backupItem.label);
+
+    QString datetimeStd = QString::fromStdString(backupItem.datetime);
+    if (datetimeStd.size() > 10 && datetimeStd[10] == QLatin1Char(' '))
+        datetimeStd[10] = QLatin1Char('T');
+
+    QDateTime dt = QDateTime::fromString(datetimeStd, Qt::ISODate);
+    if (!dt.isValid()) {
+        // Optional fallback if the string might include milliseconds
+        dt = QDateTime::fromString(datetimeStd, Qt::ISODateWithMs);
+    }
+    QDateTime datetime = dt.toLocalTime();
+    QString datetimeLabel = datetime.toString("yyyy-MM-dd HH:mm:ss");
+    if (label.isEmpty()) {
+        switch (backupItem.backupType) {
+            case BackupType::AUTOSAVE:
+                label.push_back("< Auto Save");
+                label.push_back(QString::number(autosaveCount));
+                label.push_back(" >");
+                autosaveCount++;
+                break;
+
+            case BackupType::QUICKSAVE:
+                label.push_back("< Quick Save");
+                label.push_back(QString::number(quicksaveCount));
+                label.push_back(" >");
+                quicksaveCount++;
+                break;
+
+            default:
+                label = datetimeLabel;
+                break;
+        }
+    }
+    QStandardItem* item = new QStandardItem(label);
+    item->setColumnCount(columnCount());
+    item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable);
+    item->setData(QVariant(QString::fromStdString(backupItem.id)), BackupIdRole);
+    item->setData(QVariant(datetimeLabel), BackupDateRole);
+    item->setData(QVariant(datetime), BackupSortRole);
+    return item;
+}
+
+QModelIndex BackupsOverlayModel::addBackupItem(BackupMetadata& backupItem) {
+    QStandardItem* rootItem = invisibleRootItem();
+    QStandardItem* item = createModelItem(backupItem, m_autosaveCount, m_quicksaveCount);
+    rootItem->appendRow(item);
+    return item->index();
+}
+
 void BackupsOverlayModel::setBackupItems(std::vector<BackupMetadata>& backupItems) {
+    m_autosaveCount = 0;
+    m_quicksaveCount = 0;
     QStandardItem* rootItem = invisibleRootItem();
     rootItem->removeRows(0, rootItem->rowCount());
     if (backupItems.empty()) return;
     std::sort(backupItems.begin(), backupItems.end(), [](const BackupMetadata& a, const BackupMetadata& b) {return a.epoch > b.epoch;});
-    int autosaveCount = 0;
-    int quicksaveCount = 0;
     QList<QStandardItem*> newItems;
     for (auto& backupItem: backupItems) {
-        QString label = QString::fromStdString(backupItem.label);
-
-        QString datetimeStd = QString::fromStdString(backupItem.datetime);
-        if (datetimeStd.size() > 10 && datetimeStd[10] == QLatin1Char(' '))
-            datetimeStd[10] = QLatin1Char('T');
-
-        QDateTime dt = QDateTime::fromString(datetimeStd, Qt::ISODate);
-        if (!dt.isValid()) {
-            // Optional fallback if the string might include milliseconds
-            dt = QDateTime::fromString(datetimeStd, Qt::ISODateWithMs);
-        }
-        QDateTime datetime = dt.toLocalTime();
-        QString datetimeLabel = datetime.toString("yyyy-MM-dd HH:mm:ss");
-        if (label.isEmpty()) {
-            switch (backupItem.backupType) {
-                case BackupType::AUTOSAVE:
-                    label.push_back("< Auto Save");
-                    label.push_back(QString::number(autosaveCount));
-                    label.push_back(" >");
-                    autosaveCount++;
-                    break;
-
-                case BackupType::QUICKSAVE:
-                    label.push_back("< Quick Save");
-                    label.push_back(QString::number(quicksaveCount));
-                    label.push_back(" >");
-                    quicksaveCount++;
-                    break;
-
-                default:
-                    label = datetimeLabel;
-                    break;
-            }
-        };
-        QStandardItem* item = new QStandardItem(label);
-        item->setColumnCount(columnCount());
-        item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
-        item->setData(QVariant(QString::fromStdString(backupItem.id)), BackupIdRole);
-        item->setData(QVariant(datetimeLabel), BackupDateRole);
-        item->setData(QVariant(datetime), BackupSortRole);
-        newItems.append(item);
+        newItems.append(createModelItem(backupItem, m_autosaveCount, m_quicksaveCount));
     }
     if (!newItems.isEmpty())
         rootItem->appendRows(newItems);
@@ -183,6 +165,7 @@ ManageBackupsOverlayWidget::ManageBackupsOverlayWidget(Controller* controller, Q
     m_backupsView->setAllColumnsShowFocus(true);
     m_backupsView->setAlternatingRowColors(true);
     m_backupsView->setIndentation(0);
+    m_backupsView->setEditTriggers(QTreeView::EditKeyPressed);
     m_backupsView->setTextElideMode(Qt::ElideLeft);
     m_backupsView->sortByColumn(1, Qt::DescendingOrder);
     m_backupsView->setEditTriggers(
@@ -195,7 +178,7 @@ ManageBackupsOverlayWidget::ManageBackupsOverlayWidget(Controller* controller, Q
         QAbstractItemView::ScrollPerPixel
     );
 
-    m_backupsModel = new BackupsOverlayModel(m_backupsView);
+    m_backupsModel = new BackupsOverlayModel(m_controller, m_backupsView);
 
     m_proxyModel = new QSortFilterProxyModel(m_backupsView);
     m_proxyModel->setSourceModel(m_backupsModel);
@@ -301,11 +284,11 @@ void ManageBackupsOverlayWidget::onDeleteBackups() {
 }
 
 void ManageBackupsOverlayWidget::onCreateBackup() {
-    CreateBackupDialog dialog = CreateBackupDialog(this);
-    if (dialog.exec() == QDialog::Accepted) {
-        QString label = dialog.getBackupName();
-        m_controller->createManualBackup(label);
-    }
+    auto metadataOpt = m_controller->createManualBackup();
+    if (!metadataOpt.has_value()) return;
+    QModelIndex index = m_backupsModel->addBackupItem(metadataOpt.value());
+    QModelIndex proxyIndex = m_proxyModel->mapFromSource(index);
+    m_backupsView->edit(proxyIndex);
 }
 
 void ManageBackupsOverlayWidget::onOpenBackupDir() {
