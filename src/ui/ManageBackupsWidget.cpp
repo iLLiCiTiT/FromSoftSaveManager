@@ -207,7 +207,7 @@ ManageBackupsOverlayWidget::ManageBackupsOverlayWidget(Controller* controller, Q
 
     QWidget* btnsWidget = new QWidget(wrapWidget);
 
-    QPixmap createIcon = QPixmap(":/images/common/add.png");
+    QPixmap createIcon = QPixmap(":/images/common/save.png");
     QPushButton* createBackupBtn = new QPushButton(createIcon, "Create", btnsWidget);
     createBackupBtn->setToolTip("Create a backup of the current save");
 

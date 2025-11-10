@@ -24,6 +24,7 @@
         <file alias="delete.png">images/common/delete.png</file>
         <file alias="folder_open.png">images/common/folder_open.png</file>
         <file alias="menu.png">images/common/menu.png</file>
+        <file alias="save.png">images/common/save.png</file>
     </qresource>
     <qresource prefix="/stylesheet">
         <file alias="app.qss">style/app.qss</file>
