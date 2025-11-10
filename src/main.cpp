@@ -7,7 +7,7 @@
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
     app.setApplicationName("FromSoftSaveManager");
-    app.setApplicationVersion("0.1.0");
+    app.setApplicationVersion("0.6.0");
     app.setWindowIcon(QIcon(":/icons/icon.png"));
 
     QFontDatabase::addApplicationFont(":/fonts/NotoSans-Regular.ttf");
