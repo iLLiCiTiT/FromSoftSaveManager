@@ -1,11 +1,15 @@
 #include "MainWindow.h"
 
+#include <QCoreApplication>
+
 #include <iostream>
 
 
 MainWindow::MainWindow(Controller* controller, QWidget* parent)
     : QWidget(parent), m_controller(controller) {
-    setWindowTitle("FromSoftSaveManager");
+    QString title = "FromSoftSaveManager ";
+    title.push_back(QCoreApplication::instance()->applicationVersion());
+    setWindowTitle(title);
     resize(960, 490);
 
     m_sideBar = new SideBarWidget(this);
