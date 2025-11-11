@@ -163,6 +163,33 @@ ManageBackupsOverlayWidget::ManageBackupsOverlayWidget(Controller* controller, Q
     headerLayout->addWidget(headerLabel, 1);
     headerLayout->addWidget(closeBackupBtn, 0);
 
+    QWidget* btnsWidget = new QWidget(wrapWidget);
+
+    QPixmap createIcon = QPixmap(":/images/common/save.png");
+    QPushButton* createBackupBtn = new QPushButton(createIcon, "Save", btnsWidget);
+    createBackupBtn->setToolTip("Create a backup of the current save");
+    // createBackupBtn->setStyleSheet("background: #38BA7C; color: #2B2D30;");
+
+    QPixmap deleteIcon = QPixmap(":/images/common/delete.png");
+    m_deleteBackupsBtn = new QPushButton(deleteIcon, "Delete", btnsWidget);
+    m_deleteBackupsBtn->setToolTip("Delete selected backups");
+    m_deleteBackupsBtn->setEnabled(false);
+    m_deleteBackupsBtn->setAutoDefault(false);
+    m_deleteBackupsBtn->setDefault(false);
+    m_deleteBackupsBtn->setStyleSheet("background: #F34542; color: #ffffff;");
+
+    QPixmap browseIcon = QPixmap(":/images/common/folder_open.png");
+    QPushButton* openBackupDirBtn = new QPushButton(browseIcon, "Browse", btnsWidget);
+    openBackupDirBtn->setToolTip("Open Backup directory");
+
+    QHBoxLayout* btnsLayout = new QHBoxLayout(btnsWidget);
+    btnsLayout->setContentsMargins(0, 0, 0, 0);
+    btnsLayout->setSpacing(10);
+    btnsLayout->addWidget(createBackupBtn, 0);
+    btnsLayout->addWidget(m_deleteBackupsBtn, 0);
+    btnsLayout->addStretch(1);
+    btnsLayout->addWidget(openBackupDirBtn, 0);
+
     m_backupsView = new QTreeView(wrapWidget);
     m_backupsView->setSortingEnabled(true);
     m_backupsView->setAllColumnsShowFocus(true);
@@ -186,35 +213,14 @@ ManageBackupsOverlayWidget::ManageBackupsOverlayWidget(Controller* controller, Q
     m_backupsView->setModel(m_proxyModel);
     m_backupsView->setColumnWidth(0, 200);
 
-    QWidget* btnsWidget = new QWidget(wrapWidget);
-
-    QPixmap createIcon = QPixmap(":/images/common/save.png");
-    QPushButton* createBackupBtn = new QPushButton(createIcon, "Create", btnsWidget);
-    createBackupBtn->setToolTip("Create a backup of the current save");
-
-    QPixmap browseIcon = QPixmap(":/images/common/folder_open.png");
-    QPushButton* openBackupDirBtn = new QPushButton(browseIcon, "Browse", btnsWidget);
-    openBackupDirBtn->setToolTip("Open Backup directory");
-
-    QPixmap deleteIcon = QPixmap(":/images/common/delete.png");
-    m_deleteBackupsBtn = new QPushButton(deleteIcon, "Delete", btnsWidget);
-    m_deleteBackupsBtn->setToolTip("Delete selected backups");
-    m_deleteBackupsBtn->setEnabled(false);
-
-    QHBoxLayout* btnsLayout = new QHBoxLayout(btnsWidget);
-    btnsLayout->setContentsMargins(0, 0, 0, 0);
-    btnsLayout->setSpacing(10);
-    btnsLayout->addWidget(createBackupBtn, 0);
-    btnsLayout->addWidget(openBackupDirBtn, 0);
-    btnsLayout->addStretch(1);
-    btnsLayout->addWidget(m_deleteBackupsBtn, 0);
-
     QVBoxLayout* wrapLayout = new QVBoxLayout(wrapWidget);
     wrapLayout->setContentsMargins(5, 5, 5, 5);
-    wrapLayout->setSpacing(10);
+    wrapLayout->setSpacing(0);
     wrapLayout->addWidget(headerWidget, 0);
-    wrapLayout->addWidget(m_backupsView, 1);
     wrapLayout->addWidget(btnsWidget, 0);
+    wrapLayout->addSpacing(5);
+    wrapLayout->addWidget(m_backupsView, 1);
+    wrapLayout->addSpacing(10);
 
     ClickableFrame* fillupWidget = new ClickableFrame(this);
 
