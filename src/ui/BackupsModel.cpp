@@ -343,6 +343,9 @@ bool BackupsModel::changeBackupLabel(const fssm::Game& game, const QString& back
     for (auto& item: getBackupItems(game)) {
         if (item.id == backupId) {
             item.label = label.toStdString();
+            // Automatically convert the backup type to manual
+            // - if label changed it is no longer quicksave nor auto backup
+            item.backupType = BackupType::MANUAL;
             saveBackupMetadata(item);
             return true;
         }
