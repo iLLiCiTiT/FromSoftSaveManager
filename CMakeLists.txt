@@ -33,6 +33,7 @@ add_executable(FromSoftSaveManager
 
         src/resources/resources.qrc
         src/resources/dsr_images.qrc
+        src/resources/ds2_images.qrc
         src/resources/ds3_images.qrc
         src/resources/sekiro_images.qrc
         src/resources/er_images.qrc

@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/ds2_images">
+        <file alias="bg">images/ds2/bg.png</file>
+    </qresource>
+</RCC>

@@ -1,5 +1,6 @@
 #include "DS2Widget.h"
 
+#include <QPainter>
 #include <QVBoxLayout>
 
 #include "../BaseGameWidget.h"
@@ -8,6 +9,7 @@
 DS2Widget::DS2Widget(Controller* controller, const QString& saveId, QWidget* parent)
     : BaseGameWidget(controller, saveId, parent)
 {
+    m_bgPix = QPixmap(":/ds2_images/bg");
     ManageBackupsButtonsWidget* manageBackupsBtnsWidget = new ManageBackupsButtonsWidget(controller, this);
 
     QLabel* infoLabel = new QLabel("Dark Souls 2 - SOTFS viewer is not implemented yet", this);
@@ -25,4 +27,18 @@ DS2Widget::DS2Widget(Controller* controller, const QString& saveId, QWidget* par
 
 void DS2Widget::refresh() {
     // TODO implement
+}
+
+void DS2Widget::paintEvent(QPaintEvent* event) {
+    QPainter painter = QPainter(this);
+    painter.setClipRect(event->rect());
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(QColor(6, 5, 7));
+    const QRect targetRect = rect();
+    painter.drawRect(targetRect);
+    QPixmap scaled = m_bgPix.scaled(size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+    // center vertically
+    const int x = (width() - scaled.width()) / 2;
+    const int y = (height() - scaled.height()) / 2;
+    painter.drawPixmap(x, y, scaled);
 }
