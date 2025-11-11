@@ -457,7 +457,7 @@
         <file alias="knight_leggings">images/dsr/armor/knight_leggings.png</file>
         <file alias="knight_leggings_2">images/dsr/armor/knight_leggings_2.png</file>
         <file alias="knight_shield">images/dsr/weapons_shields/knight_shield.png</file>
-        <file alias="large_amber">images/dsr/key_items/large_amber.png</file>
+        <file alias="large_ember">images/dsr/key_items/large_ember.png</file>
         <file alias="large_arrow">images/dsr/ammunition/large_arrow.png</file>
         <file alias="large_club">images/dsr/weapons_shields/large_club.png</file>
         <file alias="large_divine_ember">images/dsr/key_items/large_divine_ember.png</file>
@@ -760,7 +760,7 @@
         <file alias="unused_03">images/dsr/rings/unused_03.png</file>
         <file alias="velkas_rapier">images/dsr/weapons_shields/velkas_rapier.png</file>
         <file alias="velkas_talisman">images/dsr/weapons_shields/velkas_talisman.png</file>
-        <file alias="very_large_amber">images/dsr/key_items/very_large_amber.png</file>
+        <file alias="very_large_ember">images/dsr/key_items/very_large_ember.png</file>
         <file alias="vow_of_silence">images/dsr/spells/vow_of_silence.png</file>
         <file alias="waistcloth_of_the_channelers">images/dsr/armor/waistcloth_of_the_channelers.png</file>
         <file alias="wanderer_boots">images/dsr/armor/wanderer_boots.png</file>
