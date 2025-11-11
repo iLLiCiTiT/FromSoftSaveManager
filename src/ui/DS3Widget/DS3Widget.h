@@ -10,8 +10,8 @@
 #include "../../parse/Parse.h"
 
 namespace fssm::ui::ds3 {
-const int CHAR_ID_ROLE = Qt::UserRole + 1;
-const int CHAR_NAME_ROLE = Qt::UserRole + 2;
+const int CharIdRole = Qt::UserRole + 1;
+const int CharNameRole = Qt::UserRole + 2;
 
 
 class CharsListModel: public QStandardItemModel {

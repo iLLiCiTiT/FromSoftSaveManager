@@ -9,14 +9,14 @@
 #include "../../parse/Parse.h"
 
 namespace fssm::ui::dsr {
-inline int ITEM_LEVEL_ROLE = Qt::UserRole + 1;
-inline int ITEM_INFUSION_ICON_ROLE = Qt::UserRole + 2;
-inline int ITEM_ORDER_ROLE = Qt::UserRole + 3;
-inline int ITEM_AMOUNT_ROLE = Qt::UserRole + 4;
-inline int ITEM_DURABILITY_ROLE = Qt::UserRole + 5;
-inline int ITEM_BOTOMLESS_BOX_AMOUNT_ROLE = Qt::UserRole + 6;
-inline int ITEM_IMAGE_ROLE = Qt::UserRole + 7;
-inline int ITEM_CATEGORY_ROLE = Qt::UserRole + 8;
+const int ItemLevelRole = Qt::UserRole + 1;
+const int ItemInfusionIconRole = Qt::UserRole + 2;
+const int ItemOrderRole = Qt::UserRole + 3;
+const int ItemAmountRole = Qt::UserRole + 4;
+const int ItemDurabilityRole = Qt::UserRole + 5;
+const int ItemBotomlessBoxAmountRole = Qt::UserRole + 6;
+const int ItemImageRole = Qt::UserRole + 7;
+const int ItemCategoryRole = Qt::UserRole + 8;
 
 
 class InventoryModel: public QStandardItemModel {

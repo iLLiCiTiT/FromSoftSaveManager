@@ -143,7 +143,7 @@ void InventoryModel::setCharacter(const fssm::parse::ds3::DS3CharacterInfo* char
         // TODO find out if '1073741918' is in key items or in inventory items
         if (invItem.itemId == 1073741918) continue;
         QStandardItem* item = createModelItem(charInfo, invItem);
-        item->setData(invItem.amount, ITEM_AMOUNT_ROLE);
+        item->setData(invItem.amount, ItemAmountRole);
         newItems.push_back(item);
         if (isMergable(invItem)) itemsById[invItem.itemId] = item;
     }
@@ -151,7 +151,7 @@ void InventoryModel::setCharacter(const fssm::parse::ds3::DS3CharacterInfo* char
     for (auto invItem: charInfo->keyItems) {
         if (invItem.itemId == 1073741918) continue;
         QStandardItem* item = createModelItem(charInfo, invItem);
-        item->setData(invItem.amount, ITEM_AMOUNT_ROLE);
+        item->setData(invItem.amount, ItemAmountRole);
         newItems.push_back(item);
         if (isMergable(invItem)) itemsById[invItem.itemId] = item;
     }
@@ -165,7 +165,7 @@ void InventoryModel::setCharacter(const fssm::parse::ds3::DS3CharacterInfo* char
             item = createModelItem(charInfo, invItem);
             newItems.push_back(item);
         }
-        item->setData(invItem.amount, ITEM_STORAGE_BOX_AMOUNT_ROLE);
+        item->setData(invItem.amount, ItemStorageBoxAmountRole);
     }
     if (!newItems.isEmpty())
         rootItem->appendRows(newItems);
@@ -234,12 +234,12 @@ QStandardItem* InventoryModel::createModelItem(const parse::ds3::DS3CharacterInf
     QStandardItem* item = new QStandardItem(label);
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
 
-    item->setData(infusionImage, ITEM_INFUSION_ICON_ROLE);
-    item->setData(invItem.baseItem.order, ITEM_ORDER_ROLE);
-    item->setData(0, ITEM_AMOUNT_ROLE);
-    item->setData(0, ITEM_STORAGE_BOX_AMOUNT_ROLE);
-    item->setData(itemImage, ITEM_IMAGE_ROLE);
-    item->setData(QVariant::fromValue(invItem.baseItem.category), ITEM_CATEGORY_ROLE);
+    item->setData(infusionImage, ItemInfusionIconRole);
+    item->setData(invItem.baseItem.order, ItemOrderRole);
+    item->setData(0, ItemAmountRole);
+    item->setData(0, ItemStorageBoxAmountRole);
+    item->setData(itemImage, ItemImageRole);
+    item->setData(QVariant::fromValue(invItem.baseItem.category), ItemCategoryRole);
     return item;
 }
 
@@ -254,11 +254,11 @@ QStandardItem* InventoryModel::createUnknownItem(fssm::parse::ds3::InventoryItem
     }
     item->setText(label);
 
-    item->setData(0, ITEM_STORAGE_BOX_AMOUNT_ROLE);
-    item->setData(-1, ITEM_ORDER_ROLE);
-    item->setData(inventoryItem.amount, ITEM_AMOUNT_ROLE);
-    item->setData(QVariant::fromValue(inventoryItem.baseItem.category), ITEM_CATEGORY_ROLE);
-    item->setData(QPixmap(":/ds3_images/unknown.png"), ITEM_IMAGE_ROLE);
+    item->setData(0, ItemStorageBoxAmountRole);
+    item->setData(-1, ItemOrderRole);
+    item->setData(inventoryItem.amount, ItemAmountRole);
+    item->setData(QVariant::fromValue(inventoryItem.baseItem.category), ItemCategoryRole);
+    item->setData(QPixmap(":/ds3_images/unknown.png"), ItemImageRole);
     return item;
 }
 
@@ -275,15 +275,15 @@ void InventoryProxyModel::setCategory(parse::ds3::ItemCategory category) {
 }
 
 bool InventoryProxyModel::lessThan(const QModelIndex &sourceLeft, const QModelIndex &sourceRight) const {
-    int left = sourceLeft.data(ITEM_ORDER_ROLE).toInt();
-    int right = sourceRight.data(ITEM_ORDER_ROLE).toInt();
+    int left = sourceLeft.data(ItemOrderRole).toInt();
+    int right = sourceRight.data(ItemOrderRole).toInt();
     if (left != right) return left < right;
     return QSortFilterProxyModel::lessThan(sourceLeft, sourceRight);
 }
 
 bool InventoryProxyModel::filterAcceptsRow(int source_row, const QModelIndex &source_parent) const {
     QModelIndex index = sourceModel()->index(source_row, 0, source_parent);
-    parse::ds3::ItemCategory category = index.data(ITEM_CATEGORY_ROLE).value<parse::ds3::ItemCategory>();
+    parse::ds3::ItemCategory category = index.data(ItemCategoryRole).value<parse::ds3::ItemCategory>();
     return category == m_category;
 }
 
@@ -297,7 +297,7 @@ int InventoryDelegate::paintIcon(QPainter* painter, const QStyleOptionViewItem& 
     int textOffset = 20;
     if (!hasDS3InventoryResources()) return textOffset;
 
-    QVariant pixmapValue = index.data(ITEM_IMAGE_ROLE);
+    QVariant pixmapValue = index.data(ItemImageRole);
     QPixmap pixmap;
     if (pixmapValue.isValid() && !pixmapValue.isNull()) {
         switch (pixmapValue.userType()) {
@@ -335,7 +335,7 @@ int InventoryDelegate::paintIcon(QPainter* painter, const QStyleOptionViewItem& 
     painter->drawPixmap(standRect, standPix);
     painter->drawPixmap(iconRect, pixmap);
 
-    QVariant infusionIconValue = index.data(ITEM_INFUSION_ICON_ROLE);
+    QVariant infusionIconValue = index.data(ItemInfusionIconRole);
     QPixmap infusionIcon;
     if (infusionIconValue.isValid()) {
         infusionIcon = qvariant_cast<QPixmap>(infusionIconValue);
@@ -393,8 +393,8 @@ void InventoryDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
         textHeight, textHeight, Qt::KeepAspectRatio, Qt::SmoothTransformation
     );
 
-    QString amountText = QString::number(index.data(ITEM_AMOUNT_ROLE).toInt());
-    QString bottomlessBoxText = QString::number(index.data(ITEM_STORAGE_BOX_AMOUNT_ROLE).toInt());
+    QString amountText = QString::number(index.data(ItemAmountRole).toInt());
+    QString bottomlessBoxText = QString::number(index.data(ItemStorageBoxAmountRole).toInt());
 
     QPoint pos = QPoint(textRect.x(), option.rect.top() + halfHeight + 10);
     painter->drawPixmap(pos, invBagPix);

@@ -17,8 +17,8 @@ CharsListModel::CharsListModel(Controller* controller, const QString& saveId, QO
     for (int i = 0; i < 10; ++i) {
         QStandardItem* item = new QStandardItem("< Empty >");
         item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-        item->setData(QVariant(), CHAR_NAME_ROLE);
-        item->setData(QVariant(i), CHAR_ID_ROLE);
+        item->setData(QVariant(), CharNameRole);
+        item->setData(QVariant(i), CharIdRole);
         root->appendRow(item);
     }
 }
@@ -36,7 +36,7 @@ void CharsListModel::refresh() {
             QStandardItem* item = root->child(i);
             item->setText("");
         }
-        item->setData(QVariant(), CHAR_NAME_ROLE);
+        item->setData(QVariant(), CharNameRole);
         emit refreshed();
         return;
     }
@@ -47,14 +47,14 @@ void CharsListModel::refresh() {
         for (auto& character: m_chars) {
             if (i == character.index) {
                 item->setText(QString::fromStdU16String(character.name));
-                item->setData(QString::fromStdU16String(character.name), CHAR_NAME_ROLE);
+                item->setData(QString::fromStdU16String(character.name), CharNameRole);
                 found = true;
                 break;
             }
         }
         if (found) continue;
         item->setText("< Empty >");
-        item->setData(QVariant(), CHAR_NAME_ROLE);
+        item->setData(QVariant(), CharNameRole);
     }
     emit refreshed();
 };
@@ -162,7 +162,7 @@ void DSRWidget::paintEvent(QPaintEvent* event) {
 void DSRWidget::onRefresh() {
     QItemSelectionModel* selModel = m_view->selectionModel();
     for (auto& index: selModel->selectedIndexes()) {
-        QVariant charId = index.data(fssm::ui::dsr::CHAR_ID_ROLE);
+        QVariant charId = index.data(fssm::ui::dsr::CharIdRole);
         if (!charId.isValid() || charId.isNull()) continue;
         fssm::parse::dsr::DSRCharacterInfo* charInfo = m_model->getCharByIdx(charId.toInt());
         m_charInfoWidget->setCharacter(charInfo);
@@ -182,7 +182,7 @@ void DSRWidget::onRefresh() {
 
 void DSRWidget::onSelectionChange(const QItemSelection &selected, const QItemSelection &deselected) {
     for (auto& index: selected.indexes()) {
-        QVariant charId = index.data(fssm::ui::dsr::CHAR_ID_ROLE);
+        QVariant charId = index.data(fssm::ui::dsr::CharIdRole);
         if (!charId.isValid() || charId.isNull()) continue;
         const fssm::parse::dsr::DSRCharacterInfo* charInfo = m_model->getCharByIdx(charId.toInt());
 

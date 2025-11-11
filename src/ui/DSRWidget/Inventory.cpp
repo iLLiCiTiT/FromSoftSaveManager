@@ -26,7 +26,7 @@ void InventoryModel::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* char
         QStandardItem* item = createModelItem(invItem);
         if (item == nullptr) continue;
 
-        item->setData(invItem.amount, ITEM_AMOUNT_ROLE);
+        item->setData(invItem.amount, ItemAmountRole);
         // Show consumables, materials and ammunition items from both inventory and bottomless box in one item
         // TODO use enum for category
         if (invItem.baseItem.category == "consumables" || invItem.baseItem.category == "materials" || invItem.baseItem.category == "ammunition") {
@@ -46,7 +46,7 @@ void InventoryModel::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* char
             itemsById[blbItem.itemId] = item;
             newItems.append(item);
         }
-        item->setData(blbItem.amount, ITEM_BOTOMLESS_BOX_AMOUNT_ROLE);
+        item->setData(blbItem.amount, ItemBotomlessBoxAmountRole);
     }
 
     if (!newItems.isEmpty())
@@ -118,14 +118,14 @@ QStandardItem* InventoryModel::createModelItem(fssm::parse::dsr::InventoryItem& 
     QStandardItem* item = new QStandardItem(QString::fromStdString(inventoryItem.baseItem.label.data()));
     item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
 
-    item->setData(inventoryItem.upgradeLevel, ITEM_LEVEL_ROLE);
-    item->setData(infusionPix, ITEM_INFUSION_ICON_ROLE);
-    item->setData(inventoryItem.order, ITEM_ORDER_ROLE);
-    item->setData(inventoryItem.durability, ITEM_DURABILITY_ROLE);
-    item->setData(0, ITEM_AMOUNT_ROLE);
-    item->setData(0, ITEM_BOTOMLESS_BOX_AMOUNT_ROLE);
-    item->setData(itemImage, ITEM_IMAGE_ROLE);
-    item->setData(QString::fromStdString(inventoryItem.baseItem.category.data()), ITEM_CATEGORY_ROLE);
+    item->setData(inventoryItem.upgradeLevel, ItemLevelRole);
+    item->setData(infusionPix, ItemInfusionIconRole);
+    item->setData(inventoryItem.order, ItemOrderRole);
+    item->setData(inventoryItem.durability, ItemDurabilityRole);
+    item->setData(0, ItemAmountRole);
+    item->setData(0, ItemBotomlessBoxAmountRole);
+    item->setData(itemImage, ItemImageRole);
+    item->setData(QString::fromStdString(inventoryItem.baseItem.category.data()), ItemCategoryRole);
     return item;
 }
 QStandardItem* InventoryModel::createUnknownItem(fssm::parse::dsr::InventoryItem& inventoryItem) {
@@ -137,11 +137,11 @@ QStandardItem* InventoryModel::createUnknownItem(fssm::parse::dsr::InventoryItem
     label.push_back(QString::fromStdString(std::to_string(inventoryItem.itemId)));
     item->setText(label);
 
-    item->setData(inventoryItem.upgradeLevel, ITEM_LEVEL_ROLE);
-    item->setData(inventoryItem.order, ITEM_ORDER_ROLE);
-    item->setData(inventoryItem.durability, ITEM_DURABILITY_ROLE);
-    item->setData(QVariant(QString::fromStdString(inventoryItem.baseItem.category.data())), ITEM_CATEGORY_ROLE);
-    item->setData(QPixmap(":/dsr_images/unknown"), ITEM_IMAGE_ROLE);
+    item->setData(inventoryItem.upgradeLevel, ItemLevelRole);
+    item->setData(inventoryItem.order, ItemOrderRole);
+    item->setData(inventoryItem.durability, ItemDurabilityRole);
+    item->setData(QVariant(QString::fromStdString(inventoryItem.baseItem.category.data())), ItemCategoryRole);
+    item->setData(QPixmap(":/dsr_images/unknown"), ItemImageRole);
     return item;
 }
 
@@ -159,8 +159,8 @@ void InventoryProxyModel::setCategory(QString category) {
 }
 
 bool InventoryProxyModel::lessThan(const QModelIndex &sourceLeft, const QModelIndex &sourceRight) const {
-    int left = sourceLeft.data(ITEM_ORDER_ROLE).toInt();
-    int right = sourceRight.data(ITEM_ORDER_ROLE).toInt();
+    int left = sourceLeft.data(ItemOrderRole).toInt();
+    int right = sourceRight.data(ItemOrderRole).toInt();
     if (left != right) return left < right;
     return QSortFilterProxyModel::lessThan(sourceLeft, sourceRight);
 }
@@ -168,7 +168,7 @@ bool InventoryProxyModel::lessThan(const QModelIndex &sourceLeft, const QModelIn
 bool InventoryProxyModel::filterAcceptsRow(int source_row, const QModelIndex &source_parent) const {
     if (m_category.isEmpty()) return true;
     QModelIndex index = sourceModel()->index(source_row, 0, source_parent);
-    QString category = index.data(ITEM_CATEGORY_ROLE).toString();
+    QString category = index.data(ItemCategoryRole).toString();
     return category == m_category;
 }
 
@@ -183,7 +183,7 @@ int InventoryDelegate::paintIcon(QPainter* painter, const QStyleOptionViewItem& 
     int textOffset = 20;
     if (!hasDSRInventoryResources()) return textOffset;
 
-    QVariant pixmapValue = index.data(ITEM_IMAGE_ROLE);
+    QVariant pixmapValue = index.data(ItemImageRole);
     QPixmap pixmap;
     if (pixmapValue.isValid() && !pixmapValue.isNull()) {
         switch (pixmapValue.userType()) {
@@ -221,7 +221,7 @@ int InventoryDelegate::paintIcon(QPainter* painter, const QStyleOptionViewItem& 
     painter->drawPixmap(standRect, standPix);
     painter->drawPixmap(iconRect, pixmap);
 
-    QVariant infusionIconValue = index.data(ITEM_INFUSION_ICON_ROLE);
+    QVariant infusionIconValue = index.data(ItemInfusionIconRole);
     QPixmap infusionIcon;
     if (infusionIconValue.isValid()) {
         infusionIcon = qvariant_cast<QPixmap>(infusionIconValue);
@@ -255,7 +255,7 @@ void InventoryDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
     int textOffset = paintIcon(painter, option, index);
 
     QString label = index.data(Qt::DisplayRole).toString();
-    QVariant levelValue = index.data(ITEM_LEVEL_ROLE);
+    QVariant levelValue = index.data(ItemLevelRole);
     if (levelValue.isValid() && !levelValue.isNull()) {
         int level = levelValue.toInt();
         if (level > 0)
@@ -285,8 +285,8 @@ void InventoryDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
         textHeight, textHeight, Qt::KeepAspectRatio, Qt::SmoothTransformation
     );
 
-    QString amountText = QString::number(index.data(ITEM_AMOUNT_ROLE).toInt());
-    QString bottomlessBoxText = QString::number(index.data(ITEM_BOTOMLESS_BOX_AMOUNT_ROLE).toInt());
+    QString amountText = QString::number(index.data(ItemAmountRole).toInt());
+    QString bottomlessBoxText = QString::number(index.data(ItemBotomlessBoxAmountRole).toInt());
 
     QPoint pos = QPoint(textRect.x(), option.rect.top() + halfHeight + 10);
     painter->drawPixmap(pos, invBagPix);
