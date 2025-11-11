@@ -57,6 +57,7 @@ The project is written in C++ using Qt6. It was a Python project at the beginnin
 Make sure CMake and MinGW binaries are in your PATH environment variable.
 
 ### Build steps
+I'm using Clion, so these steps are not fully tested by me (sorry).
 1. Clone the repository `git clone https://github.com/iLLiCiTiT/FromSoftSaveManager.git --recurse-submodules`.
 2. Change directory to the cloned repository `cd FromSoftSaveManager`.
 3. Run cmake `cmake -B build -DCMAKE_MAKE_PROGRAM=mingw32-make -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH={Path to Qt6 installation}`.
