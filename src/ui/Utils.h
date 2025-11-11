@@ -1,28 +1,22 @@
 #pragma once
 
-#include <qevent.h>
-#include <QLibrary>
+#include <QResizeEvent>
+#include <QMouseEvent>
 #include <QSpinBox>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QUuid>
 
-
-inline bool tryLoadDsrResources() {
-    QLibrary lib("inv_resources_dsr");
-    return lib.load();
-}
-
-inline bool tryLoadDs3Resources() {
-    QLibrary lib("inv_resources_ds3");
-    return lib.load();
-}
-
-namespace {
-    bool g_dsrResourcesLoaded = tryLoadDsrResources();
-    bool g_ds3ResourcesLoaded = tryLoadDs3Resources();
-}
+#ifndef FSSM_SKIP_INV_IMAGES
+#include "../resources/dsr_inv_images_init.h"
+#include "../resources/ds3_inv_images_init.h"
+const bool g_dsrResourcesLoaded = true;
+const bool g_ds3ResourcesLoaded = true;
+#else
+const bool g_dsrResourcesLoaded = false;
+const bool g_ds3ResourcesLoaded = false;
+#endif
 
 inline bool hasDSRInventoryResources() {return g_dsrResourcesLoaded;}
 inline bool hasDS3InventoryResources() {return g_ds3ResourcesLoaded;}

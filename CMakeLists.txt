@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.11)
 project(FromSoftSaveManager)
 
+option(FSSM_SKIP_INV_IMAGES "Skip inventory images" OFF)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -63,18 +64,9 @@ add_executable(FromSoftSaveManager
         src/ui/ERWidget/CharInfo.cpp
 )
 
-target_link_libraries(FromSoftSaveManager
-        Qt::Core
-        Qt::Gui
-        Qt::Widgets
-        Qt::Concurrent
-        Qt::Multimedia
-        Qt::Network
-        tiny-aes
-)
 
 # --- DSR inventory resources ---
-add_library(inv_resources_dsr SHARED)
+add_library(inv_resources_dsr STATIC)
 set_source_files_properties(src/resources/dsr_inv_images.qrc PROPERTIES
     QT_RESOURCE_ALIAS "dsr_inv_images"
 )
@@ -87,7 +79,7 @@ target_link_libraries(inv_resources_dsr PUBLIC Qt::Core)
 # -------------------------------
 
 # --- DS3 inventory resources ---
-add_library(inv_resources_ds3 SHARED)
+add_library(inv_resources_ds3 STATIC)
 set_source_files_properties(src/resources/ds3_inv_images.qrc PROPERTIES
     QT_RESOURCE_ALIAS "ds3_inv_images"
 )
@@ -99,10 +91,26 @@ target_sources(inv_resources_ds3 PRIVATE
 target_link_libraries(inv_resources_ds3 PUBLIC Qt::Core)
 # -------------------------------
 
-if (WIN32)
-    target_sources(FromSoftSaveManager PRIVATE
-            src/app.rc)
+if (FSSM_SKIP_INV_IMAGES MATCHES OFF)
+    target_link_libraries(FromSoftSaveManager inv_resources_dsr inv_resources_ds3)
+else()
+    set_target_properties(FromSoftSaveManager PROPERTIES COMPILE_DEFINITIONS "FSSM_SKIP_INV_IMAGES=1")
 endif()
+
+target_link_libraries(FromSoftSaveManager
+        Qt::Core
+        Qt::Gui
+        Qt::Widgets
+        Qt::Concurrent
+        Qt::Multimedia
+        Qt::Network
+        tiny-aes
+)
+
+if (WIN32)
+    target_sources(FromSoftSaveManager PRIVATE src/app.rc)
+endif()
+
 if ((WIN32) AND (CMAKE_BUILD_TYPE MATCHES "Release"))
     set_target_properties(FromSoftSaveManager PROPERTIES WIN32_EXECUTABLE TRUE)
 endif()
@@ -110,18 +118,6 @@ endif()
 if ((MSVC) AND (MSVC_VERSION GREATER_EQUAL 1914))
     target_compile_options(FromSoftSaveManager PUBLIC "-Zc:__cplusplus" "-permissive-")
 endif()
-
-add_custom_command(TARGET FromSoftSaveManager POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    $<TARGET_FILE:inv_resources_dsr>
-    $<TARGET_FILE_DIR:FromSoftSaveManager>
-)
-
-add_custom_command(TARGET FromSoftSaveManager POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    $<TARGET_FILE:inv_resources_ds3>
-    $<TARGET_FILE_DIR:FromSoftSaveManager>
-)
 
 if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     set(DEBUG_SUFFIX)
