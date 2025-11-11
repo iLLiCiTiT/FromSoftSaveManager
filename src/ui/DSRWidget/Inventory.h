@@ -33,11 +33,11 @@ class InventoryProxyModel: public QSortFilterProxyModel {
     Q_OBJECT
 public:
     explicit InventoryProxyModel(QObject *parent = nullptr);
-    void setCategory(QString category);
+    void setCategory(parse::dsr::ItemCategory category);
     bool lessThan(const QModelIndex &sourceLeft, const QModelIndex &sourceRight) const override;
     bool filterAcceptsRow(int source_row, const QModelIndex &source_parent) const override;
 private:
-    QString m_category = QString();
+    parse::dsr::ItemCategory m_category = parse::dsr::ItemCategory::Spells;
 };
 
 class InventoryDelegate: public QStyledItemDelegate {
@@ -56,9 +56,9 @@ private:
 class DSRInventoryCategoryButton: public BaseClickableFrame {
     Q_OBJECT
 signals:
-    void clicked(QString category);
+    void clicked(parse::dsr::ItemCategory category);
 public:
-    explicit DSRInventoryCategoryButton(const QString& category, QWidget* parent);
+    explicit DSRInventoryCategoryButton(const parse::dsr::ItemCategory& category, QWidget* parent);
     void setSelected(bool selected);
 protected:
     void enterEvent(QEnterEvent *event) override;
@@ -66,7 +66,7 @@ protected:
 private:
     void onMouseRelease() override;
     PixmapLabel* m_imageLabel = nullptr;
-    QString m_category;
+    parse::dsr::ItemCategory m_category;
     QPixmap m_pix;
     QPixmap m_hoverPix;
     bool m_isSelected = false;
@@ -85,23 +85,23 @@ private:
 class CategoryButtons: public QWidget {
     Q_OBJECT
 signals:
-    void categoryChanged(QString category);
+    void categoryChanged(parse::dsr::ItemCategory category);
 public:
     explicit CategoryButtons(QWidget* parent);
-    QString getCategory();
+    parse::dsr::ItemCategory getCategory() { return m_category; }
 protected:
     void showEvent(QShowEvent* event) override;
     void resizeEvent(QResizeEvent *event) override;
 public slots:
-    void setCategory(QString category);
+    void setCategory(parse::dsr::ItemCategory category);
 private slots:
     void onAnimValueChange(QVariant posValue);
     void onAnimfinished();
 private:
     CategoryButtonOverlay* m_overlayWidget = nullptr;
     QVariantAnimation* m_overlayAnim;
-    QString m_category;
-    std::unordered_map<QString, DSRInventoryCategoryButton*> m_categoryMapping;
+    parse::dsr::ItemCategory m_category;
+    std::unordered_map<parse::dsr::ItemCategory, DSRInventoryCategoryButton*> m_categoryMapping;
 };
 
 class InventoryWidget: public QWidget {
@@ -110,7 +110,7 @@ public:
     explicit InventoryWidget(QWidget* parent);
     void setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo);
 private slots:
-    void onCategoryChange(QString category);
+    void onCategoryChange(parse::dsr::ItemCategory category);
 private:
     CategoryButtons* m_categoryBtns = nullptr;
     QListView* m_view = nullptr;

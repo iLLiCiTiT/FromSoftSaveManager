@@ -29,14 +29,14 @@ void InventoryModel::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* char
         item->setData(invItem.amount, ItemAmountRole);
         // Show consumables, materials and ammunition items from both inventory and bottomless box in one item
         // TODO use enum for category
-        if (invItem.baseItem.category == "consumables" || invItem.baseItem.category == "materials" || invItem.baseItem.category == "ammunition") {
+        if (invItem.baseItem.category == parse::dsr::ItemCategory::Consumables || invItem.baseItem.category == parse::dsr::ItemCategory::Materials || invItem.baseItem.category == parse::dsr::ItemCategory::ArrowsBolts) {
             itemsById[invItem.itemId] = item;
         }
         newItems.append(item);
     }
     for (auto blbItem: charInfo->botomlessBoxItems) {
         QStandardItem* item = nullptr;
-        if (blbItem.baseItem.category == "consumables" || blbItem.baseItem.category == "materials" || blbItem.baseItem.category == "ammunition") {
+        if (blbItem.baseItem.category == parse::dsr::ItemCategory::Consumables || blbItem.baseItem.category == parse::dsr::ItemCategory::Materials || blbItem.baseItem.category == parse::dsr::ItemCategory::ArrowsBolts) {
             auto iterItem = itemsById.find(blbItem.itemId);
             if (iterItem != itemsById.end()) item = iterItem->second;
         };
@@ -125,7 +125,7 @@ QStandardItem* InventoryModel::createModelItem(fssm::parse::dsr::InventoryItem& 
     item->setData(0, ItemAmountRole);
     item->setData(0, ItemBotomlessBoxAmountRole);
     item->setData(itemImage, ItemImageRole);
-    item->setData(QString::fromStdString(inventoryItem.baseItem.category.data()), ItemCategoryRole);
+    item->setData(QVariant::fromValue(inventoryItem.baseItem.category), ItemCategoryRole);
     return item;
 }
 QStandardItem* InventoryModel::createUnknownItem(fssm::parse::dsr::InventoryItem& inventoryItem) {
@@ -140,7 +140,7 @@ QStandardItem* InventoryModel::createUnknownItem(fssm::parse::dsr::InventoryItem
     item->setData(inventoryItem.upgradeLevel, ItemLevelRole);
     item->setData(inventoryItem.order, ItemOrderRole);
     item->setData(inventoryItem.durability, ItemDurabilityRole);
-    item->setData(QVariant(QString::fromStdString(inventoryItem.baseItem.category.data())), ItemCategoryRole);
+    item->setData(QVariant::fromValue(inventoryItem.baseItem.category), ItemCategoryRole);
     item->setData(QPixmap(":/dsr_images/unknown"), ItemImageRole);
     return item;
 }
@@ -151,7 +151,7 @@ InventoryProxyModel::InventoryProxyModel(QObject *parent): QSortFilterProxyModel
     setFilterCaseSensitivity(Qt::CaseInsensitive);
 }
 
-void InventoryProxyModel::setCategory(QString category) {
+void InventoryProxyModel::setCategory(parse::dsr::ItemCategory category) {
     if (category == m_category) return;
     beginFilterChange();
     m_category = category;
@@ -166,9 +166,8 @@ bool InventoryProxyModel::lessThan(const QModelIndex &sourceLeft, const QModelIn
 }
 
 bool InventoryProxyModel::filterAcceptsRow(int source_row, const QModelIndex &source_parent) const {
-    if (m_category.isEmpty()) return true;
     QModelIndex index = sourceModel()->index(source_row, 0, source_parent);
-    QString category = index.data(ItemCategoryRole).toString();
+    parse::dsr::ItemCategory category = index.data(ItemCategoryRole).value<parse::dsr::ItemCategory>();
     return category == m_category;
 }
 
@@ -308,10 +307,22 @@ QSize InventoryDelegate::sizeHint(const QStyleOptionViewItem& option, const QMod
     return QSize(260, 80);
 }
 
-DSRInventoryCategoryButton::DSRInventoryCategoryButton(const QString& category, QWidget* parent): BaseClickableFrame(parent), m_category(category) {
+const std::unordered_map<parse::dsr::ItemCategory, QString> categoryToString = {
+    {parse::dsr::ItemCategory::Consumables, "consumables"},
+    {parse::dsr::ItemCategory::Materials, "materials"},
+    {parse::dsr::ItemCategory::KeyItems, "key_items"},
+    {parse::dsr::ItemCategory::ArrowsBolts, "ammunition"},
+    {parse::dsr::ItemCategory::WeaponsShields, "weapons_shields"},
+    {parse::dsr::ItemCategory::Rings, "rings"},
+    {parse::dsr::ItemCategory::Armor, "armor"},
+    {parse::dsr::ItemCategory::Spells, "spells"},
+};
+
+DSRInventoryCategoryButton::DSRInventoryCategoryButton(const parse::dsr::ItemCategory& category, QWidget* parent): BaseClickableFrame(parent), m_category(category) {
     setAttribute(Qt::WA_TranslucentBackground, true);
-    m_pix = QPixmap(":/dsr_images/inventory_" + category + "");
-    m_hoverPix = QPixmap(":/dsr_images/inventory_" + category + "_hover");
+    const QString& categoryStr = categoryToString.at(category);
+    m_pix = QPixmap(":/dsr_images/inventory_" + categoryStr + "");
+    m_hoverPix = QPixmap(":/dsr_images/inventory_" + categoryStr + "_hover");
     m_imageLabel = new PixmapLabel(m_pix, this);
     m_imageLabel->setObjectName("dsr_category_icon");
     m_imageLabel->setAttribute(Qt::WA_TranslucentBackground, true);
@@ -363,25 +374,22 @@ CategoryButtons::CategoryButtons(QWidget* parent): QWidget(parent) {
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
-    const auto addCategory = [&](QString category) {
+    const auto addCategory = [&](parse::dsr::ItemCategory category) {
         DSRInventoryCategoryButton* btn = new DSRInventoryCategoryButton(category, this);
         btn->stackUnder(m_overlayWidget);
-        connect(btn, SIGNAL(clicked(QString)), this, SLOT(setCategory(QString)));
-        if (m_category.isEmpty()) {
-            m_category = category;
-            btn->setSelected(true);
-        };
+        connect(btn, SIGNAL(clicked(parse::dsr::ItemCategory)), this, SLOT(setCategory(parse::dsr::ItemCategory)));
         m_categoryMapping[category] = btn;
         layout->addWidget(btn, 0);
     };
-    addCategory("consumables");
-    addCategory("materials");
-    addCategory("key_items");
-    addCategory("spells");
-    addCategory("weapons_shields");
-    addCategory("ammunition");
-    addCategory("armor");
-    addCategory("rings");
+
+    addCategory(parse::dsr::ItemCategory::Consumables);
+    addCategory(parse::dsr::ItemCategory::Materials);
+    addCategory(parse::dsr::ItemCategory::KeyItems);
+    addCategory(parse::dsr::ItemCategory::ArrowsBolts);
+    addCategory(parse::dsr::ItemCategory::WeaponsShields);
+    addCategory(parse::dsr::ItemCategory::Rings);
+    addCategory(parse::dsr::ItemCategory::Armor);
+    addCategory(parse::dsr::ItemCategory::Spells);
 
     layout->addStretch(1);
 
@@ -389,11 +397,14 @@ CategoryButtons::CategoryButtons(QWidget* parent): QWidget(parent) {
     m_overlayAnim->setDuration(100);
     connect(m_overlayAnim, SIGNAL(valueChanged(QVariant)), this, SLOT(onAnimValueChange(QVariant)));
     connect(m_overlayAnim, SIGNAL(finished()), this, SLOT(onAnimfinished()));
+
+    // Make sure m_category is different from 'Consumables' so it can be triggered as category change
+    // TODO look if there is a better approach.
+    m_category = parse::dsr::ItemCategory::Spells;
+    setCategory(parse::dsr::ItemCategory::Consumables);
 }
-QString CategoryButtons::getCategory() {
-    return m_category;
-}
-void CategoryButtons::setCategory(QString category) {
+
+void CategoryButtons::setCategory(parse::dsr::ItemCategory category) {
     if (m_category == category) return;
     m_categoryMapping[m_category]->setSelected(false);
     m_category = category;
@@ -443,7 +454,7 @@ InventoryWidget::InventoryWidget(QWidget* parent): QWidget(parent) {
     layout->addWidget(m_categoryBtns, 0);
     layout->addWidget(m_view, 1);
 
-    connect(m_categoryBtns, SIGNAL(categoryChanged(QString)), this, SLOT(onCategoryChange(QString)));
+    connect(m_categoryBtns, SIGNAL(categoryChanged(parse::dsr::ItemCategory)), this, SLOT(onCategoryChange(parse::dsr::ItemCategory)));
 
     m_proxy->setCategory(m_categoryBtns->getCategory());
 }
@@ -453,7 +464,7 @@ void InventoryWidget::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* cha
     m_proxy->sort(0, Qt::AscendingOrder);
 }
 
-void InventoryWidget::onCategoryChange(QString category) {
+void InventoryWidget::onCategoryChange(parse::dsr::ItemCategory category) {
     m_proxy->setCategory(category);
 }
 }

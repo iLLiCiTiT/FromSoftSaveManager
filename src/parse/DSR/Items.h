@@ -7,6 +7,17 @@
 #include <optional>
 
 namespace fssm::parse::dsr {
+    enum class ItemCategory {
+        Consumables,
+        Materials,
+        KeyItems,
+        ArrowsBolts,
+        WeaponsShields,
+        Rings,
+        Armor,
+        Spells,
+    };
+
     inline constexpr std::array<std::string_view, 10> DSR_COVENANT_LABELS = {
         "None",
         "Way of White",
@@ -61,7 +72,7 @@ namespace fssm::parse::dsr {
         uint32_t type = 0;
         uint32_t max_stack_count = 999;
         // TODO use enum for category
-        std::string_view category = "consumables";
+        ItemCategory category = ItemCategory::Consumables;
         std::string_view image;
         std::string_view label = "Unknown";
     };

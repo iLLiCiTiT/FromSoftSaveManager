@@ -74,7 +74,6 @@ class Controller: public QObject {
 signals:
     void gameSaveChanged(fssm::Game game);
     void saveIdChanged(QString saveId);
-    // TODO find out if are used?
     void pathsConfigChanged();
     void hotkeysConfigChanged();
     void autobackupConfigChanged();

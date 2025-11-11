@@ -165,27 +165,27 @@ namespace fssm::parse::dsr {
                     BaseItem newBaseItem;
                     switch (invItem.itemType) {
                         case 0:
-                            newBaseItem.category = "weapons_shields";
+                            newBaseItem.category = ItemCategory::WeaponsShields;
                             break;
                         case 268435456:
-                            newBaseItem.category = "armor";
+                            newBaseItem.category = ItemCategory::Armor;
                             break;
                         case 536870912:
-                            newBaseItem.category = "rings";
+                            newBaseItem.category = ItemCategory::Rings;
                             break;
                         case 1073741824:
                             if (invItem.itemId < 800) {
-                                newBaseItem.category = "consumables";
+                                newBaseItem.category = ItemCategory::Consumables;
                             } else if (1000 <= invItem.itemId && itemId < 2000) {
-                                newBaseItem.category = "materials";
+                                newBaseItem.category = ItemCategory::Materials;
                             } else if (invItem.itemId > 3000) {
-                                newBaseItem.category = "spells";
+                                newBaseItem.category = ItemCategory::Spells;
                             } else {
-                                newBaseItem.category = "key_items";
+                                newBaseItem.category = ItemCategory::KeyItems;
                             }
                             break;
                         default:
-                            newBaseItem.category = "consumables";
+                            newBaseItem.category = ItemCategory::Consumables;
                             break;
                     }
                     newBaseItem.label = "Unknown " + std::to_string(invItem.itemId);
