@@ -118,87 +118,110 @@ namespace fssm::parse::ds3 {
         name_b.assign(menuEntry.content.begin() + menuOffset, menuEntry.content.begin() + menuOffset + 32);
         std::u16string name = parse_name(name_b);
 
-        int offset = findInitialOffset(entry.content);
-        offset += 8;
+        ContentReader reader(entry.content);
 
-        const uint8_t* c = entry.content.data();
+        reader.skip(108);
 
-        uint32_t hpCurrent = read_u32_le(c + offset);
-        uint32_t hpMax = read_u32_le(c + offset + 4);
-        uint32_t hpBase = read_u32_le(c + offset + 8);
-        uint32_t fpCurrent = read_u32_le(c + offset + 12);
-        uint32_t fpMax = read_u32_le(c + offset + 16);
-        uint32_t fpBase = read_u32_le(c + offset + 20);
+        std::array<uint8_t, 8> tmp;
+        for (int i = 0; i < 6144; ++i) {
+            reader.copyTo(&tmp, sizeof(tmp));
+            if (tmp != g_SkipValue) reader.skip(52);
+        }
+        reader.skip(8);
+
+        uint32_t hpCurrent = reader.read_u32_le();
+        uint32_t hpMax = reader.read_u32_le();
+        uint32_t hpBase = reader.read_u32_le();
+        uint32_t fpCurrent = reader.read_u32_le();
+        uint32_t fpMax = reader.read_u32_le();
+        uint32_t fpBase = reader.read_u32_le();
         // always 0
-        // _ = read_u32_le(c + offset + 24);
-        uint32_t staminaCurrent = read_u32_le(c + offset + 28);
-        uint32_t staminaMax = read_u32_le(c + offset + 32);
-        uint32_t staminaBase = read_u32_le(c + offset + 36);
+        reader.skip(4);
+        uint32_t staminaCurrent = reader.read_u32_le();
+        uint32_t staminaMax = reader.read_u32_le();
+        uint32_t staminaBase = reader.read_u32_le();
         // always 0
-        // _ = read_u32_le(c + offset + 40);
-        uint32_t vigor = read_u32_le(c + offset + 44);
-        uint32_t attunement = read_u32_le(c + offset + 48);
-        uint32_t endurance = read_u32_le(c + offset + 52);
-        uint32_t strength = read_u32_le(c + offset + 56);
-        uint32_t dexterity = read_u32_le(c + offset + 60);
-        uint32_t intelligence = read_u32_le(c + offset + 64);
-        uint32_t faith = read_u32_le(c + offset + 68);
-        uint32_t luck = read_u32_le(c + offset + 72);
+        reader.skip(4);
+        uint32_t vigor = reader.read_u32_le();
+        uint32_t attunement = reader.read_u32_le();
+        uint32_t endurance = reader.read_u32_le();
+        uint32_t strength = reader.read_u32_le();
+        uint32_t dexterity = reader.read_u32_le();
+        uint32_t intelligence = reader.read_u32_le();
+        uint32_t faith = reader.read_u32_le();
+        uint32_t luck = reader.read_u32_le();
         // always 0
-        // _ = read_u32_le(c + offset + 76);
+        reader.skip(4);
         // always 0
-        // _ = read_u32_le(c + offset + 80);
-        uint32_t vitality = read_u32_le(c + offset + 84);
-        uint32_t level = read_u32_le(c + offset + 88);
-        uint32_t souls = read_u32_le(c + offset + 92);
-        uint32_t collectedSouls = read_u32_le(c + offset + 96);
+        reader.skip(4);
+        uint32_t vitality = reader.read_u32_le();
+        uint32_t level = reader.read_u32_le();
+        uint32_t souls = reader.read_u32_le();
+        uint32_t collectedSouls = reader.read_u32_le();
+        // - offset +100
 
-        uint32_t toxicRes = read_u32_le(c + offset + 200);
-        uint32_t bleedRes = read_u32_le(c + offset + 204);
-        uint32_t poisonRes = read_u32_le(c + offset + 208);
-        uint32_t curseRes = read_u32_le(c + offset + 212);
-        uint32_t frostRes = read_u32_le(c + offset + 216);
+        reader.skip(100);
 
-        uint8_t hollowing = read_u8_le(c + offset + 230);
-        uint8_t estusMax = read_u8_le(c + offset + 234);
-        uint8_t ashenEstusMax = read_u8_le(c + offset + 235);
+        uint32_t toxicRes = reader.read_u32_le();
+        uint32_t bleedRes = reader.read_u32_le();
+        uint32_t poisonRes = reader.read_u32_le();
+        uint32_t curseRes = reader.read_u32_le();
+        uint32_t frostRes = reader.read_u32_le();
+        // - offset +220
 
+        reader.skip(10);
+
+        uint8_t hollowing = reader.read_u8_le();
+        reader.skip(3);
+        uint8_t estusMax = reader.read_u8_le();
+        uint8_t ashenEstusMax = reader.read_u8_le();
+
+        reader.skip(548);
+        // - offset +784
+
+        uint32_t invCount = reader.read_u32_le();
         std::vector<InventoryItem> inventoryItems;
         inventoryItems.reserve(1920);
         for (int i = 0; i < 1920; ++i) {
-            int itemOffset = offset + 788 + (i * 16);
-            uint32_t itemId = read_u32_le(c + itemOffset + 4);
-            if (itemId == 0) continue;
-
-            uint32_t amount = read_u32_le(c + itemOffset + 8);
-            if (amount == 0) continue;
+            reader.skip(4);
+            uint32_t itemId = reader.read_u32_le();
+            uint32_t amount = reader.read_u32_le();
+            reader.skip(4);
+            if (itemId == 0 || amount == 0) continue;
 
             auto invItemOpt = InventoryItem::fromId(itemId, amount);
             if (invItemOpt.has_value()) inventoryItems.push_back(invItemOpt.value());
         }
+        // - offset +31508
+
+        reader.skip(4);
 
         std::vector<InventoryItem> keyItems;
         keyItems.reserve(128);
         for (int i = 0; i < 128; ++i) {
-            int itemOffset = offset + 31512 + (i * 16);
-            uint32_t itemId = read_u32_le(c + itemOffset + 4);
-            if (itemId == 0) continue;
-
-            uint32_t amount = read_u32_le(c + itemOffset + 8);
-            if (amount == 0) continue;
+            reader.skip(4);
+            uint32_t itemId = reader.read_u32_le();
+            uint32_t amount = reader.read_u32_le();
+            reader.skip(4);
+            if (itemId == 0 || amount == 0) continue;
 
             auto invItemOpt = InventoryItem::fromId(itemId, amount);
             if (invItemOpt.has_value()) keyItems.push_back(invItemOpt.value());
         }
+        // - offset +33560
+
+        reader.skip(2304);
 
         std::array<uint8_t, 7> usedGestures = {0, 0, 0, 0, 0, 0, 0};
         for (int i = 0; i < 7; ++i) {
-            int itemOffset = offset + 35864 + (i * 4);
-            usedGestures[i] = read_u8_le(c + itemOffset);
+            usedGestures[i] = reader.read_u8_le();
         }
+        // - offset +35896
 
-        uint32_t maybeToolsCount = read_u32_le(c + offset + 35896);
-        offset += 35900;
+        reader.skip(25);
+
+        uint32_t maybeToolsCount = reader.read_u32_le();
+        // - offset +35900
         // std::vector<InventoryItem> maybeTools;
         // maybeTools.reserve(maybeToolsCount);
         // for (int i = 0; i < maybeToolsCount; ++i) {
@@ -207,8 +230,8 @@ namespace fssm::parse::ds3 {
         //     auto invItemOpt = InventoryItem::fromId(itemId, 1);
         //     if (invItemOpt.has_value()) maybeTools.push_back(invItemOpt.value());
         // }
+        reader.skip(maybeToolsCount * 8);
 
-        offset += maybeToolsCount * 8;
         // auto lHand1Equip = InventoryItem::fromId(read_u32_le(c + offset), 1);
         // auto rHand1Equip = InventoryItem::fromId(read_u32_le(c + offset + 4), 1);
         // auto lHand2Equip = InventoryItem::fromId(read_u32_le(c + offset + 8), 1);
@@ -244,16 +267,15 @@ namespace fssm::parse::ds3 {
         // auto toolBelt4Equip = InventoryItem::fromId(read_u32_le(c + offset + 140), 1);
         // auto toolBelt5Equip = InventoryItem::fromId(read_u32_le(c + offset + 144), 1);
 
-        offset += 400;
+        reader.skip(400);
         std::vector<InventoryItem> storageBoxItems;
         inventoryItems.reserve(1920);
         for (int i = 0; i < 1920; ++i) {
-            int itemOffset = offset + (i * 16);
-            uint32_t itemId = read_u32_le(c + itemOffset + 4);
-            if (itemId == 0) continue;
-
-            uint32_t amount = read_u32_le(c + itemOffset + 8);
-            if (amount == 0) continue;
+            reader.skip(4);
+            uint32_t itemId = reader.read_u32_le();
+            uint32_t amount = reader.read_u32_le();
+            reader.skip(4);
+            if (itemId == 0 || amount == 0) continue;
 
             auto invItemOpt = InventoryItem::fromId(itemId, amount);
             if (invItemOpt.has_value()) storageBoxItems.push_back(invItemOpt.value());
