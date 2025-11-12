@@ -21,53 +21,80 @@ namespace fssm::parse::dsr {
         std::vector<DSRCharacterInfo> characters;
         characters.reserve(10);
         for (int charIdx = 0; charIdx < sl2.entries.size() && charIdx < 10; ++charIdx) {
-            const auto& c = sl2.entries[charIdx].content;
+            ContentReader reader(sl2.entries[charIdx].content);
             // TODO read from USERDATA_10 what characters are occupied
-            if (c.empty() || c[0] == 0x00) continue;
+            if (reader.read_u8_le() == 0) continue;
+            reader.skip(3);
+
             DSRCharacterInfo ci;
             ci.index = charIdx;
-            ci.hpCurrent = bytes_to_u32(c, 96);
-            ci.hpMax = bytes_to_u32(c, 100);
-            ci.hpBase = bytes_to_u32(c, 104);
 
-            ci.staminaCurrent = bytes_to_u32(c, 124);
-            ci.staminaMax = bytes_to_u32(c, 128);
-            ci.staminaBase = bytes_to_u32(c, 132);
+            reader.skip(92);
+            ci.hpCurrent = reader.read_u32_le();
+            ci.hpMax = reader.read_u32_le();
+            ci.hpBase = reader.read_u32_le();
 
-            ci.vitality = bytes_to_u32(c, 140);
-            ci.attunement = bytes_to_u32(c, 148);
-            ci.endurance = bytes_to_u32(c, 156);
-            ci.strength = bytes_to_u32(c, 164);
-            ci.dexterity = bytes_to_u32(c, 172);
-            ci.intelligence = bytes_to_u32(c, 180);
-            ci.faith = bytes_to_u32(c, 188);
-            ci.humanity = bytes_to_u32(c, 208);
+            reader.skip(16);
 
-            ci.resistance = bytes_to_u32(c, 212);
+            ci.staminaCurrent = reader.read_u32_le();
+            ci.staminaMax = reader.read_u32_le();
+            ci.staminaBase = reader.read_u32_le();
 
-            ci.level = bytes_to_u32(c, 220);
-            ci.souls = bytes_to_u32(c, 224);
-            ci.earnedSouls = bytes_to_u32(c, 228);
-            ci.hollowState = bytes_to_u32(c, 236);
+            reader.skip(4);
+            ci.vitality = reader.read_u32_le();
+            reader.skip(4);
+            ci.attunement = reader.read_u32_le();
+            reader.skip(4);
+            ci.endurance = reader.read_u32_le();
+            reader.skip(4);
+            ci.strength = reader.read_u32_le();
+            reader.skip(4);
+            ci.dexterity = reader.read_u32_le();
+            reader.skip(4);
+            ci.intelligence = reader.read_u32_le();
+            reader.skip(4);
+            ci.faith = reader.read_u32_le();
 
-            std::copy(c.begin() + 310, c.begin() + 320, std::begin(ci.covenantLevels));
+            reader.skip(16);
 
-            ci.sex = bytes_to_u32(c, 278);
-            ci.classId = c[282];
-            ci.physiqueId = c[283];
-            ci.giftId = c[284];
+            ci.humanity = reader.read_u32_le();
+            reader.skip(4);
+            ci.resistance = reader.read_u32_le();
+            ci.level = reader.read_u32_le();
+            ci.souls = reader.read_u32_le();
+            reader.skip(4);
+            ci.earnedSouls = reader.read_u32_le();
+            reader.skip(4);
+            ci.hollowState = reader.read_u32_le();
+            // - offset +236
+            ci.name = reader.read_u16_string(12);
+            reader.skip(10);
 
-            ci.toxicRes = bytes_to_u32(c, 332);
-            ci.bleedRes = bytes_to_u32(c, 336);
-            ci.poisonRes = bytes_to_u32(c, 340);
-            ci.curseRes = bytes_to_u32(c, 344);
+            ci.sex = reader.read_u32_le();
+            ci.classId = reader.read_u8_le();
+            ci.physiqueId = reader.read_u8_le();
+            ci.giftId = reader.read_u8_le();
 
-            ci.covenantId = c[351];
+            reader.skip(25);
+            // - offset +310
 
-            std::vector<uint8_t> name_b;
-            name_b.assign(c.begin() + 244, c.begin() + 268);
+            reader.copyTo(&ci.covenantLevels, 10);
+            // - offset +320
+            reader.skip(12);
 
-            ci.name = parse_name(name_b);
+            ci.toxicRes = reader.read_u32_le();
+            ci.bleedRes = reader.read_u32_le();
+            ci.poisonRes = reader.read_u32_le();
+            ci.curseRes = reader.read_u32_le();
+            // - offset +348
+
+            reader.skip(3);
+
+            ci.covenantId = reader.read_u8_le();
+            // - offset +352
+
+            reader.skip(416);
+            // - offset +768
 
             // uint32_t lRingSlotItemType = bytes_to_u32(c, 712);
             // uint32_t rRingSlotItemType = bytes_to_u32(c, 716);
@@ -83,29 +110,30 @@ namespace fssm::parse::dsr {
             // uint32_t unknown_18_flag = bytes_to_u32(c, 756);
             // uint32_t unknown_19_flag = bytes_to_u32(c, 760);
             // uint32_t unknown_20_flag = bytes_to_u32(c, 764);
-            ci.lHandSlot1 = bytes_to_u32(c, 768);
-            ci.lHandSlot2 = bytes_to_u32(c, 772);
-            ci.rHandSlot1 = bytes_to_u32(c, 776);
-            ci.rHandSlot2 = bytes_to_u32(c, 780);
-            ci.lArrowsSlot = bytes_to_u32(c, 784);
-            ci.lBoltsSlot = bytes_to_u32(c, 788);
-            ci.rArrowsSlot = bytes_to_u32(c, 792);
-            ci.rBoltsSlot = bytes_to_u32(c, 796);
-            ci.head_slot = bytes_to_u32(c, 800);
-            ci.body_slot = bytes_to_u32(c, 804);
-            ci.arms_slot = bytes_to_u32(c, 808);
-            ci.legs_slot = bytes_to_u32(c, 812);
+            ci.lHandSlot1 = reader.read_u32_le();
+            ci.lHandSlot2 = reader.read_u32_le();
+            ci.rHandSlot1 = reader.read_u32_le();
+            ci.rHandSlot2 = reader.read_u32_le();
+            ci.lArrowsSlot = reader.read_u32_le();
+            ci.lBoltsSlot = reader.read_u32_le();
+            ci.rArrowsSlot = reader.read_u32_le();
+            ci.rBoltsSlot = reader.read_u32_le();
+            ci.head_slot = reader.read_u32_le();
+            ci.body_slot = reader.read_u32_le();
+            ci.arms_slot = reader.read_u32_le();
+            ci.legs_slot = reader.read_u32_le();
+            reader.skip(4);
             // uint32_t unknown_21_flag = bytes_to_u32(c, 816);
-            ci.lRingSlot = bytes_to_u32(c, 820);
-            ci.rRingSlot = bytes_to_u32(c, 824);
-            ci.q1Slot = bytes_to_u32(c, 828);
-            ci.q2Slot = bytes_to_u32(c, 832);
-            ci.q3Slot = bytes_to_u32(c, 836);
-            ci.q4Slot = bytes_to_u32(c, 840);
-            ci.q5Slot = bytes_to_u32(c, 844);
-            uint32_t backpackCount = bytes_to_u32(c, 848);
-            uint32_t unknown_22_flag = bytes_to_u32(c, 852);
-            uint32_t maxInventoryCount = bytes_to_u32(c, 856);
+            ci.lRingSlot = reader.read_u32_le();
+            ci.rRingSlot = reader.read_u32_le();
+            ci.q1Slot = reader.read_u32_le();
+            ci.q2Slot = reader.read_u32_le();
+            ci.q3Slot = reader.read_u32_le();
+            ci.q4Slot = reader.read_u32_le();
+            ci.q5Slot = reader.read_u32_le();
+            uint32_t backpackCount = reader.read_u32_le();
+            uint32_t unknown_22_flag = reader.read_u32_le();
+            uint32_t maxInventoryCount = reader.read_u32_le();
 
             ci.inventoryItems.reserve(maxInventoryCount);
             // TODO Use constant
@@ -113,11 +141,15 @@ namespace fssm::parse::dsr {
             std::optional<BaseItem> itemOpt;
             for (uint32_t idx = 0; idx < maxInventoryCount; ++idx) {
                 uint32_t offset = inventoryOffset + (idx * 28);
-                uint32_t itemId = bytes_to_u32(c, offset + 4);
-                if (itemId == 0xFFFFFFFFu) continue;
                 InventoryItem invItem;
-                invItem.itemType = bytes_to_u32(c, offset);
-                invItem.itemId = itemId;
+                invItem.itemType = reader.read_u32_le();
+                invItem.itemId = reader.read_u32_le();
+                invItem.amount = reader.read_u32_le();
+                invItem.order = reader.read_u32_le();
+                reader.skip(4);
+                invItem.durability = reader.read_u32_le();
+                reader.skip(4);
+                if (invItem.itemId == 0xFFFFFFFFu) continue;
                 itemOpt = findBaseItem(invItem.itemType, invItem.itemId);
                 std::optional<BaseItem> baseItem = std::nullopt;
                 if (itemOpt.has_value()) {
@@ -154,12 +186,6 @@ namespace fssm::parse::dsr {
                         }
                     }
                 }
-                // Read rest of item information
-                invItem.amount = bytes_to_u32(c, offset + 8);
-                invItem.order = bytes_to_u32(c, offset + 12);
-                // uint32_t _un1 = bytes_to_u32(c, offset + 16);
-                invItem.durability = bytes_to_u32(c, offset + 20);
-                // uint32_t _un2 = bytes_to_u32(c, offset + 24);
 
                 if (!baseItem.has_value()) {
                     invItem.knownItem = false;
@@ -177,7 +203,7 @@ namespace fssm::parse::dsr {
                         case 1073741824:
                             if (invItem.itemId < 800) {
                                 newBaseItem.category = ItemCategory::Consumables;
-                            } else if (1000 <= invItem.itemId && itemId < 2000) {
+                            } else if (1000 <= invItem.itemId && invItem.itemId < 2000) {
                                 newBaseItem.category = ItemCategory::Materials;
                             } else if (invItem.itemId > 3000) {
                                 newBaseItem.category = ItemCategory::Spells;
@@ -197,6 +223,7 @@ namespace fssm::parse::dsr {
             }
             characters.push_back(std::move(ci));
         }
+        // TODO implemet rest of file
         DSRSaveFile save_file = {
             .characters = characters,
             .sideCarEnty = sl2.entries[10]
