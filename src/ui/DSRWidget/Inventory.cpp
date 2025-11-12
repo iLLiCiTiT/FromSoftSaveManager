@@ -34,7 +34,7 @@ void InventoryModel::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* char
         }
         newItems.append(item);
     }
-    for (auto blbItem: charInfo->botomlessBoxItems) {
+    for (auto blbItem: charInfo->bottomlessBoxItems) {
         QStandardItem* item = nullptr;
         if (blbItem.baseItem.category == parse::dsr::ItemCategory::Consumables || blbItem.baseItem.category == parse::dsr::ItemCategory::Materials || blbItem.baseItem.category == parse::dsr::ItemCategory::ArrowsBolts) {
             auto iterItem = itemsById.find(blbItem.itemId);
@@ -46,7 +46,7 @@ void InventoryModel::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* char
             itemsById[blbItem.itemId] = item;
             newItems.append(item);
         }
-        item->setData(blbItem.amount, ItemBotomlessBoxAmountRole);
+        item->setData(blbItem.amount, ItemBottomlessBoxAmountRole);
     }
 
     if (!newItems.isEmpty())
@@ -123,7 +123,7 @@ QStandardItem* InventoryModel::createModelItem(fssm::parse::dsr::InventoryItem& 
     item->setData(inventoryItem.order, ItemOrderRole);
     item->setData(inventoryItem.durability, ItemDurabilityRole);
     item->setData(0, ItemAmountRole);
-    item->setData(0, ItemBotomlessBoxAmountRole);
+    item->setData(0, ItemBottomlessBoxAmountRole);
     item->setData(itemImage, ItemImageRole);
     item->setData(QVariant::fromValue(inventoryItem.baseItem.category), ItemCategoryRole);
     return item;
@@ -285,7 +285,7 @@ void InventoryDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
     );
 
     QString amountText = QString::number(index.data(ItemAmountRole).toInt());
-    QString bottomlessBoxText = QString::number(index.data(ItemBotomlessBoxAmountRole).toInt());
+    QString bottomlessBoxText = QString::number(index.data(ItemBottomlessBoxAmountRole).toInt());
 
     QPoint pos = QPoint(textRect.x(), option.rect.top() + halfHeight + 10);
     painter->drawPixmap(pos, invBagPix);

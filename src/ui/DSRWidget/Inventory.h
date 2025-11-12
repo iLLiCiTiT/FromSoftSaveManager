@@ -14,7 +14,7 @@ const int ItemInfusionIconRole = Qt::UserRole + 2;
 const int ItemOrderRole = Qt::UserRole + 3;
 const int ItemAmountRole = Qt::UserRole + 4;
 const int ItemDurabilityRole = Qt::UserRole + 5;
-const int ItemBotomlessBoxAmountRole = Qt::UserRole + 6;
+const int ItemBottomlessBoxAmountRole = Qt::UserRole + 6;
 const int ItemImageRole = Qt::UserRole + 7;
 const int ItemCategoryRole = Qt::UserRole + 8;
 

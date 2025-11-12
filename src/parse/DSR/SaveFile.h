@@ -38,8 +38,6 @@ namespace fssm::parse::dsr {
         uint8_t covenantId;
         std::array<uint8_t, 10> covenantLevels;
 
-        std::vector<uint8_t> usedGestures;
-
         uint32_t hpCurrent;
         uint32_t hpMax;
         uint32_t hpBase;
@@ -91,8 +89,9 @@ namespace fssm::parse::dsr {
         uint8_t q4Slot;
         uint8_t q5Slot;
         std::vector<InventoryItem> inventoryItems;
-        std::vector<InventoryItem> botomlessBoxItems;
         std::vector<AttunementSlot> attunementSlots;
+        std::array<uint16_t, 18> usedGestures;
+        std::vector<InventoryItem> bottomlessBoxItems;
     };
 
     struct DSRSaveFile {

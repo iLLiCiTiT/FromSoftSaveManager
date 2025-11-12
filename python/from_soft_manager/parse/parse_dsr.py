@@ -355,7 +355,7 @@ def character_from_entry(
 
     inventory_items = []
     botomless_box_items = []
-    for idx in range(2028):
+    for idx in range(2048):
         start_idx = inventory_offset + (idx * 28)
         item_content = entry.content[start_idx:start_idx + 28]
         (

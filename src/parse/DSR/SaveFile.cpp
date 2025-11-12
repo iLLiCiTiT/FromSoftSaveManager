@@ -17,6 +17,79 @@ namespace fssm::parse::dsr {
         return out;
     }
 
+    void fillBaseItem(InventoryItem& invItem) {
+        auto itemOpt = findBaseItem(invItem.itemType, invItem.itemId);
+        std::optional<BaseItem> baseItem = std::nullopt;
+        if (itemOpt.has_value()) {
+            baseItem = itemOpt.value();
+        } else if (1330000 <= invItem.itemId && invItem.itemId < 1332000) {
+            // Pyromancy Flame has different upgrade levels
+            // Pyromancy Flame
+            invItem.upgradeLevel = (invItem.itemId - 1330000) / 100;
+            invItem.itemId = 1330000;
+            baseItem = findBaseItem(invItem.itemType, invItem.itemId).value();
+        } else if (1332000 <= invItem.itemId && invItem.itemId <= 1332500) {
+            // Ascended Pyromancy Flame
+            invItem.upgradeLevel = (invItem.itemId - 1332000) / 100;
+            invItem.itemId = 1332000;
+            baseItem = findBaseItem(invItem.itemType, invItem.itemId).value();
+        } else if (311000 <= invItem.itemId && invItem.itemId <= 312705) {
+            // Sword of Artorias cursed variations
+            invItem.upgradeLevel = invItem.itemId % 100;
+            invItem.itemId = 311000;
+            baseItem = findBaseItem(invItem.itemType, invItem.itemId).value();
+        } else {
+            invItem.upgradeLevel = invItem.itemId % 100;
+            uint32_t new_id = invItem.itemId - invItem.upgradeLevel;
+            itemOpt = findBaseItem(invItem.itemType, new_id);
+            if (itemOpt.has_value()) {
+                invItem.itemId = new_id;
+                baseItem = itemOpt.value();
+            } else {
+                invItem.infusion = new_id % 1000;
+                new_id -= invItem.infusion;
+                itemOpt = findBaseItem(invItem.itemType, new_id);
+                if (itemOpt.has_value()) {
+                    invItem.itemId = new_id;
+                    baseItem = itemOpt.value();
+                }
+            }
+        }
+
+        if (baseItem.has_value()) {
+            invItem.baseItem = baseItem.value();
+            return;
+        }
+
+        invItem.knownItem = false;
+        switch (invItem.itemType) {
+            case 0:
+                invItem.baseItem.category = ItemCategory::WeaponsShields;
+                break;
+            case 268435456:
+                invItem.baseItem.category = ItemCategory::Armor;
+                break;
+            case 536870912:
+                invItem.baseItem.category = ItemCategory::Rings;
+                break;
+            case 1073741824:
+                if (invItem.itemId < 800) {
+                    invItem.baseItem.category = ItemCategory::Consumables;
+                } else if (1000 <= invItem.itemId && invItem.itemId < 2000) {
+                    invItem.baseItem.category = ItemCategory::Materials;
+                } else if (invItem.itemId > 3000) {
+                    invItem.baseItem.category = ItemCategory::Spells;
+                } else {
+                    invItem.baseItem.category = ItemCategory::KeyItems;
+                }
+                break;
+            default:
+                invItem.baseItem.category = ItemCategory::Consumables;
+                break;
+        }
+        invItem.baseItem.label = "Unknown " + std::to_string(invItem.itemId);
+    }
+
     DSRSaveFile parse_dsr_file(const SL2File& sl2) {
         std::vector<DSRCharacterInfo> characters;
         characters.reserve(10);
@@ -136,11 +209,9 @@ namespace fssm::parse::dsr {
             uint32_t maxInventoryCount = reader.read_u32_le();
 
             ci.inventoryItems.reserve(maxInventoryCount);
-            // TODO Use constant
-            uint32_t inventoryOffset = 860;
+
             std::optional<BaseItem> itemOpt;
             for (uint32_t idx = 0; idx < maxInventoryCount; ++idx) {
-                uint32_t offset = inventoryOffset + (idx * 28);
                 InventoryItem invItem;
                 invItem.itemType = reader.read_u32_le();
                 invItem.itemId = reader.read_u32_le();
@@ -150,76 +221,54 @@ namespace fssm::parse::dsr {
                 invItem.durability = reader.read_u32_le();
                 reader.skip(4);
                 if (invItem.itemId == 0xFFFFFFFFu) continue;
-                itemOpt = findBaseItem(invItem.itemType, invItem.itemId);
-                std::optional<BaseItem> baseItem = std::nullopt;
-                if (itemOpt.has_value()) {
-                    baseItem = itemOpt.value();
-                } else if (1330000 <= invItem.itemId && invItem.itemId < 1332000) {
-                    // Pyromancy Flame has different upgrade levels
-                    // Pyromancy Flame
-                    invItem.upgradeLevel = (invItem.itemId - 1330000) / 100;
-                    invItem.itemId = 1330000;
-                    baseItem = findBaseItem(invItem.itemType, invItem.itemId).value();
-                } else if (1332000 <= invItem.itemId && invItem.itemId <= 1332500) {
-                    // Ascended Pyromancy Flame
-                    invItem.upgradeLevel = (invItem.itemId - 1332000) / 100;
-                    invItem.itemId = 1332000;
-                    baseItem = findBaseItem(invItem.itemType, invItem.itemId).value();
-                } else if (311000 <= invItem.itemId && invItem.itemId <= 312705) {
-                    // Sword of Artorias cursed variations
-                    invItem.upgradeLevel = invItem.itemId % 100;
-                    invItem.itemId = 311000;
-                } else {
-                    invItem.upgradeLevel = invItem.itemId % 100;
-                    uint32_t new_id = invItem.itemId - invItem.upgradeLevel;
-                    itemOpt = findBaseItem(invItem.itemType, new_id);
-                    if (itemOpt.has_value()) {
-                        invItem.itemId = new_id;
-                        baseItem = itemOpt.value();
-                    } else {
-                        invItem.infusion = new_id % 1000;
-                        new_id -= invItem.infusion;
-                        itemOpt = findBaseItem(invItem.itemType, new_id);
-                        if (itemOpt.has_value()) {
-                            invItem.itemId = new_id;
-                            baseItem = itemOpt.value();
-                        }
-                    }
-                }
-
-                if (!baseItem.has_value()) {
-                    invItem.knownItem = false;
-                    BaseItem newBaseItem;
-                    switch (invItem.itemType) {
-                        case 0:
-                            newBaseItem.category = ItemCategory::WeaponsShields;
-                            break;
-                        case 268435456:
-                            newBaseItem.category = ItemCategory::Armor;
-                            break;
-                        case 536870912:
-                            newBaseItem.category = ItemCategory::Rings;
-                            break;
-                        case 1073741824:
-                            if (invItem.itemId < 800) {
-                                newBaseItem.category = ItemCategory::Consumables;
-                            } else if (1000 <= invItem.itemId && invItem.itemId < 2000) {
-                                newBaseItem.category = ItemCategory::Materials;
-                            } else if (invItem.itemId > 3000) {
-                                newBaseItem.category = ItemCategory::Spells;
-                            } else {
-                                newBaseItem.category = ItemCategory::KeyItems;
-                            }
-                            break;
-                        default:
-                            newBaseItem.category = ItemCategory::Consumables;
-                            break;
-                    }
-                    newBaseItem.label = "Unknown " + std::to_string(invItem.itemId);
-                    baseItem = newBaseItem;
-                }
-                invItem.baseItem = baseItem.value();
+                fillBaseItem(invItem);
                 ci.inventoryItems.push_back(invItem);
+            }
+            // - offset +58204
+
+            reader.skip(4);
+
+            ci.attunementSlots.reserve(12);
+            for (int i = 0; i < 12; ++i) {
+                AttunementSlot slot;
+                slot.itemId = reader.read_u32_le();
+                slot.remainingUses = reader.read_u32_le();
+                ci.attunementSlots.push_back(slot);
+            }
+            // - offset +58304
+
+            reader.skip(28);
+
+            for (int i = 0; i < 18; ++i) {
+                ci.usedGestures[i] = reader.read_u16_le();
+            }
+            // - offset +58368
+
+            reader.skip(136);
+            // - offset +58504
+
+            ci.bottomlessBoxItems.reserve(maxInventoryCount);
+            for (int i = 0; i < maxInventoryCount; ++i) {
+                InventoryItem invItem;
+                reader.skip(4);
+                reader.skip(4);
+                invItem.itemId = reader.read_u32_le();
+                invItem.order = reader.read_u32_le();
+                invItem.amount = reader.read_u16_le();
+                reader.skip(2);
+                invItem.durability = reader.read_u32_le();
+                reader.skip(8);
+                if (invItem.itemId == 0xFFFFFFFFu) continue;
+
+                if (invItem.itemId >= 1073741824) {
+                    invItem.itemType = 1073741824;
+                } else if (invItem.itemId >= 536870912) {
+                    invItem.itemType = 536870912;
+                } else if (invItem.itemId >= 268435456) {
+                    invItem.itemType = 268435456;
+                }
+                fillBaseItem(invItem);
+                ci.bottomlessBoxItems.push_back(invItem);
             }
             characters.push_back(std::move(ci));
         }
