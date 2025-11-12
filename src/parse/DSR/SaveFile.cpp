@@ -22,6 +22,7 @@ namespace fssm::parse::dsr {
         characters.reserve(10);
         for (int charIdx = 0; charIdx < sl2.entries.size() && charIdx < 10; ++charIdx) {
             const auto& c = sl2.entries[charIdx].content;
+            // TODO read from USERDATA_10 what characters are occupied
             if (c.empty() || c[0] == 0x00) continue;
             DSRCharacterInfo ci;
             ci.index = charIdx;
