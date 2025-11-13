@@ -1,7 +1,6 @@
 #pragma once
 
 #include <qevent.h>
-#include <QLibrary>
 #include <QSpinBox>
 #include <QPushButton>
 #include <QVBoxLayout>
@@ -9,23 +8,11 @@
 #include <QUuid>
 
 
-inline bool tryLoadDsrResources() {
-    QLibrary lib("inv_resources_dsr");
-    return lib.load();
-}
-
-inline bool tryLoadDs3Resources() {
-    QLibrary lib("inv_resources_ds3");
-    return lib.load();
-}
-
-namespace {
-    bool g_dsrResourcesLoaded = tryLoadDsrResources();
-    bool g_ds3ResourcesLoaded = tryLoadDs3Resources();
-}
-
-inline bool hasDSRInventoryResources() {return g_dsrResourcesLoaded;}
-inline bool hasDS3InventoryResources() {return g_ds3ResourcesLoaded;}
+#ifdef FSSM_USE_INV_IMAGES
+    inline bool inventoryResourcesAvailable() {return true;}
+#else
+    inline bool inventoryResourcesAvailable() {return false;}
+#endif
 
 // TODO add path related helpers
 // - e.g. join using 'std::filesystem::path'

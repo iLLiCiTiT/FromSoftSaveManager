@@ -54,7 +54,7 @@ void InventoryModel::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* char
 }
 
 static QPixmap getInfusionIcon(const uint16_t& infusion, const uint8_t& upgradeLevel) {
-    if (!hasDSRInventoryResources()) return QPixmap{};
+    if (!inventoryResourcesAvailable()) return QPixmap{};
     switch (infusion) {
         case 100:
             return QPixmap(":/dsr_inv_images/crystal");
@@ -87,7 +87,7 @@ static QPixmap getInfusionIcon(const uint16_t& infusion, const uint8_t& upgradeL
 }
 
 static QPixmap getItemImage(const std::string_view& image) {
-    if (!hasDSRInventoryResources()) return QPixmap{};
+    if (!inventoryResourcesAvailable()) return QPixmap{};
 
     QString imagePath = QString::fromStdString(":/dsr_inv_images/");
     imagePath.append(QString::fromStdString(image.data()));
@@ -180,7 +180,7 @@ InventoryDelegate::InventoryDelegate(QObject* parent): QStyledItemDelegate(paren
 
 int InventoryDelegate::paintIcon(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const {
     int textOffset = 20;
-    if (!hasDSRInventoryResources()) return textOffset;
+    if (!inventoryResourcesAvailable()) return textOffset;
 
     QVariant pixmapValue = index.data(ItemImageRole);
     QPixmap pixmap;

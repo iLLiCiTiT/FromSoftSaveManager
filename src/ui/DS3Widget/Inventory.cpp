@@ -77,7 +77,7 @@ namespace {
     }
 
     std::string_view getInfusionName(const fssm::parse::ds3::Infusion& infusion) {
-        if (!hasDS3InventoryResources()) return "";
+        if (!inventoryResourcesAvailable()) return "";
         switch (infusion) {
             case fssm::parse::ds3::Infusion::Heavy:
                 return "heavy";
@@ -172,7 +172,7 @@ void InventoryModel::setCharacter(const fssm::parse::ds3::DS3CharacterInfo* char
 }
 
 static QPixmap getItemImage(const std::string_view& image) {
-    if (!hasDS3InventoryResources()) return QPixmap{};
+    if (!inventoryResourcesAvailable()) return QPixmap{};
 
     QString imagePath = QString::fromStdString(":/ds3_inv_images/");
     imagePath.append(QString::fromStdString(image.data()));
@@ -295,7 +295,7 @@ InventoryDelegate::InventoryDelegate(QObject* parent): QStyledItemDelegate(paren
 
 int InventoryDelegate::paintIcon(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const {
     int textOffset = 20;
-    if (!hasDS3InventoryResources()) return textOffset;
+    if (!inventoryResourcesAvailable()) return textOffset;
 
     QVariant pixmapValue = index.data(ItemImageRole);
     QPixmap pixmap;
