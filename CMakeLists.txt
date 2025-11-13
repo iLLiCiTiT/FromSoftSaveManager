@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.11)
-project(FromSoftSaveManager)
+project(FromSoftSaveManager VERSION 0.6.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_AUTOMOC ON)
@@ -64,6 +64,13 @@ add_executable(FromSoftSaveManager
         src/ui/ERWidget/CharInfo.cpp
 )
 
+target_compile_definitions(FromSoftSaveManager PRIVATE
+        FSSM_VERSION="${PROJECT_VERSION}"
+        FSSM_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
+        FSSM_VERSION_MINOR=${PROJECT_VERSION_MINOR}
+        FSSM_VERSION_PATCH=${PROJECT_VERSION_PATCH}
+)
+
 target_link_libraries(FromSoftSaveManager
         Qt::Core
         Qt::Gui
@@ -73,6 +80,7 @@ target_link_libraries(FromSoftSaveManager
         Qt::Network
         tiny-aes
 )
+target_link_options(FromSoftSaveManager PRIVATE -static-libgcc -static-libstdc++)
 
 # --- DSR inventory resources ---
 add_library(inv_resources_dsr SHARED)
@@ -101,8 +109,13 @@ target_link_libraries(inv_resources_ds3 PUBLIC Qt::Core)
 # -------------------------------
 
 if (WIN32)
+    configure_file(
+            ${CMAKE_CURRENT_SOURCE_DIR}/app.rc.in
+            ${CMAKE_CURRENT_BINARY_DIR}/generated/app.rc
+            @ONLY
+    )
     target_sources(FromSoftSaveManager PRIVATE
-            src/app.rc)
+            ${CMAKE_CURRENT_BINARY_DIR}/generated/app.rc)
 endif()
 if ((WIN32) AND (CMAKE_BUILD_TYPE MATCHES "Release"))
     set_target_properties(FromSoftSaveManager PROPERTIES WIN32_EXECUTABLE TRUE)
