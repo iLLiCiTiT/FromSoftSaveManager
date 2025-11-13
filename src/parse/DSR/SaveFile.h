@@ -55,7 +55,7 @@ namespace fssm::parse::dsr {
         uint32_t intelligence;
         uint32_t faith;
 
-        uint8_t sex;
+        uint8_t gender;
         uint8_t classId;
         uint8_t physiqueId;
         uint8_t giftId;

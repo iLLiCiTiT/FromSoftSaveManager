@@ -143,7 +143,7 @@ namespace fssm::parse::dsr {
             ci.name = reader.read_u16_string(12);
             reader.skip(10);
 
-            ci.sex = reader.read_u32_le();
+            ci.gender = reader.read_u32_le();
             ci.classId = reader.read_u8_le();
             ci.physiqueId = reader.read_u8_le();
             ci.giftId = reader.read_u8_le();

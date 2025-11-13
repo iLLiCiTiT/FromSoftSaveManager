@@ -105,8 +105,8 @@ CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
     QLabel* hollowLabel = new QLabel("State", statsWidget);
     m_hollowValueWidget = new QLabel(statsWidget);
 
-    QLabel* sexLabel = new QLabel("Sex", statsWidget);
-    m_sexValueWidget = new QLabel(statsWidget);
+    QLabel* genderLabel = new QLabel("Sex", statsWidget);
+    m_genderValueWidget = new QLabel(statsWidget);
 
     QLabel* classLabel = new QLabel("Class", statsWidget);
     m_classValueWidget = new QLabel(statsWidget);
@@ -141,7 +141,7 @@ CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
     statsLayout->setContentsMargins(0, 0, 0, 0);
 
     addGridRow(statsLayout, hollowLabel, m_hollowValueWidget);
-    addGridRow(statsLayout, sexLabel, m_sexValueWidget);
+    addGridRow(statsLayout, genderLabel, m_genderValueWidget);
     addGridRow(statsLayout, classLabel, m_classValueWidget);
     addGridRow(statsLayout, physiqueLabel, m_physiqueValueWidget);
     addGridRow(statsLayout, giftLabel, m_giftValueWidget);
@@ -186,7 +186,7 @@ void CharacterStatusWidget::setCharacter(const fssm::parse::dsr::DSRCharacterInf
     m_faithValueWidget->setText(QString::number(charInfo->faith));
     m_humanityValueWidget->setText(QString::number(charInfo->humanity));
     m_hollowValueWidget->setText((charInfo->hollowState == 8) ? "Hollow" : "Human");
-    m_sexValueWidget->setText((charInfo->sex == 1) ? "Male" : "Female");
+    m_genderValueWidget->setText((charInfo->gender == 1) ? "Male" : "Female");
     m_classValueWidget->setText(QString::fromStdString(fssm::parse::dsr::DSR_CLASSES[charInfo->classId].data()));
     m_physiqueValueWidget->setText(QString::fromStdString(fssm::parse::dsr::DSR_PHYSIQUE[charInfo->physiqueId].data()));
     m_giftValueWidget->setText(QString::fromStdString(fssm::parse::dsr::DSR_GIFTS[charInfo->giftId].data()));
@@ -218,7 +218,7 @@ void CharacterStatusWidget::setEmpty() const {
     m_faithValueWidget->setText("");
     m_humanityValueWidget->setText("");
     m_hollowValueWidget->setText("");
-    m_sexValueWidget->setText("");
+    m_genderValueWidget->setText("");
     m_classValueWidget->setText("");
     m_physiqueValueWidget->setText("");
     m_giftValueWidget->setText("");

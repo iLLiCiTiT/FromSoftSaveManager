@@ -26,7 +26,7 @@ private:
     QLabel* m_humanityValueWidget = nullptr;
 
     QLabel* m_hollowValueWidget = nullptr;
-    QLabel* m_sexValueWidget = nullptr;
+    QLabel* m_genderValueWidget = nullptr;
     QLabel* m_classValueWidget = nullptr;
     QLabel* m_physiqueValueWidget = nullptr;
     QLabel* m_giftValueWidget = nullptr;
