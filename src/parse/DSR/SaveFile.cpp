@@ -91,13 +91,18 @@ namespace fssm::parse::dsr {
     }
 
     DSRSaveFile parse_dsr_file(const SL2File& sl2) {
+        // Read USERDATA_10 to get
+        ContentReader sideEntryReader(sl2.entries[10].content);
+        sideEntryReader.skip(176);
+        std::array<uint8_t, 10> occupiedSlots;
+        sideEntryReader.copyTo(occupiedSlots.data(), 10);
+
         std::vector<DSRCharacterInfo> characters;
         characters.reserve(10);
         for (int charIdx = 0; charIdx < sl2.entries.size() && charIdx < 10; ++charIdx) {
+            if (occupiedSlots[charIdx] == 0) continue;
             ContentReader reader(sl2.entries[charIdx].content);
-            // TODO read from USERDATA_10 what characters are occupied
-            if (reader.read_u8_le() == 0) continue;
-            reader.skip(3);
+            reader.skip(4);
 
             DSRCharacterInfo ci;
             ci.index = charIdx;
@@ -148,7 +153,10 @@ namespace fssm::parse::dsr {
             ci.physiqueId = reader.read_u8_le();
             ci.giftId = reader.read_u8_le();
 
-            reader.skip(25);
+            reader.skip(3);
+            uint32_t multiplayerEncounters = reader.read_u32_le();
+            uint32_t coopVictories = reader.read_u32_le();
+            reader.skip(14);
             // - offset +310
 
             reader.copyTo(&ci.covenantLevels, 10);
@@ -165,8 +173,12 @@ namespace fssm::parse::dsr {
 
             ci.covenantId = reader.read_u8_le();
             // - offset +352
+            uint8_t faceId = reader.read_u8_le();
+            uint8_t hairStyleId = reader.read_u8_le();
+            uint8_t hairColorId = reader.read_u8_le();
+            uint8_t cursed = reader.read_u8_le();
 
-            reader.skip(416);
+            reader.skip(412);
             // - offset +768
 
             // uint32_t lRingSlotItemType = bytes_to_u32(c, 712);
