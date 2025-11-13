@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.11)
-project(FromSoftSaveManager VERSION 0.6.0)
+project(FromSoftSaveManager VERSION 0.6.0.1)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_AUTOMOC ON)
@@ -69,6 +69,7 @@ target_compile_definitions(FromSoftSaveManager PRIVATE
         FSSM_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
         FSSM_VERSION_MINOR=${PROJECT_VERSION_MINOR}
         FSSM_VERSION_PATCH=${PROJECT_VERSION_PATCH}
+        FSSM_VERSION_TWEAK=${PROJECT_VERSION_TWEAK}
 )
 
 target_link_libraries(FromSoftSaveManager
