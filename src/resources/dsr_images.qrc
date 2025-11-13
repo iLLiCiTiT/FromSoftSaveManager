@@ -1,0 +1,42 @@
+<RCC>
+    <qresource prefix="/dsr_images">
+        <file alias="attr_attunement">images/dsr/status_icons/attr_attunement.png</file>
+        <file alias="attr_dexterity">images/dsr/status_icons/attr_dexterity.png</file>
+        <file alias="attr_endurance">images/dsr/status_icons/attr_endurance.png</file>
+        <file alias="attr_faith">images/dsr/status_icons/attr_faith.png</file>
+        <file alias="attr_humanity">images/dsr/status_icons/attr_humanity.png</file>
+        <file alias="attr_intelligence">images/dsr/status_icons/attr_intelligence.png</file>
+        <file alias="attr_level">images/dsr/status_icons/attr_level.png</file>
+        <file alias="attr_resistance">images/dsr/status_icons/attr_resistance.png</file>
+        <file alias="attr_souls">images/dsr/status_icons/attr_souls.png</file>
+        <file alias="attr_strength">images/dsr/status_icons/attr_strength.png</file>
+        <file alias="attr_vitality">images/dsr/status_icons/attr_vitality.png</file>
+        <file alias="bg">images/dsr/bg.png</file>
+        <file alias="bottomless_box">images/dsr/menu_icons/bottomless_box.png</file>
+        <file alias="hp">images/dsr/status_icons/hp.png</file>
+        <file alias="inventory_ammunition">images/dsr/menu_icons/inventory_ammunition.png</file>
+        <file alias="inventory_ammunition_hover">images/dsr/menu_icons/inventory_ammunition_hover.png</file>
+        <file alias="inventory_armor">images/dsr/menu_icons/inventory_armor.png</file>
+        <file alias="inventory_armor_hover">images/dsr/menu_icons/inventory_armor_hover.png</file>
+        <file alias="inventory_bag">images/dsr/menu_icons/inventory_bag.png</file>
+        <file alias="inventory_consumables">images/dsr/menu_icons/inventory_consumables.png</file>
+        <file alias="inventory_consumables_hover">images/dsr/menu_icons/inventory_consumables_hover.png</file>
+        <file alias="inventory_key_items">images/dsr/menu_icons/inventory_key_items.png</file>
+        <file alias="inventory_key_items_hover">images/dsr/menu_icons/inventory_key_items_hover.png</file>
+        <file alias="inventory_materials">images/dsr/menu_icons/inventory_materials.png</file>
+        <file alias="inventory_materials_hover">images/dsr/menu_icons/inventory_materials_hover.png</file>
+        <file alias="inventory_overlay">images/dsr/menu_icons/inventory_overlay.png</file>
+        <file alias="inventory_rings">images/dsr/menu_icons/inventory_rings.png</file>
+        <file alias="inventory_rings_hover">images/dsr/menu_icons/inventory_rings_hover.png</file>
+        <file alias="inventory_spells">images/dsr/menu_icons/inventory_spells.png</file>
+        <file alias="inventory_spells_hover">images/dsr/menu_icons/inventory_spells_hover.png</file>
+        <file alias="inventory_stand">images/dsr/menu_icons/inventory_stand.png</file>
+        <file alias="inventory_weapons_shields">images/dsr/menu_icons/inventory_weapons_shields.png</file>
+        <file alias="inventory_weapons_shields_hover">images/dsr/menu_icons/inventory_weapons_shields_hover.png</file>
+        <file alias="res_bleed">images/dsr/status_icons/res_bleed.png</file>
+        <file alias="res_curse">images/dsr/status_icons/res_curse.png</file>
+        <file alias="res_poison">images/dsr/status_icons/res_poison.png</file>
+        <file alias="stamina">images/dsr/status_icons/stamina.png</file>
+        <file alias="unknown">images/dsr/unknown.png</file>
+    </qresource>
+</RCC>

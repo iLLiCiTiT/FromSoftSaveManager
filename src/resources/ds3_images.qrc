@@ -1,0 +1,46 @@
+<RCC>
+    <qresource prefix="/ds3_images">
+        <file alias="attr_attunement">images/ds3/status_icons/attr_attunement.png</file>
+        <file alias="attr_bleed_res">images/ds3/status_icons/attr_bleed_res.png</file>
+        <file alias="attr_curse_res">images/ds3/status_icons/attr_curse_res.png</file>
+        <file alias="attr_dexterity">images/ds3/status_icons/attr_dexterity.png</file>
+        <file alias="attr_endurance">images/ds3/status_icons/attr_endurance.png</file>
+        <file alias="attr_faith">images/ds3/status_icons/attr_faith.png</file>
+        <file alias="attr_fp">images/ds3/status_icons/attr_fp.png</file>
+        <file alias="attr_frost_res">images/ds3/status_icons/attr_frost_res.png</file>
+        <file alias="attr_hp">images/ds3/status_icons/attr_hp.png</file>
+        <file alias="attr_intelligence">images/ds3/status_icons/attr_intelligence.png</file>
+        <file alias="attr_level">images/ds3/status_icons/attr_level.png</file>
+        <file alias="attr_luck">images/ds3/status_icons/attr_luck.png</file>
+        <file alias="attr_poison_res">images/ds3/status_icons/attr_poison_res.png</file>
+        <file alias="attr_souls">images/ds3/status_icons/attr_souls.png</file>
+        <file alias="attr_stamina">images/ds3/status_icons/attr_stamina.png</file>
+        <file alias="attr_strength">images/ds3/status_icons/attr_strength.png</file>
+        <file alias="attr_vigor">images/ds3/status_icons/attr_vigor.png</file>
+        <file alias="attr_vitality">images/ds3/status_icons/attr_vitality.png</file>
+        <file alias="bg">images/ds3/bg.png</file>
+        <file alias="dish">images/ds3/menu_icons/dish.png</file>
+        <file alias="inv_arrows_bolts">images/ds3/menu_icons/inv_arrows_bolts.png</file>
+        <file alias="inv_bg_1">images/ds3/menu_icons/inv_bg_1.png</file>
+        <file alias="inv_bg_2">images/ds3/menu_icons/inv_bg_2.png</file>
+        <file alias="inv_catalysts">images/ds3/menu_icons/inv_catalysts.png</file>
+        <file alias="inv_chest">images/ds3/menu_icons/inv_chest.png</file>
+        <file alias="inv_covenant">images/ds3/menu_icons/inv_covenant.png</file>
+        <file alias="inv_hands">images/ds3/menu_icons/inv_hands.png</file>
+        <file alias="inv_head">images/ds3/menu_icons/inv_head.png</file>
+        <file alias="inv_key_items">images/ds3/menu_icons/inv_key_items.png</file>
+        <file alias="inv_legs">images/ds3/menu_icons/inv_legs.png</file>
+        <file alias="inv_materials">images/ds3/menu_icons/inv_materials.png</file>
+        <file alias="inv_melee_weapons">images/ds3/menu_icons/inv_melee_weapons.png</file>
+        <file alias="inv_ranged_weapons">images/ds3/menu_icons/inv_ranged_weapons.png</file>
+        <file alias="inv_rings">images/ds3/menu_icons/inv_rings.png</file>
+        <file alias="inv_shields">images/ds3/menu_icons/inv_shields.png</file>
+        <file alias="inv_spells">images/ds3/menu_icons/inv_spells.png</file>
+        <file alias="inv_tools">images/ds3/menu_icons/inv_tools.png</file>
+        <file alias="menu_equipment">images/ds3/menu_icons/menu_equipment.png</file>
+        <file alias="menu_invetory">images/ds3/menu_icons/menu_invetory.png</file>
+        <file alias="menu_status">images/ds3/menu_icons/menu_status.png</file>
+        <file alias="menu_storage_box">images/ds3/menu_icons/menu_storage_box.png</file>
+        <file alias="test_data">images/ds3/test_data.png</file>
+    </qresource>
+</RCC>

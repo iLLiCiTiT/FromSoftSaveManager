@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/er_images">
+        <file alias="attrs_icon">images/er/menu/attrs_icon.png</file>
+        <file alias="bg">images/er/menu/bg.png</file>
+        <file alias="bg_overlay">images/er/menu/bg_overlay.png</file>
+        <file alias="sep_1">images/er/menu/sep_1.png</file>
+        <file alias="sep_2">images/er/menu/sep_2.png</file>
+    </qresource>
+</RCC>

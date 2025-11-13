@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/sekiro_images">
+        <file alias="bg">images/sekiro/menu/bg.png</file>
+    </qresource>
+</RCC>
