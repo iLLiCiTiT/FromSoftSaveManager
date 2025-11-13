@@ -210,6 +210,19 @@ SideBarWidget {
     font-size: 12pt;
 }
 
+#delete_btn {
+    background: rgba(243, 69, 66, 0.85);
+    color: #ffffff;
+}
+#delete_btn:hover {
+    background: rgba(243, 69, 66, 1.0);
+}
+
+#delete_btn:disabled {
+    background: rgba(243, 69, 66, 0.35);
+    color: rgba(255, 255, 255, 0.35);
+}
+
 #save_btn {
     background: #3574F0;
     color: rgba(255, 255, 255, 0.75);
