@@ -172,11 +172,11 @@ ManageBackupsOverlayWidget::ManageBackupsOverlayWidget(Controller* controller, Q
 
     QPixmap deleteIcon = QPixmap(":/images/common/delete.png");
     m_deleteBackupsBtn = new QPushButton(deleteIcon, "Delete", btnsWidget);
+    m_deleteBackupsBtn->setObjectName("delete_btn");
     m_deleteBackupsBtn->setToolTip("Delete selected backups");
     m_deleteBackupsBtn->setEnabled(false);
     m_deleteBackupsBtn->setAutoDefault(false);
     m_deleteBackupsBtn->setDefault(false);
-    m_deleteBackupsBtn->setStyleSheet("background: #F34542; color: #ffffff;");
 
     QPixmap browseIcon = QPixmap(":/images/common/folder_open.png");
     QPushButton* openBackupDirBtn = new QPushButton(browseIcon, "Browse", btnsWidget);

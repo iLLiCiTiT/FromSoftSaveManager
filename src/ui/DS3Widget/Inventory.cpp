@@ -520,7 +520,7 @@ InventoryWidget::InventoryWidget(QWidget* parent): QWidget(parent) {
     m_categoryBtns = new CategoryButtons(this);
 
     m_view = new QListView(this);
-    m_view->setObjectName("ds_list_view");
+    m_view->setObjectName("ds3_list_view");
     m_view->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_view->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     m_view->verticalScrollBar()->setSingleStep(15);

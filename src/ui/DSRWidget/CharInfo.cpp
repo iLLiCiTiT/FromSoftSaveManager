@@ -76,8 +76,10 @@ CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
         if (iconW != nullptr) {
             iconW->setAttribute(Qt::WA_TranslucentBackground, true);
             layout->addWidget(iconW, row, 0);
+            layout->addWidget(labelW, row, 1);
+        } else {
+            layout->addWidget(labelW, row, 0, 1, 2);
         }
-        layout->addWidget(labelW, row, 1, 1, (iconW == nullptr) ? 2 : 1);
         layout->addWidget(valueW, row, 2);
     };
 

@@ -21,7 +21,7 @@ namespace fssm::parse::ds3 {
         BaseItem{1073743967, 99, 600, 5, ItemCategory::Tools, "undead_bone_shard", "Undead Bone Shard", ""},
         BaseItem{1073742064, 99, 600, 6, ItemCategory::Tools, "divine_blessing", "Divine Blessing", ""},
         BaseItem{1073742065, 99, 600, 7, ItemCategory::Tools, "hidden_blessing", "Hidden Blessing", ""},
-        BaseItem{1073742280, 10, 600, 8, ItemCategory::Tools, "siegbrau", "Siegbr�u", ""},
+        BaseItem{1073742280, 10, 600, 8, ItemCategory::Tools, "siegbrau", "Siegbräu", ""},
         BaseItem{1073742084, 10, 600, 9, ItemCategory::Tools, "green_blossom", "Green Blossom", ""},
         BaseItem{1073742085, 99, 600, 10, ItemCategory::Tools, "budding_green_blossom", "Budding Green Blossom", ""},
         BaseItem{1073742086, 99, 600, 11, ItemCategory::Tools, "budding_green_blossom_2", "Budding Green Blossom", ""},
