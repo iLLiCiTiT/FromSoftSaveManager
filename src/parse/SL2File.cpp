@@ -83,10 +83,9 @@ std::vector<uint8_t> decrypt_entry_content(
 
 SL2File parse_sl2_file(const std::string& input_sl2_file) {
     std::ifstream f(input_sl2_file, std::ios::binary);
-    if (!f) {
-        throw std::runtime_error("Failed to open file");
-    }
+    if (!f) throw std::runtime_error("Failed to open file");
     std::vector<uint8_t> content((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+    f.close();
 
     if (content.size() < 64) {
         throw std::runtime_error("File too small to be a valid BND4 container");
