@@ -323,14 +323,14 @@ DSRInventoryCategoryButton:hover {
     font-size: 26pt;
 }
 
-#ds_list_view {
+#ds_list_view, #er_list_view, #ds3_list_view {
     border: none;
     border-radius: 0px;
     background: transparent;
     selection-background-color: transparent;
 }
 
-#ds_list_view::item {
+#ds_list_view::item, #er_list_view::item, #ds3_list_view::item {
     border: none;
     background: transparent;
 }
@@ -340,6 +340,33 @@ DSRInventoryCategoryButton:hover {
 }
 #ds_list_view::item:selected, #ds_list_view::item:selected:!active, #ds_list_view::item:selected:hover {
     background: rgba(181, 142, 41, 0.5);
+}
+
+#ds3_list_view::item:hover {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 transparent,
+        stop:0.3 rgba(253, 128, 0, 0.3),
+        stop:0.8 rgba(253, 128, 0, 0.3),
+        stop:1 transparent);
+}
+
+#ds3_list_view::item:selected, #ds3_list_view::item:selected:!active, #ds3_list_view::item:selected:hover {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 transparent,
+        stop:0.3 rgba(253, 128, 0, 0.5)
+        stop:0.8 rgba(253, 128, 0, 0.5)
+        stop:1.0 transparent);
+}
+
+#er_list_view::item:hover {
+    background: rgba(141, 137, 123, 0.3);
+}
+#er_list_view::item:selected, #er_list_view::item:selected:!active, #er_list_view::item:selected:hover {
+    border: 1px solid rgb(149, 145, 132);
+    border-radius: 2px;
+    background: rgba(141, 137, 123, 0.5);
 }
 
 /* Manage backups specific styles */

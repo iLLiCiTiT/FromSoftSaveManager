@@ -76,7 +76,7 @@ DS3Widget::DS3Widget(Controller* controller, const QString& saveId, QWidget* par
     viewWrap->setAttribute(Qt::WA_TranslucentBackground, true);
 
     m_view = new QListView(viewWrap);
-    m_view->setObjectName("ds_list_view");
+    m_view->setObjectName("ds3_list_view");
     m_view->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_view->setTextElideMode(Qt::ElideLeft);
     m_view->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
