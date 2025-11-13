@@ -86,7 +86,7 @@ QStandardItem* BackupsOverlayModel::createModelItem(BackupMetadata& backupItem, 
         dt = QDateTime::fromString(datetimeStd, Qt::ISODateWithMs);
     }
     QDateTime datetime = dt.toLocalTime();
-    QString datetimeLabel = datetime.toString("yyyy-MM-dd HH:mm:ss");
+    QString datetimeLabel = datetime.toString("yyyy.MM.dd HH:mm:ss");
     if (label.isEmpty()) {
         switch (backupItem.backupType) {
             case BackupType::AUTOSAVE:
