@@ -328,7 +328,7 @@ DSRInventoryCategoryButton::DSRInventoryCategoryButton(const parse::dsr::ItemCat
     m_imageLabel->setAttribute(Qt::WA_TranslucentBackground, true);
 
     QHBoxLayout* layout = new QHBoxLayout(this);
-    layout->setContentsMargins(5, 5, 5, 5);
+    layout->setContentsMargins(2, 2, 2, 2);
     layout->addWidget(m_imageLabel, 1);
 }
 void DSRInventoryCategoryButton::setSelected(bool selected) {
@@ -358,9 +358,10 @@ void DSRInventoryCategoryButton::onMouseRelease() {
 }
 
 CategoryButtonOverlay::CategoryButtonOverlay(QWidget* parent): QWidget(parent) {
-    m_bgPix = QPixmap(":/dsr_images/inventory_overlay");
-
+    QPixmap p = QPixmap(":/dsr_images/inventory_overlay");
+    m_bgPix = p.copy(18, 18, p.width() - 36, p.height() - 29);
 }
+
 void CategoryButtonOverlay::paintEvent(QPaintEvent* event) {
     QPainter painter = QPainter(this);
     painter.setRenderHint(QPainter::Antialiasing);
