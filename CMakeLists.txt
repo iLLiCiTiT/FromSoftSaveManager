@@ -7,6 +7,13 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 option(FSSM_USE_INV_IMAGES "Use inventory item images" ON)
 
+set(FSSM_VERSION "${PROJECT_VERSION}")
+set(FSSM_VERSION_TWEAK "0")
+if (PROJECT_VERSION_TWEAK)
+    set(FSSM_VERSION_TWEAK "${PROJECT_VERSION_TWEAK}")
+endif()
+set(FSSM_APP_RC_VERSION "${PROJECT_VERSION_MAJOR},${PROJECT_VERSION_MINOR},${PROJECT_VERSION_PATCH},${FSSM_VERSION_TWEAK}")
+
 find_package(Qt6 COMPONENTS
         Core
         Gui
@@ -72,12 +79,6 @@ if (FSSM_USE_INV_IMAGES)
     target_compile_definitions(FromSoftSaveManager PRIVATE
             FSSM_USE_INV_IMAGES=${FSSM_USE_INV_IMAGES}
     )
-endif()
-
-if (NOT DEFINED PROJECT_VERSION_TWEAK)
-    set(FSSM_VERSION_TWEAK 0)
-else()
-    set(FSSM_VERSION_TWEAK PROJECT_VERSION_TWEAK)
 endif()
 
 target_compile_definitions(FromSoftSaveManager PRIVATE
