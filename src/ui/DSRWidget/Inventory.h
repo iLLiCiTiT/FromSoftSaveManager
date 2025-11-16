@@ -96,7 +96,7 @@ public slots:
     void setCategory(parse::dsr::ItemCategory category);
 private slots:
     void onAnimValueChange(QVariant posValue);
-    void onAnimfinished();
+    void onAnimFinished();
 private:
     CategoryButtonOverlay* m_overlayWidget = nullptr;
     QVariantAnimation* m_overlayAnim;

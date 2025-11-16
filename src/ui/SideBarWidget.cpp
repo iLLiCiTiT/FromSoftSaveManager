@@ -16,7 +16,7 @@ TabButtonHint::TabButtonHint(const QString& title, QWidget* parent): QWidget(par
 
     setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
     setAttribute(Qt::WA_TranslucentBackground);
-};
+}
 
 void TabButtonHint::setSelected(const bool& selected) {
     m_labelWidget->setProperty("selected", selected ? "1" : "0");
@@ -27,7 +27,7 @@ TabIconButton::TabIconButton(const QIcon& icon, const QString& title, QWidget* p
     m_hint = new TabButtonHint(title, this);
     connect(this, SIGNAL(clicked()), SLOT(onClick()));
     setIcon(icon);
-};
+}
 
 void TabIconButton::setSelected(const bool& selected) {
     if (selected == m_isSelected) return;
@@ -35,22 +35,22 @@ void TabIconButton::setSelected(const bool& selected) {
     setProperty("selected", selected ? "1" : "0");
     style()->polish(this);
     m_hint->setSelected(selected);
-};
+}
 
 void TabIconButton::enterEvent(QEnterEvent* event) {
     m_hint->show();
     int y_offset = (height() - m_hint->height()) / 2;
     QPoint pos = mapToGlobal(QPoint(width(), y_offset - 1));
     m_hint->move(pos);
-};
+}
 
 void TabIconButton::leaveEvent(QEvent* event) {
     m_hint->hide();
-};
+}
 
 void TabIconButton::onClick() {
     emit requested("");
-};
+}
 
 GameSaveTabButton::GameSaveTabButton(const QString& saveId, const QIcon &icon, const QString &title, QWidget* parent): TabIconButton(icon, title, parent) {
     m_saveId = QString(saveId);

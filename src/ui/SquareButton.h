@@ -17,12 +17,12 @@ public:
     void showEvent(QShowEvent *event) {
         m_idealWidth = height();
         updateGeometry();
-    };
+    }
 
     void resizeEvent(QResizeEvent *event) {
         m_idealWidth = height();
         updateGeometry();
-    };
+    }
     QSize sizeHint() {
         if (m_idealWidth < 0) return QPushButton::sizeHint();
         return QSize(m_idealWidth, m_idealWidth);

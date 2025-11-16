@@ -397,7 +397,7 @@ CategoryButtons::CategoryButtons(QWidget* parent): QWidget(parent) {
     m_overlayAnim = new QVariantAnimation();
     m_overlayAnim->setDuration(100);
     connect(m_overlayAnim, SIGNAL(valueChanged(QVariant)), this, SLOT(onAnimValueChange(QVariant)));
-    connect(m_overlayAnim, SIGNAL(finished()), this, SLOT(onAnimfinished()));
+    connect(m_overlayAnim, SIGNAL(finished()), this, SLOT(onAnimFinished()));
 
     // Make sure m_category is different from 'Consumables' so it can be triggered as category change
     // TODO look if there is a better approach.
@@ -428,7 +428,7 @@ void CategoryButtons::resizeEvent(QResizeEvent *event) {
 void CategoryButtons::onAnimValueChange(QVariant posValue) {
     m_overlayWidget->move(posValue.toPoint());
 }
-void CategoryButtons::onAnimfinished() {
+void CategoryButtons::onAnimFinished() {
     m_overlayWidget->move(m_overlayAnim->endValue().toPoint());
 }
 
