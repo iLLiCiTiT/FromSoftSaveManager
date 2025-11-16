@@ -152,7 +152,7 @@ QAbstractItemView::item:selected, QAbstractItemView::item:selected:active, QAbst
 QAbstractItemView QLineEdit {
     border-radius: 0px;
     padding: 0px;
-    background: transparent;
+    background: #1E1F22;
 }
 
 QHeaderView {
