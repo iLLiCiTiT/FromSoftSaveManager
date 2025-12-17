@@ -248,13 +248,23 @@ void AutoBackupHandler::onTimer() {
         return;
     }
     std::unordered_set<QString> changedSaves = m_changedSaves;
+    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+
     for (auto& saveId: changedSaves) {
+        if (m_frequency > 0) {
+            auto itLast = m_lastAutobackups.find(saveId);
+            if (itLast != m_lastAutobackups.end()) {
+                auto diff = std::chrono::duration_cast<std::chrono::seconds>(now - itLast->second);
+                if (diff.count() < m_frequency) continue;
+            }
+        }
         auto it = m_saveItemsBySaveId.find(saveId);
         if (it == m_saveItemsBySaveId.end()) continue;
         SaveFileItem& item = it->second;
         std::filesystem::path path = item.savePath.toStdString();
         if (!std::filesystem::exists(path)) continue;
         m_changedSaves.erase(saveId);
+        m_lastAutobackups[saveId] = now;
         emit autoBackupRequested(item.savePath, item.game);
     }
 }

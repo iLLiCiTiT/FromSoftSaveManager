@@ -59,6 +59,7 @@ private:
     bool m_enabled = false;
     int m_maxAutoBackups = 0;
     int m_frequency = 0;
+    std::unordered_map<QString, std::chrono::system_clock::time_point> m_lastAutobackups;
     std::unordered_set<QString> m_changedSaves;
     std::unordered_map<QString, SaveFileItem> m_saveItemsBySaveId;
 };
