@@ -274,10 +274,13 @@ namespace fssm::parse::dsr {
 
                 if (invItem.itemId >= 1073741824) {
                     invItem.itemType = 1073741824;
+                    invItem.itemId -= 1073741824;
                 } else if (invItem.itemId >= 536870912) {
                     invItem.itemType = 536870912;
+                    invItem.itemId -= 536870912;
                 } else if (invItem.itemId >= 268435456) {
                     invItem.itemType = 268435456;
+                    invItem.itemId -= 268435456;
                 }
                 fillBaseItem(invItem);
                 ci.bottomlessBoxItems.push_back(invItem);
