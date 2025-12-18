@@ -169,6 +169,8 @@ void CharacterStatusWidget::setCharacter(const fssm::parse::dsr::DSRCharacterInf
 
     QString covenentValue = QString::fromStdString(fssm::parse::dsr::DSR_COVENANT_LABELS[charInfo->covenantId].data());
     uint8_t covenantLevel = charInfo->covenantLevels[charInfo->covenantId];
+    if (covenantLevel >= 50)
+        covenentValue.push_back("+3");
     if (covenantLevel >= 30)
         covenentValue.push_back("+2");
     else if (covenantLevel >= 10)
