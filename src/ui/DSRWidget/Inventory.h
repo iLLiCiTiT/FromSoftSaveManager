@@ -4,6 +4,7 @@
 #include <QSortFilterProxyModel>
 #include <QStyledItemDelegate>
 #include <QVariantAnimation>
+#include <QQuickWidget>
 
 #include "../Utils.h"
 #include "../../parse/Parse.h"
@@ -24,6 +25,7 @@ class InventoryModel: public QStandardItemModel {
 public:
     explicit InventoryModel(QObject* parent = nullptr);
     void setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo);
+    QHash<int, QByteArray> roleNames() const override;
 private:
     QStandardItem* createModelItem(fssm::parse::dsr::InventoryItem& inventoryItem);
     QStandardItem* createUnknownItem(fssm::parse::dsr::InventoryItem& inventoryItem);
@@ -109,13 +111,9 @@ class InventoryWidget: public QWidget {
 public:
     explicit InventoryWidget(QWidget* parent);
     void setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo);
-private slots:
-    void onCategoryChange(parse::dsr::ItemCategory category);
 private:
-    CategoryButtons* m_categoryBtns = nullptr;
-    QListView* m_view = nullptr;
+    QQuickWidget* m_quickWidget = nullptr;
     InventoryModel* m_model = nullptr;
     InventoryProxyModel* m_proxy = nullptr;
-    InventoryDelegate* m_delegate = nullptr;
 };
 }

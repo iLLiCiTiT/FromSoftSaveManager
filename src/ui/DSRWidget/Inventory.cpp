@@ -7,13 +7,28 @@
 #include <QStandardItemModel>
 #include <QSortFilterProxyModel>
 #include <QStyledItemDelegate>
-#include <QVariantAnimation>
+#include <QQuickWidget>
+#include <QQmlContext>
+#include <QQmlEngine>
 
 #include "../Utils.h"
 #include "../../parse/Parse.h"
 
 namespace fssm::ui::dsr {
 InventoryModel::InventoryModel(QObject* parent): QStandardItemModel(parent) {}
+QHash<int, QByteArray> InventoryModel::roleNames() const {
+    QHash<int, QByteArray> roles;
+    roles[Qt::DisplayRole] = "display";
+    roles[ItemLevelRole] = "level";
+    roles[ItemInfusionIconRole] = "infusionIcon";
+    roles[ItemOrderRole] = "order";
+    roles[ItemAmountRole] = "amount";
+    roles[ItemDurabilityRole] = "durability";
+    roles[ItemBottomlessBoxAmountRole] = "bottomlessBoxAmount";
+    roles[ItemImageRole] = "itemImage";
+    roles[ItemCategoryRole] = "category";
+    return roles;
+}
 
 void InventoryModel::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo) {
     QStandardItem* rootItem = invisibleRootItem();
@@ -433,39 +448,21 @@ void CategoryButtons::onAnimFinished() {
 }
 
 InventoryWidget::InventoryWidget(QWidget* parent): QWidget(parent) {
-    setAttribute(Qt::WA_TranslucentBackground, true);
-    m_categoryBtns = new CategoryButtons(this);
-
-    m_view = new QListView(this);
-    m_view->setObjectName("ds_list_view");
-    m_view->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    m_view->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-    m_view->verticalScrollBar()->setSingleStep(15);
-    m_view->setAttribute(Qt::WA_TranslucentBackground, true);
-
-    m_delegate = new InventoryDelegate(this);
-    m_view->setItemDelegate(m_delegate);
     m_model = new InventoryModel(this);
     m_proxy = new InventoryProxyModel(this);
     m_proxy->setSourceModel(m_model);
-    m_view->setModel(m_proxy);
+
+    m_quickWidget = new QQuickWidget(this);
+    m_quickWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
+    m_quickWidget->rootContext()->setContextProperty("inventoryModel", m_model);
+    m_quickWidget->setSource(QUrl("qrc:/qml/DSRInventory.qml"));
 
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(m_categoryBtns, 0);
-    layout->addWidget(m_view, 1);
-
-    connect(m_categoryBtns, SIGNAL(categoryChanged(parse::dsr::ItemCategory)), this, SLOT(onCategoryChange(parse::dsr::ItemCategory)));
-
-    m_proxy->setCategory(m_categoryBtns->getCategory());
+    layout->addWidget(m_quickWidget);
 }
 
 void InventoryWidget::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo) {
     m_model->setCharacter(charInfo);
-    m_proxy->sort(0, Qt::AscendingOrder);
-}
-
-void InventoryWidget::onCategoryChange(parse::dsr::ItemCategory category) {
-    m_proxy->setCategory(category);
 }
 }

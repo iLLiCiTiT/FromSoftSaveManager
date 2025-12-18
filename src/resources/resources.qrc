@@ -29,4 +29,8 @@
     <qresource prefix="/stylesheet">
         <file alias="app.qss">style/app.qss</file>
     </qresource>
+    <qresource prefix="/qml">
+        <file alias="DSRInventory.qml">../ui/DSRWidget/Inventory.qml</file>
+        <file alias="CategoryButton.qml">../ui/DSRWidget/CategoryButton.qml</file>
+    </qresource>
 </RCC>
