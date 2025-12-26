@@ -298,7 +298,7 @@ std::optional<BackupMetadata> BackupsModel::createBackup(const QString& savePath
     std::string filename = getFilename(stdSavePath);
     backupDir = indexExistingPath(backupDir);
     std::string dstPath = backupDir + "\\" + filename;
-    std::filesystem::create_directory(backupDir);
+    std::filesystem::create_directories(backupDir);
     std::filesystem::copy_file(stdSavePath, dstPath);
     std::string metadataPath = backupDir + "\\metadata.json";
 
@@ -390,7 +390,7 @@ std::vector<BackupMetadata> BackupsModel::getBackupItems(const fssm::Game &game)
 bool BackupsModel::restoreBackupSave(const QString& dstSavePath, const BackupMetadata &metadata) {
     auto [dstDir, dstFilename] = splitPath(dstSavePath.toStdString());
     if (!std::filesystem::exists(dstDir)) {
-        std::filesystem::create_directory(dstDir);
+        std::filesystem::create_directories(dstDir);
     }
     if (std::find(metadata.filenames.begin(), metadata.filenames.end(), dstFilename) == metadata.filenames.end()) {
         emit loadBackupFinished(false);

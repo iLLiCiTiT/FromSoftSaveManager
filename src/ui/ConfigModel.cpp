@@ -187,7 +187,7 @@ void ConfigModel::saveConfigData(const ConfigConfirmData& confirmData) {
 void ConfigModel::saveConfig() {
     std::string dirPath = getAppConfigDir().toStdString();
     if (!std::filesystem::exists(dirPath)) {
-        std::filesystem::create_directory(dirPath);
+        std::filesystem::create_directories(dirPath);
     }
     json jsonData = p_configToJson();
     std::ofstream o(m_appConfigPath.toStdString());
