@@ -6,7 +6,15 @@
 #include <stdexcept>
 #include <cstring>
 #include <iostream>
+#include <limits>
 #include <locale>
+
+#ifdef _WIN32
+  #ifndef NOMINMAX
+    #define NOMINMAX
+  #endif
+  #include <windows.h>
+#endif
 
 #include "aes.hpp"
 
@@ -81,11 +89,65 @@ std::vector<uint8_t> decrypt_entry_content(
     }
 }
 
+#ifdef _WIN32
+    static std::vector<uint8_t> read_file_shared(const std::string& pathUtf8) {
+    // Convert UTF-8 path to UTF-16 for CreateFileW
+    int wlen = MultiByteToWideChar(CP_UTF8, 0, pathUtf8.c_str(), -1, nullptr, 0);
+    if (wlen <= 0) throw std::runtime_error("Failed to convert path to UTF-16");
+    std::wstring wpath(static_cast<size_t>(wlen - 1), L'\0');
+    MultiByteToWideChar(CP_UTF8, 0, pathUtf8.c_str(), -1, wpath.data(), wlen);
+
+    HANDLE h = CreateFileW(
+        wpath.c_str(),
+        GENERIC_READ,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, // key: don't block the writer/maintainer
+        nullptr,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        nullptr
+    );
+    if (h == INVALID_HANDLE_VALUE) {
+        throw std::runtime_error("Failed to open file for shared read");
+    }
+
+    LARGE_INTEGER size{};
+    if (!GetFileSizeEx(h, &size) || size.QuadPart < 0) {
+        CloseHandle(h);
+        throw std::runtime_error("Failed to get file size");
+    }
+    if (size.QuadPart > static_cast<uint64_t>(std::numeric_limits<size_t>::max())) {
+        CloseHandle(h);
+        throw std::runtime_error("File too large to read into memory");
+    }
+
+    std::vector<uint8_t> content(static_cast<size_t>(size.QuadPart));
+    size_t totalRead = 0;
+    while (totalRead < content.size()) {
+        DWORD chunk = 0;
+        DWORD toRead = static_cast<DWORD>(std::min<size_t>(content.size() - totalRead, 1u << 20)); // 1 MiB chunks
+        if (!ReadFile(h, content.data() + totalRead, toRead, &chunk, nullptr)) {
+            CloseHandle(h);
+            throw std::runtime_error("ReadFile failed");
+        }
+        if (chunk == 0) break;
+        totalRead += static_cast<size_t>(chunk);
+    }
+    CloseHandle(h);
+
+    content.resize(totalRead);
+    return content;
+}
+#endif
+
 SL2File parse_sl2_file(const std::string& input_sl2_file) {
+#ifdef _WIN32
+    std::vector<uint8_t> content = read_file_shared(input_sl2_file);
+#else
     std::ifstream f(input_sl2_file, std::ios::binary);
     if (!f) throw std::runtime_error("Failed to open file");
     std::vector<uint8_t> content((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
     f.close();
+#endif
 
     if (content.size() < 64) {
         throw std::runtime_error("File too small to be a valid BND4 container");
