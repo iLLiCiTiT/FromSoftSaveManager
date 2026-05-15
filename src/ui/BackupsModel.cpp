@@ -371,13 +371,20 @@ std::vector<BackupMetadata> BackupsModel::getBackupItems(const fssm::Game &game)
     std::vector<BackupMetadata> output;
     std::string gameBackupDir = getGameBackupDir(game);
     if (!std::filesystem::exists(gameBackupDir)) return output;
+    json metadata;
     for (auto const& dir_entry : std::filesystem::directory_iterator{gameBackupDir}) {
         std::filesystem::path metadataPath = dir_entry.path();
         metadataPath /= "metadata.json";
         if (!std::filesystem::exists(metadataPath)) continue;
 
         std::ifstream ifs(metadataPath);
-        json metadata = json::parse(ifs);
+        try {
+            metadata = json::parse(ifs);
+        } catch (json::parse_error& ex) {
+            std::cerr << "Failed to parse " << metadataPath << ". Parse error " << ex.what() << std::endl;
+            ifs.close();
+            continue;
+        }
         ifs.close();
         auto metadateItem = backupMetadatafromJson(dir_entry.path(), metadata);
         if (metadateItem.has_value()) {
