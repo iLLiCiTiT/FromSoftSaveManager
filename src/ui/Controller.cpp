@@ -174,60 +174,84 @@ DSRCharInfoResult Controller::getDsrCharacters(const QString& saveId) const {
     QString r_savePath = m_configModel->getSavePathItem(saveId);
     if (r_savePath.isEmpty()) return {
         "Save file path is not set.",
-        std::vector<fssm::parse::dsr::DSRCharacterInfo> {},
+        {},
     };
     std::string savePath = r_savePath.toStdString();
     if (!std::filesystem::exists(savePath)) return {
         "Save file does not exist.",
-        std::vector<fssm::parse::dsr::DSRCharacterInfo> {},
+        {},
     };
-    fssm::parse::SL2File sl2_dsr = fssm::parse::parse_sl2_file(savePath);
-    fssm::parse::dsr::DSRSaveFile dsr = fssm::parse::dsr::parse_dsr_file(sl2_dsr);
+    try {
+        fssm::parse::SL2File sl2_dsr = fssm::parse::parse_sl2_file(savePath);
+        fssm::parse::dsr::DSRSaveFile dsr = fssm::parse::dsr::parse_dsr_file(sl2_dsr);
 
-    return {
-        "",
-        dsr.characters
-    };
+        return {
+            "",
+            dsr.characters
+        };
+    }
+    catch (const std::exception& e) {
+        return {
+            "Failed to read or parse DSR save",
+            {},
+        };
+    }
 }
 
 DS3CharInfoResult Controller::getDs3Characters(const QString& saveId) const {
     QString r_savePath = m_configModel->getSavePathItem(saveId);
     if (r_savePath.isEmpty()) return {
         "Save file path is not set.",
-        std::vector<fssm::parse::ds3::DS3CharacterInfo> {},
+        {},
     };
     std::string savePath = r_savePath.toStdString();
     if (!std::filesystem::exists(savePath)) return {
         "Save file does not exist.",
-        std::vector<fssm::parse::ds3::DS3CharacterInfo> {},
+        {},
     };
-    fssm::parse::SL2File sl2_dsr = fssm::parse::parse_sl2_file(savePath);
-    fssm::parse::ds3::DS3SaveFile ds3 = fssm::parse::ds3::parse_ds3_file(sl2_dsr);
+    try {
+        fssm::parse::SL2File sl2_dsr = fssm::parse::parse_sl2_file(savePath);
+        fssm::parse::ds3::DS3SaveFile ds3 = fssm::parse::ds3::parse_ds3_file(sl2_dsr);
 
-    return {
-        "",
-        ds3.characters
-    };
+        return {
+            "",
+            ds3.characters
+        };
+    }
+    catch (const std::exception& e) {
+        return {
+            "Failed to read or parse DS3 save",
+            {},
+        };
+    }
 }
 
 ERCharInfoResult Controller::getERCharacters(const QString& saveId) const {
     QString r_savePath = m_configModel->getSavePathItem(saveId);
     if (r_savePath.isEmpty()) return {
         "Save file path is not set.",
-        std::vector<fssm::parse::er::ERCharacterInfo> {},
+        {},
     };
     std::string savePath = r_savePath.toStdString();
     if (!std::filesystem::exists(savePath)) return {
         "Save file does not exist.",
-        std::vector<fssm::parse::er::ERCharacterInfo> {},
+        {},
     };
-    fssm::parse::SL2File sl2_dsr = fssm::parse::parse_sl2_file(savePath);
-    fssm::parse::er::ERSaveFile er = fssm::parse::er::parse_er_file(sl2_dsr);
+    try {
+        fssm::parse::SL2File sl2_dsr = fssm::parse::parse_sl2_file(savePath);
+        fssm::parse::er::ERSaveFile er = fssm::parse::er::parse_er_file(sl2_dsr);
 
-    return {
-        "",
-        er.characters
-    };
+        return {
+            "",
+            er.characters
+        };
+    }
+    catch (const std::exception& e) {
+        return {
+            "Failed to read or parse ER save",
+            {},
+        };
+    }
 }
 
 void Controller::openBackupDir() {
