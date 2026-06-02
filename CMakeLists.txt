@@ -18,13 +18,12 @@ find_package(Qt6 COMPONENTS
         Core
         Gui
         Widgets
-        Multimedia
-        Network
         Concurrent
         REQUIRED)
 
 
 include_directories(vendor/nlohmann_json)
+include_directories(vendor/miniaudio)
 # Add the vendor tiny-AES-c as a subdirectory (uses its own CMakeLists)
 add_subdirectory(vendor/tiny-AES-c)
 
@@ -49,6 +48,7 @@ add_executable(FromSoftSaveManager
         src/ui/SquareButton.h
         src/ui/NiceCheckbox.cpp
         src/ui/Utils.cpp
+        src/ui/AudioNotifier.cpp
         src/ui/ConfigModel.cpp
         src/ui/BackupsModel.cpp
         src/ui/Controller.cpp
@@ -94,8 +94,6 @@ target_link_libraries(FromSoftSaveManager
         Qt::Gui
         Qt::Widgets
         Qt::Concurrent
-        Qt::Multimedia
-        Qt::Network
         tiny-aes
 )
 target_link_options(FromSoftSaveManager PRIVATE -static-libgcc -static-libstdc++)
@@ -144,9 +142,6 @@ if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
         Qt6Core
         Qt6Gui
         Qt6Widgets
-        Qt6Multimedia
-        Qt6Concurrent
-        Qt6Network
         libgcc_s_seh-1
         libstdc++-6
         libwinpthread-1

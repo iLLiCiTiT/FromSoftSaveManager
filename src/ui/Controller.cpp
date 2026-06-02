@@ -1,9 +1,12 @@
 #include "Controller.h"
 
 #include <QDesktopServices>
+#include <QDir>
+#include <QStandardPaths>
 #include <QUrl>
 #include <filesystem>
 #include <iostream>
+#include <utility>
 
 
 HotkeysThread::HotkeysThread(const ConfigHotkeys& config, QObject* parent): QThread(parent) {
@@ -102,14 +105,6 @@ void SaveChangesThread::run() {
 
 // --- Controller ---
 Controller::Controller(QObject* parent): QObject(parent) {
-    m_saveSound = new QSoundEffect(this);
-    m_saveSound->setSource(QUrl("qrc:/audio/soul_suck.wav"));
-    m_saveSound->setVolume(0.5);
-
-    m_loadSound = new QSoundEffect(this);
-    m_loadSound->setSource(QUrl("qrc:/audio/ember_restored.wav"));
-    m_loadSound->setVolume(0.5);
-
     m_configModel = new ConfigModel(this);
     auto saveFileItems = m_configModel->getSaveFileItems();
     m_backupsModel = new BackupsModel(saveFileItems, m_configModel->getAutosaveConfig(), m_configModel->getBackupDirPath(), this);
@@ -338,10 +333,10 @@ void Controller::onSaveFileChange(const QString& saveId) {
 
 void Controller::onBackupCreate(bool success, BackupType backupType) {
     if (success && backupType != BackupType::AUTOSAVE)
-        m_saveSound->play();
+        m_audioNotifier.playSave();
 }
 
 void Controller::onBackupLoad(bool success) {
     if (success)
-        m_loadSound->play();
+        m_audioNotifier.playLoad();
 }
