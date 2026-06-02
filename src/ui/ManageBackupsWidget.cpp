@@ -6,7 +6,8 @@
 #include <QStackedLayout>
 #include <QPainter>
 #include <QMenu>
-#include <QtConcurrent>
+#include <QDateTime>
+#include <QtConcurrentRun>
 #include <QFutureWatcher>
 
 #include "Utils.h"

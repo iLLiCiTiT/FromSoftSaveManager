@@ -1,8 +1,8 @@
 #pragma once
 
 #include <QThread>
-#include <QSoundEffect>
 #include <unordered_set>
+#include <memory>
 
 #include "KeysWindows.h"
 #include "ConfigModel.h"
@@ -68,6 +68,8 @@ struct ERCharInfoResult {
     std::vector<fssm::parse::er::ERCharacterInfo> characters;
 };
 
+class AudioNotifier;
+
 // Controller wrapping backend logic allowing UI to access data it needs
 class Controller: public QObject {
     Q_OBJECT
@@ -114,8 +116,7 @@ private slots:
     void onBackupLoad(bool success);
 
 private:
-    QSoundEffect* m_saveSound = nullptr;
-    QSoundEffect* m_loadSound = nullptr;
+    std::unique_ptr<AudioNotifier> m_audioNotifier;
     QString m_currentSaveId = "";
     ConfigModel* m_configModel;
     BackupsModel* m_backupsModel;
