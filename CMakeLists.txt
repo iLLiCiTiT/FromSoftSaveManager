@@ -48,6 +48,7 @@ add_executable(FromSoftSaveManager
         src/ui/SquareButton.h
         src/ui/NiceCheckbox.cpp
         src/ui/Utils.cpp
+        src/ui/AudioNotifier.cpp
         src/ui/ConfigModel.cpp
         src/ui/BackupsModel.cpp
         src/ui/Controller.cpp

@@ -1,95 +1,12 @@
 #include "Controller.h"
 
-#define MINIAUDIO_IMPLEMENTATION
-#include "miniaudio.h"
-
 #include <QDesktopServices>
 #include <QDir>
-#include <QFile>
 #include <QStandardPaths>
 #include <QUrl>
-#include <QByteArray>
 #include <filesystem>
 #include <iostream>
 #include <utility>
-
-namespace {
-struct SoundInMemory {
-    QByteArray data = {};
-    ma_decoder decoder = {};
-    ma_sound sound = {};
-    bool isReady = false;
-};
-
-void tryInitSoundFromResource(ma_engine* engine, const QString& resourcePath, SoundInMemory& target) {
-    QFile resource(resourcePath);
-    if (!resource.open(QIODevice::ReadOnly)) return;
-
-    target.data = resource.readAll();
-    if (target.data.isEmpty()) return;
-
-    if (ma_decoder_init_memory(target.data.constData(), static_cast<size_t>(target.data.size()), nullptr, &target.decoder) != MA_SUCCESS)
-        return;
-
-    if (ma_sound_init_from_data_source(engine, &target.decoder, 0, nullptr, &target.sound) != MA_SUCCESS) {
-        ma_decoder_uninit(&target.decoder);
-        return;
-    }
-
-    target.isReady = true;
-}
-
-void playSound(SoundInMemory& soundData) {
-    if (!soundData.isReady) return;
-
-    ma_sound_stop(&soundData.sound);
-    ma_sound_seek_to_pcm_frame(&soundData.sound, 0);
-    ma_sound_start(&soundData.sound);
-}
-}
-
-class AudioNotifier {
-public:
-    AudioNotifier() {
-        ma_engine_config config = ma_engine_config_init();
-        config.noAutoStart = MA_FALSE;
-        if (ma_engine_init(&config, &m_engine) != MA_SUCCESS) return;
-
-        m_isInitialized = true;
-        tryInitSoundFromResource(&m_engine, ":/audio/soul_suck.wav", m_saveSound);
-        tryInitSoundFromResource(&m_engine, ":/audio/ember_restored.wav", m_loadSound);
-    }
-
-    ~AudioNotifier() {
-        if (m_isInitialized) {
-            if (m_saveSound.isReady) {
-                ma_sound_uninit(&m_saveSound.sound);
-                ma_decoder_uninit(&m_saveSound.decoder);
-            }
-            if (m_loadSound.isReady) {
-                ma_sound_uninit(&m_loadSound.sound);
-                ma_decoder_uninit(&m_loadSound.decoder);
-            }
-            ma_engine_uninit(&m_engine);
-        }
-    }
-
-    void playSave() {
-        if (!m_isInitialized) return;
-        playSound(m_saveSound);
-    }
-
-    void playLoad() {
-        if (!m_isInitialized) return;
-        playSound(m_loadSound);
-    }
-
-private:
-    ma_engine m_engine = {};
-    bool m_isInitialized = false;
-    SoundInMemory m_saveSound = {};
-    SoundInMemory m_loadSound = {};
-};
 
 
 HotkeysThread::HotkeysThread(const ConfigHotkeys& config, QObject* parent): QThread(parent) {
@@ -188,8 +105,6 @@ void SaveChangesThread::run() {
 
 // --- Controller ---
 Controller::Controller(QObject* parent): QObject(parent) {
-    m_audioNotifier = std::make_unique<AudioNotifier>();
-
     m_configModel = new ConfigModel(this);
     auto saveFileItems = m_configModel->getSaveFileItems();
     m_backupsModel = new BackupsModel(saveFileItems, m_configModel->getAutosaveConfig(), m_configModel->getBackupDirPath(), this);
@@ -418,10 +333,10 @@ void Controller::onSaveFileChange(const QString& saveId) {
 
 void Controller::onBackupCreate(bool success, BackupType backupType) {
     if (success && backupType != BackupType::AUTOSAVE)
-        m_audioNotifier->playSave();
+        m_audioNotifier.playSave();
 }
 
 void Controller::onBackupLoad(bool success) {
     if (success)
-        m_audioNotifier->playLoad();
+        m_audioNotifier.playLoad();
 }
