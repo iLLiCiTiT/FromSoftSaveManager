@@ -18,6 +18,7 @@ void tryInitSoundFromResource(ma_engine* engine, const QString& resourcePath, So
         ma_decoder_uninit(&target.decoder);
         return;
     }
+    ma_sound_set_volume(&target.sound, 0.5f);
 
     target.isReady = true;
 }
