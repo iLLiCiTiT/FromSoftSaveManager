@@ -6,6 +6,7 @@
 
 #include "KeysWindows.h"
 #include "ConfigModel.h"
+#include "BackupsDb.h"
 #include "BackupsModel.h"
 #include "AudioNotifier.h"
 #include "../parse/Parse.h"
@@ -84,6 +85,8 @@ public:
     explicit Controller(QObject* parent = nullptr);
     ~Controller() override;
 
+    void initialize(QWidget* parent);
+
     QString getLastSelectedSaveId() const;
     void setCurrentTabId(const QString& saveId);
     ConfigSettingsData getConfigSettingsData() const;
@@ -103,8 +106,6 @@ public:
     void deleteBackupByIds(const std::vector<QString>& backupIds);
     bool changeBackupLabel(const QString& backupId, const QString& label);
 
-    void openBackupDir();
-
 private slots:
     void onQuickSaveRequest();
     void onQuickLoadRequest();
@@ -119,6 +120,7 @@ private:
     AudioNotifier m_audioNotifier;
     QString m_currentSaveId = "";
     ConfigModel* m_configModel;
+    BackupsDb* m_backupsDb;
     BackupsModel* m_backupsModel;
     HotkeysThread* m_hotkeysThread;
     SaveChangesThread* m_saveChangesThread;

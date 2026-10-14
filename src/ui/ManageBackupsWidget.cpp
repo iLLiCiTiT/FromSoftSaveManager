@@ -7,8 +7,6 @@
 #include <QPainter>
 #include <QMenu>
 #include <QDateTime>
-#include <QtConcurrentRun>
-#include <QFutureWatcher>
 
 #include "Utils.h"
 
@@ -179,17 +177,12 @@ ManageBackupsOverlayWidget::ManageBackupsOverlayWidget(Controller* controller, Q
     m_deleteBackupsBtn->setAutoDefault(false);
     m_deleteBackupsBtn->setDefault(false);
 
-    QPixmap browseIcon = QPixmap(":/images/common/folder_open.png");
-    QPushButton* openBackupDirBtn = new QPushButton(browseIcon, "Browse", btnsWidget);
-    openBackupDirBtn->setToolTip("Open Backup directory");
-
     QHBoxLayout* btnsLayout = new QHBoxLayout(btnsWidget);
     btnsLayout->setContentsMargins(0, 0, 0, 0);
     btnsLayout->setSpacing(10);
     btnsLayout->addWidget(createBackupBtn, 0);
     btnsLayout->addWidget(m_deleteBackupsBtn, 0);
     btnsLayout->addStretch(1);
-    btnsLayout->addWidget(openBackupDirBtn, 0);
 
     m_backupsView = new QTreeView(wrapWidget);
     m_backupsView->setSortingEnabled(true);
@@ -247,7 +240,6 @@ ManageBackupsOverlayWidget::ManageBackupsOverlayWidget(Controller* controller, Q
     connect(fillupWidget, SIGNAL(clicked()), this, SIGNAL(hideRequested()));
     connect(closeBackupBtn, SIGNAL(clicked()), this, SIGNAL(hideRequested()));
     connect(createBackupBtn, SIGNAL(clicked()), this, SLOT(onCreateBackup()));
-    connect(openBackupDirBtn, SIGNAL(clicked()), this, SLOT(onOpenBackupDir()));
     connect(m_deleteBackupsBtn, SIGNAL(clicked()), this, SLOT(onDeleteBackups()));
     connect(m_backupsView, SIGNAL(doubleClicked(const QModelIndex &)), this, SLOT(onDoubleClick(const QModelIndex &)));
     connect(m_backupsView, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(onCustomContextMenu(const QPoint &)));
@@ -264,21 +256,8 @@ void ManageBackupsOverlayWidget::keyPressEvent(QKeyEvent *event) {
 }
 
 void ManageBackupsOverlayWidget::refresh() {
-    auto watcher = new QFutureWatcher<std::vector<BackupMetadata>>(this);
-
-    // Kick off background work
-    QFuture<std::vector<BackupMetadata>> future = QtConcurrent::run([this]() {
-        return m_controller->getBackupItems();  // must be thread-safe for reads
-    });
-
-    connect(watcher, &QFutureWatcher<std::vector<BackupMetadata>>::finished, this, [this, watcher]() {
-        // Back on the GUI thread here
-        auto items = watcher->result();
-        m_backupsModel->setBackupItems(items);
-        watcher->deleteLater();
-    });
-
-    watcher->setFuture(future);
+    auto items = m_controller->getBackupItems();
+    m_backupsModel->setBackupItems(items);
 }
 
 void ManageBackupsOverlayWidget::onDeleteBackups() {
@@ -299,10 +278,6 @@ void ManageBackupsOverlayWidget::onCreateBackup() {
     QModelIndex index = m_backupsModel->addBackupItem(metadataOpt.value());
     QModelIndex proxyIndex = m_proxyModel->mapFromSource(index);
     m_backupsView->edit(proxyIndex);
-}
-
-void ManageBackupsOverlayWidget::onOpenBackupDir() {
-    m_controller->openBackupDir();
 }
 
 void ManageBackupsOverlayWidget::onSelectionChange(const QItemSelection& selected, const QItemSelection& deselected) {

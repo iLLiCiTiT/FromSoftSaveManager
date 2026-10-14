@@ -54,7 +54,6 @@ protected:
 private slots:
     void onDeleteBackups();
     void onCreateBackup();
-    void onOpenBackupDir();
     void onDoubleClick(const QModelIndex &index);
     void onCustomContextMenu(const QPoint &point);
     void onSelectionChange(const QItemSelection& selected, const QItemSelection& deselected);

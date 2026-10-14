@@ -1,12 +1,11 @@
 #include "Controller.h"
 
-#include <QDesktopServices>
 #include <QDir>
-#include <QStandardPaths>
-#include <QUrl>
 #include <filesystem>
 #include <iostream>
 #include <utility>
+
+#include "MigrationHelper.h"
 
 
 HotkeysThread::HotkeysThread(const ConfigHotkeys& config, QObject* parent): QThread(parent) {
@@ -107,7 +106,9 @@ void SaveChangesThread::run() {
 Controller::Controller(QObject* parent): QObject(parent) {
     m_configModel = new ConfigModel(this);
     auto saveFileItems = m_configModel->getSaveFileItems();
-    m_backupsModel = new BackupsModel(saveFileItems, m_configModel->getAutosaveConfig(), m_configModel->getBackupDirPath(), this);
+    QString dbPath = m_configModel->getAppDataDirPath() + "\\backups.db";
+    m_backupsDb = new BackupsDb(dbPath);
+    m_backupsModel = new BackupsModel(saveFileItems, m_configModel->getAutosaveConfig(), m_backupsDb, this);
     m_hotkeysThread = new HotkeysThread(m_configModel->getHotkeysConfig(), this);
     m_saveChangesThread = new SaveChangesThread(saveFileItems, this);
 
@@ -138,6 +139,12 @@ Controller::~Controller() {
 
     m_configModel->saveConfig();
     delete m_configModel;
+    delete m_backupsDb;
+}
+
+void Controller::initialize(QWidget* parent) {
+    if (hasLegacyBackups(m_configModel->getBackupDirPath()))
+        migrateIfAgreed(m_configModel->getBackupDirPath(), m_backupsDb, parent);
 }
 
 QString Controller::getLastSelectedSaveId() const {
@@ -247,15 +254,6 @@ ERCharInfoResult Controller::getERCharacters(const QString& saveId) const {
             {},
         };
     }
-}
-
-void Controller::openBackupDir() {
-    if (m_currentSaveId.isEmpty()) return;
-    auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
-    if (!itemOpt.has_value()) return;
-    std::string backupDir = m_backupsModel->getGameBackupDir(itemOpt.value().game);
-    if (!std::filesystem::exists(backupDir)) return;
-    QDesktopServices::openUrl(QUrl::fromLocalFile(QString::fromStdString(backupDir)));
 }
 
 void Controller::onQuickSaveRequest() {

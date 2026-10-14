@@ -60,6 +60,7 @@ MainWindow::MainWindow(Controller* controller, QWidget* parent)
 }
 
 void MainWindow::showEvent(QShowEvent *event) {
+    m_controller->initialize(this);
     refresh();
     updateOverlayGeo();
 }
