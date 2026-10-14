@@ -36,6 +36,7 @@ add_executable(FromSoftSaveManager
         src/parse/DSR/Items.cpp
         src/parse/DSR/SaveFile.cpp
         src/parse/DSR/SaveData.cpp
+        src/parse/DS2/SaveData.cpp
         src/parse/DS3/Items.cpp
         src/parse/DS3/SaveFile.cpp
         src/parse/EldenRing/SaveFile.cpp
@@ -112,6 +113,15 @@ add_executable(DSRRoundTrip
 )
 target_link_libraries(DSRRoundTrip tiny-aes)
 target_link_options(DSRRoundTrip PRIVATE -static-libgcc -static-libstdc++)
+
+add_executable(DS2RoundTrip
+        tools/ds2_roundtrip.cpp
+        src/parse/Utils.cpp
+        src/parse/SL2File.cpp
+        src/parse/DS2/SaveData.cpp
+)
+target_link_libraries(DS2RoundTrip tiny-aes)
+target_link_options(DS2RoundTrip PRIVATE -static-libgcc -static-libstdc++)
 
 if (WIN32)
     configure_file(
