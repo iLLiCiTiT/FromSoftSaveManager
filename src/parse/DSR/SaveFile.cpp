@@ -1,22 +1,8 @@
 #include "SaveFile.h"
-#include <cstring>
-#include <iostream>
-#include <locale>
 #include <optional>
-#include "../Utils.h"
+#include <stdexcept>
 
 namespace fssm::parse::dsr {
-    uint32_t bytes_to_u32(const std::vector<uint8_t>& b, const uint32_t& offset)
-    {
-        if (b.size() % sizeof(uint32_t) != 0) {
-            throw std::runtime_error("Byte size not a multiple of 4");
-        }
-        uint32_t out;
-        // Safe: copying from bytes into properly aligned uint32_t storage
-        std::memcpy(&out, b.data() + offset, 4);
-        return out;
-    }
-
     void fillBaseItem(InventoryItem& invItem) {
         auto itemOpt = findBaseItem(invItem.itemType, invItem.itemId);
         std::optional<BaseItem> baseItem = std::nullopt;
@@ -90,204 +76,143 @@ namespace fssm::parse::dsr {
         invItem.baseItem.label = "Unknown " + std::to_string(invItem.itemId);
     }
 
+    static std::u16string name_to_string(const std::array<char16_t, 17>& name) {
+        std::u16string out;
+        for (char16_t ch : name) {
+            if (ch == 0) break;
+            out.push_back(ch);
+        }
+        return out;
+    }
+
+    static DSRCharacterInfo character_info_from_slot(int charIdx, const CharacterSlot& slot) {
+        const PlayerGameData& player = slot.player;
+        const PlayerGameDataStats& st = player.stats;
+        const EquipGameData& equip = player.equip;
+
+        DSRCharacterInfo ci;
+        ci.index = charIdx;
+        ci.name = name_to_string(st.name);
+        ci.humanity = st.humanity;
+        ci.souls = st.souls;
+        ci.earnedSouls = st.earnedSouls;
+        ci.hollowState = st.hollowState;
+        ci.covenantId = st.covenantId;
+        ci.covenantLevels = st.covenantLevels;
+
+        ci.hpCurrent = st.hp;
+        ci.hpMax = st.hpMax;
+        ci.hpBase = st.hpBase;
+        ci.staminaCurrent = st.stamina;
+        ci.staminaMax = st.staminaMax;
+        ci.staminaBase = st.staminaBase;
+
+        ci.level = st.level;
+        ci.vitality = st.vitality;
+        ci.attunement = st.attunement;
+        ci.endurance = st.endurance;
+        ci.strength = st.strength;
+        ci.dexterity = st.dexterity;
+        ci.resistance = st.resistance;
+        ci.intelligence = st.intelligence;
+        ci.faith = st.faith;
+
+        ci.gender = st.gender;
+        ci.classId = st.classId;
+        ci.physiqueId = st.physiqueId;
+        ci.giftId = st.giftId;
+
+        ci.toxicRes = st.toxicResistance;
+        ci.bleedRes = st.bleedResistance;
+        ci.poisonRes = st.poisonResistance;
+        ci.curseRes = st.curseResistance;
+
+        ci.faceId = st.faceId;
+        ci.hairStyleId = st.hairStyleId;
+        ci.hairColorId = st.hairColorId;
+
+        const ChrAsm& asm_ = equip.chrAsm;
+        ci.lHandSlot1 = asm_.leftHand1;
+        ci.lHandSlot2 = asm_.leftHand2;
+        ci.rHandSlot1 = asm_.rightHand1;
+        ci.rHandSlot2 = asm_.rightHand2;
+        ci.lArrowsSlot = asm_.leftArrows;
+        ci.lBoltsSlot = asm_.leftBolts;
+        ci.rArrowsSlot = asm_.rightArrows;
+        ci.rBoltsSlot = asm_.rightBolts;
+        ci.head_slot = asm_.head;
+        ci.body_slot = asm_.body;
+        ci.arms_slot = asm_.arms;
+        ci.legs_slot = asm_.legs;
+        ci.lRingSlot = asm_.leftRing;
+        ci.rRingSlot = asm_.rightRing;
+        ci.q1Slot = asm_.quickItems[0];
+        ci.q2Slot = asm_.quickItems[1];
+        ci.q3Slot = asm_.quickItems[2];
+        ci.q4Slot = asm_.quickItems[3];
+        ci.q5Slot = asm_.quickItems[4];
+
+        const auto& invItems = equip.inventory.items;
+        ci.inventoryItems.reserve(invItems.size());
+        for (uint32_t idx = 0; idx < invItems.size(); ++idx) {
+            const EquipInventoryItem& src = invItems[idx];
+            if (src.itemId == 0xFFFFFFFFu) continue;
+            InventoryItem invItem;
+            invItem.itemType = src.itemType;
+            invItem.itemId = src.itemId;
+            invItem.amount = src.amount;
+            invItem.order = src.order;
+            invItem.durability = src.durability;
+            invItem.idx = idx;
+            fillBaseItem(invItem);
+            ci.inventoryItems.push_back(invItem);
+        }
+
+        ci.attunementSlots.assign(equip.magic.attunement.begin(), equip.magic.attunement.end());
+        ci.equippedGestures = equip.gestureEquip.gestures;
+
+        const auto& boxItems = player.repository.items;
+        ci.bottomlessBoxItems.reserve(boxItems.size());
+        for (uint32_t idx = 0; idx < boxItems.size(); ++idx) {
+            const RepositoryItem& src = boxItems[idx];
+            if (src.itemId == 0xFFFFFFFFu) continue;
+            InventoryItem invItem;
+            invItem.itemId = src.itemId;
+            invItem.order = src.order;
+            invItem.amount = src.amount;
+            invItem.durability = src.durability;
+            invItem.idx = idx;
+            // Bottomless box stores the item type in the high bits of the id
+            if (invItem.itemId >= 1073741824) {
+                invItem.itemType = 1073741824;
+                invItem.itemId -= 1073741824;
+            } else if (invItem.itemId >= 536870912) {
+                invItem.itemType = 536870912;
+                invItem.itemId -= 536870912;
+            } else if (invItem.itemId >= 268435456) {
+                invItem.itemType = 268435456;
+                invItem.itemId -= 268435456;
+            }
+            fillBaseItem(invItem);
+            ci.bottomlessBoxItems.push_back(invItem);
+        }
+        return ci;
+    }
+
     DSRSaveFile parse_dsr_file(const SL2File& sl2) {
-        // Read USERDATA_10 to get
-        ContentReader sideEntryReader(sl2.entries[10].content);
-        sideEntryReader.skip(176);
-        std::array<uint8_t, 10> occupiedSlots;
-        sideEntryReader.copyTo(occupiedSlots.data(), 10);
+        if (sl2.entries.size() < 11) {
+            throw std::runtime_error("DSR save has fewer than 11 entries");
+        }
+        // USER_DATA010 holds which character slots are in use
+        const SystemSlot systemSlot = parse_system_slot(sl2.entries[10].content);
 
         std::vector<DSRCharacterInfo> characters;
         characters.reserve(10);
-        for (int charIdx = 0; charIdx < sl2.entries.size() && charIdx < 10; ++charIdx) {
-            if (occupiedSlots[charIdx] == 0) continue;
-            ContentReader reader(sl2.entries[charIdx].content);
-            reader.skip(4);
-
-            DSRCharacterInfo ci;
-            ci.index = charIdx;
-
-            reader.skip(92);
-            ci.hpCurrent = reader.read_u32_le();
-            ci.hpMax = reader.read_u32_le();
-            ci.hpBase = reader.read_u32_le();
-
-            reader.skip(16);
-
-            ci.staminaCurrent = reader.read_u32_le();
-            ci.staminaMax = reader.read_u32_le();
-            ci.staminaBase = reader.read_u32_le();
-
-            reader.skip(4);
-            ci.vitality = reader.read_u32_le();
-            reader.skip(4);
-            ci.attunement = reader.read_u32_le();
-            reader.skip(4);
-            ci.endurance = reader.read_u32_le();
-            reader.skip(4);
-            ci.strength = reader.read_u32_le();
-            reader.skip(4);
-            ci.dexterity = reader.read_u32_le();
-            reader.skip(4);
-            ci.intelligence = reader.read_u32_le();
-            reader.skip(4);
-            ci.faith = reader.read_u32_le();
-
-            reader.skip(16);
-
-            ci.humanity = reader.read_u32_le();
-            reader.skip(4);
-            ci.resistance = reader.read_u32_le();
-            ci.level = reader.read_u32_le();
-            ci.souls = reader.read_u32_le();
-            reader.skip(4);
-            ci.earnedSouls = reader.read_u32_le();
-            reader.skip(4);
-            ci.hollowState = reader.read_u32_le();
-            // - offset +236
-            ci.name = reader.read_u16_string(12);
-            reader.skip(10);
-
-            ci.gender = reader.read_u32_le();
-            ci.classId = reader.read_u8_le();
-            ci.physiqueId = reader.read_u8_le();
-            ci.giftId = reader.read_u8_le();
-
-            reader.skip(3);
-            uint32_t multiplayerEncounters = reader.read_u32_le();
-            uint32_t coopVictories = reader.read_u32_le();
-            reader.skip(14);
-            // - offset +310
-
-            reader.copyTo(&ci.covenantLevels, 10);
-            // - offset +320
-            reader.skip(12);
-
-            ci.toxicRes = reader.read_u32_le();
-            ci.bleedRes = reader.read_u32_le();
-            ci.poisonRes = reader.read_u32_le();
-            ci.curseRes = reader.read_u32_le();
-            // - offset +348
-
-            reader.skip(3);
-
-            ci.covenantId = reader.read_u8_le();
-            // - offset +352
-            uint8_t faceId = reader.read_u8_le();
-            uint8_t hairStyleId = reader.read_u8_le();
-            uint8_t hairColorId = reader.read_u8_le();
-            uint8_t cursed = reader.read_u8_le();
-
-            reader.skip(412);
-            // - offset +768
-
-            // uint32_t lRingSlotItemType = bytes_to_u32(c, 712);
-            // uint32_t rRingSlotItemType = bytes_to_u32(c, 716);
-            // uint32_t q1SlotItemType = bytes_to_u32(c, 720);
-            // uint32_t q2SlotItemType = bytes_to_u32(c, 724);
-            // uint32_t q3SlotItemType = bytes_to_u32(c, 728);
-            // uint32_t q4SlotItemType = bytes_to_u32(c, 732);
-            // uint32_t q5SlotItemType = bytes_to_u32(c, 736);
-            // uint32_t one_double_handling = bytes_to_u32(c, 740);
-            // uint32_t l_hand_flag = bytes_to_u32(c, 744);
-            // uint32_t r_hand_flag = bytes_to_u32(c, 748);
-            // uint32_t unknown_17_flag = bytes_to_u32(c, 752);
-            // uint32_t unknown_18_flag = bytes_to_u32(c, 756);
-            // uint32_t unknown_19_flag = bytes_to_u32(c, 760);
-            // uint32_t unknown_20_flag = bytes_to_u32(c, 764);
-            ci.lHandSlot1 = reader.read_u32_le();
-            ci.lHandSlot2 = reader.read_u32_le();
-            ci.rHandSlot1 = reader.read_u32_le();
-            ci.rHandSlot2 = reader.read_u32_le();
-            ci.lArrowsSlot = reader.read_u32_le();
-            ci.lBoltsSlot = reader.read_u32_le();
-            ci.rArrowsSlot = reader.read_u32_le();
-            ci.rBoltsSlot = reader.read_u32_le();
-            ci.head_slot = reader.read_u32_le();
-            ci.body_slot = reader.read_u32_le();
-            ci.arms_slot = reader.read_u32_le();
-            ci.legs_slot = reader.read_u32_le();
-            reader.skip(4);
-            // uint32_t unknown_21_flag = bytes_to_u32(c, 816);
-            ci.lRingSlot = reader.read_u32_le();
-            ci.rRingSlot = reader.read_u32_le();
-            ci.q1Slot = reader.read_u32_le();
-            ci.q2Slot = reader.read_u32_le();
-            ci.q3Slot = reader.read_u32_le();
-            ci.q4Slot = reader.read_u32_le();
-            ci.q5Slot = reader.read_u32_le();
-            uint32_t backpackCount = reader.read_u32_le();
-            uint32_t unknown_22_flag = reader.read_u32_le();
-            uint32_t maxInventoryCount = reader.read_u32_le();
-
-            ci.inventoryItems.reserve(maxInventoryCount);
-
-            std::optional<BaseItem> itemOpt;
-            for (uint32_t idx = 0; idx < maxInventoryCount; ++idx) {
-                InventoryItem invItem;
-                invItem.itemType = reader.read_u32_le();
-                invItem.itemId = reader.read_u32_le();
-                invItem.amount = reader.read_u32_le();
-                invItem.order = reader.read_u32_le();
-                reader.skip(4);
-                invItem.durability = reader.read_u32_le();
-                reader.skip(4);
-                if (invItem.itemId == 0xFFFFFFFFu) continue;
-                fillBaseItem(invItem);
-                ci.inventoryItems.push_back(invItem);
-            }
-            // - offset +58204
-
-            reader.skip(4);
-
-            ci.attunementSlots.reserve(12);
-            for (int i = 0; i < 12; ++i) {
-                AttunementSlot slot;
-                slot.itemId = reader.read_u32_le();
-                slot.remainingUses = reader.read_u32_le();
-                ci.attunementSlots.push_back(slot);
-            }
-            // - offset +58304
-
-            reader.skip(28);
-
-            for (int i = 0; i < 18; ++i) {
-                ci.usedGestures[i] = reader.read_u16_le();
-            }
-            // - offset +58368
-
-            reader.skip(136);
-            // - offset +58504
-
-            ci.bottomlessBoxItems.reserve(maxInventoryCount);
-            for (int i = 0; i < maxInventoryCount; ++i) {
-                InventoryItem invItem;
-                reader.skip(4);
-                reader.skip(4);
-                invItem.itemId = reader.read_u32_le();
-                invItem.order = reader.read_u32_le();
-                invItem.amount = reader.read_u16_le();
-                reader.skip(2);
-                invItem.durability = reader.read_u32_le();
-                reader.skip(8);
-                if (invItem.itemId == 0xFFFFFFFFu) continue;
-
-                if (invItem.itemId >= 1073741824) {
-                    invItem.itemType = 1073741824;
-                    invItem.itemId -= 1073741824;
-                } else if (invItem.itemId >= 536870912) {
-                    invItem.itemType = 536870912;
-                    invItem.itemId -= 536870912;
-                } else if (invItem.itemId >= 268435456) {
-                    invItem.itemType = 268435456;
-                    invItem.itemId -= 268435456;
-                }
-                fillBaseItem(invItem);
-                ci.bottomlessBoxItems.push_back(invItem);
-            }
-            characters.push_back(std::move(ci));
+        for (int charIdx = 0; charIdx < 10; ++charIdx) {
+            if (systemSlot.profiles.occupied[charIdx] == 0) continue;
+            const CharacterSlot slot = parse_character_slot(sl2.entries[charIdx].content);
+            characters.push_back(character_info_from_slot(charIdx, slot));
         }
-        // TODO implemet rest of file
         DSRSaveFile save_file = {
             .characters = characters,
             .sideCarEnty = sl2.entries[10]

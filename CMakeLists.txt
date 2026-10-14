@@ -35,6 +35,7 @@ add_executable(FromSoftSaveManager
         src/parse/SL2File.cpp
         src/parse/DSR/Items.cpp
         src/parse/DSR/SaveFile.cpp
+        src/parse/DSR/SaveData.cpp
         src/parse/DS3/Items.cpp
         src/parse/DS3/SaveFile.cpp
         src/parse/EldenRing/SaveFile.cpp
@@ -101,6 +102,16 @@ target_link_libraries(FromSoftSaveManager
         tiny-aes
 )
 target_link_options(FromSoftSaveManager PRIVATE -static-libgcc -static-libstdc++)
+
+# Console tool: checks that the DSR slot parser round-trips save files exactly.
+add_executable(DSRRoundTrip
+        tools/dsr_roundtrip.cpp
+        src/parse/Utils.cpp
+        src/parse/SL2File.cpp
+        src/parse/DSR/SaveData.cpp
+)
+target_link_libraries(DSRRoundTrip tiny-aes)
+target_link_options(DSRRoundTrip PRIVATE -static-libgcc -static-libstdc++)
 
 if (WIN32)
     configure_file(
