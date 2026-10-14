@@ -82,6 +82,10 @@ namespace fssm::parse::ds2 {
         return read_record<EnemyData>(entry, RecordType::Enemy);
     }
 
+    std::optional<InventoryData> read_inventory(const SaveEntry& entry) {
+        return read_record<InventoryData>(entry, RecordType::ItemInventory);
+    }
+
     std::optional<ObjData> read_obj(const SaveEntry& entry) {
         const Record* record = entry.find(RecordType::Obj);
         if (record == nullptr) return std::nullopt;

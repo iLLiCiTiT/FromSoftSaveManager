@@ -4,6 +4,7 @@
 // Usage: DS2RoundTrip <file.sl2> [more.sl2 ...]
 
 #include <cstdio>
+#include <map>
 #include <exception>
 #include <string>
 #include <vector>
@@ -11,6 +12,7 @@
 #include "../src/parse/SL2File.h"
 #include "../src/parse/Utils.h"
 #include "../src/parse/DS2/SaveData.h"
+#include "../src/parse/DS2/Items.h"
 
 using namespace fssm::parse;
 
@@ -60,6 +62,26 @@ static bool check_file(const std::string& path) {
             std::printf("  slot %zu: %s level %u, souls %u, map %08x\n", slot,
                         name_of(s.name.data(), s.name.size()).c_str(), s.level,
                         player ? player->souls : 0, game ? static_cast<uint32_t>(game->mapId) : 0);
+            if (const auto inventory = ds2::read_inventory(character)) {
+                const auto items = ds2::decode_inventory(*inventory);
+                std::map<int, int> perCategory;
+                size_t unknown = 0;
+                for (const auto& item : items) {
+                    perCategory[static_cast<int>(item.baseItem.category)]++;
+                    if (!item.knownItem) ++unknown;
+                }
+                std::printf("    inventory: %zu items, %zu unknown;", items.size(), unknown);
+                for (const auto& [category, count] : perCategory) std::printf(" cat%d=%d", category, count);
+                std::printf("\n");
+                for (size_t i = 0; i < items.size() && i < 8; ++i) {
+                    const auto& item = items[i];
+                    const auto infusion = ds2::infusionLabel(item.infusion);
+                    std::printf("      %.*s%s%.*s +%u x%u\n",
+                                static_cast<int>(infusion.size()), infusion.data(), infusion.empty() ? "" : " ",
+                                static_cast<int>(item.baseItem.label.size()), item.baseItem.label.data(),
+                                item.upgradeLevel, item.amount);
+                }
+            }
         }
     }
     return ok;

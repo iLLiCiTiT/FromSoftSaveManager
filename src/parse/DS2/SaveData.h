@@ -155,6 +155,25 @@ namespace fssm::parse::ds2 {
         std::array<EnemyMapBlock, 3> maps;
     };
     static_assert(sizeof(EnemyData) == 0x9c30);
+
+    // One slot of SaveDataItemInventory2 (ItemInventory2 +0x30).
+    struct InventoryEntry {
+        uint32_t itemId;            // 0 or 0xFFFFFFFF when empty
+        uint32_t flags;
+        // Goods, ammo and spells: count. Equipment: current durability (float bits).
+        // Estus Flask: bytes {1, charges, max charges, 0}.
+        uint32_t value;
+        uint32_t reinforcement;     // low byte upgrade level, next byte Infusion
+
+        bool empty() const { return itemId == 0 || itemId == 0xFFFFFFFFu; }
+    };
+    static_assert(sizeof(InventoryEntry) == 0x10);
+
+    struct InventoryData {
+        std::array<InventoryEntry, 0x1000> entries;
+        std::array<uint8_t, 0xbc> unk_10000;
+    };
+    static_assert(sizeof(InventoryData) == 0x100bc);
 #pragma pack(pop)
 
     // SaveDataObj payload (FUN_1402e5a10 + FUN_1401f2ea0): variable length.
@@ -168,5 +187,6 @@ namespace fssm::parse::ds2 {
     std::optional<PlayerData> read_player(const SaveEntry& entry);
     std::optional<GameData> read_game(const SaveEntry& entry);
     std::optional<EnemyData> read_enemy(const SaveEntry& entry);
+    std::optional<InventoryData> read_inventory(const SaveEntry& entry);
     std::optional<ObjData> read_obj(const SaveEntry& entry);
 }
