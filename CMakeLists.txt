@@ -42,6 +42,8 @@ add_executable(FromSoftSaveManager
         src/parse/DS2/SaveFile.cpp
         src/parse/DS2/Areas.cpp
         src/parse/Sekiro/SaveData.cpp
+        src/parse/Sekiro/Items.cpp
+        src/parse/Sekiro/ItemLookup.cpp
         src/parse/DS3/Items.cpp
         src/parse/DS3/SaveFile.cpp
         src/parse/EldenRing/SaveFile.cpp
@@ -88,6 +90,7 @@ if (FSSM_USE_INV_IMAGES)
     target_sources(FromSoftSaveManager PRIVATE
             src/resources/dsr_inv_images.qrc
             src/resources/ds2_inv_images.qrc
+            src/resources/sekiro_inv_images.qrc
             src/resources/ds3_inv_images.qrc)
     target_compile_definitions(FromSoftSaveManager PRIVATE
             FSSM_USE_INV_IMAGES=${FSSM_USE_INV_IMAGES}
@@ -138,6 +141,8 @@ add_executable(SekiroRoundTrip
         src/parse/Utils.cpp
         src/parse/SL2File.cpp
         src/parse/Sekiro/SaveData.cpp
+        src/parse/Sekiro/Items.cpp
+        src/parse/Sekiro/ItemLookup.cpp
 )
 target_link_libraries(SekiroRoundTrip tiny-aes)
 target_link_options(SekiroRoundTrip PRIVATE -static-libgcc -static-libstdc++)

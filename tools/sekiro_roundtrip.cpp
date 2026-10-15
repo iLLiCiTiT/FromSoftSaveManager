@@ -10,6 +10,7 @@
 
 #include "../src/parse/SL2File.h"
 #include "../src/parse/Sekiro/SaveData.h"
+#include "../src/parse/Sekiro/Items.h"
 
 using namespace fssm::parse;
 
@@ -34,6 +35,18 @@ static bool check_file(const std::string& path) {
                             out == entry.content ? "OK" : "MISMATCH", ids.c_str(), parsed.trailing.size());
             }
             if (out != entry.content) ok = false;
+            if (const auto gaitem = sekiro::read_gaitem(parsed)) {
+                const auto items = sekiro::decode_inventory(gaitem->inventory.items);
+                size_t withIcon = 0;
+                for (const auto& item : items) if (!item.baseItem.image.empty()) ++withIcon;
+                std::printf("    inventory: %u normal / %u key entries, %zu shown items (%zu with icons)\n",
+                            gaitem->inventory.items.normalCount, gaitem->inventory.items.keyCount,
+                            items.size(), withIcon);
+                for (size_t i = 0; i < items.size() && i < 6; ++i) {
+                    std::printf("      %.*s x%u\n", int(items[i].baseItem.label.size()),
+                                items[i].baseItem.label.data(), items[i].quantity);
+                }
+            }
         } catch (const std::exception& e) {
             ok = false;
             std::printf("  %s ERROR %s\n", entry.name.c_str(), e.what());

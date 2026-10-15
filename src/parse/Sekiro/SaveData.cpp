@@ -44,6 +44,14 @@ namespace fssm::parse::sekiro {
         return entry;
     }
 
+    std::optional<GaitemData> read_gaitem(const SaveEntry& entry) {
+        const Record* record = entry.find(RecordId::Gaitem);
+        if (record == nullptr || record->data.size() != sizeof(GaitemData)) return std::nullopt;
+        GaitemData out;
+        std::memcpy(&out, record->data.data(), sizeof(GaitemData));
+        return out;
+    }
+
     std::vector<uint8_t> serialize_entry(const SaveEntry& entry) {
         std::vector<uint8_t> out;
         for (const auto& record : entry.records) {
