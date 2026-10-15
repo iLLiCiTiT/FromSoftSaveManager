@@ -87,10 +87,13 @@ class Archive:
                 self.entries[h] = (size, data_offset, aes_offset)
 
     def read(self, path):
-        entry = self.entries.get(path_hash(path))
-        if entry is None:
+        h = path_hash(path)
+        if h not in self.entries:
             raise KeyError(path)
-        size, offset, aes_offset = entry
+        return self.read_hash(h)
+
+    def read_hash(self, h):
+        size, offset, aes_offset = self.entries[h]
         with open(self.bdt_path, "rb") as f:
             f.seek(offset)
             data = bytearray(f.read(size))
@@ -103,6 +106,50 @@ class Archive:
                 if start != -1 and end > start:
                     data[start:end] = cipher.decrypt(bytes(data[start:end]))
         return undcx(bytes(data))
+
+
+def tpf_textures(d):
+    """Return [(name, dds_bytes)] of a PC TPF texture pack."""
+    assert d[:4] == b"TPF\0"
+    count = struct.unpack_from("<I", d, 8)[0]
+    utf16 = d[0x0E] == 1
+    out = []
+    for i in range(count):
+        offset, size, _fmt, _type, _mips, _flags, name_offset = struct.unpack_from("<IIBBBBI", d, 0x10 + i * 0x14)
+        end = name_offset
+        if utf16:
+            while d[end:end + 2] != b"\0\0":
+                end += 2
+            name = d[name_offset:end].decode("utf-16le", "replace")
+        else:
+            while d[end] != 0:
+                end += 1
+            name = d[name_offset:end].decode("ascii", "replace")
+        out.append((name, d[offset:offset + size]))
+    return out
+
+
+def icon_textures(archive):
+    """Map every single-texture item icon pack ("*_IC_<10 digit id>") to its DDS data."""
+    icons = {}
+    for h, (size, offset, aes_offset) in archive.entries.items():
+        if size > 2_000_000:
+            continue
+        if not aes_offset:
+            with open(archive.bdt_path, "rb") as f:
+                f.seek(offset)
+                if f.read(4) not in (b"TPF\0", b"DCX\0"):
+                    continue
+        try:
+            d = archive.read_hash(h)
+        except Exception:
+            continue
+        if d[:4] != b"TPF\0" or struct.unpack_from("<I", d, 8)[0] != 1:
+            continue
+        name, dds = tpf_textures(d)[0]
+        if "_IC_" in name:
+            icons[name] = dds
+    return icons
 
 
 def read_regulation(game_dir):
@@ -122,7 +169,10 @@ def parse_bnd4(b):
     for i in range(count):
         o = 0x40 + i * header_size
         size = struct.unpack_from("<q", b, o + 8)[0]
-        offset, name_offset = struct.unpack_from("<II", b, o + 0x10)
+        if header_size >= 0x24:     # entries with uncompressed size and id
+            offset, _file_id, name_offset = struct.unpack_from("<IiI", b, o + 0x18)
+        else:
+            offset, name_offset = struct.unpack_from("<II", b, o + 0x10)
         end = name_offset
         if unicode:
             while b[end:end + 2] != b"\0\0":

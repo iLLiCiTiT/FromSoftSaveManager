@@ -74,7 +74,7 @@ namespace fssm::parse::ds2 {
             }
 
             if (entry.itemId == ESTUS_FLASK_ID) {
-                item.amount = (entry.value >> 8) & 0xff;    // current charges
+                item.amount = (entry.value >> 16) & 0xff;   // current charges
             } else if (hasDurability(item.baseItem.category)) {
                 float durability;
                 std::memcpy(&durability, &entry.value, sizeof(durability));

@@ -54,7 +54,7 @@ static bool check_file(const std::string& path) {
     const auto system = ds2::parse_entry(sl2.entries[ds2::SYSTEM_ENTRY_INDEX].content);
     if (auto info = ds2::read_load_info(system)) {
         for (size_t slot = 0; slot < ds2::CHARACTER_SLOTS; ++slot) {
-            const auto& s = info->slots[slot];
+            const auto& s = info->slotInfos[slot];
             if ((s.flags & 1) == 0) continue;
             const auto character = ds2::parse_entry(sl2.entries[ds2::CHARACTER_ENTRY_OFFSET + slot].content);
             const auto player = ds2::read_player(character);

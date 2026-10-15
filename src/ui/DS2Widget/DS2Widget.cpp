@@ -2,35 +2,157 @@
 
 #include <QPainter>
 #include <QVBoxLayout>
+#include <qevent.h>
 
-#include "../BaseGameWidget.h"
 #include "../ManageBackupsWidget.h"
+#include "../../parse/DS2/Areas.h"
+
+namespace fssm::ui::ds2 {
+CharsListModel::CharsListModel(Controller* controller, const QString& saveId, QObject* parent)
+    : QStandardItemModel(parent),
+    m_saveId(saveId),
+    m_controller(controller)
+{
+    setColumnCount(1);
+    QStandardItem* root = invisibleRootItem();
+    for (int i = 0; i < 10; ++i) {
+        QStandardItem* item = new QStandardItem("");
+        item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+        item->setData(QVariant(), CharNameRole);
+        item->setData(QVariant(i), CharIdRole);
+        root->appendRow(item);
+    }
+}
+
+void CharsListModel::refresh() {
+    QStandardItem* root = invisibleRootItem();
+
+    DS2CharInfoResult charsInfo = m_controller->getDs2Characters(m_saveId);
+    if (!charsInfo.error.isEmpty()) {
+        m_chars.clear();
+        for (int i = 0; i < root->rowCount(); ++i) {
+            root->child(i)->setText(i == 0 ? charsInfo.error : "");
+            root->child(i)->setData(QVariant(), CharNameRole);
+        }
+        emit refreshed();
+        return;
+    }
+    m_chars = charsInfo.characters;
+    for (int i = 0; i < root->rowCount(); ++i) {
+        QStandardItem* item = root->child(i);
+        const fssm::parse::ds2::DS2CharacterInfo* character = getCharByIdx(i);
+        if (character == nullptr) {
+            item->setText("");
+            item->setData(QVariant(), CharNameRole);
+            continue;
+        }
+        const QString name = QString::fromStdU16String(character->name);
+        const auto area = fssm::parse::ds2::findAreaName(character->mapId);
+        item->setText(name);
+        item->setData(name, CharNameRole);
+        item->setData(character->level, CharLevelRole);
+        item->setData(QString::fromUtf8(area.data(), int(area.size())), CharAreaRole);
+        item->setData(character->playTime, CharPlayTimeRole);
+    }
+    emit refreshed();
+}
+
+const fssm::parse::ds2::DS2CharacterInfo* CharsListModel::getCharByIdx(const int& index) const {
+    for (auto& character: m_chars) {
+        if (character.index == index) return &character;
+    }
+    return nullptr;
+}
+}
 
 DS2Widget::DS2Widget(Controller* controller, const QString& saveId, QWidget* parent)
     : BaseGameWidget(controller, saveId, parent)
 {
     setAttribute(Qt::WA_TranslucentBackground, true);
-
     m_bgPix = QPixmap(":/ds2_images/bg");
 
-    ManageBackupsButtonsWidget* manageBackupsBtnsWidget = new ManageBackupsButtonsWidget(controller, this);
+    QWidget* viewWrap = new QWidget(this);
+    viewWrap->setAttribute(Qt::WA_TranslucentBackground, true);
 
-    QLabel* infoLabel = new QLabel("Dark Souls 2 - SOTFS viewer is not implemented yet", this);
-    infoLabel->setAttribute(Qt::WA_TranslucentBackground, true);
-    infoLabel->setAlignment(Qt::AlignCenter);
+    m_view = new QListView();
+    m_view->setObjectName("ds2_list_view");
+    m_view->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_view->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    m_view->setMouseTracking(true);
+    m_view->setFrameShape(QFrame::NoFrame);
+    m_view->setItemDelegate(new fssm::ui::ds2::CharacterDelegate(m_view));
+    auto* dataListFrame = new fssm::ui::ds2::DataListFrame(m_view, viewWrap);
 
-    QVBoxLayout* mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(24, 24, 24, 24);
-    mainLayout->setSpacing(0);
-    mainLayout->addWidget(infoLabel, 3);
-    mainLayout->addWidget(manageBackupsBtnsWidget, 0);
-    mainLayout->addStretch(1);
+    ManageBackupsButtonsWidget* manageBackupsBtnsWidget = new ManageBackupsButtonsWidget(controller, viewWrap);
+    manageBackupsBtnsWidget->setAttribute(Qt::WA_TranslucentBackground, true);
 
+    m_model = new fssm::ui::ds2::CharsListModel(controller, saveId, m_view);
+    m_view->setModel(m_model);
+
+    QVBoxLayout* viewWrapLayout = new QVBoxLayout(viewWrap);
+    viewWrapLayout->setContentsMargins(0, 0, 0, 0);
+    viewWrapLayout->addSpacing(28);
+    viewWrapLayout->addWidget(dataListFrame, 4);
+    viewWrapLayout->addWidget(manageBackupsBtnsWidget, 1);
+
+    m_charTabs = new TabWidget(this);
+    m_inventoryWidget = new fssm::ui::ds2::InventoryWidget(m_charTabs);
+    m_charTabs->addTab("Inventory", m_inventoryWidget);
+
+    QHBoxLayout* layout = new QHBoxLayout(this);
+    layout->setContentsMargins(20, 20, 20, 20);
+    layout->addWidget(viewWrap, 0);
+    layout->addWidget(m_charTabs, 1);
+
+    connect(m_view->selectionModel(), SIGNAL(selectionChanged(const QItemSelection&, const QItemSelection&)),
+            this, SLOT(onSelectionChange(const QItemSelection&, const QItemSelection&)));
+    connect(m_model, SIGNAL(refreshed()), this, SLOT(onRefresh()));
     connect(manageBackupsBtnsWidget, SIGNAL(showBackupsRequested()), this, SIGNAL(showBackupsRequested()));
 }
 
 void DS2Widget::refresh() {
-    // TODO implement
+    m_model->refresh();
+}
+
+void DS2Widget::showCharacter(const QModelIndex& index) {
+    const QVariant charId = index.data(fssm::ui::ds2::CharIdRole);
+    const fssm::parse::ds2::DS2CharacterInfo* charInfo = nullptr;
+    if (charId.isValid() && !charId.isNull()) charInfo = m_model->getCharByIdx(charId.toInt());
+    m_inventoryWidget->setCharacter(charInfo);
+}
+
+void DS2Widget::onRefresh() {
+    // Like the game's list, only slots with a character are shown (or the error in row 0).
+    for (int row = 0; row < m_model->rowCount(); ++row) {
+        const QModelIndex index = m_model->index(row, 0);
+        const bool hasCharacter = index.data(fssm::ui::ds2::CharNameRole).isValid();
+        const bool isError = row == 0 && !hasCharacter && !index.data(Qt::DisplayRole).toString().isEmpty();
+        m_view->setRowHidden(row, !hasCharacter && !isError);
+    }
+
+    QItemSelectionModel* selModel = m_view->selectionModel();
+    const auto selected = selModel->selectedIndexes();
+    if (!selected.isEmpty()) {
+        showCharacter(selected.first());
+        return;
+    }
+    for (int row = 0; row < m_model->rowCount(); ++row) {
+        QModelIndex index = m_model->index(row, 0);
+        if (index.data(fssm::ui::ds2::CharNameRole).isValid()) {
+            selModel->setCurrentIndex(index, QItemSelectionModel::ClearAndSelect);
+            return;
+        }
+    }
+    m_inventoryWidget->setCharacter(nullptr);
+}
+
+void DS2Widget::onSelectionChange(const QItemSelection& selected, const QItemSelection&) {
+    const auto indexes = selected.indexes();
+    if (indexes.isEmpty()) {
+        m_inventoryWidget->setCharacter(nullptr);
+        return;
+    }
+    showCharacter(indexes.first());
 }
 
 void DS2Widget::paintEvent(QPaintEvent* event) {
@@ -38,10 +160,8 @@ void DS2Widget::paintEvent(QPaintEvent* event) {
     painter.setClipRect(event->rect());
     painter.setPen(Qt::NoPen);
     painter.setBrush(QColor(6, 5, 7));
-    const QRect targetRect = rect();
-    painter.drawRect(targetRect);
+    painter.drawRect(rect());
     QPixmap scaled = m_bgPix.scaled(size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
-    // center vertically
     const int x = (width() - scaled.width()) / 2;
     const int y = (height() - scaled.height()) / 2;
     painter.drawPixmap(x, y, scaled);

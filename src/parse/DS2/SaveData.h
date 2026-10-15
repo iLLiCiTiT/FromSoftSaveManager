@@ -83,7 +83,7 @@ namespace fssm::parse::ds2 {
         // adaptability, intelligence, faith, unk, unk
         std::array<uint16_t, 11> stats;             // +0x174
         std::array<char16_t, 33> name;              // +0x18a
-        uint32_t playTime;                          // +0x1cc, frames
+        uint32_t playTime;                          // +0x1cc, seconds (capped at 999:59:59)
         int32_t mapId;                              // +0x1d0
         uint16_t level;                             // +0x1d4
         uint16_t unk_1d6;
@@ -101,7 +101,7 @@ namespace fssm::parse::ds2 {
         uint32_t currentSlot;
         uint32_t slotCount;                         // always 10
         std::array<uint8_t, 8> flags;
-        std::array<LoadInfoSlot, CHARACTER_SLOTS> slots;
+        std::array<LoadInfoSlot, CHARACTER_SLOTS> slotInfos;
     };
     static_assert(sizeof(LoadInfo) == 0x1370);
 
@@ -161,7 +161,7 @@ namespace fssm::parse::ds2 {
         uint32_t itemId;            // 0 or 0xFFFFFFFF when empty
         uint32_t flags;
         // Goods, ammo and spells: count. Equipment: current durability (float bits).
-        // Estus Flask: bytes {1, charges, max charges, 0}.
+        // Estus Flask: bytes {1, 0, charges, max charges}.
         uint32_t value;
         uint32_t reinforcement;     // low byte upgrade level, next byte Infusion
 

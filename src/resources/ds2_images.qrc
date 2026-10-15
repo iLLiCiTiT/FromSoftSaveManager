@@ -1,5 +1,32 @@
 <RCC>
     <qresource prefix="/ds2_images">
         <file alias="bg">images/ds2/bg.png</file>
+        <file alias="inv_ammunition">images/ds2/menu_icons/inv_ammunition.png</file>
+        <file alias="inv_catalysts">images/ds2/menu_icons/inv_catalysts.png</file>
+        <file alias="inv_chest">images/ds2/menu_icons/inv_chest.png</file>
+        <file alias="inv_consumables">images/ds2/menu_icons/inv_consumables.png</file>
+        <file alias="inv_gestures">images/ds2/menu_icons/inv_gestures.png</file>
+        <file alias="inv_hands">images/ds2/menu_icons/inv_hands.png</file>
+        <file alias="inv_head">images/ds2/menu_icons/inv_head.png</file>
+        <file alias="inv_key_items">images/ds2/menu_icons/inv_key_items.png</file>
+        <file alias="inv_legs">images/ds2/menu_icons/inv_legs.png</file>
+        <file alias="inv_materials">images/ds2/menu_icons/inv_materials.png</file>
+        <file alias="inv_ranged_weapons">images/ds2/menu_icons/inv_ranged_weapons.png</file>
+        <file alias="inv_rings">images/ds2/menu_icons/inv_rings.png</file>
+        <file alias="inv_shields">images/ds2/menu_icons/inv_shields.png</file>
+        <file alias="inv_spells">images/ds2/menu_icons/inv_spells.png</file>
+        <file alias="inv_weapons">images/ds2/menu_icons/inv_weapons.png</file>
+        <file alias="ui_category_selected">images/ds2/ui/ui_category_selected.png</file>
+        <file alias="ui_category_tile">images/ds2/ui/ui_category_tile.png</file>
+        <file alias="ui_data_list">images/ds2/ui/ui_data_list.png</file>
+        <file alias="ui_divider">images/ds2/ui/ui_divider.png</file>
+        <file alias="ui_item_border">images/ds2/ui/ui_item_border.png</file>
+        <file alias="ui_item_selected">images/ds2/ui/ui_item_selected.png</file>
+        <file alias="ui_item_shadow">images/ds2/ui/ui_item_shadow.png</file>
+        <file alias="ui_item_tile">images/ds2/ui/ui_item_tile.png</file>
+        <file alias="ui_menu_tabs">images/ds2/ui/ui_menu_tabs.png</file>
+        <file alias="ui_pedestal">images/ds2/ui/ui_pedestal.png</file>
+        <file alias="ui_row_selected">images/ds2/ui/ui_row_selected.png</file>
+        <file alias="ui_window">images/ds2/ui/ui_window.png</file>
     </qresource>
 </RCC>

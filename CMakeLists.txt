@@ -39,6 +39,8 @@ add_executable(FromSoftSaveManager
         src/parse/DS2/SaveData.cpp
         src/parse/DS2/Items.cpp
         src/parse/DS2/ItemLookup.cpp
+        src/parse/DS2/SaveFile.cpp
+        src/parse/DS2/Areas.cpp
         src/parse/DS3/Items.cpp
         src/parse/DS3/SaveFile.cpp
         src/parse/EldenRing/SaveFile.cpp
@@ -71,6 +73,8 @@ add_executable(FromSoftSaveManager
         src/ui/DSRWidget/Covenants.cpp
         src/ui/DSRWidget/CharInfo.cpp
         src/ui/DS2Widget/DS2Widget.cpp
+        src/ui/DS2Widget/Inventory.cpp
+        src/ui/DS2Widget/CharacterList.cpp
         src/ui/DS3Widget/DS3Widget.cpp
         src/ui/DS3Widget/Inventory.cpp
         src/ui/DS3Widget/CharInfo.cpp
@@ -82,6 +86,7 @@ add_executable(FromSoftSaveManager
 if (FSSM_USE_INV_IMAGES)
     target_sources(FromSoftSaveManager PRIVATE
             src/resources/dsr_inv_images.qrc
+            src/resources/ds2_inv_images.qrc
             src/resources/ds3_inv_images.qrc)
     target_compile_definitions(FromSoftSaveManager PRIVATE
             FSSM_USE_INV_IMAGES=${FSSM_USE_INV_IMAGES}

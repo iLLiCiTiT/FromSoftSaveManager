@@ -200,6 +200,34 @@ DSRCharInfoResult Controller::getDsrCharacters(const QString& saveId) const {
     }
 }
 
+DS2CharInfoResult Controller::getDs2Characters(const QString& saveId) const {
+    QString r_savePath = m_configModel->getSavePathItem(saveId);
+    if (r_savePath.isEmpty()) return {
+        "Save file path is not set.",
+        {},
+    };
+    std::string savePath = r_savePath.toStdString();
+    if (!std::filesystem::exists(savePath)) return {
+        "Save file does not exist.",
+        {},
+    };
+    try {
+        fssm::parse::SL2File sl2_ds2 = fssm::parse::parse_sl2_file(savePath);
+        fssm::parse::ds2::DS2SaveFile ds2 = fssm::parse::ds2::parse_ds2_file(sl2_ds2);
+
+        return {
+            "",
+            ds2.characters
+        };
+    }
+    catch (const std::exception& e) {
+        return {
+            "Failed to read or parse DS2 save",
+            {},
+        };
+    }
+}
+
 DS3CharInfoResult Controller::getDs3Characters(const QString& saveId) const {
     QString r_savePath = m_configModel->getSavePathItem(saveId);
     if (r_savePath.isEmpty()) return {

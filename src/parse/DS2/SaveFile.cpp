@@ -1,0 +1,46 @@
+#include "SaveFile.h"
+
+#include <algorithm>
+#include <stdexcept>
+
+namespace fssm::parse::ds2 {
+    static std::u16string name_to_string(const char16_t* name, size_t size) {
+        std::u16string out;
+        for (size_t i = 0; i < size && name[i] != 0; ++i) out.push_back(name[i]);
+        return out;
+    }
+
+    DS2SaveFile parse_ds2_file(const SL2File& sl2) {
+        if (sl2.entries.size() <= CHARACTER_ENTRY_OFFSET + CHARACTER_SLOTS) {
+            throw std::runtime_error("DS2 save has too few entries");
+        }
+        const SaveEntry system = parse_entry(sl2.entries[SYSTEM_ENTRY_INDEX].content);
+        const auto loadInfo = read_load_info(system);
+        if (!loadInfo) throw std::runtime_error("DS2 save has no LoadInfo record");
+
+        DS2SaveFile out;
+        for (size_t slot = 0; slot < CHARACTER_SLOTS; ++slot) {
+            const LoadInfoSlot& summary = loadInfo->slotInfos[slot];
+            if ((summary.flags & 1) == 0) continue;
+
+            DS2CharacterInfo ci;
+            ci.index = static_cast<int>(slot);
+            ci.name = name_to_string(summary.name.data(), summary.name.size());
+            ci.level = summary.level;
+            ci.playTime = summary.playTime;
+            ci.mapId = summary.mapId;
+            std::copy_n(summary.stats.begin(), ci.stats.size(), ci.stats.begin());
+
+            const SaveEntry character = parse_entry(sl2.entries[CHARACTER_ENTRY_OFFSET + slot].content);
+            if (const auto player = read_player(character)) {
+                ci.souls = player->souls;
+                ci.soulMemory = player->soulMemory;
+            }
+            if (const auto inventory = read_inventory(character)) {
+                ci.inventoryItems = decode_inventory(*inventory);
+            }
+            out.characters.push_back(std::move(ci));
+        }
+        return out;
+    }
+}
