@@ -47,6 +47,8 @@ add_executable(FromSoftSaveManager
         src/parse/DS3/Items.cpp
         src/parse/DS3/SaveFile.cpp
         src/parse/EldenRing/SaveFile.cpp
+        src/parse/EldenRing/Items.cpp
+        src/parse/EldenRing/ItemLookup.cpp
 
         src/resources/resources.qrc
         src/resources/dsr_images.qrc
@@ -91,6 +93,7 @@ if (FSSM_USE_INV_IMAGES)
             src/resources/dsr_inv_images.qrc
             src/resources/ds2_inv_images.qrc
             src/resources/sekiro_inv_images.qrc
+            src/resources/er_inv_images.qrc
             src/resources/ds3_inv_images.qrc)
     target_compile_definitions(FromSoftSaveManager PRIVATE
             FSSM_USE_INV_IMAGES=${FSSM_USE_INV_IMAGES}
