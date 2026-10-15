@@ -1,5 +1,7 @@
 #pragma once
+#include <array>
 #include <cstdint>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -66,13 +68,27 @@ namespace fssm::parse {
         uint32_t read_u32_le() { return read<uint32_t>(Endianness::Little); }
         uint64_t read_u64_le() { return read<uint64_t>(Endianness::Little); }
         int32_t  read_i32_le() { return static_cast<int32_t>(read<uint32_t>(Endianness::Little)); }
+        float    read_f32_le() {
+            uint32_t v = read_u32_le();
+            float f;
+            std::memcpy(&f, &v, sizeof(f));
+            return f;
+        }
 
         uint16_t read_u16_be() { return read<uint16_t>(Endianness::Big); }
         uint32_t read_u32_be() { return read<uint32_t>(Endianness::Big); }
         uint64_t read_u64_be() { return read<uint64_t>(Endianness::Big); }
         int32_t  read_i32_be() { return static_cast<int32_t>(read<uint32_t>(Endianness::Big)); }
 
+        template <size_t N>
+        std::array<uint8_t, N> read_bytes() {
+            std::array<uint8_t, N> a{};
+            copyTo(a.data(), N);
+            return a;
+        }
+
         std::vector<uint8_t> read_vec_u8(size_t size) {
+            if (m_pos + size > m_size) throw std::out_of_range("read past end");
             std::vector<uint8_t> v;
             v.reserve(size);
             v.assign(m_data + m_pos, m_data + m_pos + size);
@@ -96,6 +112,12 @@ namespace fssm::parse {
             m_pos += n;
         }
         void skip(int n) { m_pos += n; }
+        void seek(size_t pos) {
+            if (pos > m_size) throw std::out_of_range("seek past end");
+            m_pos = pos;
+        }
+        size_t pos() const { return m_pos; }
+        size_t size() const { return m_size; }
 
     private:
         const uint8_t* m_data;
