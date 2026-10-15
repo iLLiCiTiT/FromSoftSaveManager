@@ -46,6 +46,7 @@ add_executable(FromSoftSaveManager
         src/parse/Sekiro/ItemLookup.cpp
         src/parse/DS3/Items.cpp
         src/parse/DS3/SaveFile.cpp
+        src/parse/DS3/SaveData.cpp
         src/parse/EldenRing/SaveFile.cpp
         src/parse/EldenRing/Items.cpp
         src/parse/EldenRing/ItemLookup.cpp
@@ -149,6 +150,15 @@ add_executable(SekiroRoundTrip
 )
 target_link_libraries(SekiroRoundTrip tiny-aes)
 target_link_options(SekiroRoundTrip PRIVATE -static-libgcc -static-libstdc++)
+
+add_executable(DS3RoundTrip
+        tools/ds3_roundtrip.cpp
+        src/parse/Utils.cpp
+        src/parse/SL2File.cpp
+        src/parse/DS3/SaveData.cpp
+)
+target_link_libraries(DS3RoundTrip tiny-aes)
+target_link_options(DS3RoundTrip PRIVATE -static-libgcc -static-libstdc++)
 
 if (WIN32)
     configure_file(

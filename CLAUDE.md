@@ -37,9 +37,11 @@ The app has three layers: **parse** (binary decoding), **ui** (Qt backend), and 
 - Each game subdirectory (`DSR/`, `DS3/`, `EldenRing/`) has a `SaveFile.h/.cpp` that returns a typed struct (e.g. `DSRSaveFile`) containing a vector of character info structs, and optionally an `Items.h/.cpp` with a static item database.
 - All code lives under the `fssm::parse::<game>::` namespace hierarchy.
 
-DS2 and Sekiro parsing are not yet implemented (stubs only).
+DS2 (`DS2/SaveData`), Sekiro (`Sekiro/SaveData`) and DS3 (`DS3/SaveData`) have byte-exact slot models as well, each with a round-trip console target (`DS2RoundTrip`, `SekiroRoundTrip`, `DS3RoundTrip` in `tools/`).
 
 `DSR/SaveData.h/.cpp` is a full, byte-exact model of DSR slots (`USER_DATA000..009` character slots, `USER_DATA010` system slot) recovered from `DarkSoulsRemastered.exe`; struct names follow the game's RTTI (`PlayerGameData`, `EquipGameData`, ...). `parse_*_slot` and `serialize_*_slot` must round-trip exactly — check with the `DSRRoundTrip` console target (`tools/dsr_roundtrip.cpp`) after layout changes.
+
+`DS3/SaveData.h/.cpp` models DS3 character slots (`USER_DATA000..009`, 0xc0000 bytes) and the system slot (`USER_DATA010`); `USER_DATA011` (regulation copy) is passed through raw. `DS3RoundTrip` also verifies the header checksum (adler32 * 2, see `compute_character_checksum`). `parse_ds3_file` builds `DS3CharacterInfo` from these structs.
 
 ### UI Backend (`src/ui/`)
 
