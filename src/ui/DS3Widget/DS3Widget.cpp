@@ -96,10 +96,10 @@ DS3Widget::DS3Widget(Controller* controller, const QString& saveId, QWidget* par
     viewWrapLayout->addWidget(manageBackupsBtnsWidget, 1);
 
     m_charTabs = new TabWidget(this);
-    m_inventoryWidget = new fssm::ui::ds3::InventoryWidget(m_charTabs);
     m_charInfoWidget = new fssm::ui::ds3::CharacterInfoWidget(m_charTabs);
+    m_inventoryWidget = new fssm::ui::ds3::InventoryWidget(m_charTabs);
+    m_charTabs->addTab("Character Info", m_charInfoWidget);
     m_charTabs->addTab("Inventory", m_inventoryWidget);
-    m_charTabs->addTab("Status", m_charInfoWidget);
 
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->setContentsMargins(20, 20, 20, 20);
