@@ -135,14 +135,14 @@ void LoadGameFrame::paintEvent(QPaintEvent* event) {
     painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
     painter.setRenderHint(QPainter::Antialiasing, true);
 
-    // Title with the menu icon, like "LOAD GAME" above the slots.
+    // Title with the menu icon, like "Characters" above the slots.
     const int iconSize = 26;
     if (!m_icon.isNull()) {
         painter.drawPixmap(QRect(4, (TITLE_HEIGHT - iconSize) / 2, iconSize, iconSize), m_icon);
     }
     painter.setFont(serifFont(18));
     drawShadowText(painter, QRect(iconSize + 11, 0, width() - iconSize - 13, TITLE_HEIGHT),
-                   Qt::AlignLeft | Qt::AlignVCenter, "LOAD GAME");
+                   Qt::AlignLeft | Qt::AlignVCenter, "Characters");
 
     // Weathered stone frame.
     const QRect outer = rect().adjusted(0, TITLE_HEIGHT, 0, 0);
