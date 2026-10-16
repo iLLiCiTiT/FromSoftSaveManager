@@ -88,7 +88,6 @@ void CharacterInfoWidget::paintEvent(QPaintEvent* event) {
     };
     const std::vector<StatRow> right = {
         {"attr_souls", "Souls", QString::number(c.souls)},
-        {"", "Estus Flasks", QString("%1 / %2").arg(c.estusMax).arg(c.ashenEstusMax)},
         {"attr_hp", "HP", pair(c.hpCurrent, c.hpMax), true},
         {"attr_fp", "FP", pair(c.fpCurrent, c.fpMax)},
         {"attr_stamina", "Stamina", QString::number(c.staminaMax)},
