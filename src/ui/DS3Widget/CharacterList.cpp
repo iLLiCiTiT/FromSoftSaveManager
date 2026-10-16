@@ -135,7 +135,7 @@ void LoadGameFrame::paintEvent(QPaintEvent* event) {
     painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
     painter.setRenderHint(QPainter::Antialiasing, true);
 
-    // Title with the menu icon, like "Characters" above the slots.
+    // Title with the menu icon, like "LOAD GAME" above the slots in the game.
     const int iconSize = 26;
     if (!m_icon.isNull()) {
         painter.drawPixmap(QRect(4, (TITLE_HEIGHT - iconSize) / 2, iconSize, iconSize), m_icon);
