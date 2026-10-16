@@ -96,6 +96,8 @@ namespace fssm::parse {
             m_pos += n;
         }
         void skip(int n) { m_pos += n; }
+        size_t pos() const { return m_pos; }
+        void seek(size_t pos) { m_pos = pos; }
 
     private:
         const uint8_t* m_data;

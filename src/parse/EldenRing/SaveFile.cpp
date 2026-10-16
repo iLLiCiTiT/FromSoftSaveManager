@@ -3,6 +3,8 @@
 #include <iostream>
 #include <optional>
 #include <ostream>
+#include <unordered_map>
+#include <unordered_set>
 
 #include "../Utils.h"
 
@@ -21,6 +23,82 @@ UserData10 parseUserData10(const BND4Entry& entry) {
     reader.copyTo(&output.slotsSummary.occupied, sizeof(output.slotsSummary.occupied));
     // TODO do rest
     return output;
+}
+
+namespace {
+// Slot layout after the gaitem table, as far as the inventory needs it
+// (offsets from the end of the gaitem table, checked against live saves):
+//   +0x000 PlayerGameData (0x1b0), +0x1b0 SpEffects (13 x 0x10),
+//   +0x280 equip inventory indices (0x58), +0x2d8 arm style / active slots (0x1c),
+//   +0x2f4 equipped item ids (0x58), +0x34c equipped gaitem handles (0x58),
+//   +0x3a4 held EquipInventoryData,
+//   then spells (14 x 8 + 4), quick items (10 x 8), active quick slot, pouch (6 x 8),
+//   great rune (8), gestures (6 x 4), acquired projectiles (count + count x 8),
+//   equipped armaments and items (0x9c), physick (0xc), face data (0x12f)
+//   and the storage chest EquipInventoryData.
+constexpr size_t EQUIPPED_HANDLES_OFFSET = 0x34c;
+constexpr size_t INVENTORY_OFFSET = 0x3a4;
+
+EquipInventoryData readInventory(ContentReader& reader, size_t commonSlots, size_t keySlots) {
+    EquipInventoryData data;
+    const auto readList = [&](std::vector<InventoryEntry>& out, size_t slots) {
+        out.resize(slots);
+        for (auto& entry : out) {
+            entry.handle = reader.read_u32_le();
+            entry.quantity = reader.read_u32_le();
+            entry.acquisitionIndex = reader.read_u32_le();
+        }
+    };
+    data.commonCount = reader.read_u32_le();
+    readList(data.commonItems, commonSlots);
+    data.keyCount = reader.read_u32_le();
+    readList(data.keyItems, keySlots);
+    data.nextEquipIndex = reader.read_u32_le();
+    data.nextAcquisitionSortId = reader.read_u32_le();
+    return data;
+}
+
+std::vector<InventoryItem> resolveItems(const EquipInventoryData& data, const ERCharacterInfo& character) {
+    std::unordered_map<uint32_t, uint32_t> gaItemIds;
+    for (const auto& gaItem : character.gaItems) {
+        if (gaItem.itemId != 0 && gaItem.itemId != 0xffffffff) gaItemIds[gaItem.handle] = gaItem.itemId;
+    }
+    std::unordered_set<uint32_t> equipped(character.equippedHandles.begin(), character.equippedHandles.end());
+    std::unordered_set<uint32_t> pouch(character.quickItemHandles.begin(), character.quickItemHandles.end());
+    pouch.insert(character.pouchHandles.begin(), character.pouchHandles.end());
+    pouch.insert(character.greatRuneHandle);
+    equipped.erase(0);
+    equipped.erase(0xffffffff);
+    pouch.erase(0);
+    pouch.erase(0xffffffff);
+
+    std::vector<InventoryItem> items;
+    const auto add = [&](const std::vector<InventoryEntry>& entries, bool keyItem) {
+        for (const auto& entry : entries) {
+            if (entry.handle == 0 || entry.handle == 0xffffffff) continue;
+            InventoryItem item;
+            item.handle = entry.handle;
+            item.quantity = entry.quantity;
+            item.acquisitionIndex = entry.acquisitionIndex;
+            item.keyItem = keyItem;
+            switch (entry.handle >> 28) {
+                case 0xB: item.itemId = 0x40000000 | (entry.handle & 0x0fffffff); break;
+                case 0xA: item.itemId = 0x20000000 | (entry.handle & 0x0fffffff); break;
+                default: {
+                    auto it = gaItemIds.find(entry.handle);
+                    if (it != gaItemIds.end()) item.itemId = it->second;
+                }
+            }
+            item.equipped = equipped.count(entry.handle) != 0;
+            item.inPouch = pouch.count(entry.handle) != 0;
+            if (auto base = findBaseItem(item.itemId)) item.baseItem = *base;
+            items.push_back(item);
+        }
+    };
+    add(data.commonItems, false);
+    add(data.keyItems, true);
+    return items;
+}
 }
 
 ERCharacterInfo parseERCharacter(const BND4Entry& entry, const UserData10& userData10, const uint8_t& index) {
@@ -65,6 +143,7 @@ ERCharacterInfo parseERCharacter(const BND4Entry& entry, const UserData10& userD
         });
     }
 
+    const size_t playerStart = reader.pos();
     reader.skip(4);
     reader.skip(4);
     output.hpCurrent = reader.read_u32_le();
@@ -97,6 +176,32 @@ ERCharacterInfo parseERCharacter(const BND4Entry& entry, const UserData10& userD
 
     output.name = reader.read_u16_string(16);
 
+    reader.seek(playerStart + EQUIPPED_HANDLES_OFFSET);
+    for (auto& handle : output.equippedHandles) handle = reader.read_u32_le();
+    reader.seek(playerStart + INVENTORY_OFFSET);
+    output.inventory = readInventory(reader, 0xa80, 0x180);
+    reader.skip(14 * 8 + 4);                // equipped spells, active spell slot
+    for (auto& handle : output.quickItemHandles) {
+        handle = reader.read_u32_le();
+        reader.skip(4);                     // equip inventory index
+    }
+    reader.skip(4);                         // active quick slot
+    for (auto& handle : output.pouchHandles) {
+        handle = reader.read_u32_le();
+        reader.skip(4);
+    }
+    output.greatRuneHandle = reader.read_u32_le();
+    reader.skip(4);
+    reader.skip(6 * 4);                     // gestures
+    const uint32_t projectileCount = reader.read_u32_le();
+    if (projectileCount < 0x1000) {
+        reader.skip(int(projectileCount) * 8);
+        reader.skip(0x9c + 0xc + 0x12f);    // equipped armaments and items, physick, face data
+        output.storageBox = readInventory(reader, 0x780, 0x80);
+    }
+
+    output.inventoryItems = resolveItems(output.inventory, output);
+    output.storageItems = resolveItems(output.storageBox, output);
     return output;
 }
 

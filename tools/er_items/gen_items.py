@@ -18,7 +18,16 @@ Param fields used (found by correlating with the icon atlases and known items):
     EquipParamAccessory  +0x26 iconId
     EquipParamGem        +0x18 iconId
     EquipParamGoods      +0x20 sortId, +0x72 sortGroupId (the in-game inventory sorts by
-                         sortId and draws a separator wherever sortGroupId changes)
+                         sortId and draws a separator wherever sortGroupId changes),
+                         +0x3A maxNum (No. Held), +0x70 maxRepositoryNum (Stored)
+    EquipParamWeapon     +0x08 sortId, +0x190 sortGroupId, +0x235 maxArrowQuantity
+    EquipParamProtector  +0x04 sortId, +0xD8 sortGroupId
+    EquipParamAccessory  +0x1C sortId, +0x33 sortGroupId
+    EquipParamGem        +0x28 sortId, +0x07 sortGroupId
+    (the sortGroupId bytes split each category into contiguous runs when ordered by sortId,
+    matching the separators in the game's Bolstering Materials view)
+
+Short item effects ("Item Effect" in the detail view) come from the *Info.fmg tables.
 
 Requires pycryptodome, zstandard and Pillow.
 """
@@ -82,7 +91,7 @@ def load_names(archives):
         for fmg_name, data in archives.bnd(path).items():
             # DLC text lives in e.g. GoodsName_dlc01.fmg; merge it into GoodsName.fmg
             base = re.sub(r"_dlc\d+(?=\.fmg$)", "", fmg_name)
-            if not base.endswith("Name.fmg"):
+            if not base.endswith(("Name.fmg", "Info.fmg")):
                 continue
             table = names.setdefault(base, {})
             for item_id, text in erdata.parse_fmg2(data).items():
@@ -153,42 +162,58 @@ def main(game_dir, repo_root, with_icons=True, icon_size=128):
 
     items = []
 
-    def add(type_nibble, item_id, category, name, icon_id, sort_id=-1, sort_group=0):
-        items.append(((type_nibble << 28) | item_id, category, name, icon_id, sort_id, sort_group))
+    def i32(row, offset):
+        return struct.unpack_from("<i", row, offset)[0]
 
-    goods_names = names.get("GoodsName.fmg", {})
+    def u16(row, offset):
+        return struct.unpack_from("<H", row, offset)[0]
+
+    def add(type_nibble, item_id, category, name, icon_id, sort_id, sort_group, effect="",
+            max_held=0, max_stored=0):
+        items.append(((type_nibble << 28) | item_id, category, name, icon_id, sort_id, sort_group,
+                      effect, max_held, max_stored))
+
+    def tables(kind):
+        return names.get(f"{kind}Name.fmg", {}), names.get(f"{kind}Info.fmg", {})
+
+    goods_names, goods_info = tables("Goods")
     for item_id, row in sorted(rows("EquipParamGoods.param").items()):
         name = goods_names.get(item_id)
         category = GOODS_TYPES.get(row[0x3E])
         if name and category:
-            add(TYPE_GOODS, item_id, category, name, struct.unpack_from("<H", row, 0x30)[0],
-                struct.unpack_from("<i", row, 0x20)[0], row[0x72])
+            add(TYPE_GOODS, item_id, category, name, u16(row, 0x30), i32(row, 0x20), row[0x72],
+                goods_info.get(item_id, ""), u16(row, 0x3A), u16(row, 0x70))
 
-    weapon_names = names.get("WeaponName.fmg", {})
+    weapon_names, weapon_info = tables("Weapon")
     for item_id, row in sorted(rows("EquipParamWeapon.param").items()):
         name = weapon_names.get(item_id)
         if name:
-            wep_type = struct.unpack_from("<H", row, 0x1A6)[0]
-            add(TYPE_WEAPON, item_id, weapon_category(wep_type), name, struct.unpack_from("<H", row, 0xBE)[0])
+            category = weapon_category(u16(row, 0x1A6))
+            # Arrows and bolts stack; other weapons are one item per handle.
+            max_held = row[0x235] if category == "Ammunition" else 0
+            add(TYPE_WEAPON, item_id, category, name, u16(row, 0xBE), i32(row, 0x08), row[0x190],
+                weapon_info.get(item_id, ""), max_held)
 
-    protector_names = names.get("ProtectorName.fmg", {})
+    protector_names, protector_info = tables("Protector")
     for item_id, row in sorted(rows("EquipParamProtector.param").items()):
         name = protector_names.get(item_id)
         if name:
-            add(TYPE_PROTECTOR, item_id, protector_category(item_id), name,
-                struct.unpack_from("<H", row, 0xA6)[0])
+            add(TYPE_PROTECTOR, item_id, protector_category(item_id), name, u16(row, 0xA6),
+                i32(row, 0x04), row[0xD8], protector_info.get(item_id, ""))
 
-    accessory_names = names.get("AccessoryName.fmg", {})
+    accessory_names, accessory_info = tables("Accessory")
     for item_id, row in sorted(rows("EquipParamAccessory.param").items()):
         name = accessory_names.get(item_id)
         if name:
-            add(TYPE_ACCESSORY, item_id, "Talismans", name, struct.unpack_from("<H", row, 0x26)[0])
+            add(TYPE_ACCESSORY, item_id, "Talismans", name, u16(row, 0x26), i32(row, 0x1C), row[0x33],
+                accessory_info.get(item_id, ""))
 
-    gem_names = names.get("GemName.fmg", {})
+    gem_names, gem_info = tables("Gem")
     for item_id, row in sorted(rows("EquipParamGem.param").items()):
         name = gem_names.get(item_id)
         if name:
-            add(TYPE_GEM, item_id, "AshesOfWar", name, struct.unpack_from("<H", row, 0x18)[0])
+            add(TYPE_GEM, item_id, "AshesOfWar", name, u16(row, 0x18), i32(row, 0x28), row[0x07],
+                gem_info.get(item_id, ""))
 
     if with_icons:
         sprites, textures = icon_sprites(archives)
@@ -206,10 +231,11 @@ def main(game_dir, repo_root, with_icons=True, icon_size=128):
         "namespace fssm::parse::er {",
         f"    const std::array<BaseItem, {len(items)}> ALL_ITEMS = {{",
     ]
-    for item_id, category, name, icon_id, sort_id, sort_group in sorted(items):
+    for item_id, category, name, icon_id, sort_id, sort_group, effect, max_held, max_stored in sorted(items):
         image = str(icon_id) if icon_id in icons else ""
         lines.append(f"        BaseItem{{0x{item_id:08x}, ItemCategory::{category}, "
-                     f"{cpp_string(name)}, {cpp_string(image)}, {sort_id}, {sort_group}}},")
+                     f"{cpp_string(name)}, {cpp_string(image)}, {sort_id}, {sort_group}, "
+                     f"{max_held}, {max_stored}, {cpp_string(effect)}}},")
     lines += ["    };", "}", ""]
     out_path = os.path.join(repo_root, "src", "parse", "EldenRing", "Items.cpp")
     with open(out_path, "w", encoding="utf-8", newline="\r\n") as f:

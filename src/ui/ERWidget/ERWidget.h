@@ -3,6 +3,7 @@
 #include <QStandardItemModel>
 
 #include "CharInfo.h"
+#include "Inventory.h"
 #include "../BaseGameWidget.h"
 
 namespace fssm::ui::er {
@@ -39,4 +40,5 @@ private:
     TabWidget* m_charTabs = nullptr;
     fssm::ui::er::CharsListModel* m_model = nullptr;
     fssm::ui::er::CharacterInfoWidget* m_charInfoWidget = nullptr;
+    fssm::ui::er::InventoryWidget* m_inventoryWidget = nullptr;
 };

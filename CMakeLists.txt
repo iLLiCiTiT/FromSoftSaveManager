@@ -87,6 +87,7 @@ add_executable(FromSoftSaveManager
         src/ui/SekiroWidget/SekiroWidget.cpp
         src/ui/ERWidget/ERWidget.cpp
         src/ui/ERWidget/CharInfo.cpp
+        src/ui/ERWidget/Inventory.cpp
 )
 
 if (FSSM_USE_INV_IMAGES)
