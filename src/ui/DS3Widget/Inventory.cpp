@@ -232,14 +232,13 @@ InventoryWidget::Layout InventoryWidget::computeLayout() const {
 
     l.panel = r;
     const QRect inner = r.adjusted(px(14), px(8), -px(14), -px(12));
-    l.categoryLabel = QRect(inner.left() + px(8), inner.top(), inner.width() - px(16), px(28));
 
-    // Category tabs; a wider panel shows more of them.
-    const int tabsTop = l.categoryLabel.bottom() + px(8);
-    const int tabHeight = px(58);
+    // Category tabs (the name shows as a tooltip); a wider panel shows more of them.
+    const int tabsTop = inner.top() + px(6);
+    const int tabHeight = px(56);
     const int arrowW = px(26);
     const int tabsWidth = inner.width() - 2 * arrowW;
-    const int maxTabWidth = int(tabHeight * 1.2);
+    const int maxTabWidth = int(tabHeight * 0.85);
     l.visibleTabs = std::clamp(tabsWidth / maxTabWidth, 5, int(CATEGORY_ORDER.size()));
     l.tabWidth = std::min(tabsWidth / l.visibleTabs, maxTabWidth);
     const int tabsLeft = inner.left() + (inner.width() - l.tabWidth * l.visibleTabs) / 2;
@@ -255,7 +254,7 @@ InventoryWidget::Layout InventoryWidget::computeLayout() const {
     l.gridFrame = QRect(inner.left(), frameTop, inner.width(), l.detail.top() - px(8) - frameTop);
     const QRect frameInner = l.gridFrame.adjusted(px(12), px(10), -px(16), -px(10));
     // As many columns as fit at a comfortable tile size, never fewer than the game's five.
-    l.columns = std::max(5, frameInner.width() / px(80));
+    l.columns = std::max(5, frameInner.width() / px(64));
     l.cellWidth = frameInner.width() / l.columns;
     l.rowHeight = int(l.cellWidth * 1.05);
     l.grid = QRect(frameInner.left() + (frameInner.width() - l.cellWidth * l.columns) / 2, frameInner.top(),
@@ -332,28 +331,24 @@ void InventoryWidget::paintEvent(QPaintEvent* event) {
 void InventoryWidget::drawCategories(QPainter& painter) {
     const Layout& l = m_layout;
     const double s = l.scale;
-    painter.setFont(serifFont(int(20 * s)));
-    drawShadowText(painter, l.categoryLabel.adjusted(int(30 * s), 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter,
-                   categoryLabel(CATEGORY_ORDER[m_category]));
-    drawGoldRule(painter, l.categoryLabel.left(), l.categoryLabel.right(), l.categoryLabel.bottom() + 2, 220);
-
     const int w = l.tabWidth;
     for (int i = 0; i < l.visibleTabs; ++i) {
         const int categoryIdx = m_tabOffset + i;
         if (categoryIdx >= int(CATEGORY_ORDER.size())) break;
         const bool selected = categoryIdx == m_category;
+        const bool hovered = !selected && categoryIdx == m_hoverTab;
         QRect cell(l.tabs.left() + i * w, l.tabs.top(), w, l.tabs.height());
-        cell = selected ? cell.adjusted(1, -int(6 * s), -1, int(4 * s)) : cell.adjusted(int(5 * s), int(4 * s), -int(5 * s), -int(2 * s));
+        cell = selected ? cell.adjusted(1, -int(5 * s), -1, int(3 * s)) : cell.adjusted(int(3 * s), int(3 * s), -int(3 * s), -int(2 * s));
 
-        painter.setOpacity(selected ? 1.0 : 0.42);
+        painter.setOpacity(selected ? 1.0 : (hovered ? 0.75 : 0.4));
         painter.drawPixmap(cell, m_tabBackground);
-        painter.setOpacity(selected ? 1.0 : 0.72);
+        painter.setOpacity(selected || hovered ? 1.0 : 0.7);
         const QString iconName = fromView(fssm::parse::ds3::getCategoryIcon(CATEGORY_ORDER[categoryIdx]));
-        const QPixmap icon = scaled(":/ds3_images/" + iconName, cell.size() * (selected ? 0.9 : 0.82));
+        const QPixmap icon = scaled(":/ds3_images/" + iconName, cell.size() * (selected ? 1.05 : 1.0));
         painter.drawPixmap(cell.center().x() - icon.width() / 2 + 1, cell.center().y() - icon.height() / 2 + 1, icon);
         painter.setOpacity(1.0);
-        if (selected) {
-            painter.setPen(QPen(QColor(210, 200, 180, 160), 1));
+        if (selected || hovered) {
+            painter.setPen(QPen(selected ? QColor(210, 200, 180, 160) : QColor(214, 170, 96, 150), 1));
             painter.setBrush(Qt::NoBrush);
             painter.drawRect(cell.adjusted(0, 0, -1, -1));
         }
@@ -573,6 +568,10 @@ void InventoryWidget::mouseMoveEvent(QMouseEvent* event) {
         update();
     }
     const int tab = m_hasCharacter ? tabIndexAt(event->pos()) : -1;
+    if (tab != m_hoverTab) {
+        m_hoverTab = tab;
+        update();
+    }
     setToolTip(tab >= 0 ? categoryLabel(CATEGORY_ORDER[tab]) : QString());
     QWidget::mouseMoveEvent(event);
 }
@@ -611,6 +610,7 @@ void InventoryWidget::wheelEvent(QWheelEvent* event) {
 
 void InventoryWidget::leaveEvent(QEvent* event) {
     m_hoverItem = -1;
+    m_hoverTab = -1;
     update();
     QWidget::leaveEvent(event);
 }

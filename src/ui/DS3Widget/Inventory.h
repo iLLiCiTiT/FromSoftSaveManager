@@ -38,7 +38,6 @@ private:
     struct Layout {
         double scale = 1.0;
         QRect panel;
-        QRect categoryLabel;
         QRect leftArrow;
         QRect rightArrow;
         QRect tabs;
@@ -73,6 +72,7 @@ private:
     int m_tabOffset = 0;            // first visible tab
     int m_scroll = 0;               // pixels
     int m_hoverItem = -1;
+    int m_hoverTab = -1;            // index into CATEGORY_ORDER
     int m_selectedItem = 0;
 
     Layout m_layout;
