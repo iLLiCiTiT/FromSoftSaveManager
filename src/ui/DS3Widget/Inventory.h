@@ -8,9 +8,9 @@
 #include "../../parse/DS3/SaveFile.h"
 
 namespace fssm::ui::ds3 {
-// Inventory screen drawn like the game's: category tabs above a five column
-// grid of items standing on dishes (counts, red seals on equipped items) and a
-// detail panel for the selected item.
+// Inventory screen drawn like the game's: category tabs above a grid of items
+// standing on dishes (counts, red seals on equipped items), with the selected
+// item's details below.
 class InventoryWidget: public QWidget {
     Q_OBJECT
 public:
@@ -37,23 +37,25 @@ private:
 
     struct Layout {
         double scale = 1.0;
-        QRect leftPanel;
-        QRect detailPanel;          // empty when the widget is too narrow
+        QRect panel;
         QRect categoryLabel;
         QRect leftArrow;
         QRect rightArrow;
         QRect tabs;
         int tabWidth = 0;
+        int visibleTabs = 5;
         QRect gridFrame;
-        QRect gridTitle;
         QRect grid;
+        int columns = 5;
         int cellWidth = 0;
         int rowHeight = 0;
+        QRect detail;               // selected item, below the grid
     };
 
     Layout computeLayout() const;
     void rebuildVisibleItems();
     void selectCategory(int category);
+    void keepCategoryVisible();
     int maxScroll() const;
     int itemIndexAt(const QPoint& pos) const;
     int tabIndexAt(const QPoint& pos) const;
@@ -63,9 +65,6 @@ private:
     void drawCategories(QPainter& painter);
     void drawGrid(QPainter& painter);
     void drawDetail(QPainter& painter);
-
-    static constexpr int COLUMNS = 5;
-    static constexpr int VISIBLE_TABS = 5;
 
     std::vector<Entry> m_entries;
     std::vector<const Entry*> m_visible;
