@@ -8,9 +8,9 @@
 #include "../../parse/EldenRing/SaveFile.h"
 
 namespace fssm::ui::er {
-// Inventory screen drawn like the game's: category tabs, a five column grid
-// split into sort groups by separator lines, and a detail panel with the
-// item's counts, effect and large icon.
+// Inventory screen drawn like the game's: category tabs, an item grid split
+// into sort groups by separator lines (as many columns as fit, at least the
+// game's five) and a strip under it with the selected item's details.
 class InventoryWidget: public QWidget {
     Q_OBJECT
 public:
@@ -45,25 +45,25 @@ private:
 
     struct Layout {
         double scale = 1.0;
-        QRect leftPanel;
-        QRect detailPanel;          // empty when the widget is too narrow
-        QRect header;
-        QRect categoryLabel;
+        QRect panel;
         QRect tabs;
         int tabWidth = 0;
+        int visibleTabs = 5;
         QRect leftButton;
         QRect rightButton;
-        QRect itemName;
         QRect grid;
+        int columns = 5;
         int cellWidth = 0;
         int rowHeight = 0;
         int separatorGap = 0;
+        QRect detail;               // selected item, under the grid
     };
 
     Layout computeLayout() const;
     void rebuildVisibleItems();
     void layoutRows();
     void selectCategory(int category);
+    void keepCategoryVisible();
     void selectItem(int index);
     int contentHeight() const;
     int maxScroll() const;
@@ -73,13 +73,9 @@ private:
     const Entry* currentEntry() const;
     QPixmap scaled(const QString& resource, const QSize& size);
     QPixmap itemIcon(const Entry& entry, const QSize& size);
-    void drawHeader(QPainter& painter);
     void drawTabs(QPainter& painter);
     void drawGrid(QPainter& painter);
     void drawDetail(QPainter& painter);
-
-    static constexpr int COLUMNS = 5;
-    static constexpr int VISIBLE_TABS = 5;
 
     std::vector<Entry> m_entries;
     std::vector<const Entry*> m_visible;
@@ -89,6 +85,7 @@ private:
     int m_tabOffset = 0;            // first visible tab
     int m_scroll = 0;               // pixels
     int m_hoverItem = -1;
+    int m_hoverTab = -1;            // index into the tab list
     int m_selectedItem = 0;
 
     Layout m_layout;

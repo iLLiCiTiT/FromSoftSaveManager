@@ -49,8 +49,8 @@ namespace {
     }};
 
     // Reference layout size; everything scales with the widget.
-    constexpr int DESIGN_W = 860;
-    constexpr int DESIGN_H = 540;
+    constexpr int DESIGN_W = 560;
+    constexpr int DESIGN_H = 470;
 
     const QColor TEXT_COLOR(228, 224, 210);
     const QColor DIM_TEXT_COLOR(150, 144, 128);
@@ -201,7 +201,7 @@ void InventoryWidget::layoutRows() {
         if (row.groupStart) y += m_layout.separatorGap;
         row.top = y;
         const uint8_t group = m_visible[i]->item.baseItem.sortGroup;
-        while (i < int(m_visible.size()) && row.count < COLUMNS
+        while (i < int(m_visible.size()) && row.count < m_layout.columns
                && (!grouped || m_visible[i]->item.baseItem.sortGroup == group)) {
             ++row.count;
             ++i;
@@ -211,13 +211,18 @@ void InventoryWidget::layoutRows() {
     }
 }
 
+void InventoryWidget::keepCategoryVisible() {
+    const int visible = std::max(1, m_layout.visibleTabs);
+    if (m_category < m_tabOffset) m_tabOffset = m_category;
+    if (m_category >= m_tabOffset + visible) m_tabOffset = m_category - visible + 1;
+    m_tabOffset = std::clamp(m_tabOffset, 0, std::max(0, int(TABS.size()) - visible));
+}
+
 void InventoryWidget::selectCategory(int category) {
     category = std::clamp(category, 0, int(TABS.size()) - 1);
     if (category == m_category) return;
     m_category = category;
-    // Keep the selected tab inside the visible strip.
-    if (m_category < m_tabOffset) m_tabOffset = m_category;
-    if (m_category >= m_tabOffset + VISIBLE_TABS) m_tabOffset = m_category - VISIBLE_TABS + 1;
+    keepCategoryVisible();
     m_scroll = 0;
     m_selectedItem = 0;
     m_hoverItem = -1;
@@ -245,40 +250,40 @@ void InventoryWidget::selectItem(int index) {
 InventoryWidget::Layout InventoryWidget::computeLayout() const {
     Layout l;
     const QRect r = rect();
-    l.scale = std::clamp(std::min(double(r.width()) / DESIGN_W, double(r.height()) / DESIGN_H), 0.5, 1.6);
+    l.scale = std::clamp(std::min(double(r.width()) / DESIGN_W, double(r.height()) / DESIGN_H), 0.6, 1.4);
     const double s = l.scale;
     const auto px = [s](double v) { return int(std::round(v * s)); };
 
-    // The detail panel needs room for the grid next to it.
-    const bool showDetail = r.width() >= px(600);
-    const int leftWidth = showDetail ? std::max(px(330), r.width() * 47 / 100) : r.width();
-    l.leftPanel = QRect(r.left(), r.top(), leftWidth, r.height());
-    if (showDetail) {
-        l.detailPanel = QRect(l.leftPanel.right() + 1 + px(18), r.top(),
-                              r.right() - l.leftPanel.right() - px(18), r.height());
-    }
+    l.panel = r;
+    const QRect inner = r.adjusted(px(12), px(8), -px(12), -px(10));
 
-    const QRect inner = l.leftPanel.adjusted(px(14), px(10), -px(10), -px(10));
-    l.header = QRect(inner.left(), inner.top(), inner.width(), px(40));
-    l.categoryLabel = QRect(inner.left() + px(18), l.header.bottom() + px(10), inner.width() - px(18), px(26));
-
-    const int tabsTop = l.categoryLabel.bottom() + px(8);
-    const int tabHeight = px(58);
+    // Category tabs (the name shows as a tooltip); a wider panel shows more of them.
+    const int tabsTop = inner.top() + px(4);
+    const int tabHeight = px(56);
     const int buttonW = px(34);
-    const int tabsWidth = inner.width() - 2 * buttonW - px(8);
-    l.tabWidth = std::min(tabsWidth / VISIBLE_TABS, px(70));
-    const int tabsLeft = inner.left() + (inner.width() - l.tabWidth * VISIBLE_TABS) / 2;
-    l.tabs = QRect(tabsLeft, tabsTop, l.tabWidth * VISIBLE_TABS, tabHeight);
+    const int tabsWidth = inner.width() - 2 * (buttonW + px(4));
+    const int maxTabWidth = int(tabHeight * 0.95);
+    l.visibleTabs = std::clamp(tabsWidth / maxTabWidth, 5, int(TABS.size()));
+    l.tabWidth = std::min(tabsWidth / l.visibleTabs, maxTabWidth);
+    const int tabsLeft = inner.left() + (inner.width() - l.tabWidth * l.visibleTabs) / 2;
+    l.tabs = QRect(tabsLeft, tabsTop, l.tabWidth * l.visibleTabs, tabHeight);
     l.leftButton = QRect(tabsLeft - buttonW - px(4), tabsTop, buttonW, tabHeight);
     l.rightButton = QRect(l.tabs.right() + 1 + px(4), tabsTop, buttonW, tabHeight);
 
-    l.itemName = QRect(inner.left() + px(18), l.tabs.bottom() + px(10), inner.width() - px(18), px(28));
-    const int gridTop = l.itemName.bottom() + px(12);
+    // Selected item details along the bottom.
+    const int detailHeight = px(104);
+    l.detail = QRect(inner.left(), inner.bottom() - detailHeight + 1, inner.width(), detailHeight);
+
+    // As many columns as fit at a comfortable tile size, never fewer than the game's five.
+    const int gridTop = l.tabs.bottom() + 1 + px(10);
     const int scrollW = px(14);
-    l.cellWidth = (inner.width() - px(18) - scrollW) / COLUMNS;
-    l.rowHeight = int(l.cellWidth * 1.0);
-    l.separatorGap = px(14);
-    l.grid = QRect(inner.left() + px(14), gridTop, l.cellWidth * COLUMNS, std::max(0, inner.bottom() - gridTop));
+    const int gridWidth = inner.width() - px(8) - scrollW;
+    l.columns = std::max(5, gridWidth / px(86));
+    l.cellWidth = gridWidth / l.columns;
+    l.rowHeight = l.cellWidth;
+    l.separatorGap = px(12);
+    l.grid = QRect(inner.left() + px(4), gridTop, l.cellWidth * l.columns,
+                   std::max(0, l.detail.top() - px(10) - gridTop));
     return l;
 }
 
@@ -294,6 +299,7 @@ int InventoryWidget::maxScroll() const {
 void InventoryWidget::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
     m_layout = computeLayout();
+    keepCategoryVisible();
     m_scaledCache.clear();
     layoutRows();
     m_scroll = std::clamp(m_scroll, 0, maxScroll());
@@ -352,11 +358,10 @@ void InventoryWidget::paintEvent(QPaintEvent* event) {
         layoutRows();
     }
 
-    drawPane(painter, m_layout.leftPanel);
-    drawHeader(painter);
+    drawPane(painter, m_layout.panel);
     if (!m_hasCharacter) {
         painter.setFont(serifFont(int(20 * m_layout.scale)));
-        drawText(painter, m_layout.leftPanel, Qt::AlignCenter, "No character selected", DIM_TEXT_COLOR);
+        drawText(painter, m_layout.panel, Qt::AlignCenter, "No character selected", DIM_TEXT_COLOR);
         return;
     }
     drawTabs(painter);
@@ -364,22 +369,9 @@ void InventoryWidget::paintEvent(QPaintEvent* event) {
     drawDetail(painter);
 }
 
-void InventoryWidget::drawHeader(QPainter& painter) {
-    const Layout& l = m_layout;
-    const double s = l.scale;
-    const QPixmap icon = scaled(":/er_images/inventory_icon", QSize(l.header.height(), l.header.height()));
-    painter.drawPixmap(l.header.left(), l.header.top(), icon);
-    painter.setFont(serifFont(int(24 * s)));
-    drawText(painter, l.header.adjusted(icon.width() + int(10 * s), 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter,
-             "Inventory");
-}
-
 void InventoryWidget::drawTabs(QPainter& painter) {
     const Layout& l = m_layout;
     const double s = l.scale;
-    painter.setFont(serifFont(int(18 * s)));
-    drawText(painter, l.categoryLabel, Qt::AlignLeft | Qt::AlignVCenter, TABS[m_category].label);
-
     // Strip behind the tabs.
     const QRect strip(l.leftButton.left(), l.tabs.top(), l.rightButton.right() - l.leftButton.left(), l.tabs.height());
     painter.save();
@@ -388,10 +380,11 @@ void InventoryWidget::drawTabs(QPainter& painter) {
     painter.restore();
 
     const int w = l.tabWidth;
-    for (int i = 0; i < VISIBLE_TABS; ++i) {
+    for (int i = 0; i < l.visibleTabs; ++i) {
         const int tabIdx = m_tabOffset + i;
         if (tabIdx >= int(TABS.size())) break;
         const bool selected = tabIdx == m_category;
+        const bool hovered = !selected && tabIdx == m_hoverTab;
         const QRect cell(l.tabs.left() + i * w, l.tabs.top(), w, l.tabs.height());
         if (selected) {
             const QSize cursorSize(int(w * 1.3), int(l.tabs.height() * 1.25));
@@ -399,8 +392,15 @@ void InventoryWidget::drawTabs(QPainter& painter) {
             painter.drawPixmap(cell.center().x() - cursor.width() / 2, cell.center().y() - cursor.height() / 2 + int(2 * s),
                                cursor);
         }
-        painter.setOpacity(selected ? 1.0 : 0.55);
-        const QPixmap icon = scaled(QString(":/er_images/") + TABS[tabIdx].icon, cell.size() * 0.78);
+        if (hovered) {
+            const QSize cursorSize(int(w * 1.3), int(l.tabs.height() * 1.25));
+            painter.setOpacity(0.35);
+            painter.drawPixmap(cell.center().x() - cursorSize.width() / 2,
+                               cell.center().y() - cursorSize.height() / 2 + int(2 * s),
+                               scaled(":/er_images/tab_cursor", cursorSize).scaled(cursorSize));
+        }
+        painter.setOpacity(selected ? 1.0 : hovered ? 0.85 : 0.55);
+        const QPixmap icon = scaled(QString(":/er_images/") + TABS[tabIdx].icon, cell.size() * 0.9);
         painter.drawPixmap(cell.center().x() - icon.width() / 2, cell.center().y() - icon.height() / 2, icon);
         painter.setOpacity(1.0);
     }
@@ -423,10 +423,6 @@ void InventoryWidget::drawTabs(QPainter& painter) {
 void InventoryWidget::drawGrid(QPainter& painter) {
     const Layout& l = m_layout;
     const double s = l.scale;
-
-    const Entry* current = currentEntry();
-    painter.setFont(serifFont(int(18 * s)));
-    drawText(painter, l.itemName, Qt::AlignLeft | Qt::AlignVCenter, current != nullptr ? current->title : QString());
 
     painter.save();
     painter.setClipRect(l.grid.adjusted(0, 0, 0, 1), Qt::IntersectClip);
@@ -454,7 +450,7 @@ void InventoryWidget::drawGrid(QPainter& painter) {
             painter.setOpacity(1.0);
         }
         if (top + rh < l.grid.top()) continue;
-        for (int col = 0; col < COLUMNS; ++col) {
+        for (int col = 0; col < l.columns; ++col) {
             const QRect cell = cellRect(r, col);
             const QPoint slotPos(cell.center().x() - slot.width() / 2, cell.center().y() - slot.height() / 2);
             if (col >= row.count) {
@@ -503,92 +499,82 @@ void InventoryWidget::drawGrid(QPainter& painter) {
 }
 
 void InventoryWidget::drawDetail(QPainter& painter) {
-    const QRect panel = m_layout.detailPanel;
-    if (panel.isEmpty()) return;
-    const Entry* entry = currentEntry();
-    if (entry == nullptr) return;
+    const QRect area = m_layout.detail;
     const double s = m_layout.scale;
     const auto px = [s](double v) { return int(std::round(v * s)); };
-    const QRect inner = panel.adjusted(px(6), px(54), -px(12), -px(12));
+    painter.save();
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(QColor(10, 10, 8, 120));
+    painter.drawRect(area);
+    painter.restore();
+    drawRule(painter, area.left(), area.right(), area.top(), 150);
+    const Entry* entry = currentEntry();
+    if (entry == nullptr) return;
     const InventoryItem& item = entry->item;
 
-    // Name, then a vertical rule along the stats like in the game.
-    const QRect name(inner.left(), inner.top(), inner.width(), px(32));
-    painter.setFont(serifFont(px(22)));
-    drawText(painter, name, Qt::AlignLeft | Qt::AlignVCenter, entry->title);
-
-    // Large icon in its frame, top right.
-    const int frameSize = std::min(px(150), inner.width() * 2 / 5);
-    const QRect frame(inner.right() - frameSize, name.bottom() + px(16), frameSize, int(frameSize * 1.05));
+    // Large icon in its frame at the left.
+    const int frameH = area.height() - px(8);
+    const QRect frame(area.left() + px(4), area.top() + px(4), int(frameH * 0.95), frameH);
     painter.drawPixmap(frame, scaled(":/er_images/item_frame", frame.size()).scaled(frame.size()));
     const QPixmap icon = itemIcon(*entry, frame.size() * 0.82);
     painter.drawPixmap(frame.center().x() - icon.width() / 2, frame.center().y() - icon.height() / 2, icon);
 
-    const int textLeft = inner.left() + px(28);
-    const int textRight = frame.left() - px(14);
-    const int lineH = px(28);
-    painter.setFont(serifFont(px(18)));
-    int y = name.bottom() + px(54);
-
-    const auto countRow = [&](const QString& label, const QString& value, const QString& max) {
-        const QRect line(textLeft, y, textRight - textLeft, lineH);
-        drawText(painter, line, Qt::AlignLeft | Qt::AlignVCenter, label);
-        const int valueRight = line.left() + line.width() * 72 / 100;
-        drawText(painter, QRect(line.left(), y, valueRight - line.left(), lineH), Qt::AlignRight | Qt::AlignVCenter,
-                 value + " /");
-        drawText(painter, QRect(valueRight, y, line.right() - valueRight, lineH), Qt::AlignRight | Qt::AlignVCenter, max);
-        y += lineH + px(4);
+    // Text columns: name and effect, No. Held / Stored, then upgrade and status.
+    // When narrow, upgrade and status go under the counts.
+    const QRect text(frame.right() + px(14), area.top() + px(6), area.right() - frame.right() - px(18),
+                     area.height() - px(12));
+    const bool wide = text.width() >= px(560);
+    const int lineH = text.height() / 3;
+    const int col1W = text.width() * (wide ? 44 : 52) / 100;
+    const int col2W = wide ? text.width() * 28 / 100 : text.width() - col1W;
+    const int gap = px(16);
+    const QRect col1(text.left(), text.top(), col1W - gap, text.height());
+    const QRect col2(text.left() + col1W, text.top(), col2W - (wide ? gap : 0), text.height());
+    const QRect col3(text.left() + col1W + col2W, text.top(), text.width() - col1W - col2W, text.height());
+    const auto line = [&](const QRect& col, int row) {
+        return QRect(col.left(), col.top() + row * lineH, col.width(), lineH);
     };
-    const bool stacks = item.baseItem.maxHeld > 0;
-    if (stacks) {
-        const uint32_t maxHeld = std::max<uint32_t>(item.baseItem.maxHeld, item.quantity);
-        countRow("No. Held", QString::number(item.quantity), QString::number(maxHeld));
-        // Flasks and unique items can't go into the chest (stack size 1 there).
-        if (item.baseItem.maxStored > 1) {
-            countRow("Stored", QString::number(entry->stored), QString::number(item.baseItem.maxStored));
-        } else {
-            countRow("Stored", "-", "-");
-        }
-    } else {
-        countRow("No. Held", "1", "1");
-        countRow("Stored", "-", "-");
-    }
-    if (isWeapon(item) || item.equipped || item.inPouch) {
-        y += px(6);
-        const QRect line(textLeft, y, textRight - textLeft, lineH);
-        if (isWeapon(item)) {
-            drawText(painter, line, Qt::AlignLeft | Qt::AlignVCenter, "Upgrade");
-            drawText(painter, line, Qt::AlignRight | Qt::AlignVCenter,
-                     entry->upgradeLevel > 0 ? QString("+%1").arg(entry->upgradeLevel) : "-");
-            y += lineH + px(4);
-        }
-        if (item.equipped || item.inPouch) {
-            const QRect statusLine(textLeft, y, textRight - textLeft, lineH);
-            const int mark = px(20);
-            painter.drawPixmap(statusLine.left(), statusLine.center().y() - mark / 2,
-                               scaled(item.inPouch ? ":/er_images/pouch_mark" : ":/er_images/equip_mark", QSize(mark, mark)));
-            drawText(painter, statusLine.adjusted(mark + px(6), 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter,
-                     item.inPouch ? "In pouch / quick items" : "Equipped");
-            y += lineH + px(4);
-        }
-    }
-    const int ruleBottom = std::max(y, frame.bottom());
-    painter.save();
-    painter.setPen(QPen(QColor(GOLD_COLOR.red(), GOLD_COLOR.green(), GOLD_COLOR.blue(), 110), 1));
-    painter.drawLine(inner.left() + px(16), name.bottom() + px(12), inner.left() + px(16), ruleBottom);
-    painter.restore();
+    const auto valueRow = [&](const QRect& col, int row, const QString& label, const QString& value) {
+        const QRect r = line(col, row);
+        drawText(painter, r, Qt::AlignLeft | Qt::AlignVCenter, label);
+        if (!value.isEmpty()) drawText(painter, r, Qt::AlignRight | Qt::AlignVCenter, value);
+        drawRule(painter, r.left(), r.right(), r.bottom(), 90);
+    };
 
-    // Item effect.
+    painter.setFont(serifFont(px(19)));
+    drawText(painter, line(col1, 0), Qt::AlignLeft | Qt::AlignVCenter, entry->title);
+    painter.setFont(serifFont(px(15)));
     const QString effect = fromView(item.baseItem.effect);
     if (!effect.isEmpty()) {
-        y = ruleBottom + px(30);
-        painter.setFont(serifFont(px(18)));
-        drawText(painter, QRect(inner.left(), y, inner.width(), lineH), Qt::AlignLeft | Qt::AlignVCenter, "Item Effect");
-        drawRule(painter, inner.left(), inner.right(), y + lineH + px(2), 120);
-        y += lineH + px(8);
-        painter.setFont(serifFont(px(17)));
-        drawText(painter, QRect(textLeft, y, inner.right() - textLeft, inner.bottom() - y),
-                 Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap, effect);
+        const QRect effectRect(col1.left(), col1.top() + lineH, col1.width(), 2 * lineH);
+        drawText(painter, effectRect, Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap, effect, DIM_TEXT_COLOR.lighter(125));
+    }
+
+    // Counts.
+    QString held = "1 /  1";
+    QString stored = "- /  -";
+    if (item.baseItem.maxHeld > 0) {
+        const uint32_t maxHeld = std::max<uint32_t>(item.baseItem.maxHeld, item.quantity);
+        held = QString("%1 /  %2").arg(item.quantity).arg(maxHeld);
+        // Flasks and unique items can't go into the chest (stack size 1 there).
+        if (item.baseItem.maxStored > 1) stored = QString("%1 /  %2").arg(entry->stored).arg(item.baseItem.maxStored);
+    }
+    valueRow(col2, 0, "No. Held", held);
+    valueRow(col2, 1, "Stored", stored);
+
+    // Upgrade level and equipped / pouch status.
+    const QRect statusCol = wide ? col3 : col2;
+    int row = wide ? 0 : 2;
+    if (isWeapon(item) && row < 3) {
+        valueRow(statusCol, row++, "Upgrade", entry->upgradeLevel > 0 ? QString("+%1").arg(entry->upgradeLevel) : "-");
+    }
+    if ((item.equipped || item.inPouch) && row < 3) {
+        const QRect r = line(statusCol, row);
+        const int mark = std::min(px(20), lineH);
+        painter.drawPixmap(r.left(), r.center().y() - mark / 2,
+                           scaled(item.inPouch ? ":/er_images/pouch_mark" : ":/er_images/equip_mark", QSize(mark, mark)));
+        drawText(painter, r.adjusted(mark + px(6), 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter,
+                 item.inPouch ? "In pouch / quick items" : "Equipped");
     }
 }
 
@@ -618,6 +604,10 @@ void InventoryWidget::mouseMoveEvent(QMouseEvent* event) {
         update();
     }
     const int tab = m_hasCharacter ? tabIndexAt(event->pos()) : -1;
+    if (tab != m_hoverTab) {
+        m_hoverTab = tab;
+        update();
+    }
     setToolTip(tab >= 0 ? TABS[tab].label : QString());
     QWidget::mouseMoveEvent(event);
 }
@@ -681,6 +671,7 @@ void InventoryWidget::keyPressEvent(QKeyEvent* event) {
 
 void InventoryWidget::leaveEvent(QEvent* event) {
     m_hoverItem = -1;
+    m_hoverTab = -1;
     update();
     QWidget::leaveEvent(event);
 }
