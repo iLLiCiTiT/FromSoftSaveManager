@@ -11,6 +11,7 @@
 #include "../src/parse/SL2File.h"
 #include "../src/parse/Sekiro/SaveData.h"
 #include "../src/parse/Sekiro/Items.h"
+#include "../src/parse/Sekiro/SaveFile.h"
 
 using namespace fssm::parse;
 
@@ -51,6 +52,18 @@ static bool check_file(const std::string& path) {
             ok = false;
             std::printf("  %s ERROR %s\n", entry.name.c_str(), e.what());
         }
+    }
+    try {
+        for (const auto& c : sekiro::parse_sekiro_file(sl2).characters) {
+            const auto area = sekiro::findPlaceName(c.placeNameId);
+            std::printf("  character %d: %.*s, play time %u:%02u:%02u, vitality %u, attack power %u, "
+                        "HP %u/%u, posture %u/%u, sen %u, %zu items\n", c.index, int(area.size()), area.data(),
+                        c.playTime / 3600, (c.playTime / 60) % 60, c.playTime % 60, c.vitality, c.attackPower,
+                        c.hp, c.maxHp, c.posture, c.maxPosture, c.sen, c.inventoryItems.size());
+        }
+    } catch (const std::exception& e) {
+        ok = false;
+        std::printf("  parse_sekiro_file ERROR %s\n", e.what());
     }
     return ok;
 }

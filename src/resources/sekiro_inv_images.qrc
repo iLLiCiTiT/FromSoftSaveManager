@@ -6,6 +6,7 @@
         <file alias="12">images/sekiro/item_icons/12.png</file>
         <file alias="13">images/sekiro/item_icons/13.png</file>
         <file alias="14">images/sekiro/item_icons/14.png</file>
+        <file alias="15">images/sekiro/item_icons/15.png</file>
         <file alias="20">images/sekiro/item_icons/20.png</file>
         <file alias="21">images/sekiro/item_icons/21.png</file>
         <file alias="22">images/sekiro/item_icons/22.png</file>
@@ -90,6 +91,7 @@
         <file alias="442">images/sekiro/item_icons/442.png</file>
         <file alias="443">images/sekiro/item_icons/443.png</file>
         <file alias="450">images/sekiro/item_icons/450.png</file>
+        <file alias="460">images/sekiro/item_icons/460.png</file>
         <file alias="510">images/sekiro/item_icons/510.png</file>
         <file alias="520">images/sekiro/item_icons/520.png</file>
         <file alias="530">images/sekiro/item_icons/530.png</file>
@@ -161,6 +163,9 @@
         <file alias="717">images/sekiro/item_icons/717.png</file>
         <file alias="718">images/sekiro/item_icons/718.png</file>
         <file alias="719">images/sekiro/item_icons/719.png</file>
+        <file alias="752">images/sekiro/item_icons/752.png</file>
+        <file alias="754">images/sekiro/item_icons/754.png</file>
+        <file alias="756">images/sekiro/item_icons/756.png</file>
         <file alias="800">images/sekiro/item_icons/800.png</file>
         <file alias="801">images/sekiro/item_icons/801.png</file>
         <file alias="802">images/sekiro/item_icons/802.png</file>
@@ -180,6 +185,8 @@
         <file alias="818">images/sekiro/item_icons/818.png</file>
         <file alias="819">images/sekiro/item_icons/819.png</file>
         <file alias="820">images/sekiro/item_icons/820.png</file>
+        <file alias="821">images/sekiro/item_icons/821.png</file>
+        <file alias="822">images/sekiro/item_icons/822.png</file>
         <file alias="900">images/sekiro/item_icons/900.png</file>
         <file alias="910">images/sekiro/item_icons/910.png</file>
         <file alias="920">images/sekiro/item_icons/920.png</file>
@@ -187,6 +194,12 @@
         <file alias="940">images/sekiro/item_icons/940.png</file>
         <file alias="951">images/sekiro/item_icons/951.png</file>
         <file alias="961">images/sekiro/item_icons/961.png</file>
+        <file alias="972">images/sekiro/item_icons/972.png</file>
+        <file alias="973">images/sekiro/item_icons/973.png</file>
+        <file alias="974">images/sekiro/item_icons/974.png</file>
+        <file alias="975">images/sekiro/item_icons/975.png</file>
+        <file alias="976">images/sekiro/item_icons/976.png</file>
+        <file alias="977">images/sekiro/item_icons/977.png</file>
         <file alias="1000">images/sekiro/item_icons/1000.png</file>
         <file alias="1100">images/sekiro/item_icons/1100.png</file>
         <file alias="1101">images/sekiro/item_icons/1101.png</file>
@@ -261,6 +274,7 @@
         <file alias="1610">images/sekiro/item_icons/1610.png</file>
         <file alias="1620">images/sekiro/item_icons/1620.png</file>
         <file alias="1630">images/sekiro/item_icons/1630.png</file>
+        <file alias="1650">images/sekiro/item_icons/1650.png</file>
         <file alias="1700">images/sekiro/item_icons/1700.png</file>
         <file alias="1710">images/sekiro/item_icons/1710.png</file>
         <file alias="1720">images/sekiro/item_icons/1720.png</file>
