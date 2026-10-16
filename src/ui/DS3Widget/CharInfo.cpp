@@ -1,211 +1,138 @@
 #include "CharInfo.h"
 
-#include "../Utils.h"
-#include "../../parse/Parse.h"
+#include <QPaintEvent>
+#include <QPainter>
+#include <cmath>
+
+#include "Painting.h"
 
 namespace fssm::ui::ds3 {
-CharacterStatusWidget::CharacterStatusWidget(QWidget* parent): QWidget(parent) {
-    setAttribute(Qt::WA_TranslucentBackground, true);
+namespace {
+    constexpr int DESIGN_W = 900;
+    constexpr int DESIGN_H = 520;
 
-    QWidget* attributesWidget = new QWidget(this);
-    attributesWidget->setAttribute(Qt::WA_TranslucentBackground, true);
-
-    m_nameValueWidget = new QLabel("< Empty >", attributesWidget);
-    m_nameValueWidget->setAlignment(Qt::AlignCenter);
-    m_nameValueWidget->setAttribute(Qt::WA_TranslucentBackground, true);
-
-    PixmapLabel* levelIconWidget = new PixmapLabel(QPixmap(":/ds3_images/attr_level"), attributesWidget);
-    QLabel* levelLabelWidget = new QLabel("Level", attributesWidget);
-    m_levelValueWidget = new QLabel(attributesWidget);
-
-    PixmapLabel* soulsIconWidget = new PixmapLabel(QPixmap(":/ds3_images/attr_souls"), attributesWidget);
-    QLabel* soulsLabelWidget = new QLabel("Souls", attributesWidget);
-    m_soulsValueWidget = new QLabel(attributesWidget);
-
-    PixmapLabel* vigorIconWidget = new PixmapLabel(QPixmap(":/ds3_images/attr_vigor"), attributesWidget);
-    QLabel* vigorLabelWidget = new QLabel("Vitality", attributesWidget);
-    m_vigorValueWidget = new QLabel(attributesWidget);
-
-    PixmapLabel* attunementIconWidget = new PixmapLabel(QPixmap(":/ds3_images/attr_attunement"), attributesWidget);
-    QLabel* attunementLabelWidget = new QLabel("Attunement", attributesWidget);
-    m_attunementValueWidget = new QLabel(attributesWidget);
-
-    PixmapLabel* enduranceIconWidget = new PixmapLabel(QPixmap(":/ds3_images/attr_endurance"), attributesWidget);
-    QLabel* enduranceLabelWidget = new QLabel("Endurance", attributesWidget);
-    m_enduranceValueWidget = new QLabel(attributesWidget);
-
-    PixmapLabel* vitalityIconWidget = new PixmapLabel(QPixmap(":/ds3_images/attr_vitality"), attributesWidget);
-    QLabel* vitalityLabelWidget = new QLabel("Vitality", attributesWidget);
-    m_vitalityValueWidget = new QLabel(attributesWidget);
-
-    PixmapLabel* strengthIconWidget = new PixmapLabel(QPixmap(":/ds3_images/attr_strength"), attributesWidget);
-    QLabel* strengthLabelWidget = new QLabel("Strength", attributesWidget);
-    m_strengthValueWidget = new QLabel(attributesWidget);
-
-    PixmapLabel* dexterityIconWidget = new PixmapLabel(QPixmap(":/ds3_images/attr_dexterity"), attributesWidget);
-    QLabel* dexterityLabelWidget = new QLabel("Dexterity", attributesWidget);
-    m_dexterityValueWidget = new QLabel(attributesWidget);
-
-    PixmapLabel* intelligenceIconWidget = new PixmapLabel(QPixmap(":/ds3_images/attr_intelligence"), attributesWidget);
-    QLabel* intelligenceLabelWidget = new QLabel("Intelligence", attributesWidget);
-    m_intelligenceValueWidget = new QLabel(attributesWidget);
-
-    PixmapLabel* faithIconWidget = new PixmapLabel(QPixmap(":/ds3_images/attr_faith"), attributesWidget);
-    QLabel* faithLabelWidget = new QLabel("Faith", attributesWidget);
-    m_faithValueWidget = new QLabel(attributesWidget);
-
-    PixmapLabel* luckIconWidget = new PixmapLabel(QPixmap(":/ds3_images/attr_luck"), attributesWidget);
-    QLabel* luckLabelWidget = new QLabel("Luck>", attributesWidget);
-    m_luckValueWidget = new QLabel(attributesWidget);
-
-    QGridLayout* attributesLayout = new QGridLayout(attributesWidget);
-    attributesLayout->setContentsMargins(0, 0, 0, 0);
-
-    attributesLayout->addWidget(m_nameValueWidget, 0, 0, 1, 3);
-
-    const auto addGridRow = [](QGridLayout* layout, QLabel* labelW, QLabel* valueW, PixmapLabel* iconW = nullptr) {
-        int row = layout->rowCount();
-        labelW->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-        valueW->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-        labelW->setAttribute(Qt::WA_TranslucentBackground, true);
-        valueW->setAttribute(Qt::WA_TranslucentBackground, true);
-        if (iconW != nullptr) {
-            iconW->setAttribute(Qt::WA_TranslucentBackground, true);
-            layout->addWidget(iconW, row, 0);
-            layout->addWidget(labelW, row, 1);
-        } else {
-            layout->addWidget(labelW, row, 0, 1, 2);
-        }
-        layout->addWidget(valueW, row, 2);
+    struct StatRow {
+        QString icon;           // :/ds3_images/<icon>, empty for none
+        QString label;
+        QString value;
+        bool gapBefore = false; // the game separates stat groups with a blank line
     };
 
-    addGridRow(attributesLayout, levelLabelWidget, m_levelValueWidget, levelIconWidget);
-    addGridRow(attributesLayout, soulsLabelWidget, m_soulsValueWidget, soulsIconWidget);
-    addGridRow(attributesLayout, vigorLabelWidget, m_vigorValueWidget, vigorIconWidget);
-    addGridRow(attributesLayout, attunementLabelWidget, m_attunementValueWidget, attunementIconWidget);
-    addGridRow(attributesLayout, enduranceLabelWidget, m_enduranceValueWidget, enduranceIconWidget);
-    addGridRow(attributesLayout, vitalityLabelWidget, m_vitalityValueWidget, vitalityIconWidget);
-    addGridRow(attributesLayout, strengthLabelWidget, m_strengthValueWidget, strengthIconWidget);
-    addGridRow(attributesLayout, dexterityLabelWidget, m_dexterityValueWidget, dexterityIconWidget);
-    addGridRow(attributesLayout, intelligenceLabelWidget, m_intelligenceValueWidget, intelligenceIconWidget);
-    addGridRow(attributesLayout, faithLabelWidget, m_faithValueWidget, faithIconWidget);
-    addGridRow(attributesLayout, luckLabelWidget, m_luckValueWidget, luckIconWidget);
-
-    attributesLayout->setRowStretch(attributesLayout->rowCount(), 1);
-    attributesLayout->setColumnStretch(0, 0);
-    attributesLayout->setColumnStretch(1, 1);
-    attributesLayout->setColumnStretch(2, 1);
-
-    QWidget* statsWidget = new QWidget(this);
-    statsWidget->setAttribute(Qt::WA_TranslucentBackground, true);
-
-    PixmapLabel* hpIconWidget = new PixmapLabel(QPixmap(":/ds3_images/attr_hp"), statsWidget);
-    QLabel* hpLabel = new QLabel("HP", statsWidget);
-    m_hpValueWidget = new QLabel(statsWidget);
-
-    PixmapLabel* fpIconWidget = new PixmapLabel(QPixmap(":/ds3_images/attr_fp"), statsWidget);
-    QLabel* fpLabel = new QLabel("FP", statsWidget);
-    m_fpValueWidget = new QLabel(statsWidget);
-
-    PixmapLabel* staminaIconWidget = new PixmapLabel(QPixmap(":/ds3_images/attr_stamina"), statsWidget);
-    QLabel* staminaLabel = new QLabel("Stamina", statsWidget);
-    m_staminaValueWidget = new QLabel(statsWidget);
-
-    PixmapLabel* bleedResIconWidget = new PixmapLabel(QPixmap(":/ds3_images/attr_bleed_res"), statsWidget);
-    QLabel* bleedResLabel = new QLabel("Bleed", statsWidget);
-    m_bleedResValueWidget = new QLabel(statsWidget);
-
-    PixmapLabel* poisonResIconWidget = new PixmapLabel(QPixmap(":/ds3_images/attr_poison_res"), statsWidget);
-    QLabel* poisonResLabel = new QLabel("Poison", statsWidget);
-    m_poisonResValueWidget = new QLabel(statsWidget);
-
-    PixmapLabel* frostResIconWidget = new PixmapLabel(QPixmap(":/ds3_images/attr_frost_res"), statsWidget);
-    QLabel* frostResLabel = new QLabel("Frost", statsWidget);
-    m_frostResValueWidget = new QLabel(statsWidget);
-
-    PixmapLabel* curseResIconWidget = new PixmapLabel(QPixmap(":/ds3_images/attr_curse_res"), statsWidget);
-    QLabel* curseResLabel = new QLabel("Curse", statsWidget);
-    m_curseResValueWidget = new QLabel(statsWidget);
-
-    QGridLayout* statsLayout = new QGridLayout(statsWidget);
-    statsLayout->setContentsMargins(0, 0, 0, 0);
-
-    addGridRow(statsLayout, hpLabel, m_hpValueWidget, hpIconWidget);
-    addGridRow(statsLayout, fpLabel, m_fpValueWidget, fpIconWidget);
-    addGridRow(statsLayout, staminaLabel, m_staminaValueWidget, staminaIconWidget);
-    addGridRow(statsLayout, bleedResLabel, m_bleedResValueWidget, bleedResIconWidget);
-    addGridRow(statsLayout, poisonResLabel, m_poisonResValueWidget, poisonResIconWidget);
-    addGridRow(statsLayout, frostResLabel, m_frostResValueWidget, frostResIconWidget);
-    addGridRow(statsLayout, curseResLabel, m_curseResValueWidget, curseResIconWidget);
-
-    statsLayout->setRowStretch(attributesLayout->rowCount(), 1);
-    statsLayout->setColumnStretch(0, 0);
-    statsLayout->setColumnStretch(1, 1);
-    statsLayout->setColumnStretch(2, 1);
-
-    QHBoxLayout* layout = new QHBoxLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(attributesWidget, 1);
-    layout->addWidget(statsWidget, 1);
-}
-
-void CharacterStatusWidget::setCharacter(const fssm::parse::ds3::DS3CharacterInfo* charInfo) {
-    if (charInfo == nullptr) return setEmpty();
-
-    m_nameValueWidget->setText(QString::fromStdU16String(charInfo->name));
-    m_levelValueWidget->setText(QString::number(charInfo->level));
-    m_soulsValueWidget->setText(QString::number(charInfo->souls));
-    m_vigorValueWidget->setText(QString::number(charInfo->vigor));
-    m_attunementValueWidget->setText(QString::number(charInfo->attunement));
-    m_enduranceValueWidget->setText(QString::number(charInfo->endurance));
-    m_vitalityValueWidget->setText(QString::number(charInfo->vitality));
-    m_strengthValueWidget->setText(QString::number(charInfo->strength));
-    m_dexterityValueWidget->setText(QString::number(charInfo->dexterity));
-    m_intelligenceValueWidget->setText(QString::number(charInfo->intelligence));
-    m_faithValueWidget->setText(QString::number(charInfo->faith));
-    m_luckValueWidget->setText(QString::number(charInfo->luck));
-    QString hpValue = QString::number(charInfo->hpCurrent);
-    hpValue.append("/");
-    hpValue.append(QString::number(charInfo->hpMax));
-    QString staminaValue = QString::number(charInfo->staminaCurrent);
-    staminaValue.append("/");
-    staminaValue.append(QString::number(charInfo->staminaMax));
-    m_hpValueWidget->setText(hpValue);
-    m_staminaValueWidget->setText(staminaValue);
-    m_bleedResValueWidget->setText(QString::number(charInfo->bleedRes));
-    m_poisonResValueWidget->setText(QString::number(charInfo->poisonRes));
-    m_curseResValueWidget->setText(QString::number(charInfo->curseRes));
-}
-
-void CharacterStatusWidget::setEmpty() {
-    m_nameValueWidget->setText("< Empty >");
-    m_levelValueWidget->setText("");
-    m_soulsValueWidget->setText("");
-    m_vigorValueWidget->setText("");
-    m_attunementValueWidget->setText("");
-    m_enduranceValueWidget->setText("");
-    m_vitalityValueWidget->setText("");
-    m_strengthValueWidget->setText("");
-    m_dexterityValueWidget->setText("");
-    m_intelligenceValueWidget->setText("");
-    m_faithValueWidget->setText("");
-    m_luckValueWidget->setText("");
-    m_hpValueWidget->setText("");
-    m_staminaValueWidget->setText("");
-    m_bleedResValueWidget->setText("");
-    m_poisonResValueWidget->setText("");
-    m_curseResValueWidget->setText("");
+    QString pair(uint32_t current, uint32_t max) {
+        return QString("%1/ %2").arg(current).arg(max);
+    }
 }
 
 CharacterInfoWidget::CharacterInfoWidget(QWidget* parent): QWidget(parent) {
     setAttribute(Qt::WA_TranslucentBackground, true);
-    m_statusWidget = new CharacterStatusWidget(this);
-    QHBoxLayout* layout = new QHBoxLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(m_statusWidget, 1);
 }
 
 void CharacterInfoWidget::setCharacter(const fssm::parse::ds3::DS3CharacterInfo* charInfo) {
-    m_statusWidget->setCharacter(charInfo);
+    if (charInfo != nullptr) {
+        m_character = *charInfo;
+    } else {
+        m_character.reset();
+    }
+    update();
+}
+
+QPixmap CharacterInfoWidget::icon(const QString& name, int size) {
+    const QString key = name + QString("@%1").arg(size);
+    auto it = m_iconCache.find(key);
+    if (it != m_iconCache.end()) return *it;
+    QPixmap pix(":/ds3_images/" + name);
+    if (!pix.isNull()) pix = pix.scaled(size, size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    m_iconCache.insert(key, pix);
+    return pix;
+}
+
+void CharacterInfoWidget::paintEvent(QPaintEvent* event) {
+    QPainter painter(this);
+    painter.setClipRect(event->rect());
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+
+    const double s = std::clamp(std::min(double(width()) / DESIGN_W, double(height()) / DESIGN_H), 0.6, 1.4);
+    const auto px = [s](double v) { return int(std::round(v * s)); };
+
+    // Header like the inventory's: menu icon and title.
+    const QRect header(0, 0, width(), px(46));
+    const int headerIcon = header.height() - px(6);
+    painter.drawPixmap(px(4), (header.height() - headerIcon) / 2, icon("menu_status", headerIcon));
+    painter.setFont(serifFont(px(26)));
+    drawShadowText(painter, header.adjusted(headerIcon + px(14), 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter, "Status");
+
+    const QRect panel = rect().adjusted(0, header.height() + px(4), 0, 0);
+    drawStonePanel(painter, panel);
+    const QRect inner = panel.adjusted(px(18), px(8), -px(18), -px(12));
+    if (!m_character.has_value()) {
+        painter.setFont(serifFont(px(20)));
+        drawShadowText(painter, panel, Qt::AlignCenter, "No character selected", DIM_TEXT_COLOR);
+        return;
+    }
+    const auto& c = *m_character;
+
+    // Title row: "Player Status" on the left, the character's name on the right.
+    const QRect title(inner.left(), inner.top(), inner.width(), px(32));
+    painter.setFont(serifFont(px(21)));
+    drawShadowText(painter, title.adjusted(px(4), 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter, "Player Status");
+    drawShadowText(painter, title.adjusted(0, 0, -px(4), 0), Qt::AlignRight | Qt::AlignVCenter,
+                   QString::fromStdU16String(c.name));
+    drawGoldRule(painter, title.left(), title.right(), title.bottom() + 2, 220);
+
+    const std::vector<StatRow> left = {
+        {"attr_level", "Level", QString::number(c.level)},
+        {"", "Hollowing", QString::number(c.hollowing)},
+        {"attr_vigor", "Vigor", QString::number(c.vigor), true},
+        {"attr_attunement", "Attunement", QString::number(c.attunement)},
+        {"attr_endurance", "Endurance", QString::number(c.endurance)},
+        {"attr_vitality", "Vitality", QString::number(c.vitality)},
+        {"attr_strength", "Strength", QString::number(c.strength)},
+        {"attr_dexterity", "Dexterity", QString::number(c.dexterity)},
+        {"attr_intelligence", "Intelligence", QString::number(c.intelligence)},
+        {"attr_faith", "Faith", QString::number(c.faith)},
+        {"attr_luck", "Luck", QString::number(c.luck)},
+    };
+    const std::vector<StatRow> right = {
+        {"attr_souls", "Souls", QString::number(c.souls)},
+        {"", "Estus Flasks", QString("%1 / %2").arg(c.estusMax).arg(c.ashenEstusMax)},
+        {"attr_hp", "HP", pair(c.hpCurrent, c.hpMax), true},
+        {"attr_fp", "FP", pair(c.fpCurrent, c.fpMax)},
+        {"attr_stamina", "Stamina", QString::number(c.staminaMax)},
+        {"attr_bleed_res", "Bleed", QString::number(c.bleedRes), true},
+        {"attr_poison_res", "Poison", QString::number(c.poisonRes)},
+        {"attr_frost_res", "Frost", QString::number(c.frostRes)},
+        {"attr_curse_res", "Curse", QString::number(c.curseRes)},
+    };
+
+    const int top = title.bottom() + px(14);
+    const int gap = px(26);
+    const bool twoColumns = inner.width() >= px(520);
+    const int columnWidth = twoColumns ? (inner.width() - gap) / 2 : inner.width();
+    const int lineH = px(29);
+    const int iconSize = px(22);
+    painter.setFont(serifFont(px(19)));
+    const auto drawColumn = [&](const std::vector<StatRow>& rows, int x, int y) {
+        for (const auto& row : rows) {
+            if (row.gapBefore) y += px(14);
+            const QRect line(x, y, columnWidth, lineH);
+            int textLeft = line.left() + iconSize + px(4);
+            if (!row.icon.isEmpty()) {
+                painter.drawPixmap(line.left(), line.center().y() - iconSize / 2, icon(row.icon, iconSize));
+            }
+            drawShadowText(painter, QRect(textLeft, line.top(), line.right() - textLeft, line.height()),
+                           Qt::AlignLeft | Qt::AlignVCenter, row.label);
+            drawShadowText(painter, line.adjusted(0, 0, -px(4), 0), Qt::AlignRight | Qt::AlignVCenter, row.value);
+            drawGoldRule(painter, line.left(), line.right(), line.bottom(), 120);
+            y += lineH + px(1);
+        }
+        return y;
+    };
+    const int leftBottom = drawColumn(left, inner.left(), top);
+    if (twoColumns) {
+        drawColumn(right, inner.left() + columnWidth + gap, top);
+    } else {
+        drawColumn(right, inner.left(), leftBottom + px(10));
+    }
 }
 }

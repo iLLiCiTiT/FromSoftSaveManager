@@ -47,6 +47,7 @@ add_executable(FromSoftSaveManager
         src/parse/DS3/Items.cpp
         src/parse/DS3/SaveFile.cpp
         src/parse/DS3/SaveData.cpp
+        src/parse/DS3/Areas.cpp
         src/parse/EldenRing/SaveFile.cpp
         src/parse/EldenRing/Items.cpp
         src/parse/EldenRing/ItemLookup.cpp
@@ -84,6 +85,7 @@ add_executable(FromSoftSaveManager
         src/ui/DS3Widget/DS3Widget.cpp
         src/ui/DS3Widget/Inventory.cpp
         src/ui/DS3Widget/CharInfo.cpp
+        src/ui/DS3Widget/CharacterList.cpp
         src/ui/SekiroWidget/SekiroWidget.cpp
         src/ui/ERWidget/ERWidget.cpp
         src/ui/ERWidget/CharInfo.cpp
