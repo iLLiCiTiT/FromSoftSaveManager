@@ -9,7 +9,7 @@
 namespace fssm::ui::ds3 {
 namespace {
     constexpr int ROW_HEIGHT = 66;
-    constexpr int TITLE_HEIGHT = 34;
+    constexpr int TITLE_HEIGHT = 32;
     constexpr int STONE_BORDER = 9;
 
     QString formatPlayTime(uint32_t seconds) {
@@ -136,12 +136,12 @@ void LoadGameFrame::paintEvent(QPaintEvent* event) {
     painter.setRenderHint(QPainter::Antialiasing, true);
 
     // Title with the menu icon, like "LOAD GAME" above the slots.
-    const int iconSize = TITLE_HEIGHT - 6;
+    const int iconSize = 26;
     if (!m_icon.isNull()) {
-        painter.drawPixmap(QRect(2, 2, iconSize, iconSize), m_icon);
+        painter.drawPixmap(QRect(4, (TITLE_HEIGHT - iconSize) / 2, iconSize, iconSize), m_icon);
     }
-    painter.setFont(serifFont(21));
-    drawShadowText(painter, QRect(iconSize + 10, 0, width() - iconSize - 12, TITLE_HEIGHT - 2),
+    painter.setFont(serifFont(18));
+    drawShadowText(painter, QRect(iconSize + 11, 0, width() - iconSize - 13, TITLE_HEIGHT),
                    Qt::AlignLeft | Qt::AlignVCenter, "LOAD GAME");
 
     // Weathered stone frame.

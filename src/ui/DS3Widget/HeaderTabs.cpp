@@ -10,10 +10,10 @@
 
 namespace fssm::ui::ds3 {
 namespace {
-    constexpr int BAR_HEIGHT = 46;
-    constexpr int ICON_SIZE = 40;
-    constexpr int TAB_SPACING = 28;
-    constexpr int FONT_SIZE = 26;
+    constexpr int BAR_HEIGHT = 32;
+    constexpr int ICON_SIZE = 26;
+    constexpr int TAB_SPACING = 20;
+    constexpr int FONT_SIZE = 18;
 }
 
 HeaderTabs::HeaderTabs(QWidget* parent): QWidget(parent) {
@@ -46,7 +46,7 @@ QRect HeaderTabs::tabRect(int index) const {
     const QFontMetrics fm(serifFont(FONT_SIZE));
     int x = 4;
     for (int i = 0; i < int(m_tabs.size()); ++i) {
-        const int w = ICON_SIZE + 10 + fm.horizontalAdvance(m_tabs[i].title) + 6;
+        const int w = ICON_SIZE + 7 + fm.horizontalAdvance(m_tabs[i].title) + 6;
         if (i == index) return {x, 0, w, BAR_HEIGHT};
         x += w + TAB_SPACING;
     }
@@ -71,7 +71,7 @@ void HeaderTabs::paintEvent(QPaintEvent* event) {
         const bool current = i == m_current;
         painter.setOpacity(current ? 1.0 : (i == m_hover ? 0.8 : 0.5));
         painter.drawPixmap(r.left(), r.top() + (BAR_HEIGHT - m_tabs[i].icon.height()) / 2, m_tabs[i].icon);
-        drawShadowText(painter, r.adjusted(ICON_SIZE + 10, 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter,
+        drawShadowText(painter, r.adjusted(ICON_SIZE + 7, 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter,
                        m_tabs[i].title, current ? TEXT_COLOR : DIM_TEXT_COLOR);
         painter.setOpacity(1.0);
         if (current) drawGoldRule(painter, r.left(), r.right() + 8, r.bottom() + 2, 220);

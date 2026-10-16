@@ -92,7 +92,7 @@ DS3Widget::DS3Widget(Controller* controller, const QString& saveId, QWidget* par
     QVBoxLayout* viewWrapLayout = new QVBoxLayout(viewWrap);
     viewWrapLayout->setContentsMargins(0, 0, 0, 0);
     // Lines the Load Game frame up with the panels below the header tabs.
-    viewWrapLayout->addSpacing(16);
+    viewWrapLayout->addSpacing(4);
     viewWrapLayout->addWidget(loadGameFrame, 4);
     viewWrapLayout->addWidget(manageBackupsBtnsWidget, 1);
 
