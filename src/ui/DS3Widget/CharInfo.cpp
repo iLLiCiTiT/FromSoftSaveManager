@@ -8,7 +8,7 @@
 
 namespace fssm::ui::ds3 {
 namespace {
-    constexpr int DESIGN_W = 900;
+    constexpr int DESIGN_W = 620;
     constexpr int DESIGN_H = 470;
 
     struct StatRow {
