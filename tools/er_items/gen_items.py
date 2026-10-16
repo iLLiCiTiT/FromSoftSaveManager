@@ -17,6 +17,8 @@ Param fields used (found by correlating with the icon atlases and known items):
     EquipParamProtector  +0xA6 iconIdM
     EquipParamAccessory  +0x26 iconId
     EquipParamGem        +0x18 iconId
+    EquipParamGoods      +0x20 sortId, +0x72 sortGroupId (the in-game inventory sorts by
+                         sortId and draws a separator wherever sortGroupId changes)
 
 Requires pycryptodome, zstandard and Pillow.
 """
@@ -78,9 +80,11 @@ def load_names(archives):
         if not archives.has(path):
             continue
         for fmg_name, data in archives.bnd(path).items():
-            if not fmg_name.endswith("Name.fmg"):
+            # DLC text lives in e.g. GoodsName_dlc01.fmg; merge it into GoodsName.fmg
+            base = re.sub(r"_dlc\d+(?=\.fmg$)", "", fmg_name)
+            if not base.endswith("Name.fmg"):
                 continue
-            table = names.setdefault(fmg_name, {})
+            table = names.setdefault(base, {})
             for item_id, text in erdata.parse_fmg2(data).items():
                 if text and not text.startswith("[ERROR]"):
                     table[item_id] = text
@@ -149,15 +153,16 @@ def main(game_dir, repo_root, with_icons=True, icon_size=128):
 
     items = []
 
-    def add(type_nibble, item_id, category, name, icon_id):
-        items.append(((type_nibble << 28) | item_id, category, name, icon_id))
+    def add(type_nibble, item_id, category, name, icon_id, sort_id=-1, sort_group=0):
+        items.append(((type_nibble << 28) | item_id, category, name, icon_id, sort_id, sort_group))
 
     goods_names = names.get("GoodsName.fmg", {})
     for item_id, row in sorted(rows("EquipParamGoods.param").items()):
         name = goods_names.get(item_id)
         category = GOODS_TYPES.get(row[0x3E])
         if name and category:
-            add(TYPE_GOODS, item_id, category, name, struct.unpack_from("<H", row, 0x30)[0])
+            add(TYPE_GOODS, item_id, category, name, struct.unpack_from("<H", row, 0x30)[0],
+                struct.unpack_from("<i", row, 0x20)[0], row[0x72])
 
     weapon_names = names.get("WeaponName.fmg", {})
     for item_id, row in sorted(rows("EquipParamWeapon.param").items()):
@@ -201,15 +206,23 @@ def main(game_dir, repo_root, with_icons=True, icon_size=128):
         "namespace fssm::parse::er {",
         f"    const std::array<BaseItem, {len(items)}> ALL_ITEMS = {{",
     ]
-    for item_id, category, name, icon_id in sorted(items):
+    for item_id, category, name, icon_id, sort_id, sort_group in sorted(items):
         image = str(icon_id) if icon_id in icons else ""
         lines.append(f"        BaseItem{{0x{item_id:08x}, ItemCategory::{category}, "
-                     f"{cpp_string(name)}, {cpp_string(image)}}},")
+                     f"{cpp_string(name)}, {cpp_string(image)}, {sort_id}, {sort_group}}},")
     lines += ["    };", "}", ""]
     out_path = os.path.join(repo_root, "src", "parse", "EldenRing", "Items.cpp")
     with open(out_path, "w", encoding="utf-8", newline="\r\n") as f:
         f.write("\n".join(lines))
     print(f"wrote {len(items)} items to {out_path}")
+
+    # Keep the array size declared in Items.h in sync.
+    header_path = os.path.join(repo_root, "src", "parse", "EldenRing", "Items.h")
+    with open(header_path, encoding="utf-8", newline="") as f:
+        header = f.read()
+    header = re.sub(r"std::array<BaseItem, \d+> ALL_ITEMS", f"std::array<BaseItem, {len(items)}> ALL_ITEMS", header)
+    with open(header_path, "w", encoding="utf-8", newline="") as f:
+        f.write(header)
 
 
 if __name__ == "__main__":
