@@ -60,7 +60,7 @@ void CharacterInfoWidget::paintEvent(QPaintEvent* event) {
     const int headerIcon = header.height() - px(6);
     painter.drawPixmap(px(4), (header.height() - headerIcon) / 2, icon("menu_status", headerIcon));
     painter.setFont(serifFont(px(26)));
-    drawShadowText(painter, header.adjusted(headerIcon + px(14), 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter, "Status");
+    drawShadowText(painter, header.adjusted(headerIcon + px(14), 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter, "Character Info");
 
     const QRect panel = rect().adjusted(0, header.height() + px(4), 0, 0);
     drawStonePanel(painter, panel);
