@@ -70,6 +70,12 @@ struct DS3CharInfoResult {
     std::vector<fssm::parse::ds3::DS3CharacterInfo> characters;
 };
 
+// Result to receive characters of Sekiro save file
+struct SekiroCharInfoResult {
+    QString error;
+    std::vector<fssm::parse::sekiro::SekiroCharacterInfo> characters;
+};
+
 // Result to receive characters of ER save file
 struct ERCharInfoResult {
     QString error;
@@ -103,7 +109,7 @@ public:
     DSRCharInfoResult getDsrCharacters(const QString& saveId) const;
     DS2CharInfoResult getDs2Characters(const QString& saveId) const;
     DS3CharInfoResult getDs3Characters(const QString& saveId) const;
-    // SekiroCharInfoResult getSekiroCharacters(const QString& saveId) const;
+    SekiroCharInfoResult getSekiroCharacters(const QString& saveId) const;
     ERCharInfoResult getERCharacters(const QString& saveId) const;
 
     std::vector<BackupMetadata> getBackupItems();

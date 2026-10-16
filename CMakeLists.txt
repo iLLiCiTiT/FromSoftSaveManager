@@ -44,6 +44,7 @@ add_executable(FromSoftSaveManager
         src/parse/Sekiro/SaveData.cpp
         src/parse/Sekiro/Items.cpp
         src/parse/Sekiro/ItemLookup.cpp
+        src/parse/Sekiro/SaveFile.cpp
         src/parse/DS3/Items.cpp
         src/parse/DS3/SaveFile.cpp
         src/parse/DS3/SaveData.cpp
@@ -85,6 +86,8 @@ add_executable(FromSoftSaveManager
         src/ui/DS3Widget/Inventory.cpp
         src/ui/DS3Widget/CharInfo.cpp
         src/ui/SekiroWidget/SekiroWidget.cpp
+        src/ui/SekiroWidget/CharacterList.cpp
+        src/ui/SekiroWidget/Inventory.cpp
         src/ui/ERWidget/ERWidget.cpp
         src/ui/ERWidget/CharInfo.cpp
 )
@@ -147,6 +150,7 @@ add_executable(SekiroRoundTrip
         src/parse/Sekiro/SaveData.cpp
         src/parse/Sekiro/Items.cpp
         src/parse/Sekiro/ItemLookup.cpp
+        src/parse/Sekiro/SaveFile.cpp
 )
 target_link_libraries(SekiroRoundTrip tiny-aes)
 target_link_options(SekiroRoundTrip PRIVATE -static-libgcc -static-libstdc++)

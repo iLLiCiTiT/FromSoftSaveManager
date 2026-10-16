@@ -228,6 +228,34 @@ DS2CharInfoResult Controller::getDs2Characters(const QString& saveId) const {
     }
 }
 
+SekiroCharInfoResult Controller::getSekiroCharacters(const QString& saveId) const {
+    QString r_savePath = m_configModel->getSavePathItem(saveId);
+    if (r_savePath.isEmpty()) return {
+        "Save file path is not set.",
+        {},
+    };
+    std::string savePath = r_savePath.toStdString();
+    if (!std::filesystem::exists(savePath)) return {
+        "Save file does not exist.",
+        {},
+    };
+    try {
+        fssm::parse::SL2File sl2 = fssm::parse::parse_sl2_file(savePath);
+        fssm::parse::sekiro::SekiroSaveFile sekiro = fssm::parse::sekiro::parse_sekiro_file(sl2);
+
+        return {
+            "",
+            sekiro.characters
+        };
+    }
+    catch (const std::exception& e) {
+        return {
+            "Failed to read or parse Sekiro save",
+            {},
+        };
+    }
+}
+
 DS3CharInfoResult Controller::getDs3Characters(const QString& saveId) const {
     QString r_savePath = m_configModel->getSavePathItem(saveId);
     if (r_savePath.isEmpty()) return {
