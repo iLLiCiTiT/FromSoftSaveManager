@@ -51,6 +51,8 @@ namespace {
     // Reference layout size; everything scales with the widget.
     constexpr int DESIGN_W = 560;
     constexpr int DESIGN_H = 470;
+    // Item tile size in pixels, independent of the widget size.
+    constexpr int TILE_SIZE = 80;
 
     const QColor TEXT_COLOR(228, 224, 210);
     const QColor DIM_TEXT_COLOR(150, 144, 128);
@@ -274,12 +276,12 @@ InventoryWidget::Layout InventoryWidget::computeLayout() const {
     const int detailHeight = px(104);
     l.detail = QRect(inner.left(), inner.bottom() - detailHeight + 1, inner.width(), detailHeight);
 
-    // As many columns as fit at a comfortable tile size, never fewer than the game's five.
+    // Tiles keep one size; resizing the window adds or removes columns.
     const int gridTop = l.tabs.bottom() + 1 + px(10);
     const int scrollW = px(14);
     const int gridWidth = inner.width() - px(8) - scrollW;
-    l.columns = std::max(5, gridWidth / px(86));
-    l.cellWidth = gridWidth / l.columns;
+    l.cellWidth = TILE_SIZE;
+    l.columns = std::max(1, gridWidth / TILE_SIZE);
     l.rowHeight = l.cellWidth;
     l.separatorGap = px(12);
     l.grid = QRect(inner.left() + px(4), gridTop, l.cellWidth * l.columns,
