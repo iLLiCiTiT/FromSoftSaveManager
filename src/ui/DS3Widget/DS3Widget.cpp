@@ -91,15 +91,16 @@ DS3Widget::DS3Widget(Controller* controller, const QString& saveId, QWidget* par
 
     QVBoxLayout* viewWrapLayout = new QVBoxLayout(viewWrap);
     viewWrapLayout->setContentsMargins(0, 0, 0, 0);
-    viewWrapLayout->addSpacing(28);
+    // Lines the Load Game frame up with the panels below the header tabs.
+    viewWrapLayout->addSpacing(16);
     viewWrapLayout->addWidget(loadGameFrame, 4);
     viewWrapLayout->addWidget(manageBackupsBtnsWidget, 1);
 
-    m_charTabs = new TabWidget(this);
+    m_charTabs = new fssm::ui::ds3::HeaderTabs(this);
     m_charInfoWidget = new fssm::ui::ds3::CharacterInfoWidget(m_charTabs);
     m_inventoryWidget = new fssm::ui::ds3::InventoryWidget(m_charTabs);
-    m_charTabs->addTab("Character Info", m_charInfoWidget);
-    m_charTabs->addTab("Inventory", m_inventoryWidget);
+    m_charTabs->addTab("Character Info", "menu_status", m_charInfoWidget);
+    m_charTabs->addTab("Inventory", "menu_invetory", m_inventoryWidget);
 
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->setContentsMargins(20, 20, 20, 20);

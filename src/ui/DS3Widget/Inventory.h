@@ -37,7 +37,6 @@ private:
 
     struct Layout {
         double scale = 1.0;
-        QRect header;
         QRect leftPanel;
         QRect detailPanel;          // empty when the widget is too narrow
         QRect categoryLabel;
@@ -61,7 +60,6 @@ private:
     const Entry* currentEntry() const;
     QPixmap scaled(const QString& resource, const QSize& size);
     QPixmap itemIcon(const Entry& entry, const QSize& size);
-    void drawHeader(QPainter& painter);
     void drawCategories(QPainter& painter);
     void drawGrid(QPainter& painter);
     void drawDetail(QPainter& painter);
@@ -72,7 +70,6 @@ private:
     std::vector<Entry> m_entries;
     std::vector<const Entry*> m_visible;
     bool m_hasCharacter = false;
-    uint32_t m_souls = 0;
     int m_category = 0;             // index into CATEGORY_ORDER
     int m_tabOffset = 0;            // first visible tab
     int m_scroll = 0;               // pixels

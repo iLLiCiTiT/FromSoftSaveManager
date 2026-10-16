@@ -39,7 +39,7 @@ namespace {
 
     // Reference layout size (the game's inventory at 1080p, scaled down).
     constexpr int DESIGN_W = 900;
-    constexpr int DESIGN_H = 520;
+    constexpr int DESIGN_H = 470;
     // Items that never show in the game's inventory.
     constexpr uint32_t HIDDEN_ITEM_ID = 1073741918;
     constexpr uint32_t ESTUS_FLASK_ID = 1073741974;
@@ -155,7 +155,6 @@ QSize InventoryWidget::sizeHint() const {
 void InventoryWidget::setCharacter(const fssm::parse::ds3::DS3CharacterInfo* charInfo) {
     m_entries.clear();
     m_hasCharacter = charInfo != nullptr;
-    m_souls = charInfo != nullptr ? charInfo->souls : 0;
     if (charInfo != nullptr) {
         std::unordered_map<uint32_t, uint32_t> stored;
         for (const auto& item : charInfo->storageBoxItems) stored[item.itemId] += item.amount;
@@ -226,8 +225,7 @@ InventoryWidget::Layout InventoryWidget::computeLayout() const {
     const double s = l.scale;
     const auto px = [s](double v) { return int(std::round(v * s)); };
 
-    l.header = QRect(r.left(), r.top(), r.width(), px(46));
-    const QRect body = r.adjusted(0, l.header.height() + px(4), 0, 0);
+    const QRect body = r;
     // The detail panel needs room for the grid next to it.
     const bool showDetail = body.width() >= px(560);
     const int leftWidth = showDetail ? std::max(px(330), body.width() * 46 / 100) : body.width();
@@ -315,7 +313,6 @@ void InventoryWidget::paintEvent(QPaintEvent* event) {
     painter.setRenderHint(QPainter::TextAntialiasing, true);
     if (m_layout.cellWidth == 0) m_layout = computeLayout();
 
-    drawHeader(painter);
     drawStonePanel(painter, m_layout.leftPanel);
     if (!m_layout.detailPanel.isEmpty()) drawStonePanel(painter, m_layout.detailPanel);
     if (!m_hasCharacter) {
@@ -326,29 +323,6 @@ void InventoryWidget::paintEvent(QPaintEvent* event) {
     drawCategories(painter);
     drawGrid(painter);
     drawDetail(painter);
-}
-
-void InventoryWidget::drawHeader(QPainter& painter) {
-    const Layout& l = m_layout;
-    const double s = l.scale;
-    const QRect h = l.header;
-    const int iconSize = h.height() - int(6 * s);
-    const QPixmap icon = scaled(":/ds3_images/menu_invetory", QSize(iconSize, iconSize));
-    painter.drawPixmap(h.left() + int(4 * s), h.top() + (h.height() - icon.height()) / 2, icon);
-    painter.setFont(serifFont(int(26 * s)));
-    drawShadowText(painter, h.adjusted(iconSize + int(14 * s), 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter, "Inventory");
-    if (!m_hasCharacter) return;
-
-    // Souls, top right.
-    const int soulsWidth = std::min(int(300 * s), h.width() / 2);
-    const QRect souls(h.right() - soulsWidth, h.top() + int(6 * s), soulsWidth - int(8 * s), h.height() - int(14 * s));
-    const int soulIcon = int(20 * s);
-    painter.drawPixmap(QRect(souls.left(), souls.center().y() - soulIcon / 2, soulIcon, soulIcon),
-                       scaled(":/ds3_images/attr_souls", QSize(soulIcon, soulIcon)));
-    painter.setFont(serifFont(int(19 * s)));
-    drawShadowText(painter, souls.adjusted(soulIcon + int(4 * s), 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter, "Souls");
-    drawShadowText(painter, souls, Qt::AlignRight | Qt::AlignVCenter, QString::number(m_souls));
-    drawGoldRule(painter, souls.left(), souls.right() + int(6 * s), souls.bottom() + 2, 200);
 }
 
 void InventoryWidget::drawCategories(QPainter& painter) {

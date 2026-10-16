@@ -9,7 +9,7 @@
 namespace fssm::ui::ds3 {
 namespace {
     constexpr int DESIGN_W = 900;
-    constexpr int DESIGN_H = 520;
+    constexpr int DESIGN_H = 470;
 
     struct StatRow {
         QString icon;           // :/ds3_images/<icon>, empty for none
@@ -55,14 +55,7 @@ void CharacterInfoWidget::paintEvent(QPaintEvent* event) {
     const double s = std::clamp(std::min(double(width()) / DESIGN_W, double(height()) / DESIGN_H), 0.6, 1.4);
     const auto px = [s](double v) { return int(std::round(v * s)); };
 
-    // Header like the inventory's: menu icon and title.
-    const QRect header(0, 0, width(), px(46));
-    const int headerIcon = header.height() - px(6);
-    painter.drawPixmap(px(4), (header.height() - headerIcon) / 2, icon("menu_status", headerIcon));
-    painter.setFont(serifFont(px(26)));
-    drawShadowText(painter, header.adjusted(headerIcon + px(14), 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter, "Character Info");
-
-    const QRect panel = rect().adjusted(0, header.height() + px(4), 0, 0);
+    const QRect panel = rect();
     drawStonePanel(painter, panel);
     const QRect inner = panel.adjusted(px(18), px(8), -px(18), -px(12));
     if (!m_character.has_value()) {

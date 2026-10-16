@@ -86,6 +86,7 @@ add_executable(FromSoftSaveManager
         src/ui/DS3Widget/Inventory.cpp
         src/ui/DS3Widget/CharInfo.cpp
         src/ui/DS3Widget/CharacterList.cpp
+        src/ui/DS3Widget/HeaderTabs.cpp
         src/ui/SekiroWidget/SekiroWidget.cpp
         src/ui/ERWidget/ERWidget.cpp
         src/ui/ERWidget/CharInfo.cpp

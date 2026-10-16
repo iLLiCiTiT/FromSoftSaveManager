@@ -6,6 +6,7 @@
 
 #include "CharInfo.h"
 #include "CharacterList.h"
+#include "HeaderTabs.h"
 #include "Inventory.h"
 #include "../BaseGameWidget.h"
 #include "../Controller.h"
@@ -43,7 +44,7 @@ private:
     QPixmap m_bgPix;
     fssm::ui::ds3::CharsListModel* m_model;
     QListView* m_view;
-    TabWidget* m_charTabs;
+    fssm::ui::ds3::HeaderTabs* m_charTabs;
     fssm::ui::ds3::InventoryWidget* m_inventoryWidget;
     fssm::ui::ds3::CharacterInfoWidget* m_charInfoWidget;
 };
