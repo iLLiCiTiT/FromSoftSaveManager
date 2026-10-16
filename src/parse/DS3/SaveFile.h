@@ -13,7 +13,7 @@ namespace fssm::parse::ds3 {
         uint8_t upgradeLevel = 0;
         Infusion infusion = Infusion::None;
         BaseItem baseItem;
-        // Index the game uses to reference the entry from equip slots (InventoryEntry::unk_0c & 0xfff).
+        // Index the game uses to reference the entry from equip slots (InventoryEntry::index & 0xfff).
         uint16_t inventoryIndex = 0xffff;
         // Equipped, in a quick slot or an attuned spell (red seal in the game's inventory).
         bool equipped = false;

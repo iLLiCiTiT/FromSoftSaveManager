@@ -150,7 +150,7 @@ namespace fssm::parse::ds3 {
                 auto invItemOpt = InventoryItem::fromId(e.itemId, e.quantity);
                 if (!invItemOpt.has_value()) continue;
                 InventoryItem& item = invItemOpt.value();
-                item.inventoryIndex = uint16_t(e.unk_0c & 0xfff);
+                item.inventoryIndex = uint16_t(e.index & 0xfff);
                 if (equipped != nullptr) {
                     item.equipped = equipped->indices.count(item.inventoryIndex) != 0
                         || ((e.itemId & 0xf0000000) == GOODS_TYPE && equipped->spells.count(e.itemId & 0x0fffffff) != 0);
@@ -197,9 +197,9 @@ namespace fssm::parse::ds3 {
                 .inventoryItems = decode_items(slot.player.equip.inventory.list.normal, &equipped),
                 .keyItems = decode_items(slot.player.equip.inventory.list.key, &equipped),
                 .storageBoxItems = decode_items(slot.player.storage.list.normal),
-                .playTime = profile.unk_28,
+                .playTime = profile.playTime,
                 .mapId = profile.mapId,
-                .areaId = profile.unk_34,
+                .areaId = profile.areaId,
                 .equipItemIds = slot.player.equip.chrAsm.equipItemIds,
             };
         }
