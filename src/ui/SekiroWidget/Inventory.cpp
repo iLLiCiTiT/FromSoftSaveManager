@@ -1,6 +1,7 @@
 #include "Inventory.h"
 
 #include <QImage>
+#include <QRadialGradient>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QWheelEvent>
@@ -76,16 +77,25 @@ namespace {
         return fssm::parse::sekiro::findBaseItem(node.itemId).value_or(fssm::parse::sekiro::BaseItem{});
     }
 
-    QPixmap grayscale(const QPixmap& pix) {
-        QImage image = pix.toImage().convertToFormat(QImage::Format_ARGB32);
-        for (int y = 0; y < image.height(); ++y) {
-            auto* line = reinterpret_cast<QRgb*>(image.scanLine(y));
-            for (int x = 0; x < image.width(); ++x) {
-                const int g = qGray(line[x]) * 3 / 4;
-                line[x] = qRgba(g, g, g, qAlpha(line[x]));
-            }
+    // Ornate octagon the game puts around some nodes: the secret techniques that
+    // open the Mushin Arts (also shown at the start of that tree) and the Mushin Arts.
+    enum class SkillFrame { None, Ougi, Hiden };
+
+    SkillFrame skillFrame(const SkillNode& node) {
+        constexpr int MUSHIN_TREE = 4;
+        if (node.tree == MUSHIN_TREE && node.column > 0) return SkillFrame::Hiden;
+        for (const auto& other : fssm::parse::sekiro::SKILL_TREE) {
+            if (other.tree == MUSHIN_TREE && other.column == 0 && other.itemId == node.itemId) return SkillFrame::Ougi;
         }
-        return QPixmap::fromImage(image);
+        return SkillFrame::None;
+    }
+
+    // Colour of the icon's painted ring, used for the glow of learned skills.
+    QColor ringColor(const QPixmap& icon) {
+        const QImage image = icon.toImage();
+        if (image.isNull()) return ORANGE_COLOR;
+        const QColor c = image.pixelColor(image.width() / 10, image.height() / 2);
+        return c.alpha() < 64 ? ORANGE_COLOR : c;
     }
 }
 
@@ -191,7 +201,6 @@ void InventoryWidget::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
     m_layout = computeLayout();
     m_cache.clear();
-    m_grayCache.clear();
     m_scroll = std::clamp(m_scroll, 0, maxScroll());
 }
 
@@ -215,14 +224,70 @@ QPoint InventoryWidget::nodeCenter(const SkillNode& node, int* nodeSize) const {
             int(canvas.top() + rowStep * (node.row + 0.5))};
 }
 
-QPixmap InventoryWidget::skillIcon(const SkillNode& node, int size, bool gray) {
+QPixmap InventoryWidget::skillIcon(const SkillNode& node, int size) {
     const auto item = skillItem(node);
     if (!inventoryResourcesAvailable() || item.image.empty()) return {};
-    const QString resource = ":/sekiro_inv_images/" + label(item.image);
-    if (!gray) return m_cache.fit(resource, QSize(size, size));
-    const QString key = QString("gray:%1@%2").arg(resource).arg(size);
-    if (!m_grayCache.contains(key)) m_grayCache.insert(key, grayscale(m_cache.fit(resource, QSize(size, size))));
-    return m_grayCache.value(key);
+    return m_cache.fit(":/sekiro_inv_images/" + label(item.image), QSize(size, size));
+}
+
+// The skill's icon is what the game shows for a skill not acquired yet. Acquired
+// skills get the Skill screen's treatment on top: a glow in the ring's colour, a
+// brightened centre and the red 修 ("mastered") stamp.
+void InventoryWidget::drawSkillNode(QPainter& painter, const SkillNode& node, const QRect& box) {
+    const bool isLearned = learned(node);
+    const SkillFrame frame = skillFrame(node);
+    const QPointF c = QRectF(box).center();
+    const int size = box.width();
+    const int iconSize = frame == SkillFrame::None ? size : int(size * 0.8);
+    const QPixmap icon = skillIcon(node, iconSize);
+
+    if (isLearned) {
+        QColor glow = ringColor(icon).lighter(150);
+        QRadialGradient halo(c, size * 0.72);
+        glow.setAlpha(235);
+        halo.setColorAt(0.5, glow);
+        glow.setAlpha(0);
+        halo.setColorAt(1.0, glow);
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(halo);
+        painter.drawEllipse(c, size * 0.72, size * 0.72);
+    }
+    if (!icon.isNull()) {
+        painter.drawPixmap(int(c.x() - icon.width() / 2.0), int(c.y() - icon.height() / 2.0), icon);
+    }
+    if (isLearned && !icon.isNull()) {
+        // Lift the parchment towards white while the ink stays dark.
+        painter.save();
+        painter.setCompositionMode(QPainter::CompositionMode_SoftLight);
+        QRadialGradient bloom(c, iconSize * 0.42);
+        bloom.setColorAt(0.0, QColor(255, 255, 255, 255));
+        bloom.setColorAt(1.0, QColor(255, 255, 255, 0));
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(bloom);
+        painter.drawEllipse(c, iconSize * 0.42, iconSize * 0.42);
+        painter.drawEllipse(c, iconSize * 0.42, iconSize * 0.42);
+        painter.restore();
+    }
+    if (frame != SkillFrame::None) {
+        const int frameSize = int(size * 1.08);
+        const QString resource = frame == SkillFrame::Ougi ? ":/sekiro_images/skill_frame_ougi"
+                                                           : ":/sekiro_images/skill_frame_hiden";
+        painter.drawPixmap(int(c.x() - frameSize / 2.0), int(c.y() - frameSize / 2.0),
+                           m_cache.get(resource, QSize(frameSize, frameSize)));
+    }
+    if (isLearned) {
+        const int stamp = std::max(8, int(size * 0.26));
+        const QRect mark(box.right() - stamp + int(size * 0.06), box.top() - int(size * 0.04), stamp, stamp);
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(QColor(196, 36, 24, 235));
+        painter.drawRoundedRect(mark, stamp * 0.12, stamp * 0.12);
+        QFont font;
+        font.setFamilies({"SimSun", "MingLiU", "Yu Gothic"});
+        font.setPixelSize(std::max(6, int(stamp * 0.8)));
+        painter.setFont(font);
+        painter.setPen(QColor(255, 236, 220));
+        painter.drawText(mark, Qt::AlignCenter, QString(QChar(0x4FEE)));
+    }
 }
 
 QPixmap InventoryWidget::itemIcon(const InventoryItem& item, int size) {
@@ -600,17 +665,7 @@ void InventoryWidget::drawSkillTree(QPainter& painter) {
         int size = 0;
         const QPoint c = nodeCenter(node, &size);
         const QRect box(c.x() - size / 2, c.y() - size / 2, size, size);
-        const bool isLearned = learned(node);
-        // Plate behind the icon so the connectors do not show through.
-        painter.setPen(Qt::NoPen);
-        painter.setBrush(QColor(40, 37, 32, isLearned ? 255 : 200));
-        painter.drawEllipse(box.adjusted(1, 1, -1, -1));
-        const QPixmap icon = skillIcon(node, size, !isLearned);
-        if (!icon.isNull()) {
-            painter.setOpacity(isLearned ? 1.0 : 0.7);
-            painter.drawPixmap(c.x() - icon.width() / 2, c.y() - icon.height() / 2, icon);
-            painter.setOpacity(1.0);
-        }
+        drawSkillNode(painter, node, box);
         if (i == m_selectedItem || i == m_hoverItem) {
             painter.setBrush(Qt::NoBrush);
             painter.setPen(QPen(i == m_selectedItem ? ORANGE_COLOR : QColor(240, 236, 226, 160), std::max(2.0, 3 * s)));
@@ -649,7 +704,7 @@ void InventoryWidget::drawSkillDetail(QPainter& painter, const QRect& inner) {
         textTop += story.height() + int(8 * s);
     } else {
         const int size = std::min(int(96 * s), inner.width() / 3);
-        const QPixmap icon = skillIcon(node, size, !isLearned);
+        const QPixmap icon = skillIcon(node, size);
         if (!icon.isNull()) painter.drawPixmap(inner.center().x() - icon.width() / 2, textTop, icon);
         textTop += size + int(8 * s);
     }

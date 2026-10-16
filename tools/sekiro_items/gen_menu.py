@@ -52,6 +52,8 @@ SPRITES = {
     "icon_attack": ("MENU_ST_Offensive", 1.0),
     "icon_sen": ("MENU_Money", 1.0),
     "arrow": ("MENU_Arrow", 1.0),
+    "skill_frame_ougi": ("MENU_Skill_Ougi", 0.5),
+    "skill_frame_hiden": ("MENU_Skill_Hiden", 0.5),
 }
 
 

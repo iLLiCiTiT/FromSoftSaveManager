@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QHash>
 #include <QWidget>
 #include <unordered_set>
 #include <vector>
@@ -58,7 +57,8 @@ private:
     void drawDetail(QPainter& painter);
     void drawStatus(QPainter& painter);
     QPixmap itemIcon(const fssm::parse::sekiro::InventoryItem& item, int size);
-    QPixmap skillIcon(const fssm::parse::sekiro::SkillNode& node, int size, bool gray);
+    QPixmap skillIcon(const fssm::parse::sekiro::SkillNode& node, int size);
+    void drawSkillNode(QPainter& painter, const fssm::parse::sekiro::SkillNode& node, const QRect& box);
 
     std::vector<fssm::parse::sekiro::InventoryItem> m_allItems;
     std::vector<const fssm::parse::sekiro::InventoryItem*> m_visibleItems;
@@ -74,6 +74,5 @@ private:
 
     Layout m_layout;
     PixmapCache m_cache;
-    QHash<QString, QPixmap> m_grayCache;    // icons of skills not learned yet
 };
 }

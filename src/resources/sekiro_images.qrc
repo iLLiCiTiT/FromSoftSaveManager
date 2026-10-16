@@ -18,6 +18,8 @@
         <file alias="plate">images/sekiro/menu/plate.png</file>
         <file alias="profile_row">images/sekiro/menu/profile_row.png</file>
         <file alias="profile_row_selected">images/sekiro/menu/profile_row_selected.png</file>
+        <file alias="skill_frame_hiden">images/sekiro/menu/skill_frame_hiden.png</file>
+        <file alias="skill_frame_ougi">images/sekiro/menu/skill_frame_ougi.png</file>
         <file alias="stat_bar">images/sekiro/menu/stat_bar.png</file>
         <file alias="tab">images/sekiro/menu/tab.png</file>
         <file alias="tab_selected">images/sekiro/menu/tab_selected.png</file>
