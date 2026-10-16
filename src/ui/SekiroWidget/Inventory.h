@@ -1,15 +1,19 @@
 #pragma once
 
+#include <QHash>
 #include <QWidget>
+#include <unordered_set>
 #include <vector>
 
 #include "Painting.h"
 #include "../../parse/Sekiro/SaveFile.h"
+#include "../../parse/Sekiro/SkillTree.h"
 
 namespace fssm::ui::sekiro {
 // Inventory screen drawn with the game's own menu art: page tabs, category
 // icons, a list of ink strokes with item icons and counts, the item detail
-// panel and the status bar (Vitality, Attack Power, sen).
+// panel and the status bar (Vitality, Attack Power, sen). The Skills tab shows
+// the five Acquire Skills trees with the skills the character has learned.
 class InventoryWidget: public QWidget {
     Q_OBJECT
 public:
@@ -41,26 +45,35 @@ private:
     Layout computeLayout() const;
     void rebuildVisibleItems();
     int maxScroll() const;
-    int itemIndexAt(const QPoint& pos) const;
+    int itemIndexAt(const QPoint& pos) const;      // list row, or skill node on the Skills tab
+    bool skillPage() const;
+    QPoint nodeCenter(const fssm::parse::sekiro::SkillNode& node, int* nodeSize = nullptr) const;
+    bool learned(const fssm::parse::sekiro::SkillNode& node) const;
     void selectPage(int page, int category);
     void drawTabs(QPainter& painter);
     void drawCategories(QPainter& painter);
     void drawList(QPainter& painter);
+    void drawSkillTree(QPainter& painter);
+    void drawSkillDetail(QPainter& painter, const QRect& inner);
     void drawDetail(QPainter& painter);
     void drawStatus(QPainter& painter);
     QPixmap itemIcon(const fssm::parse::sekiro::InventoryItem& item, int size);
+    QPixmap skillIcon(const fssm::parse::sekiro::SkillNode& node, int size, bool gray);
 
     std::vector<fssm::parse::sekiro::InventoryItem> m_allItems;
     std::vector<const fssm::parse::sekiro::InventoryItem*> m_visibleItems;
+    std::vector<const fssm::parse::sekiro::SkillNode*> m_treeNodes;     // Skills tab, current tree
+    std::unordered_set<uint32_t> m_heldItems;     // item ids in the inventory (learned skills)
     fssm::parse::sekiro::SekiroCharacterInfo m_stats;   // without items
     bool m_hasCharacter = false;
     int m_page = 0;                 // index into PAGES
     int m_category = 0;             // index into the page's categories
     int m_scroll = 0;               // pixels
-    int m_hoverItem = -1;
+    int m_hoverItem = -1;           // list row, or index into m_treeNodes on the Skills tab
     int m_selectedItem = -1;
 
     Layout m_layout;
     PixmapCache m_cache;
+    QHash<QString, QPixmap> m_grayCache;    // icons of skills not learned yet
 };
 }

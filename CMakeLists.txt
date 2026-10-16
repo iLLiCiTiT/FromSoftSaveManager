@@ -45,6 +45,7 @@ add_executable(FromSoftSaveManager
         src/parse/Sekiro/Items.cpp
         src/parse/Sekiro/ItemLookup.cpp
         src/parse/Sekiro/SaveFile.cpp
+        src/parse/Sekiro/SkillTree.cpp
         src/parse/DS3/Items.cpp
         src/parse/DS3/SaveFile.cpp
         src/parse/DS3/SaveData.cpp
@@ -97,6 +98,7 @@ if (FSSM_USE_INV_IMAGES)
             src/resources/dsr_inv_images.qrc
             src/resources/ds2_inv_images.qrc
             src/resources/sekiro_inv_images.qrc
+            src/resources/sekiro_skill_images.qrc
             src/resources/er_inv_images.qrc
             src/resources/ds3_inv_images.qrc)
     target_compile_definitions(FromSoftSaveManager PRIVATE

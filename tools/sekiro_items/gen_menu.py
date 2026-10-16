@@ -5,6 +5,12 @@ Usage:
 
 Writes:
     src/resources/images/sekiro/menu/<name>.png    menu sprites (see SPRITES)
+    src/resources/images/sekiro/skill_story/<icon id>.png
+                                                   skill illustrations (MENU_SkillStory_<icon id>),
+                                                   keyed like the item icons of the skills,
+                                                   256 colours to keep them small
+    src/resources/sekiro_skill_images.qrc          Qt resource list for the illustrations
+                                                   (optional bundle, like the item icons)
     src/resources/sekiro_images.qrc                Qt resource list (keeps the existing bg)
 
 Sprites come from the /menu/hi/01_common layouts and atlases. They are authored for
@@ -14,11 +20,14 @@ Requires pycryptodome and Pillow.
 """
 import io
 import os
+import re
 import sys
 
 import sekirodata
 
 MENU_DIR = os.path.join("src", "resources", "images", "sekiro", "menu")
+SKILL_STORY_DIR = os.path.join("src", "resources", "images", "sekiro", "skill_story")
+SKILL_STORY_SCALE = 0.75
 
 # alias -> (sprite name, scale)
 SPRITES = {
@@ -65,13 +74,36 @@ def main(game_dir, exe_path, repo_root):
             image = image.resize((max(1, round(w * scale)), max(1, round(h * scale))), Image.LANCZOS)
         image.save(os.path.join(out_dir, f"{alias}.png"), optimize=True)
 
+    story_dir = os.path.join(repo_root, SKILL_STORY_DIR)
+    os.makedirs(story_dir, exist_ok=True)
+    stories = []
+    for name, (texture, x, y, w, h) in sorted(sprites.items()):
+        m = re.fullmatch(r"MENU_SkillStory_(\d+)", name)
+        if not m:
+            continue                    # also skips the "...d" placeholder sprites
+        if texture not in atlases:
+            image = Image.open(io.BytesIO(textures[texture]))
+            image.load()
+            atlases[texture] = image.convert("RGBA")
+        image = atlases[texture].crop((x, y, x + w, y + h))
+        image = image.resize((round(w * SKILL_STORY_SCALE), round(h * SKILL_STORY_SCALE)), Image.LANCZOS)
+        icon_id = int(m.group(1))
+        image = image.quantize(colors=256, method=Image.Quantize.FASTOCTREE)
+        image.save(os.path.join(story_dir, f"{icon_id}.png"), optimize=True)
+        stories.append(icon_id)
+
     lines = ["<RCC>", '    <qresource prefix="/sekiro_images">',
              '        <file alias="bg">images/sekiro/menu/bg.png</file>']
     lines += [f'        <file alias="{alias}">images/sekiro/menu/{alias}.png</file>' for alias in sorted(SPRITES)]
     lines += ["    </qresource>", "</RCC>", ""]
     with open(os.path.join(repo_root, "src", "resources", "sekiro_images.qrc"), "w", newline="\r\n") as f:
         f.write("\n".join(lines))
-    print(f"wrote {len(SPRITES)} menu sprites")
+    lines = ["<RCC>", '    <qresource prefix="/sekiro_skill_images">']
+    lines += [f'        <file alias="{i}">images/sekiro/skill_story/{i}.png</file>' for i in stories]
+    lines += ["    </qresource>", "</RCC>", ""]
+    with open(os.path.join(repo_root, "src", "resources", "sekiro_skill_images.qrc"), "w", newline="\r\n") as f:
+        f.write("\n".join(lines))
+    print(f"wrote {len(SPRITES)} menu sprites and {len(stories)} skill illustrations")
 
 
 if __name__ == "__main__":

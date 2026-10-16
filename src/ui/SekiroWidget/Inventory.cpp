@@ -1,5 +1,6 @@
 #include "Inventory.h"
 
+#include <QImage>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QWheelEvent>
@@ -12,12 +13,14 @@
 namespace fssm::ui::sekiro {
 using fssm::parse::sekiro::InventoryItem;
 using fssm::parse::sekiro::ItemCategory;
+using fssm::parse::sekiro::SkillNode;
 
 namespace {
     struct Category {
         const char* label;
-        const char* icon;           // alias in :/sekiro_images, nullptr for none
-        std::initializer_list<ItemCategory> categories;
+        const char* icon;           // resource path
+        std::initializer_list<ItemCategory> categories;     // empty on the Skills tab
+        bool tile = false;          // icon needs the dark tile drawn under it
     };
 
     struct Page {
@@ -25,19 +28,27 @@ namespace {
         std::initializer_list<Category> categories;
     };
 
-    // The game's inventory tabs; skills and combat arts live in their own menu.
+    // The game's inventory tabs, then its Acquire Skills screen: one category per
+    // skill tree, in SkillNode::tree order, shown with the tree's Esoteric Text.
     const std::array<Page, 2> PAGES = {{
         {"Inventory", {
-            {"Quick Items", "category_quick_items", {ItemCategory::QuickItems}},
-            {"Key Items", "category_key_items",
+            {"Quick Items", ":/sekiro_images/category_quick_items", {ItemCategory::QuickItems}},
+            {"Key Items", ":/sekiro_images/category_key_items",
              {ItemCategory::KeyItems, ItemCategory::PrayerBeads, ItemCategory::Memories, ItemCategory::SpiritEmblems}},
-            {"Upgrade Materials", "category_materials", {ItemCategory::Materials}},
-            {"Prosthetic Tools", "category_prosthetics", {ItemCategory::ProstheticTools}},
+            {"Upgrade Materials", ":/sekiro_images/category_materials", {ItemCategory::Materials}},
+            {"Prosthetic Tools", ":/sekiro_images/category_prosthetics", {ItemCategory::ProstheticTools}},
         }},
         {"Skills", {
-            {"Skills and Combat Arts", nullptr, {ItemCategory::CombatArts}},
+            {"Shinobi Arts", ":/sekiro_inv_images/910", {}, true},
+            {"Prosthetic Arts", ":/sekiro_inv_images/930", {}, true},
+            {"Ashina Arts", ":/sekiro_inv_images/900", {}, true},
+            {"Temple Arts", ":/sekiro_inv_images/920", {}, true},
+            {"Mushin Arts", ":/sekiro_inv_images/940", {}, true},
         }},
     }};
+    constexpr int SKILLS_PAGE = 1;
+    constexpr int SKILL_ROWS = 8;
+    constexpr int SKILL_COLUMNS = 4;
 
     // Size the layout is designed for; everything scales from it.
     constexpr int DESIGN_W = 600;
@@ -60,6 +71,22 @@ namespace {
     QString label(std::string_view text) {
         return QString::fromUtf8(text.data(), int(text.size()));
     }
+
+    fssm::parse::sekiro::BaseItem skillItem(const SkillNode& node) {
+        return fssm::parse::sekiro::findBaseItem(node.itemId).value_or(fssm::parse::sekiro::BaseItem{});
+    }
+
+    QPixmap grayscale(const QPixmap& pix) {
+        QImage image = pix.toImage().convertToFormat(QImage::Format_ARGB32);
+        for (int y = 0; y < image.height(); ++y) {
+            auto* line = reinterpret_cast<QRgb*>(image.scanLine(y));
+            for (int x = 0; x < image.width(); ++x) {
+                const int g = qGray(line[x]) * 3 / 4;
+                line[x] = qRgba(g, g, g, qAlpha(line[x]));
+            }
+        }
+        return QPixmap::fromImage(image);
+    }
 }
 
 InventoryWidget::InventoryWidget(QWidget* parent): QWidget(parent) {
@@ -76,6 +103,8 @@ void InventoryWidget::setCharacter(const fssm::parse::sekiro::SekiroCharacterInf
     m_stats = charInfo != nullptr ? *charInfo : fssm::parse::sekiro::SekiroCharacterInfo{};
     m_allItems = std::move(m_stats.inventoryItems);
     m_stats.inventoryItems.clear();
+    m_heldItems.clear();
+    for (const auto& item : m_allItems) m_heldItems.insert(item.itemId);
     std::stable_sort(m_allItems.begin(), m_allItems.end(), [](const InventoryItem& a, const InventoryItem& b) {
         if (a.baseItem.order != b.baseItem.order) return a.baseItem.order < b.baseItem.order;
         return a.itemId < b.itemId;
@@ -90,12 +119,23 @@ void InventoryWidget::selectPage(int page, int category) {
     m_hoverItem = -1;
     m_layout = computeLayout();
     rebuildVisibleItems();
-    m_selectedItem = m_visibleItems.empty() ? -1 : 0;
+    m_selectedItem = m_visibleItems.empty() && m_treeNodes.empty() ? -1 : 0;
     update();
 }
 
 void InventoryWidget::rebuildVisibleItems() {
     m_visibleItems.clear();
+    m_treeNodes.clear();
+    if (skillPage()) {
+        for (const auto& node : fssm::parse::sekiro::SKILL_TREE) {
+            if (node.tree == m_category) m_treeNodes.push_back(&node);
+        }
+        std::stable_sort(m_treeNodes.begin(), m_treeNodes.end(), [](const SkillNode* a, const SkillNode* b) {
+            return std::make_pair(a->column, a->row) < std::make_pair(b->column, b->row);
+        });
+        m_scroll = 0;
+        return;
+    }
     const Category& category = categoryAt(m_page, m_category);
     for (const auto& item : m_allItems) {
         const auto& wanted = category.categories;
@@ -117,7 +157,9 @@ InventoryWidget::Layout InventoryWidget::computeLayout() const {
     for (int i = 0; i < int(PAGES.size()); ++i) {
         l.tabs.emplace_back(r.left() + px(16) + i * (tabW + px(10)), r.top(), tabW, px(34));
     }
-    l.status = QRect(r.left(), r.bottom() + 1 - px(56), r.width(), px(56));
+    // The Acquire Skills screen has no status bar; the tree gets the room.
+    l.status = m_page == SKILLS_PAGE ? QRect(r.left(), r.bottom() + 1, r.width(), 0)
+                                     : QRect(r.left(), r.bottom() + 1 - px(56), r.width(), px(56));
 
     const int top = r.top() + px(44);
     const int leftW = int(r.width() * 0.52);
@@ -131,7 +173,7 @@ InventoryWidget::Layout InventoryWidget::computeLayout() const {
         }
         listTop = l.categories.back().bottom() + 1 + px(10);
     }
-    const int bottom = l.status.top() - px(10);
+    const int bottom = l.status.top() - (l.status.height() > 0 ? px(10) : px(2));
     l.list = QRect(r.left(), listTop, leftW - px(16), std::max(0, bottom - listTop));
     l.rowHeight = px(46);
     l.scrollTrack = QRect(l.list.right() + px(6), l.list.top() + px(4), std::max(2, px(3)),
@@ -149,7 +191,38 @@ void InventoryWidget::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
     m_layout = computeLayout();
     m_cache.clear();
+    m_grayCache.clear();
     m_scroll = std::clamp(m_scroll, 0, maxScroll());
+}
+
+bool InventoryWidget::skillPage() const {
+    return m_page == SKILLS_PAGE;
+}
+
+bool InventoryWidget::learned(const SkillNode& node) const {
+    return m_heldItems.count(node.itemId) > 0;
+}
+
+QPoint InventoryWidget::nodeCenter(const SkillNode& node, int* nodeSize) const {
+    const QRect canvas = m_layout.list;
+    const double margin = 14 * m_layout.scale;
+    // Proportions of the game's screen: rows ~97 px apart, nodes ~90 px, columns ~276 px.
+    const double rowStep = canvas.height() / double(SKILL_ROWS);
+    const int size = int(rowStep * 0.9);
+    const double colStep = std::min(rowStep * 2.85, (canvas.width() - size - 2 * margin) / double(SKILL_COLUMNS - 1));
+    if (nodeSize != nullptr) *nodeSize = size;
+    return {int(canvas.left() + margin + size / 2.0 + node.column * colStep),
+            int(canvas.top() + rowStep * (node.row + 0.5))};
+}
+
+QPixmap InventoryWidget::skillIcon(const SkillNode& node, int size, bool gray) {
+    const auto item = skillItem(node);
+    if (!inventoryResourcesAvailable() || item.image.empty()) return {};
+    const QString resource = ":/sekiro_inv_images/" + label(item.image);
+    if (!gray) return m_cache.fit(resource, QSize(size, size));
+    const QString key = QString("gray:%1@%2").arg(resource).arg(size);
+    if (!m_grayCache.contains(key)) m_grayCache.insert(key, grayscale(m_cache.fit(resource, QSize(size, size))));
+    return m_grayCache.value(key);
 }
 
 QPixmap InventoryWidget::itemIcon(const InventoryItem& item, int size) {
@@ -172,9 +245,13 @@ void InventoryWidget::paintEvent(QPaintEvent* event) {
         return;
     }
     drawCategories(painter);
-    drawList(painter);
+    if (skillPage()) {
+        drawSkillTree(painter);
+    } else {
+        drawList(painter);
+        drawStatus(painter);
+    }
     drawDetail(painter);
-    drawStatus(painter);
 }
 
 void InventoryWidget::drawTabs(QPainter& painter) {
@@ -204,8 +281,14 @@ void InventoryWidget::drawCategories(QPainter& painter) {
     painter.drawPixmap(labelBar.topLeft(), m_cache.get(":/sekiro_images/header_bar", labelBar.size()));
     painter.setOpacity(1.0);
     painter.setFont(serifFont(int(16 * s)));
+    QString count = QString::number(m_visibleItems.size());
+    if (skillPage()) {
+        const auto learnedCount = std::count_if(m_treeNodes.begin(), m_treeNodes.end(),
+                                                [this](const SkillNode* n) { return learned(*n); });
+        count = QString("%1/%2").arg(learnedCount).arg(m_treeNodes.size());
+    }
     drawShadowText(painter, l.categoryLabel.adjusted(int(14 * s), 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter,
-                   QString("%1  (%2)").arg(categoryAt(m_page, m_category).label).arg(m_visibleItems.size()));
+                   QString("%1  (%2)").arg(categoryAt(m_page, m_category).label, count));
 
     for (int i = 0; i < int(l.categories.size()); ++i) {
         const QRect cell = l.categories[i];
@@ -213,12 +296,17 @@ void InventoryWidget::drawCategories(QPainter& painter) {
             const QRect glow = cell.adjusted(-int(5 * s), -int(5 * s), int(5 * s), int(5 * s));
             painter.drawPixmap(glow.topLeft(), m_cache.get(":/sekiro_images/category_cursor", glow.size()));
         }
-        const char* icon = categoryAt(m_page, i).icon;
-        if (icon != nullptr) {
-            painter.setOpacity(i == m_category ? 1.0 : 0.85);
-            painter.drawPixmap(cell.topLeft(), m_cache.get(QString(":/sekiro_images/") + icon, cell.size()));
-            painter.setOpacity(1.0);
+        const Category& category = categoryAt(m_page, i);
+        if (category.tile) {
+            painter.fillRect(cell, QColor(16, 15, 13, 235));
+            painter.setPen(QPen(QColor(120, 112, 96), 1));
+            painter.setBrush(Qt::NoBrush);
+            painter.drawRect(cell.adjusted(0, 0, -1, -1));
         }
+        painter.setOpacity(i == m_category ? 1.0 : 0.85);
+        const QRect iconRect = category.tile ? cell.adjusted(int(2 * s), int(2 * s), -int(2 * s), -int(2 * s)) : cell;
+        painter.drawPixmap(iconRect.topLeft(), m_cache.get(category.icon, iconRect.size()));
+        painter.setOpacity(1.0);
     }
 }
 
@@ -281,6 +369,10 @@ void InventoryWidget::drawDetail(QPainter& painter) {
     const double s = l.scale;
     painter.drawPixmap(l.detail.topLeft(), m_cache.get(":/sekiro_images/detail_panel", l.detail.size()));
     const QRect inner = l.detail.adjusted(int(14 * s), int(12 * s), -int(14 * s), -int(14 * s));
+    if (skillPage()) {
+        drawSkillDetail(painter, inner);
+        return;
+    }
     if (m_selectedItem < 0 || m_selectedItem >= int(m_visibleItems.size())) {
         painter.setFont(serifFont(int(16 * s)));
         drawShadowText(painter, inner, Qt::AlignCenter, "No items", DIM_TEXT_COLOR);
@@ -413,6 +505,14 @@ void InventoryWidget::drawStatus(QPainter& painter) {
 
 int InventoryWidget::itemIndexAt(const QPoint& pos) const {
     const Layout& l = m_layout;
+    if (skillPage()) {
+        for (int i = 0; i < int(m_treeNodes.size()); ++i) {
+            int size = 0;
+            const QPoint d = pos - nodeCenter(*m_treeNodes[i], &size);
+            if (d.x() * d.x() + d.y() * d.y() <= size * size / 4) return i;
+        }
+        return -1;
+    }
     if (!l.list.contains(pos) || l.rowHeight <= 0) return -1;
     const int idx = (pos.y() - l.list.top() + m_scroll) / l.rowHeight;
     return idx < int(m_visibleItems.size()) ? idx : -1;
@@ -428,6 +528,7 @@ void InventoryWidget::mouseMoveEvent(QMouseEvent* event) {
     for (int i = 0; i < int(m_layout.categories.size()); ++i) {
         if (m_layout.categories[i].contains(event->pos())) tip = categoryAt(m_page, i).label;
     }
+    if (skillPage() && m_hoverItem >= 0) tip = label(skillItem(*m_treeNodes[m_hoverItem]).label);
     setToolTip(tip);
     QWidget::mouseMoveEvent(event);
 }
@@ -457,7 +558,7 @@ void InventoryWidget::mousePressEvent(QMouseEvent* event) {
 }
 
 void InventoryWidget::wheelEvent(QWheelEvent* event) {
-    if (!m_hasCharacter) return;
+    if (!m_hasCharacter || skillPage()) return;
     const int steps = event->angleDelta().y() / 120;
     m_scroll = std::clamp(m_scroll - steps * m_layout.rowHeight, 0, maxScroll());
     m_hoverItem = itemIndexAt(event->position().toPoint());
@@ -469,5 +570,104 @@ void InventoryWidget::leaveEvent(QEvent* event) {
     m_hoverItem = -1;
     update();
     QWidget::leaveEvent(event);
+}
+
+void InventoryWidget::drawSkillTree(QPainter& painter) {
+    const double s = m_layout.scale;
+    // Connectors first: right from the prerequisite, along to halfway, then into the skill.
+    painter.setPen(QPen(QColor(28, 26, 22, 220), std::max(1.5, 2.2 * s), Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin));
+    painter.setBrush(Qt::NoBrush);
+    for (const SkillNode* node : m_treeNodes) {
+        int size = 0;
+        const QPoint to = nodeCenter(*node, &size);
+        for (const int32_t pre : node->prerequisites) {
+            const auto parent = std::find_if(m_treeNodes.begin(), m_treeNodes.end(),
+                                             [pre](const SkillNode* n) { return n->rowId == pre; });
+            if (pre < 0 || parent == m_treeNodes.end()) continue;
+            const QPoint from = nodeCenter(**parent);
+            const int midX = (from.x() + size / 2 + to.x() - size / 2) / 2;
+            const QPoint points[4] = {from, QPoint(midX, from.y()), QPoint(midX, to.y()), to};
+            painter.drawPolyline(points, 4);
+            painter.setBrush(QColor(28, 26, 22));
+            const int dot = std::max(2, int(3 * s));
+            painter.drawEllipse(QPoint(midX, to.y()), dot, dot);
+            painter.setBrush(Qt::NoBrush);
+        }
+    }
+
+    for (int i = 0; i < int(m_treeNodes.size()); ++i) {
+        const SkillNode& node = *m_treeNodes[i];
+        int size = 0;
+        const QPoint c = nodeCenter(node, &size);
+        const QRect box(c.x() - size / 2, c.y() - size / 2, size, size);
+        const bool isLearned = learned(node);
+        // Plate behind the icon so the connectors do not show through.
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(QColor(40, 37, 32, isLearned ? 255 : 200));
+        painter.drawEllipse(box.adjusted(1, 1, -1, -1));
+        const QPixmap icon = skillIcon(node, size, !isLearned);
+        if (!icon.isNull()) {
+            painter.setOpacity(isLearned ? 1.0 : 0.7);
+            painter.drawPixmap(c.x() - icon.width() / 2, c.y() - icon.height() / 2, icon);
+            painter.setOpacity(1.0);
+        }
+        if (i == m_selectedItem || i == m_hoverItem) {
+            painter.setBrush(Qt::NoBrush);
+            painter.setPen(QPen(i == m_selectedItem ? ORANGE_COLOR : QColor(240, 236, 226, 160), std::max(2.0, 3 * s)));
+            painter.drawEllipse(box.adjusted(-int(3 * s), -int(3 * s), int(3 * s), int(3 * s)));
+        }
+    }
+}
+
+void InventoryWidget::drawSkillDetail(QPainter& painter, const QRect& inner) {
+    const double s = m_layout.scale;
+    if (m_selectedItem < 0 || m_selectedItem >= int(m_treeNodes.size())) return;
+    const SkillNode& node = *m_treeNodes[m_selectedItem];
+    const auto item = skillItem(node);
+    const bool isLearned = learned(node);
+
+    const QRect title(inner.left(), inner.top(), inner.width(), int(32 * s));
+    painter.drawPixmap(title.topLeft(), m_cache.get(":/sekiro_images/title_bar", title.size()));
+    painter.setFont(serifFont(int(18 * s)));
+    drawShadowText(painter, title.adjusted(int(24 * s), 0, -int(24 * s), 0), Qt::AlignCenter, label(item.label));
+
+    painter.setFont(serifFont(int(14 * s)));
+    const QRect state(inner.left() + int(6 * s), title.bottom() + int(2 * s), inner.width(), int(20 * s));
+    drawShadowText(painter, state, Qt::AlignLeft | Qt::AlignVCenter, isLearned ? "Learned" : "Not learned",
+                   isLearned ? TEXT_COLOR : DIM_TEXT_COLOR);
+
+    // The game's ink illustration of the skill, or its icon when there is none.
+    int textTop = state.bottom() + int(6 * s);
+    QPixmap story;
+    if (inventoryResourcesAvailable() && !item.image.empty()) {
+        const int w = inner.width() - int(8 * s);
+        story = m_cache.fit(":/sekiro_skill_images/" + label(item.image), QSize(w, w));
+    }
+    painter.setOpacity(isLearned ? 1.0 : 0.55);
+    if (!story.isNull()) {
+        painter.drawPixmap(inner.center().x() - story.width() / 2, textTop, story);
+        textTop += story.height() + int(8 * s);
+    } else {
+        const int size = std::min(int(96 * s), inner.width() / 3);
+        const QPixmap icon = skillIcon(node, size, !isLearned);
+        if (!icon.isNull()) painter.drawPixmap(inner.center().x() - icon.width() / 2, textTop, icon);
+        textTop += size + int(8 * s);
+    }
+    painter.setOpacity(1.0);
+
+    const QFont descFont = serifFont(int(14 * s));
+    const int lineH = QFontMetrics(descFont).lineSpacing();
+    const int descH = (inner.bottom() - textTop) / lineH * lineH;
+    const QRect desc(inner.left() + int(6 * s), textTop, inner.width() - int(12 * s), descH);
+    if (desc.height() <= 0) return;
+    painter.save();
+    painter.setClipRect(desc.adjusted(-2, 0, 2, 2), Qt::IntersectClip);
+    painter.setFont(descFont);
+    painter.setPen(QPen(QColor(240, 236, 226, 45), 1));
+    for (int y = desc.top() + lineH; y < desc.bottom(); y += lineH) {
+        painter.drawLine(QPoint(desc.left(), y + 1), QPoint(desc.right(), y + 1));
+    }
+    drawShadowText(painter, desc, Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap, label(item.description));
+    painter.restore();
 }
 }
