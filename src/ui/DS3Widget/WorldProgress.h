@@ -6,7 +6,7 @@
 #include "../../parse/DS3/SaveFile.h"
 
 namespace fssm::ui::ds3 {
-// Lit bonfires (grouped by the travel menu's areas) and defeated bosses of a
+// Lit bonfires (grouped by the travel menu's areas), defeated bosses and NPC states of a
 // character, from its event flags.
 class WorldProgressWidget: public QWidget {
     Q_OBJECT

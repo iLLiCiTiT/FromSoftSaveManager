@@ -182,6 +182,26 @@ namespace fssm::parse::ds3 {
             return defeated;
         }
 
+        std::vector<NpcState> npc_states(const CharacterSlot& slot) {
+            std::vector<NpcState> states;
+            states.reserve(NPCS.size());
+            for (const auto& npc : NPCS) {
+                const auto isSet = [&](uint32_t offset) {
+                    return get_event_flag(slot, npc.statusFlag + offset).value_or(false);
+                };
+                if (isSet(3)) {
+                    states.push_back(NpcState::Dead);
+                } else if (isSet(1) || isSet(2)) {
+                    states.push_back(NpcState::Hostile);
+                } else if (isSet(0)) {
+                    states.push_back(NpcState::Friendly);
+                } else {
+                    states.push_back(NpcState::Unknown);
+                }
+            }
+            return states;
+        }
+
         DS3CharacterInfo character_info(const CharacterSlot& slot, const ProfileSummaryEntry& profile, uint8_t index) {
             const auto& st = slot.player.stats;
             const EquippedSet equipped = equipped_set(slot.player.equip);
@@ -225,6 +245,7 @@ namespace fssm::parse::ds3 {
                 .equipItemIds = slot.player.equip.chrAsm.equipItemIds,
                 .bonfiresLit = lit_bonfires(slot),
                 .bossesDefeated = defeated_bosses(slot),
+                .npcStates = npc_states(slot),
             };
         }
     }

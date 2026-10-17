@@ -18,10 +18,19 @@ namespace fssm::parse::ds3 {
         std::string_view name;
     };
 
+    // Status flags of an NPC, exactly one set once its map has loaded:
+    // statusFlag friendly, + 1 or + 2 hostile, + 3 dead (or gone for good).
+    struct Npc {
+        uint32_t statusFlag;
+        std::string_view name;
+    };
+
     // Areas of the bonfire travel menu, in menu order.
     extern const std::array<std::string_view, 14> AREAS;
     // Bonfires in travel menu order.
     extern const std::array<Bonfire, 78> BONFIRES;
     // Bosses in the order they are usually met.
     extern const std::array<Boss, 25> BOSSES;
+    // NPCs with a status flag block, by flag.
+    extern const std::array<Npc, 30> NPCS;
 }

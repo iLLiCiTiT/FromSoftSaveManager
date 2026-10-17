@@ -21,6 +21,14 @@ namespace fssm::parse::ds3 {
         static std::optional<InventoryItem> fromId(uint32_t itemId, const uint32_t& amount);
     };
 
+    // From an NPC's status flags (Npc in WorldProgress.h).
+    enum class NpcState : uint8_t {
+        Unknown,        // none set: the NPC's map hasn't loaded yet
+        Friendly,
+        Hostile,
+        Dead,           // or gone from the world for good
+    };
+
     struct DS3CharacterInfo {
         uint8_t index;
         std::u16string name;
@@ -68,9 +76,10 @@ namespace fssm::parse::ds3 {
         // ChrAsm::equipItemIds (weapons, ammunition, armor, rings, ...); 0xffffffff when empty.
         std::array<uint32_t, 0x16> equipItemIds{};
 
-        // From the event flags, one per BONFIRES / BOSSES entry (WorldProgress.h).
+        // From the event flags, one per BONFIRES / BOSSES / NPCS entry (WorldProgress.h).
         std::vector<bool> bonfiresLit;
         std::vector<bool> bossesDefeated;
+        std::vector<NpcState> npcStates;
     };
 
     struct DS3SaveFile {

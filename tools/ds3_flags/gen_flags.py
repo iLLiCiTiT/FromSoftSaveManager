@@ -1,4 +1,4 @@
-"""Generate the Dark Souls III bonfire and boss tables from the installed game data.
+"""Generate the Dark Souls III bonfire, boss and NPC tables from the installed game data.
 
 Usage:
     python gen_flags.py "<...>/DARK SOULS III/Game" <DecryptionKeys.cs> <repo root>
@@ -9,7 +9,7 @@ BinderTool/DecryptionKeys.cs (github.com/Atvaark/BinderTool).
 
 Writes:
     src/parse/DS3/WorldProgress.h      table sizes
-    src/parse/DS3/WorldProgress.cpp    bonfires (BonfireWarpParam) and bosses
+    src/parse/DS3/WorldProgress.cpp    bonfires (BonfireWarpParam), bosses and NPCs
 
 Bonfires come from BonfireWarpParam in the regulation (Data0.bdt, AES-256-CBC with the
 key below, IV = first 16 bytes): +0x0 event flag set when the bonfire is lit, +0x8 name
@@ -21,8 +21,22 @@ any of their flags is set.
 Boss defeat flags are not in the game params; BOSSES was checked against saves (each
 map's 8xx flags of the first thousand, matching the bonfire named after the boss).
 
+NPCs come from the map event scripts (/event/mAA_BB_00_00.emevd.dcx). Each NPC owns a
+block of 20 global flags; the last five (S = base + 15 .. base + 19) are its status and
+exactly one is set: S friendly, S + 1 / S + 2 hostile, S + 3 dead or gone for good. The
+scripts always clear the five and then set one (Batch Set Event Flags S..S+4 off, Set
+Event Flag S+k), and the common events show which is which: 20006002 sets S + 3 when
+the character dies, 20006000 sets S + 1 or S + 2 when it turns hostile (both count as
+hostile there). The NPC is the character in the same event instance (IF Character
+Dead/Alive, IF Character HP Ratio or Set Character Team Type 27) -> map MSB enemy part
+-> NpcParam +0x8 name id -> NPC名[_dlc1|_dlc2].fmg in /msg/engus/item*.msgbnd.dcx.
+Blocks whose characters have no name (DLC side characters) and bosses (name ids from
+900000) are left out. The first 15 flags of a block are questline stages; the game data
+doesn't name them.
+
 Requires pycryptodome.
 """
+import collections
 import os
 import struct
 import sys
@@ -39,7 +53,18 @@ ARCHIVES = ("Data1", "Data2", "Data3", "Data4", "Data5", "DLC1", "DLC2")
 # Later ones override earlier ones; not every install has all of them.
 MENU_MSG = ("/msg/engus/menu.msgbnd.dcx", "/msg/engus/menu_dlc1.msgbnd.dcx", "/msg/engus/menu_dlc2.msgbnd.dcx")
 MENU_FMG_PREFIX = "FDP_メニューテキスト"
+ITEM_MSG = ("/msg/engus/item.msgbnd.dcx", "/msg/engus/item_dlc1.msgbnd.dcx", "/msg/engus/item_dlc2.msgbnd.dcx")
+NPC_FMG_PREFIX = "NPC名"
 HIDDEN_AREA = 99
+
+# Map areas and blocks to look for event scripts and MSBs in.
+MAP_AREAS = range(30, 56)
+MAP_BLOCKS = range(0, 3)
+COMMON_FUNC = "/event/common_func.emevd.dcx"
+# NPC status flags are global flags base + 15 .. base + 19 of a 20 flag block.
+NPC_FLAG_MIN, NPC_FLAG_MAX = 1000, 2000
+NPC_TEAM_TYPE = 27              # Set Character Team Type: hostile NPC
+BOSS_NAME_ID = 900000           # NPC name ids from here on are bosses
 
 # Travel menu areas, by BonfireWarpParam +0x14.
 AREAS = [
@@ -125,18 +150,22 @@ def read_file(archives, path):
     return None
 
 
-def menu_text(archives):
+def fmg_text(archives, paths, prefix):
     text = {}
-    for path in MENU_MSG:
+    for path in paths:
         data = read_file(archives, path)
         if data is None:
             continue
         for name, fmg in sekirodata.parse_bnd4(data).items():
-            if os.path.basename(name.replace("\\", "/")).startswith(MENU_FMG_PREFIX):
+            if os.path.basename(name.replace("\\", "/")).startswith(prefix):
                 text.update(sekirodata.parse_fmg2(fmg))
     if not text:
-        raise RuntimeError("no menu text found")
+        raise RuntimeError(f"no {prefix} text found")
     return text
+
+
+def menu_text(archives):
+    return fmg_text(archives, MENU_MSG, MENU_FMG_PREFIX)
 
 
 def regulation_params(game_dir):
@@ -177,6 +206,141 @@ def bonfires(params, text):
     return out
 
 
+def parse_emevd(data):
+    """EMEVD version 0xCD (64-bit): {event id: [(bank, id, args, [(target, source, size)])]}."""
+    assert data[:4] == b"EVD\0" and struct.unpack_from("<I", data, 8)[0] == 0xCD
+    (event_count, events_offset, _ic, instrs_offset, _uc, _uo, _lc, _lo,
+     _pc, params_offset, _fc, _fo, _al, args_offset) = struct.unpack_from("<14q", data, 0x10)
+    events = {}
+    for i in range(event_count):
+        event_id, count, offset, param_count, param_offset = struct.unpack_from(
+            "<qqqqq", data, events_offset + i * 0x30)
+        instrs = []
+        for k in range(count):
+            bank, index, size, arg_offset, _layer = struct.unpack_from(
+                "<IIqqq", data, instrs_offset + offset + k * 0x20)
+            start = args_offset + arg_offset
+            instrs.append((bank, index, data[start:start + size], []))
+        for k in range(param_count):
+            instr, target, source, size = struct.unpack_from("<qqqi", data, params_offset + param_offset + k * 0x20)
+            instrs[instr][3].append((target, source, size))
+        events[event_id] = instrs
+    return events
+
+
+def event_instances(map_events, common_events):
+    """Instructions of every initialized event with its arguments filled in, plus the events
+    that run without initialization (e.g. event 0)."""
+    initialized = set()
+    for instrs in map_events.values():
+        for bank, index, args, _params in instrs:
+            if (bank, index) == (2000, 0):      # Initialize Event: slot, event id, args
+                event_id, values, events = struct.unpack_from("<I", args, 4)[0], args[8:], map_events
+            elif (bank, index) == (2000, 6):    # Initialize Common Event: event id, args
+                event_id, values, events = struct.unpack_from("<I", args, 0)[0], args[4:], common_events
+            else:
+                continue
+            if event_id in events:
+                initialized.add(event_id)
+                yield [(b, i, substitute(a, p, values)) for b, i, a, p in events[event_id]]
+    for event_id, instrs in map_events.items():
+        if event_id not in initialized:
+            yield [(b, i, a) for b, i, a, _p in instrs]
+
+
+def substitute(args, params, values):
+    out = bytearray(args)
+    for target, source, size in params:
+        if source + size <= len(values):
+            out[target:target + size] = values[source:source + size]
+    return bytes(out)
+
+
+def npc_status_blocks(instances):
+    """{status base: {offset set: set of characters in the same event}}."""
+    blocks = collections.defaultdict(lambda: collections.defaultdict(set))
+    for instrs in instances:
+        dying, hostile = set(), set()
+        for bank, index, args in instrs:
+            if (bank, index) == (4, 0) and args[8] == 1:            # IF Character Dead/Alive: dead
+                dying.add(struct.unpack_from("<i", args, 4)[0])
+            elif (bank, index) == (4, 2):                           # IF Character HP Ratio
+                dying.add(struct.unpack_from("<i", args, 4)[0])
+            elif (bank, index) == (2004, 2) and args[4] == NPC_TEAM_TYPE:
+                hostile.add(struct.unpack_from("<i", args, 0)[0])
+        for (bank, index, args), (bank2, index2, args2) in zip(instrs, instrs[1:]):
+            # Batch Set (Network-Connected) Event Flags start, end, off; then Set flag on.
+            if bank != 2003 or index not in (22, 63) or bank2 != 2003 or index2 not in (2, 62):
+                continue
+            start, end = struct.unpack_from("<ii", args, 0)
+            flag = struct.unpack_from("<i", args2, 0)[0]
+            if end - start != 4 or args[8] != 0 or args2[4] != 1 or not start <= flag <= end:
+                continue
+            if not NPC_FLAG_MIN <= start < NPC_FLAG_MAX:
+                continue
+            offset = flag - start
+            owners = dying if offset == 3 else hostile if offset in (1, 2) else set()
+            blocks[start][offset] |= owners
+    return blocks
+
+
+def msb_npc_params(data):
+    """MSB3 enemy parts: {entity id: NpcParam id}."""
+    lists, offset = {}, 0x10
+    while offset:
+        _version, count, name_offset = struct.unpack_from("<iiq", data, offset)
+        entries = struct.unpack_from(f"<{count - 1}q", data, offset + 16)
+        name = data[name_offset:data.index(b"\0\0", name_offset)].decode("ascii", "ignore")
+        lists[name.replace("\0", "")] = entries
+        offset = struct.unpack_from("<q", data, offset + 16 + (count - 1) * 8)[0]
+    out = {}
+    for part in lists["PARTS_PARAM_ST"]:
+        part_type = struct.unpack_from("<i", data, part + 8)[0]
+        if part_type != 2:      # enemy
+            continue
+        entity_offset, type_offset = struct.unpack_from("<qq", data, part + 0xB0)
+        entity = struct.unpack_from("<i", data, part + entity_offset)[0]
+        if entity > 0:
+            out[entity] = struct.unpack_from("<i", data, part + type_offset + 0xC)[0]
+    return out
+
+
+def npcs(archives, params):
+    """[(status base, name)] for the named NPCs, by status base."""
+    common = parse_emevd(read_file(archives, COMMON_FUNC))
+    npc_params = {}
+    blocks = collections.defaultdict(lambda: collections.defaultdict(set))
+    for area in MAP_AREAS:
+        for block in MAP_BLOCKS:
+            map_name = f"m{area:02d}_{block:02d}_00_00"
+            msb = read_file(archives, f"/map/mapstudio/{map_name}.msb.dcx")
+            if msb is not None:
+                npc_params.update(msb_npc_params(msb))
+            script = read_file(archives, f"/event/{map_name}.emevd.dcx")
+            if script is None:
+                continue
+            for base, offsets in npc_status_blocks(event_instances(parse_emevd(script), common)).items():
+                for offset, owners in offsets.items():
+                    blocks[base][offset] |= owners
+    npc_rows = sekirodata.parse_param(params["NpcParam.param"])
+    names = fmg_text(archives, ITEM_MSG, NPC_FMG_PREFIX)
+    out = []
+    for base, offsets in sorted(blocks.items()):
+        votes = collections.Counter()
+        for owners in offsets.values():
+            for entity in owners:
+                row = npc_rows.get(npc_params.get(entity))
+                name_id = struct.unpack_from("<i", row, 8)[0] if row else 0
+                if name_id in names and name_id < BOSS_NAME_ID:
+                    votes[names[name_id]] += 1
+        if votes:
+            name = votes.most_common(1)[0][0]
+            # The Shrine Handmaid has two blocks (two characters at the same spot).
+            seen = sum(1 for _, n in out if n == name or n.startswith(name + " ("))
+            out.append((base, f"{name} ({seen + 1})" if seen else name))
+    return out
+
+
 def cpp_string(s):
     return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
@@ -192,7 +356,9 @@ def main():
         sys.exit(1)
     game_dir, keys_path, repo = sys.argv[1:]
     archives = [Archive(game_dir, keys_path, name) for name in ARCHIVES]
-    table = bonfires(regulation_params(game_dir), menu_text(archives))
+    params = regulation_params(game_dir)
+    table = bonfires(params, menu_text(archives))
+    npc_table = npcs(archives, params)
 
     out_dir = os.path.join(repo, "src", "parse", "DS3")
     write_crlf(os.path.join(out_dir, "WorldProgress.h"), f"""#pragma once
@@ -215,12 +381,21 @@ namespace fssm::parse::ds3 {{
         std::string_view name;
     }};
 
+    // Status flags of an NPC, exactly one set once its map has loaded:
+    // statusFlag friendly, + 1 or + 2 hostile, + 3 dead (or gone for good).
+    struct Npc {{
+        uint32_t statusFlag;
+        std::string_view name;
+    }};
+
     // Areas of the bonfire travel menu, in menu order.
     extern const std::array<std::string_view, {len(AREAS)}> AREAS;
     // Bonfires in travel menu order.
     extern const std::array<Bonfire, {len(table)}> BONFIRES;
     // Bosses in the order they are usually met.
     extern const std::array<Boss, {len(BOSSES)}> BOSSES;
+    // NPCs with a status flag block, by flag.
+    extern const std::array<Npc, {len(npc_table)}> NPCS;
 }}
 """)
 
@@ -239,9 +414,12 @@ namespace fssm::parse::ds3 {{
     lines += ["    };", "", f"    const std::array<Boss, {len(BOSSES)}> BOSSES = {{"]
     for flag, area, name in BOSSES:
         lines.append(f"        Boss{{{flag}, {area}, {cpp_string(name)}}},")
+    lines += ["    };", "", f"    const std::array<Npc, {len(npc_table)}> NPCS = {{"]
+    for flag, name in npc_table:
+        lines.append(f"        Npc{{{flag}, {cpp_string(name)}}},")
     lines += ["    };", "}", ""]
     write_crlf(os.path.join(out_dir, "WorldProgress.cpp"), "\n".join(lines))
-    print(f"{len(table)} bonfires, {len(BOSSES)} bosses")
+    print(f"{len(table)} bonfires, {len(BOSSES)} bosses, {len(npc_table)} NPCs")
 
 
 if __name__ == "__main__":
