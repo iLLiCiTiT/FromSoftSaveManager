@@ -259,7 +259,8 @@ InventoryWidget::Layout InventoryWidget::computeLayout() const {
     // Tiles keep one size; resizing the window adds or removes columns.
     l.cellWidth = TILE_SIZE;
     l.columns = std::max(1, frameInner.width() / TILE_SIZE);
-    l.rowHeight = TILE_SIZE;
+    // The game's item cells are about 100x110 px: slightly taller than wide.
+    l.rowHeight = TILE_SIZE * 11 / 10;
     l.grid = QRect(frameInner.left() + (frameInner.width() - l.cellWidth * l.columns) / 2, frameInner.top(),
                    l.cellWidth * l.columns, std::max(0, frameInner.height()));
     return l;
