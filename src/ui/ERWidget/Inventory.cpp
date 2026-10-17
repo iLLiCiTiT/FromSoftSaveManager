@@ -51,8 +51,13 @@ namespace {
     // Reference layout size; everything scales with the widget.
     constexpr int DESIGN_W = 560;
     constexpr int DESIGN_H = 470;
-    // Item tile size in pixels, independent of the widget size.
-    constexpr int TILE_SIZE = 68;
+    // Item tile pitch in pixels, independent of the widget size; the slot
+    // background fills all of it but a small gap.
+    constexpr int TILE_SIZE = 60;
+    constexpr double SLOT_FILL = 0.95;
+    // Opaque part of the slot / cursor sprites (they have soft transparent margins).
+    constexpr double SLOT_SPRITE_OPAQUE = 0.86;
+    constexpr double CURSOR_SPRITE_OPAQUE = 0.69;
 
     const QColor TEXT_COLOR(228, 224, 210);
     const QColor DIM_TEXT_COLOR(150, 144, 128);
@@ -430,17 +435,17 @@ void InventoryWidget::drawGrid(QPainter& painter) {
     painter.setClipRect(l.grid.adjusted(0, 0, 0, 1), Qt::IntersectClip);
     const int cw = l.cellWidth;
     const int rh = l.rowHeight;
-    const QSize slotSize(int(cw * 0.97), int(rh * 0.97));
+    const QSize slotSize(int(cw * SLOT_FILL / SLOT_SPRITE_OPAQUE), int(rh * SLOT_FILL / SLOT_SPRITE_OPAQUE));
     const QPixmap slot = scaled(":/er_images/slot_base", slotSize).scaled(slotSize);
-    const QSize cursorSize(int(cw * 1.02), int(rh * 1.02));
+    const QSize cursorSize(int(cw * SLOT_FILL / CURSOR_SPRITE_OPAQUE), int(rh * SLOT_FILL / CURSOR_SPRITE_OPAQUE));
     const QPixmap cursor = scaled(":/er_images/slot_cursor", cursorSize).scaled(cursorSize);
     const QPixmap separator = scaled(":/er_images/group_line", QSize(l.grid.width(), int(4 * s) + 2))
         .scaled(QSize(l.grid.width(), std::max(1, int(2 * s))));
     const int markSize = int(cw * 0.2);
     const QPixmap pouchMark = scaled(":/er_images/pouch_mark", QSize(markSize, markSize));
     const QPixmap equipMark = scaled(":/er_images/equip_mark", QSize(markSize, markSize));
-    const int iconSize = int(cw * 0.9);
-    painter.setFont(serifFont(std::max(10, int(cw * 0.19))));
+    const int iconSize = int(cw * 1.0);
+    painter.setFont(serifFont(std::max(10, int(cw * 0.21))));
 
     for (int r = 0; r < int(m_rows.size()); ++r) {
         const Row& row = m_rows[r];
