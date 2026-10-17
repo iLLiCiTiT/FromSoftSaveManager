@@ -1,5 +1,8 @@
 #include "SaveFile.h"
 
+#include "EventFlags.h"
+#include "WorldProgress.h"
+
 #include <array>
 #include <cstring>
 #include <optional>
@@ -58,6 +61,26 @@ namespace fssm::parse::sekiro {
         T read_or(const std::vector<uint8_t>& data, size_t offset, T fallback) {
             return read_at<T>(data, offset).value_or(fallback);
         }
+
+        std::vector<bool> found_idols(EventFlagView eventFlags) {
+            std::vector<bool> found;
+            found.reserve(IDOLS.size());
+            for (const auto& idol : IDOLS) found.push_back(get_event_flag(eventFlags, idol.flagId).value_or(false));
+            return found;
+        }
+
+        std::vector<bool> defeated_bosses(EventFlagView eventFlags) {
+            std::vector<bool> defeated;
+            defeated.reserve(BOSSES.size());
+            for (const auto& boss : BOSSES) {
+                bool isDefeated = false;
+                for (const uint32_t flagId : boss.flagIds) {
+                    if (flagId != 0 && get_event_flag(eventFlags, flagId).value_or(false)) isDefeated = true;
+                }
+                defeated.push_back(isDefeated);
+            }
+            return defeated;
+        }
     }
 
     std::string_view findPlaceName(uint32_t placeNameId) {
@@ -107,6 +130,9 @@ namespace fssm::parse::sekiro {
             if (const auto gaitem = read_gaitem(character)) {
                 ci.inventoryItems = decode_inventory(gaitem->inventory.items, gaitem->storage);
             }
+            const auto eventFlags = event_flags(character);
+            ci.idolsFound = found_idols(eventFlags);
+            ci.bossesDefeated = defeated_bosses(eventFlags);
             out.characters.push_back(std::move(ci));
         }
         return out;

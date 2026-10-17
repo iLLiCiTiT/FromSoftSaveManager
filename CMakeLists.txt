@@ -47,6 +47,8 @@ add_executable(FromSoftSaveManager
         src/parse/Sekiro/ItemLookup.cpp
         src/parse/Sekiro/SaveFile.cpp
         src/parse/Sekiro/SkillTree.cpp
+        src/parse/Sekiro/EventFlags.cpp
+        src/parse/Sekiro/WorldProgress.cpp
         src/parse/DS3/Items.cpp
         src/parse/DS3/SaveFile.cpp
         src/parse/DS3/SaveData.cpp
@@ -56,6 +58,8 @@ add_executable(FromSoftSaveManager
         src/parse/EldenRing/SaveFile.cpp
         src/parse/EldenRing/Items.cpp
         src/parse/EldenRing/ItemLookup.cpp
+        src/parse/EldenRing/EventFlags.cpp
+        src/parse/EldenRing/WorldProgress.cpp
 
         src/resources/resources.qrc
         src/resources/dsr_images.qrc
@@ -162,6 +166,8 @@ add_executable(SekiroRoundTrip
         src/parse/Sekiro/Items.cpp
         src/parse/Sekiro/ItemLookup.cpp
         src/parse/Sekiro/SaveFile.cpp
+        src/parse/Sekiro/EventFlags.cpp
+        src/parse/Sekiro/WorldProgress.cpp
 )
 target_link_libraries(SekiroRoundTrip tiny-aes)
 target_link_options(SekiroRoundTrip PRIVATE -static-libgcc -static-libstdc++)

@@ -22,6 +22,10 @@ namespace fssm::parse::sekiro {
         uint32_t maxPosture = 0;
         uint32_t sen = 0;
         std::vector<InventoryItem> inventoryItems;
+
+        // From the event flags, one per IDOLS / BOSSES entry (WorldProgress.h).
+        std::vector<bool> idolsFound;
+        std::vector<bool> bossesDefeated;
     };
 
     struct SekiroSaveFile {

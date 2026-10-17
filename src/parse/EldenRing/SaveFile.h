@@ -90,6 +90,11 @@ struct ERCharacterInfo {
     EquipInventoryData storageBox;
     std::vector<InventoryItem> inventoryItems;   // held, normal then key items
     std::vector<InventoryItem> storageItems;
+
+    // From the event flags, one per GRACES / BOSSES entry (WorldProgress.h); empty
+    // when the event flag region could not be located.
+    std::vector<bool> gracesDiscovered;
+    std::vector<bool> bossesDefeated;
 };
 
 struct MenuSystemSaveLoad {

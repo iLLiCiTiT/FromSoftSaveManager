@@ -3,6 +3,7 @@
 //
 // Usage: SekiroRoundTrip <file.sl2> [more.sl2 ...]
 
+#include <algorithm>
 #include <cstdio>
 #include <exception>
 #include <string>
@@ -12,6 +13,7 @@
 #include "../src/parse/Sekiro/SaveData.h"
 #include "../src/parse/Sekiro/Items.h"
 #include "../src/parse/Sekiro/SaveFile.h"
+#include "../src/parse/Sekiro/WorldProgress.h"
 
 using namespace fssm::parse;
 
@@ -60,6 +62,14 @@ static bool check_file(const std::string& path) {
                         "HP %u/%u, posture %u/%u, sen %u, %zu items\n", c.index, int(area.size()), area.data(),
                         c.playTime / 3600, (c.playTime / 60) % 60, c.playTime % 60, c.vitality, c.attackPower,
                         c.hp, c.maxHp, c.posture, c.maxPosture, c.sen, c.inventoryItems.size());
+            std::string defeated;
+            for (size_t i = 0; i < c.bossesDefeated.size(); ++i) {
+                if (c.bossesDefeated[i]) defeated += std::string(sekiro::BOSSES[i].name) + "; ";
+            }
+            std::printf("    idols %zu/%zu, bosses %zu/%zu: %s\n",
+                        size_t(std::count(c.idolsFound.begin(), c.idolsFound.end(), true)), sekiro::IDOLS.size(),
+                        size_t(std::count(c.bossesDefeated.begin(), c.bossesDefeated.end(), true)),
+                        sekiro::BOSSES.size(), defeated.c_str());
         }
     } catch (const std::exception& e) {
         ok = false;

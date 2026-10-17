@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "EventFlags.h"
+#include "WorldProgress.h"
 #include "../Utils.h"
 
 
@@ -36,8 +38,30 @@ namespace {
 //   great rune (8), gestures (6 x 4), acquired projectiles (count + count x 8),
 //   equipped armaments and items (0x9c), physick (0xc), face data (0x12f)
 //   and the storage chest EquipInventoryData.
+// After the storage chest, up to the event flags (field order of ER-Save-Editor,
+// Apache-2.0, src/save/common/save_slot.rs): gesture game data (0x40 x 4), unlocked
+// regions (count + count x 4), ride game data (0x28), 1 + 0x40 + 12 bytes, menu
+// profile (0x1008), trophy equip data (0x34), GaItemData (8 + 0x1b58 x 16), tutorial
+// data (0x408) and 0x1d bytes.
 constexpr size_t EQUIPPED_HANDLES_OFFSET = 0x34c;
 constexpr size_t INVENTORY_OFFSET = 0x3a4;
+
+// From the end of the storage chest; false when the region doesn't fit the slot.
+bool skipToEventFlags(ContentReader& reader) {
+    if (reader.pos() + 0x40 * 4 + 4 > reader.size()) return false;
+    reader.skip(0x40 * 4);                  // gesture game data
+    const uint32_t regionCount = reader.read_u32_le();
+    if (regionCount >= 0x1000) return false;
+    reader.skip(int(regionCount) * 4);      // unlocked regions
+    reader.skip(0x28);                      // ride game data
+    reader.skip(1 + 0x40 + 12);
+    reader.skip(0x1008);                    // menu profile
+    reader.skip(0x34);                      // trophy equip data
+    reader.skip(8 + 0x1b58 * 16);           // GaItemData
+    reader.skip(0x408);                     // tutorial data
+    reader.skip(0x1d);
+    return reader.pos() + EVENT_FLAGS_SIZE <= reader.size();
+}
 
 EquipInventoryData readInventory(ContentReader& reader, size_t commonSlots, size_t keySlots) {
     EquipInventoryData data;
@@ -198,6 +222,16 @@ ERCharacterInfo parseERCharacter(const BND4Entry& entry, const UserData10& userD
         reader.skip(int(projectileCount) * 8);
         reader.skip(0x9c + 0xc + 0x12f);    // equipped armaments and items, physick, face data
         output.storageBox = readInventory(reader, 0x780, 0x80);
+    }
+
+    if (projectileCount < 0x1000 && skipToEventFlags(reader)) {
+        const EventFlagView eventFlags{entry.content.data() + reader.pos(), EVENT_FLAGS_SIZE};
+        for (const auto& grace : GRACES) {
+            output.gracesDiscovered.push_back(get_event_flag(eventFlags, grace.flagId).value_or(false));
+        }
+        for (const auto& boss : BOSSES) {
+            output.bossesDefeated.push_back(get_event_flag(eventFlags, boss.flagId).value_or(false));
+        }
     }
 
     output.inventoryItems = resolveItems(output.inventory, output);
