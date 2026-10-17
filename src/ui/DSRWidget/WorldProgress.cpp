@@ -34,6 +34,7 @@ namespace {
         QString value;
         bool done = false;
         NpcState npc = NpcState::Unknown;
+        QString detail;     // second, smaller line: an NPC's questline stage
     };
 
     QString count(int done, int total) {
@@ -80,7 +81,7 @@ namespace {
     }
 
     // NPCs by their event flags; the state is shown right aligned (nothing while the NPC's
-    // map hasn't loaded yet).
+    // map hasn't loaded yet) and the questline stage below the name.
     std::vector<Row> npcRows(const fssm::parse::dsr::DSRCharacterInfo& c) {
         using fssm::parse::dsr::NPCS;
         std::vector<Row> rows = {{RowKind::Heading, "NPCs", ""}};
@@ -93,8 +94,9 @@ namespace {
                 case NpcState::Dead: value = "Dead"; break;
                 case NpcState::Unknown: break;
             }
+            const std::string_view stage = i < c.npcStages.size() ? c.npcStages[i] : std::string_view();
             rows.push_back({RowKind::Npc, fromView(NPCS[i].name), value,
-                            state == NpcState::Alive || state == NpcState::Hostile, state});
+                            state == NpcState::Alive || state == NpcState::Hostile, state, fromView(stage)});
         }
         return rows;
     }
@@ -191,7 +193,11 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     headingFont.setPointSizeF(textFont.pointSizeF() * 1.25);
     headingFont.setBold(true);
     const QFontMetrics fm(textFont);
+    QFont detailFont = font();
+    detailFont.setPointSizeF(textFont.pointSizeF() * 0.85);
+    const QFontMetrics detailFm(detailFont);
     const int lineH = fm.height() + 6;
+    const int detailH = detailFm.height() + 2;
     const int areaH = lineH + 2;
     const int areaGap = 8;
     const int headingH = QFontMetrics(headingFont).height() + 10;
@@ -203,7 +209,7 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
         switch (row.kind) {
             case RowKind::Heading: return (first ? 0 : 16) + headingH;
             case RowKind::Area: return areaGap + areaH;
-            default: return lineH;
+            default: return row.detail.isEmpty() ? lineH : lineH + detailH;
         }
     };
     const auto columnHeight = [&](const std::vector<Row>& rows) {
@@ -266,7 +272,8 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
                 case RowKind::Bonfire:
                 case RowKind::Boss:
                 case RowKind::Npc: {
-                    const QRectF icon(x + 10, full.center().y() - iconSize / 2.0, iconSize, iconSize);
+                    const QRect line(full.left(), full.top(), full.width(), lineH);
+                    const QRectF icon(x + 10, line.center().y() - iconSize / 2.0, iconSize, iconSize);
                     const QRectF smallIcon = icon.adjusted(iconSize * 0.2, iconSize * 0.2, -iconSize * 0.2, -iconSize * 0.2);
                     if (row.kind == RowKind::Bonfire) {
                         drawBonfireMark(painter, icon, row.done);
@@ -281,12 +288,19 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
                     if (!row.value.isEmpty()) {
                         valueW = fm.horizontalAdvance(row.value) + 10;
                         painter.setPen(row.npc == NpcState::Hostile ? HOSTILE_COLOR : row.done ? AREA_COLOR : DIM_TEXT_COLOR);
-                        painter.drawText(full.adjusted(0, 0, -4, 0), Qt::AlignRight | Qt::AlignVCenter, row.value);
+                        painter.drawText(line.adjusted(0, 0, -4, 0), Qt::AlignRight | Qt::AlignVCenter, row.value);
                     }
                     painter.setPen(row.done ? TEXT_COLOR : DIM_TEXT_COLOR);
-                    const QRect textRect(textLeft, full.top(), full.right() - textLeft - valueW, full.height());
+                    const QRect textRect(textLeft, line.top(), line.right() - textLeft - valueW, line.height());
                     painter.drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter,
                                      fm.elidedText(row.text, Qt::ElideRight, textRect.width()));
+                    if (!row.detail.isEmpty()) {
+                        const QRect detailRect(textLeft, line.bottom() - 3, full.right() - textLeft - 4, detailH);
+                        painter.setFont(detailFont);
+                        painter.setPen(row.done ? AREA_COLOR : DIM_TEXT_COLOR);
+                        painter.drawText(detailRect, Qt::AlignLeft | Qt::AlignTop,
+                                         detailFm.elidedText(row.detail, Qt::ElideRight, detailRect.width()));
+                    }
                     break;
                 }
             }

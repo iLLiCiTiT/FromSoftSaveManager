@@ -46,6 +46,7 @@ EMEVD_SET_EVENT_FLAG = (2003, 2)
 EMEVD_BATCH_SET_EVENT_FLAGS = (2003, 22)
 
 NPC_FLAGS = range(1000, 2000)
+COMMON_CONSTRUCTOR = 50
 
 # Areas (PlaceName ids) in the order they are usually reached.
 AREAS = [
@@ -207,6 +208,179 @@ NPCS = {
 NPC_BLOCKS_LEFT_OUT = {1240, 1690}
 NPC_SLOTS = 3
 
+# Questline stage of each flag the scripts set in an NPC block (one is set at a time): the
+# developers' event names translated, see docs/dsr-npc-stages.md. Every stage flag needs a
+# text; dead flags may have one when the death is a particular one.
+NPC_STAGES = {
+    # Solaire of Astora
+    1000: "Not met yet",
+    1001: "Undead Burg: met, offers his help",
+    1007: "Sunlight Altar: offers his covenant",
+    1008: "Anor Londo: met again",
+    1009: "Lost Izalith: looking for his sun",
+    1002: "Lost Izalith: found his sun",
+    1003: "Lost Izalith: did not find his sun",
+    1012: "Ready to fight alongside you",
+    1011: "Died after finding his sun",
+    # Darkmoon Knightess
+    1030: "Not met yet",
+    1031: "Anor Londo: wants to talk",
+    1036: "Anor Londo: wants to talk (after the Lordvessel)",
+    # Oscar, Knight of Astora
+    1060: "Undead Asylum",
+    1061: "Undead Asylum: hollowed",
+    1062: "Killed as a Hollow",
+    # Big Hat Logan
+    1090: "Not met yet",
+    1091: "Sen's Fortress: freed, thanked you",
+    1092: "Firelink Shrine: teaches sorceries",
+    1093: "Duke's Archives: locked in a cell",
+    1094: "Duke's Archives: freed, thanked you",
+    1095: "Duke's Archives: teaches sorceries",
+    # Griggs of Vinheim
+    1110: "Not met yet",
+    1111: "Undead Burg: freed, thanked you",
+    1112: "Firelink Shrine: teaches sorceries",
+    1113: "Firelink Shrine: teaches advanced sorceries",
+    # Dusk of Oolacile
+    1120: "Not met yet",
+    1121: "Darkroot Basin: freed, thanked you",
+    1122: "Summon sign available",
+    1123: "Teaches sorceries",
+    1126: "Gone",
+    1127: "Taken to Oolacile, needs help",
+    1128: "Oolacile: thanked you",
+    1129: "Back from Oolacile, summon sign available",
+    1130: "Back from Oolacile, teaches sorceries",
+    # Rhea of Thorolund, Petrus, Vince, Nico
+    1170: "Not met yet",
+    1171: "Firelink Shrine: arrived",
+    1173: "Left for the Catacombs",
+    1174: "Tomb of the Giants: rescued, thanked you",
+    1175: "Undead Parish: teaches miracles",
+    1180: "Killed without resisting",
+    1202: "Not met yet",
+    1192: "Left with Rhea",
+    1193: "Firelink Shrine: came back alone",
+    1194: "Firelink Shrine: showed his true nature",
+    1196: "Killed after betraying Rhea",
+    1210: "Not met yet",
+    1211: "Firelink Shrine: arrived",
+    1216: "Left with Rhea",
+    1220: "Not met yet",
+    1221: "Firelink Shrine: arrived",
+    1226: "Left with Rhea",
+    # Gwynevere, Fair Lady
+    1230: "Anor Londo",
+    1270: "Quelaag's Domain",
+    # Laurentius of the Great Swamp
+    1250: "Not met yet",
+    1251: "Depths: freed, thanked you",
+    1252: "Firelink Shrine: teaches pyromancy",
+    1256: "Went to Blighttown after Chaos",
+    # Eingyi
+    1280: "Not met yet",
+    1281: "Turns you away",
+    1286: "Friendly, you are an egg-bearer",
+    # Quelana of Izalith
+    1290: "Not met yet",
+    1291: "Teaches pyromancy",
+    1292: "Left",
+    1293: "Thanked you for the Bed of Chaos",
+    1296: "Gone",
+    # Ingward
+    1310: "Not met yet",
+    1311: "New Londo: will give you the key",
+    1312: "New Londo: asks you to defeat the Darkwraiths",
+    1313: "Heals curses",
+    # Merchants and smiths
+    1320: "Undead Parish",
+    1340: "The Catacombs",
+    1360: "Anor Londo",
+    1380: "New Londo Ruins",
+    1400: "Undead Burg",
+    1410: "Lower Undead Burg",
+    1420: "Sen's Fortress",
+    1700: "Undead Parish",
+    # Domhnall of Zena
+    1430: "Depths",
+    1431: "Firelink Shrine: sells his wares",
+    # Crestfallen Warrior
+    1460: "Firelink Shrine",
+    1464: "Hollowed in New Londo",
+    # Siegmeyer of Catarina
+    1490: "Not met yet",
+    1491: "Sen's Fortress: waiting on the balcony",
+    1492: "Sen's Fortress: waiting on the balcony",
+    1493: "Left Sen's Fortress",
+    1494: "Anor Londo: thanked you",
+    1497: "Firelink Shrine: resting",
+    1501: "Blighttown: asleep, needs help",
+    1502: "Blighttown: thanked you",
+    1503: "Lost Izalith: wants to help",
+    1504: "Lost Izalith: charging the Chaos Bugs",
+    1505: "Lost Izalith: you killed the bugs",
+    1506: "Lost Izalith: thanked you, near death",
+    1507: "Lost Izalith: thanked you, survived",
+    1511: "Hollowed, killed at Ash Lake",
+    1514: "Gone",
+    # Sieglinde of Catarina
+    1540: "Not met yet",
+    1541: "Duke's Archives: locked in a cell",
+    1542: "Duke's Archives: freed, thanked you",
+    1543: "Can't find her father",
+    1544: "Firelink Shrine: looking for her father",
+    1545: "Found her father",
+    1546: "Killed her hollowed father",
+    1549: "Gone",
+    # Knight Lautrec of Carim
+    1570: "Undead Parish: locked in a cell",
+    1571: "Freed, thanked you",
+    1572: "Firelink Shrine: looking for his target",
+    1573: "Gone after the Fire Keeper",
+    1577: "Not freed, gone",
+    # Shiva of the East and his bodyguard
+    1600: "Not met yet",
+    1601: "Blighttown: sells his wares",
+    1606: "Painted World: invading",
+    1607: "Painted World: invading",
+    1608: "Killed in the Painted World",
+    1609: "Killed in the Painted World",
+    1760: "Not met yet",
+    1766: "Darkroot Garden",
+    # Patches
+    1620: "Not met yet",
+    1621: "Catacombs: kicked you down",
+    1623: "Tomb of the Giants: waiting to kick you down",
+    1624: "Tomb of the Giants: kicked you down",
+    1626: "Firelink Shrine: sells his wares",
+    # Kingseeker Frampt, Darkstalker Kaathe
+    1640: "Asleep",
+    1641: "About to wake",
+    1642: "Gives you the first task",
+    1643: "Wants the Lordvessel placed",
+    1644: "Gives you the second task",
+    1645: "Pleased, task done",
+    1647: "Gone",
+    1649: "Lamenting your choice",
+    1670: "Not met yet",
+    1671: "Gives you the first task",
+    1672: "Wants the Lordvessel placed",
+    1673: "Gives you the second task",
+    1674: "Pleased, task done",
+    1677: "Gone",
+    1678: "Lamenting your choice",
+    # Oolacile
+    1820: "Not met yet",
+    1821: "Thanked you",
+    1840: "Not met yet",
+    1860: "Not met yet",
+    1861: "At Artorias' grave",
+    1862: "Thanked you",
+    1865: "Gone",
+    1870: "Not met yet",
+}
+
 WARP_FLAGS = range(200, 300)
 WARP_TEXTS = range(2000, 2100)
 
@@ -324,7 +498,8 @@ def parse_emeld(d):
 
 
 def npc_blocks(game_dir):
-    """{first flag: (last flag, dead flags, hostile flags, entities)} of the NPC flag blocks.
+    """{first flag: (last flag, dead flags, hostile flags, entities, stage flags)} of the NPC
+    flag blocks; stage flags are the other flags of the block the scripts set.
 
     Every instance of an event (InitializeEvent with its parameters) is read with the event's
     developer name from the matching .emeld: a 死亡 (death) event clears the block with Batch
@@ -396,7 +571,14 @@ def npc_blocks(game_dir):
     # moves to (1766: Shiva and his bodyguard are in Darkroot Garden).
     for block in hostile:
         hostile[block] -= stage[block]
-    return {start: (ranges[start], sorted(dead[start]), sorted(hostile[start]), entities[start])
+    # Starting stages: common.emevd event 50 (run by the game itself) sets them.
+    for bank, index, args in instantiate(common[COMMON_CONSTRUCTOR], b""):
+        if (bank, index) == EMEVD_SET_EVENT_FLAG and args[0] in NPC_FLAGS and args[1] == 1:
+            block = block_of(args[0])
+            if block is not None:
+                named[block].add(args[0])
+    return {start: (ranges[start], sorted(dead[start]), sorted(hostile[start]), entities[start],
+                    sorted(named[start] - hostile[start] - dead[start]))
             for start in sorted(ranges) if dead[start] or hostile[start]}
 
 
@@ -485,10 +667,17 @@ def main():
                            f"gone {sorted(set(NPCS) - set(blocks))}")
     npc_table = []
     for start, name in NPCS.items():
-        end, dead, hostile, _entities = blocks[start]
+        end, dead, hostile, _entities, stages = blocks[start]
         if len(dead) > NPC_SLOTS or len(hostile) > NPC_SLOTS:
             raise RuntimeError(f"NPC block {start}: more than {NPC_SLOTS} dead or hostile flags")
+        missing = [f for f in stages if f not in NPC_STAGES]
+        if missing:
+            raise RuntimeError(f"NPC block {start} ({name}): no stage text for {missing}")
         npc_table.append((start, end, dead, hostile, name))
+    known = {f for start in NPCS for f in blocks[start][1] + blocks[start][4]}
+    if set(NPC_STAGES) - known:
+        raise RuntimeError(f"stage texts for flags no script sets: {sorted(set(NPC_STAGES) - known)}")
+    stage_table = sorted(NPC_STAGES.items())
 
     out_dir = os.path.join(repo, "src", "parse", "DSR")
     write_crlf(os.path.join(out_dir, "WorldProgress.h"), f"""#pragma once
@@ -521,6 +710,12 @@ namespace fssm::parse::dsr {{
         std::string_view name;
     }};
 
+    // A questline stage: the NPC block's one set flag (docs/dsr-npc-stages.md).
+    struct NpcStage {{
+        uint32_t flag;
+        std::string_view text;
+    }};
+
     // Areas in the order they are usually reached.
     extern const std::array<std::string_view, {len(AREAS)}> AREAS;
     // Bonfires by area.
@@ -529,6 +724,8 @@ namespace fssm::parse::dsr {{
     extern const std::array<Boss, {len(boss_table)}> BOSSES;
     // NPCs with an event flag block, by flag.
     extern const std::array<Npc, {len(npc_table)}> NPCS;
+    // Questline stage of the flags the scripts set in the NPC blocks, by flag.
+    extern const std::array<NpcStage, {len(stage_table)}> NPC_STAGES;
 }}
 """)
 
@@ -553,6 +750,9 @@ namespace fssm::parse::dsr {{
 
     for start, end, dead, hostile, name in npc_table:
         lines.append(f"        Npc{{{start}, {end}, {flag_array(dead)}, {flag_array(hostile)}, {cpp_string(name)}}},")
+    lines += ["    };", "", f"    const std::array<NpcStage, {len(stage_table)}> NPC_STAGES = {{"]
+    for flag, text in stage_table:
+        lines.append(f"        NpcStage{{{flag}, {cpp_string(text)}}},")
     lines += ["    };", "}", ""]
     write_crlf(os.path.join(out_dir, "WorldProgress.cpp"), "\n".join(lines))
     print(f"{len(bonfire_table)} bonfires ({len(warp)} named by the warp list), {len(boss_table)} bosses, "

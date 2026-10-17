@@ -28,6 +28,12 @@ namespace fssm::parse::dsr {
         std::string_view name;
     };
 
+    // A questline stage: the NPC block's one set flag (docs/dsr-npc-stages.md).
+    struct NpcStage {
+        uint32_t flag;
+        std::string_view text;
+    };
+
     // Areas in the order they are usually reached.
     extern const std::array<std::string_view, 21> AREAS;
     // Bonfires by area.
@@ -36,4 +42,6 @@ namespace fssm::parse::dsr {
     extern const std::array<Boss, 26> BOSSES;
     // NPCs with an event flag block, by flag.
     extern const std::array<Npc, 38> NPCS;
+    // Questline stage of the flags the scripts set in the NPC blocks, by flag.
+    extern const std::array<NpcStage, 145> NPC_STAGES;
 }

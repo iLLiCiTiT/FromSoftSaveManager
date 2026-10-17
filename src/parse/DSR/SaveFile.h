@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "../SL2File.h"
@@ -103,6 +104,8 @@ namespace fssm::parse::dsr {
         std::vector<bool> bonfiresLit;
         std::vector<bool> bossesDefeated;
         std::vector<NpcState> npcStates;
+        // Questline stage text per NPCS entry (NPC_STAGES), empty when none is set.
+        std::vector<std::string_view> npcStages;
     };
 
     struct DSRSaveFile {

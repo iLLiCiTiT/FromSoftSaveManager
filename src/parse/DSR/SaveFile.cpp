@@ -130,6 +130,23 @@ namespace fssm::parse::dsr {
         return states;
     }
 
+    // The questline stage of each NPC: the text of the block's set flag that has one (the
+    // scripts keep one stage flag set; the hostile flag is set beside it).
+    static std::vector<std::string_view> npc_stages(const CharacterSlot& slot) {
+        std::vector<std::string_view> stages;
+        stages.reserve(NPCS.size());
+        for (const auto& npc : NPCS) {
+            std::string_view text;
+            auto it = std::lower_bound(NPC_STAGES.begin(), NPC_STAGES.end(), npc.firstFlag,
+                                       [](const NpcStage& stage, uint32_t flag) { return stage.flag < flag; });
+            for (; it != NPC_STAGES.end() && it->flag <= npc.lastFlag && text.empty(); ++it) {
+                if (get_event_flag(slot, it->flag).value_or(false)) text = it->text;
+            }
+            stages.push_back(text);
+        }
+        return stages;
+    }
+
     static DSRCharacterInfo character_info_from_slot(int charIdx, const CharacterSlot& slot) {
         const PlayerGameData& player = slot.player;
         const PlayerGameDataStats& st = player.stats;
@@ -244,6 +261,7 @@ namespace fssm::parse::dsr {
         ci.bonfiresLit = lit_bonfires(slot);
         ci.bossesDefeated = defeated_bosses(slot);
         ci.npcStates = npc_states(slot);
+        ci.npcStages = npc_stages(slot);
         return ci;
     }
 
