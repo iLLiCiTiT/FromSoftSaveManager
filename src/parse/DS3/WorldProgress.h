@@ -25,6 +25,13 @@ namespace fssm::parse::ds3 {
         std::string_view name;
     };
 
+    // A questline stage: the one set flag of statusFlag - 15 .. statusFlag - 1
+    // (docs/ds3-npc-stages.md).
+    struct NpcStage {
+        uint32_t flag;
+        std::string_view text;
+    };
+
     // Areas of the bonfire travel menu, in menu order.
     extern const std::array<std::string_view, 14> AREAS;
     // Bonfires in travel menu order.
@@ -33,4 +40,6 @@ namespace fssm::parse::ds3 {
     extern const std::array<Boss, 25> BOSSES;
     // NPCs with a status flag block, by flag.
     extern const std::array<Npc, 30> NPCS;
+    // Questline stage of the flags the scripts set in the NPC blocks, by flag.
+    extern const std::array<NpcStage, 156> NPC_STAGES;
 }

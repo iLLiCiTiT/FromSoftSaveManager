@@ -4,6 +4,7 @@
 #include "SaveData.h"
 #include "WorldProgress.h"
 
+#include <algorithm>
 #include <cstring>
 #include <unordered_set>
 
@@ -202,6 +203,23 @@ namespace fssm::parse::ds3 {
             return states;
         }
 
+        // The questline stage of each NPC: the text of the set flag among the 15 before its
+        // status flags (the scripts keep exactly one set).
+        std::vector<std::string_view> npc_stages(const CharacterSlot& slot) {
+            std::vector<std::string_view> stages;
+            stages.reserve(NPCS.size());
+            for (const auto& npc : NPCS) {
+                std::string_view text;
+                auto it = std::lower_bound(NPC_STAGES.begin(), NPC_STAGES.end(), npc.statusFlag - 15,
+                                           [](const NpcStage& stage, uint32_t flag) { return stage.flag < flag; });
+                for (; it != NPC_STAGES.end() && it->flag < npc.statusFlag && text.empty(); ++it) {
+                    if (get_event_flag(slot, it->flag).value_or(false)) text = it->text;
+                }
+                stages.push_back(text);
+            }
+            return stages;
+        }
+
         DS3CharacterInfo character_info(const CharacterSlot& slot, const ProfileSummaryEntry& profile, uint8_t index) {
             const auto& st = slot.player.stats;
             const EquippedSet equipped = equipped_set(slot.player.equip);
@@ -246,6 +264,7 @@ namespace fssm::parse::ds3 {
                 .bonfiresLit = lit_bonfires(slot),
                 .bossesDefeated = defeated_bosses(slot),
                 .npcStates = npc_states(slot),
+                .npcStages = npc_stages(slot),
             };
         }
     }

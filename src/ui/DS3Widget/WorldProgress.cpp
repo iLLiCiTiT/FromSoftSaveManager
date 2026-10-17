@@ -32,6 +32,7 @@ namespace {
         QString value;
         bool done = false;
         NpcState npc = NpcState::Unknown;
+        QString detail;     // second, smaller line: an NPC's questline stage
     };
 
     QString count(int done, int total) {
@@ -77,7 +78,7 @@ namespace {
     }
 
     // NPCs by their status flags; the state is shown right aligned (nothing while the
-    // NPC's map hasn't loaded yet).
+    // NPC's map hasn't loaded yet) and the questline stage below the name.
     std::vector<Row> npcRows(const fssm::parse::ds3::DS3CharacterInfo& c) {
         using fssm::parse::ds3::NPCS;
         std::vector<Row> rows = {{RowKind::Heading, "NPCs", ""}};
@@ -91,8 +92,10 @@ namespace {
                 case NpcState::Unknown: break;
             }
             const auto& name = NPCS[i].name;
+            const std::string_view stage = i < c.npcStages.size() ? c.npcStages[i] : std::string_view();
             rows.push_back({RowKind::Npc, QString::fromUtf8(name.data(), int(name.size())), value,
-                            state == NpcState::Friendly || state == NpcState::Hostile, state});
+                            state == NpcState::Friendly || state == NpcState::Hostile, state,
+                            QString::fromUtf8(stage.data(), int(stage.size()))});
         }
         return rows;
     }
@@ -178,6 +181,7 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     const int areaH = px(28);
     const int areaGap = px(8);
     const int lineH = px(25);
+    const int detailH = px(17);
     const int iconSize = px(20);
     const int scrollBarW = px(10);
     m_lineHeight = lineH;
@@ -186,7 +190,7 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
         switch (row.kind) {
             case RowKind::Heading: return (first ? 0 : px(16)) + headingH;
             case RowKind::Area: return areaGap + areaH;
-            default: return lineH;
+            default: return row.detail.isEmpty() ? lineH : lineH + detailH;
         }
     };
     const auto columnHeight = [&](const std::vector<Row>& rows) {
@@ -245,7 +249,8 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
                 case RowKind::Bonfire:
                 case RowKind::Boss:
                 case RowKind::Npc: {
-                    const QRectF icon(x + px(10), full.center().y() - iconSize / 2.0, iconSize, iconSize);
+                    const QRect line(full.left(), full.top(), full.width(), lineH);
+                    const QRectF icon(x + px(10), line.center().y() - iconSize / 2.0, iconSize, iconSize);
                     const QRectF smallIcon = icon.adjusted(iconSize * 0.2, iconSize * 0.2, -iconSize * 0.2, -iconSize * 0.2);
                     if (row.kind == RowKind::Bonfire) {
                         drawBonfire(painter, icon, row.done);
@@ -256,16 +261,24 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
                     }
                     painter.setFont(serifFont(px(17)));
                     const int textLeft = int(icon.right()) + px(10);
-                    int textRight = full.right();
+                    int textRight = line.right();
                     if (!row.value.isEmpty()) {
                         const QFontMetrics fm(painter.font());
                         const QColor valueColor = row.npc == NpcState::Hostile ? HOSTILE_COLOR : DIM_TEXT_COLOR;
-                        drawShadowText(painter, QRect(textLeft, full.top(), full.right() - textLeft - px(4), full.height()),
+                        drawShadowText(painter, QRect(textLeft, line.top(), line.right() - textLeft - px(4), line.height()),
                                        Qt::AlignRight | Qt::AlignVCenter, row.value, valueColor);
                         textRight -= fm.horizontalAdvance(row.value) + px(14);
                     }
-                    drawShadowText(painter, QRect(textLeft, full.top(), textRight - textLeft, full.height()),
+                    drawShadowText(painter, QRect(textLeft, line.top(), textRight - textLeft, line.height()),
                                    Qt::AlignLeft | Qt::AlignVCenter, row.text, row.done ? TEXT_COLOR : DIM_TEXT_COLOR);
+                    if (!row.detail.isEmpty()) {
+                        painter.setFont(serifFont(px(14)));
+                        const QFontMetrics dfm(painter.font());
+                        const QRect detailRect(textLeft, line.bottom() - px(3), full.right() - textLeft - px(4), detailH);
+                        drawShadowText(painter, detailRect, Qt::AlignLeft | Qt::AlignTop,
+                                       dfm.elidedText(row.detail, Qt::ElideRight, detailRect.width()),
+                                       row.done ? AREA_COLOR : DIM_TEXT_COLOR);
+                    }
                     break;
                 }
             }

@@ -32,7 +32,7 @@ Dead/Alive, IF Character HP Ratio or Set Character Team Type 27) -> map MSB enem
 -> NpcParam +0x8 name id -> NPC名[_dlc1|_dlc2].fmg in /msg/engus/item*.msgbnd.dcx.
 Blocks whose characters have no name (DLC side characters) and bosses (name ids from
 900000) are left out. The first 15 flags of a block are questline stages; the game data
-doesn't name them.
+doesn't name them; NPC_STAGES below describes each from what its event waits for.
 
 Requires pycryptodome.
 """
@@ -65,6 +65,198 @@ COMMON_FUNC = "/event/common_func.emevd.dcx"
 NPC_FLAG_MIN, NPC_FLAG_MAX = 1000, 2000
 NPC_TEAM_TYPE = 27              # Set Character Team Type: hostile NPC
 BOSS_NAME_ID = 900000           # NPC name ids from here on are bosses
+NPC_STAGE_COUNT = 15            # questline stages base .. base + 14 before the status flags
+
+# Questline stage of each flag the event scripts set in an NPC block (exactly one of the
+# 15 is set at a time). The game data has no names for them (DS3 ships no .emeld): each
+# text was written from what the setting event waits for (a boss or NPC defeated, a line
+# of dialogue whose talk flag it reads, an item, another NPC's stage), see
+# docs/ds3-npc-stages.md.
+NPC_STAGES = {
+    # Fire Keeper
+    1000: "Firelink Shrine",
+    1001: "Lords of Cinder on their thrones",
+    1002: "Lords of Cinder on their thrones, later",
+    # Ludleth of Courland
+    1020: "Firelink Shrine",
+    1021: "After the Kiln warp",
+    # Yuria of Londor
+    1040: "Not met yet",
+    1041: "Firelink Shrine: came after Yoel's death",
+    1042: "Firelink Shrine: met",
+    1043: "Firelink Shrine: later",
+    1044: "Left",
+    1045: "Kiln: after the Soul of Cinder",
+    # Yoel of Londor
+    1060: "Not met yet",
+    1061: "Firelink Shrine: serving you",
+    1062: "Drew out all your strength",
+    1063: "Not recruited, gone",
+    1064: "Died at Firelink Shrine",
+    # Company Captain Yorshka
+    1080: "Anor Londo",
+    # Hawkwood the Deserter
+    1100: "Firelink Shrine",
+    1101: "Firelink Shrine: after the Greatwood or Crystal Sage",
+    1102: "Firelink Shrine: after the Abyss Watchers",
+    1103: "Left Firelink Shrine",
+    1104: "Farron Keep: waiting for a duel",
+    # Sirris of the Sunless Realms
+    1120: "Not met yet",
+    1121: "Firelink Shrine",
+    1122: "Firelink Shrine: met",
+    1123: "Firelink Shrine: talked again",
+    1124: "Irithyll: asks for help against Creighton",
+    1125: "Creighton defeated",
+    1126: "Thanked you for the rescue",
+    1127: "Holy Knight Hodrick defeated",
+    1128: "Thanked you again",
+    1129: "After the Twin Princes",
+    1130: "Undead Settlement: her last duel",
+    1133: "You joined Rosaria's Fingers",
+    1134: "Turned against you, a Finger of Rosaria",
+    # Ringfinger Leonhard
+    1140: "Firelink Shrine",
+    1141: "Firelink Shrine: after the High Wall",
+    1142: "Firelink Shrine: gave you red eye orbs",
+    1143: "Firelink Shrine: you have a Pale Tongue",
+    1144: "Firelink Shrine: talked about invading",
+    1145: "Firelink Shrine: later",
+    1146: "Cathedral of the Deep: you joined Rosaria's Fingers",
+    1151: "Cathedral of the Deep: asked about Horace",
+    1152: "Took Rosaria's soul",
+    1153: "Defeated in Anor Londo",
+    # Blacksmith Andre, Shrine Handmaid
+    1160: "Firelink Shrine",
+    1180: "Firelink Shrine",
+    1600: "Firelink Shrine",
+    # Greirat of the Undead Settlement
+    1200: "High Wall: in his cell",
+    1201: "Freed",
+    1202: "Firelink Shrine: sells his wares",
+    1203: "Out looting the Undead Settlement",
+    1204: "Back from looting",
+    1205: "Out looting Irithyll alone",
+    1206: "Back from Irithyll",
+    1207: "Out looting Lothric Castle",
+    # Orbeck of Vinheim
+    1220: "Not met yet",
+    1221: "Road of Sacrifices: met",
+    1222: "Firelink Shrine: teaches sorceries",
+    1223: "Firelink Shrine: you brought him scrolls",
+    1224: "After the Twin Princes",
+    # Cornyx, Karla
+    1240: "Undead Settlement: in a cage",
+    1241: "Firelink Shrine: freed",
+    1260: "Irithyll Dungeon: in a cell",
+    1261: "Firelink Shrine: freed",
+    # Irina of Carim
+    1280: "Undead Settlement: in a cell",
+    1281: "Firelink Shrine: freed",
+    1282: "Firelink Shrine: given a dark tome",
+    1283: "Firelink Shrine: given every dark tome",
+    1284: "Firelink Shrine: gone dark",
+    1285: "Firelink Shrine: gone dark",
+    1286: "Firelink Shrine: given no dark tome",
+    # Eygon of Carim
+    1300: "Undead Settlement",
+    1301: "Undead Settlement: met",
+    1302: "Firelink Shrine: after the Abyss Watchers",
+    1303: "Firelink Shrine: talked",
+    1304: "Firelink Shrine: Irina gone dark",
+    1305: "After the Dragonslayer Armour",
+    # Anri of Astora
+    1340: "Not met yet",
+    1341: "Road of Sacrifices: met",
+    1342: "Firelink Shrine: after the Deacons",
+    1344: "Catacombs of Carthus",
+    1345: "Catacombs of Carthus: met again",
+    1346: "After High Lord Wolnir, Horace hollowed",
+    1347: "After High Lord Wolnir",
+    1348: "Irithyll: met again",
+    1349: "Irithyll: wedding",
+    1350: "Irithyll: the Old Woman is dead",
+    1351: "After Aldrich",
+    1352: "After Aldrich: left",
+    1353: "After Aldrich: left (Smouldering Lake)",
+    # Unbreakable Patches
+    1360: "Not met yet",
+    1361: "Cathedral of the Deep: met",
+    1362: "Cathedral of the Deep: trapped you",
+    1363: "Cathedral of the Deep: trap avoided",
+    1364: "Firelink Shrine: arrived",
+    1365: "Firelink Shrine: sells his wares",
+    1366: "Firelink Shrine: Greirat went to Irithyll",
+    1367: "Firelink Shrine: Greirat went to Lothric",
+    1370: "Greirat is dead",
+    # Siegward of Catarina
+    1380: "Not met yet",
+    1382: "Undead Settlement: on the tower",
+    1383: "Cathedral of the Deep: met again",
+    1384: "Firelink Shrine",
+    1385: "Cathedral of the Deep: lost his armour",
+    1386: "Irithyll: dinner by the fire",
+    1388: "Irithyll Dungeon: freed",
+    1389: "Fought Yhorm with you",
+    1390: "Yhorm defeated",
+    1394: "Undead Settlement: Fire Demon defeated",
+    # High Priestess Emma
+    1420: "High Wall",
+    1421: "After the Dancer",
+    # Horace the Hushed
+    1480: "Not met yet",
+    1481: "Road of Sacrifices: met",
+    1482: "Firelink Shrine: after the Deacons",
+    1484: "Catacombs of Carthus",
+    1485: "Smouldering Lake: hollowed",
+    # Rosaria, Mother of Rebirth
+    1500: "Cathedral of the Deep",
+    1501: "Soul taken by Leonhard",
+    1502: "Restored",
+    # Old Woman of Londor
+    1560: "Firelink Shrine",
+    1561: "After High Lord Wolnir",
+    1562: "Talked",
+    1563: "Anri in Irithyll",
+    1564: "Told you of the Lord of Hollows",
+    1565: "Wedding with Anri",
+    1566: "Anri in Irithyll",
+    1567: "Anri is dead",
+    # Holy Knight Hodrick
+    1580: "Undead Settlement",
+    # Slave Knight Gael
+    1620: "Cathedral of the Deep",
+    1621: "Cathedral of the Deep: met",
+    1622: "Cathedral of the Deep: talked",
+    1623: "Later in the game",
+    1624: "Later in the game, talked",
+    1625: "The Painted World",
+    # Sir Vilhelm
+    1640: "Painted World of Ariandel",
+    1641: "Painted World of Ariandel: met",
+    # Amnesiac Lapp
+    1800: "Not met yet",
+    1801: "Dreg Heap: met",
+    1802: "Dreg Heap: remembered",
+    1803: "Dreg Heap: summon sign",
+    1804: "Dreg Heap: summon sign",
+    1805: "After the Demon Prince",
+    1806: "After the Demon Prince",
+    1807: "Feast with you",
+    1808: "Off to the Purging Monument",
+    1809: "Asked for help",
+    1810: "Thanked you",
+    1811: "Purging Monument",
+    # Shira, Knight of Filianore
+    1820: "Ringed City",
+    1821: "Ringed City: gave you a token",
+    1822: "After Halflight",
+    1823: "Ringed City: later",
+    # Stone-humped Hag
+    1860: "Ringed City",
+    1861: "Ringed City: dead",
+    1862: "Ringed City: later",
+}
 
 # Travel menu areas, by BonfireWarpParam +0x14.
 AREAS = [
@@ -284,6 +476,24 @@ def npc_status_blocks(instances):
     return blocks
 
 
+def npc_stage_flags(archives, bases):
+    """Flags of the NPC blocks' stage range (base .. base + 14) the map scripts set."""
+    common = parse_emevd(read_file(archives, COMMON_FUNC))
+    stages = set()
+    for area in MAP_AREAS:
+        for block in MAP_BLOCKS:
+            script = read_file(archives, f"/event/m{area:02d}_{block:02d}_00_00.emevd.dcx")
+            if script is None:
+                continue
+            for instrs in event_instances(parse_emevd(script), common):
+                for bank, index, args in instrs:
+                    if bank == 2003 and index in (2, 62):       # Set (Network-Connected) Event Flag
+                        flag, on = struct.unpack_from("<iB", args, 0)
+                        if on == 1 and any(base <= flag < base + NPC_STAGE_COUNT for base in bases):
+                            stages.add(flag)
+    return stages
+
+
 def msb_npc_params(data):
     """MSB3 enemy parts: {entity id: NpcParam id}."""
     lists, offset = {}, 0x10
@@ -359,6 +569,11 @@ def main():
     params = regulation_params(game_dir)
     table = bonfires(params, menu_text(archives))
     npc_table = npcs(archives, params)
+    stages = npc_stage_flags(archives, [flag - NPC_STAGE_COUNT for flag, _ in npc_table])
+    if stages != set(NPC_STAGES):
+        raise RuntimeError(f"NPC stages changed: no text for {sorted(stages - set(NPC_STAGES))}, "
+                           f"no script sets {sorted(set(NPC_STAGES) - stages)}")
+    stage_table = sorted(NPC_STAGES.items())
 
     out_dir = os.path.join(repo, "src", "parse", "DS3")
     write_crlf(os.path.join(out_dir, "WorldProgress.h"), f"""#pragma once
@@ -388,6 +603,13 @@ namespace fssm::parse::ds3 {{
         std::string_view name;
     }};
 
+    // A questline stage: the one set flag of statusFlag - 15 .. statusFlag - 1
+    // (docs/ds3-npc-stages.md).
+    struct NpcStage {{
+        uint32_t flag;
+        std::string_view text;
+    }};
+
     // Areas of the bonfire travel menu, in menu order.
     extern const std::array<std::string_view, {len(AREAS)}> AREAS;
     // Bonfires in travel menu order.
@@ -396,6 +618,8 @@ namespace fssm::parse::ds3 {{
     extern const std::array<Boss, {len(BOSSES)}> BOSSES;
     // NPCs with a status flag block, by flag.
     extern const std::array<Npc, {len(npc_table)}> NPCS;
+    // Questline stage of the flags the scripts set in the NPC blocks, by flag.
+    extern const std::array<NpcStage, {len(stage_table)}> NPC_STAGES;
 }}
 """)
 
@@ -417,9 +641,12 @@ namespace fssm::parse::ds3 {{
     lines += ["    };", "", f"    const std::array<Npc, {len(npc_table)}> NPCS = {{"]
     for flag, name in npc_table:
         lines.append(f"        Npc{{{flag}, {cpp_string(name)}}},")
+    lines += ["    };", "", f"    const std::array<NpcStage, {len(stage_table)}> NPC_STAGES = {{"]
+    for flag, text in stage_table:
+        lines.append(f"        NpcStage{{{flag}, {cpp_string(text)}}},")
     lines += ["    };", "}", ""]
     write_crlf(os.path.join(out_dir, "WorldProgress.cpp"), "\n".join(lines))
-    print(f"{len(table)} bonfires, {len(BOSSES)} bosses, {len(npc_table)} NPCs")
+    print(f"{len(table)} bonfires, {len(BOSSES)} bosses, {len(npc_table)} NPCs, {len(stage_table)} NPC stages")
 
 
 if __name__ == "__main__":

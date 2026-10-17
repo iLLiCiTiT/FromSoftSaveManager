@@ -3,6 +3,7 @@
 #include <vector>
 #include <array>
 #include <string>
+#include <string_view>
 #include "Items.h"
 #include "../SL2File.h"
 
@@ -80,6 +81,8 @@ namespace fssm::parse::ds3 {
         std::vector<bool> bonfiresLit;
         std::vector<bool> bossesDefeated;
         std::vector<NpcState> npcStates;
+        // Questline stage text per NPCS entry (NPC_STAGES), empty when none is set.
+        std::vector<std::string_view> npcStages;
     };
 
     struct DS3SaveFile {
