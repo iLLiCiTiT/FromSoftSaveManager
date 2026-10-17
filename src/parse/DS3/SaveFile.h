@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <array>
 #include <string>
 #include "Items.h"
 #include "../SL2File.h"
@@ -12,6 +13,10 @@ namespace fssm::parse::ds3 {
         uint8_t upgradeLevel = 0;
         Infusion infusion = Infusion::None;
         BaseItem baseItem;
+        // Index the game uses to reference the entry from equip slots (InventoryEntry::index & 0xfff).
+        uint16_t inventoryIndex = 0xffff;
+        // Equipped, in a quick slot or an attuned spell (red seal in the game's inventory).
+        bool equipped = false;
 
         static std::optional<InventoryItem> fromId(uint32_t itemId, const uint32_t& amount);
     };
@@ -55,6 +60,13 @@ namespace fssm::parse::ds3 {
         std::vector<InventoryItem> inventoryItems;
         std::vector<InventoryItem> keyItems;
         std::vector<InventoryItem> storageBoxItems;
+
+        // From the load game summary (ProfileSummaryEntry).
+        uint32_t playTime = 0;          // seconds
+        uint32_t mapId = 0;             // 0xAABB0000 for map mAA_BB
+        uint32_t areaId = 0;            // AA * 100 + sub area, e.g. 4005 Firelink Shrine
+        // ChrAsm::equipItemIds (weapons, ammunition, armor, rings, ...); 0xffffffff when empty.
+        std::array<uint32_t, 0x16> equipItemIds{};
     };
 
     struct DS3SaveFile {

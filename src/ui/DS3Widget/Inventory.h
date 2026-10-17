@@ -1,106 +1,82 @@
 #pragma once
-#include <QListView>
-#include <QStandardItemModel>
-#include <QSortFilterProxyModel>
-#include <QStyledItemDelegate>
-#include <QVariantAnimation>
 
-#include "../Utils.h"
-#include "../../parse/Parse.h"
+#include <QHash>
+#include <QPixmap>
+#include <QWidget>
+#include <vector>
+
+#include "../../parse/DS3/SaveFile.h"
 
 namespace fssm::ui::ds3 {
-const int ItemLevelRole = Qt::UserRole + 1;
-const int ItemInfusionIconRole = Qt::UserRole + 2;
-const int ItemOrderRole = Qt::UserRole + 3;
-const int ItemAmountRole = Qt::UserRole + 4;
-const int ItemDurabilityRole = Qt::UserRole + 5;
-const int ItemStorageBoxAmountRole = Qt::UserRole + 6;
-const int ItemImageRole = Qt::UserRole + 7;
-const int ItemCategoryRole = Qt::UserRole + 8;
-
-class InventoryModel: public QStandardItemModel {
-    Q_OBJECT
-public:
-    explicit InventoryModel(QObject* parent = nullptr);
-    void setCharacter(const parse::ds3::DS3CharacterInfo* charInfo);
-private:
-    QStandardItem* createModelItem(const parse::ds3::DS3CharacterInfo* charInfo, parse::ds3::InventoryItem& inventoryItem);
-    QStandardItem* createUnknownItem(parse::ds3::InventoryItem& inventoryItem);
-};
-
-class InventoryProxyModel: public QSortFilterProxyModel {
-    Q_OBJECT
-public:
-    explicit InventoryProxyModel(QObject *parent = nullptr);
-    void setCategory(parse::ds3::ItemCategory category);
-    bool lessThan(const QModelIndex &sourceLeft, const QModelIndex &sourceRight) const override;
-    bool filterAcceptsRow(int source_row, const QModelIndex &source_parent) const override;
-private:
-    parse::ds3::ItemCategory m_category = parse::ds3::ItemCategory::Tools;
-};
-
-class InventoryDelegate: public QStyledItemDelegate {
-    Q_OBJECT
-public:
-    explicit InventoryDelegate(QObject* parent = nullptr);
-    void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
-    QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const override;
-private:
-    QPixmap m_standPix;
-    QPixmap m_inventoryBagPix;
-    QPixmap m_bottomlessBoxPix;
-    int paintIcon(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const;
-};
-
-class DS3InventoryCategoryButton: public BaseClickableFrame {
-    Q_OBJECT
-signals:
-    void clicked(parse::ds3::ItemCategory category);
-public:
-    explicit DS3InventoryCategoryButton(const parse::ds3::ItemCategory& category, QWidget* parent);
-    void setSelected(bool selected);
-    QSize sizeHint() const override;
-    QSize minimumSizeHint() const override;
-protected:
-    void enterEvent(QEnterEvent *event) override;
-    void leaveEvent(QEvent *event) override;
-    void paintEvent(QPaintEvent *) override;
-private:
-    void onMouseRelease() override;
-    parse::ds3::ItemCategory m_category;
-    QPixmap m_pix;
-    QPixmap m_bg1;
-    QPixmap m_bg2;
-    bool m_isSelected = false;
-    bool m_isHovered = false;
-};
-
-class CategoryButtons: public QWidget {
-    Q_OBJECT
-signals:
-    void categoryChanged(parse::ds3::ItemCategory category);
-public:
-    explicit CategoryButtons(QWidget* parent);
-    parse::ds3::ItemCategory getCategory();
-public slots:
-    void setCategory(parse::ds3::ItemCategory category);
-private:
-    parse::ds3::ItemCategory m_category = parse::ds3::ItemCategory::Tools;
-    std::unordered_map<parse::ds3::ItemCategory, DS3InventoryCategoryButton*> m_categoryMapping;
-};
-
+// Inventory screen drawn like the game's: category tabs above a grid of items
+// standing on dishes (counts, red seals on equipped items), with the selected
+// item's details below.
 class InventoryWidget: public QWidget {
     Q_OBJECT
 public:
-    explicit InventoryWidget(QWidget* parent);
-    void setCharacter(const parse::ds3::DS3CharacterInfo* charInfo);
-private slots:
-    void onCategoryChange(parse::ds3::ItemCategory category);
+    explicit InventoryWidget(QWidget* parent = nullptr);
+    void setCharacter(const fssm::parse::ds3::DS3CharacterInfo* charInfo);
+    QSize sizeHint() const override;
+
+protected:
+    void paintEvent(QPaintEvent* event) override;
+    void resizeEvent(QResizeEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void mousePressEvent(QMouseEvent* event) override;
+    void wheelEvent(QWheelEvent* event) override;
+    void leaveEvent(QEvent* event) override;
+
 private:
-    CategoryButtons* m_categoryBtns = nullptr;
-    QListView* m_view = nullptr;
-    InventoryModel* m_model = nullptr;
-    InventoryProxyModel* m_proxy = nullptr;
-    InventoryDelegate* m_delegate = nullptr;
+    struct Entry {
+        fssm::parse::ds3::InventoryItem item;
+        uint32_t stored = 0;        // same item in the storage box
+        uint32_t maxHeld = 0;       // 0 for items that don't stack
+        QString title;
+        QString image;
+    };
+
+    struct Layout {
+        double scale = 1.0;
+        QRect panel;
+        QRect leftArrow;
+        QRect rightArrow;
+        QRect tabs;
+        int tabWidth = 0;
+        int visibleTabs = 5;
+        QRect gridFrame;
+        QRect grid;
+        int columns = 5;
+        int cellWidth = 0;
+        int rowHeight = 0;
+        QRect detail;               // selected item, below the grid
+    };
+
+    Layout computeLayout() const;
+    void rebuildVisibleItems();
+    void selectCategory(int category);
+    void keepCategoryVisible();
+    int maxScroll() const;
+    int itemIndexAt(const QPoint& pos) const;
+    int tabIndexAt(const QPoint& pos) const;
+    const Entry* currentEntry() const;
+    QPixmap scaled(const QString& resource, const QSize& size);
+    QPixmap itemIcon(const Entry& entry, const QSize& size);
+    void drawCategories(QPainter& painter);
+    void drawGrid(QPainter& painter);
+    void drawDetail(QPainter& painter);
+
+    std::vector<Entry> m_entries;
+    std::vector<const Entry*> m_visible;
+    bool m_hasCharacter = false;
+    int m_category = 0;             // index into CATEGORY_ORDER
+    int m_tabOffset = 0;            // first visible tab
+    int m_scroll = 0;               // pixels
+    int m_hoverItem = -1;
+    int m_hoverTab = -1;            // index into CATEGORY_ORDER
+    int m_selectedItem = 0;
+
+    Layout m_layout;
+    QHash<QString, QPixmap> m_scaledCache;
+    QPixmap m_tabBackground;
 };
 }

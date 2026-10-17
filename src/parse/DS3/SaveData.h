@@ -128,7 +128,7 @@ namespace fssm::parse::ds3 {
         uint32_t handle;            // gaitem handle (weapons/armor) or item id
         uint32_t itemId;
         uint32_t quantity;
-        uint32_t unk_0c;            // sort / acquisition index
+        uint32_t index;             // low 12 bits: inventory index referenced by equip/quick slots (key items 0..0x7f, normal from 0x80); upper bits unknown
     };
     static_assert(sizeof(InventoryEntry) == 0x10);
 
@@ -292,7 +292,7 @@ namespace fssm::parse::ds3 {
     struct CharacterSlotHeader {
         uint32_t version;
         uint32_t mapId;                 // 0x28000000 when unknown
-        uint32_t unk_08;                // GameDataMan+0xa4
+        uint32_t playTimeMs;            // GameDataMan+0xa4, play time in milliseconds
         uint32_t gameDataOffset;
         uint32_t gameDataSize;
         uint32_t playerGameDataOffset;
@@ -356,10 +356,10 @@ namespace fssm::parse::ds3 {
     struct ProfileSummaryEntry {
         std::array<char16_t, 17> name;
         uint32_t level;
-        uint32_t unk_28;
+        uint32_t playTime;                  // seconds
         uint32_t souls;
         uint32_t mapId;
-        uint32_t unk_34;
+        uint32_t areaId;                    // map area * 100 + sub area (e.g. 4005 Firelink Shrine)
         FaceData face;
         std::array<uint8_t, 0xf0> chrAsm;   // FUN_1408696e0
         std::array<uint8_t, 4> unk_240;

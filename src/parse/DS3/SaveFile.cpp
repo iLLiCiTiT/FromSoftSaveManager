@@ -2,6 +2,9 @@
 
 #include "SaveData.h"
 
+#include <cstring>
+#include <unordered_set>
+
 namespace fssm::parse::ds3 {
     Infusion infusionFromInt(const uint32_t& infusion) {
         switch (infusion) {
@@ -102,19 +105,64 @@ namespace fssm::parse::ds3 {
             return out;
         }
 
-        std::vector<InventoryItem> decode_items(const std::vector<InventoryEntry>& entries) {
+        constexpr uint32_t GOODS_TYPE = 0x40000000;
+
+        // Inventory indices and spell ids the character has equipped.
+        struct EquippedSet {
+            std::unordered_set<uint16_t> indices;
+            std::unordered_set<uint32_t> spells;
+        };
+
+        int32_t read_i32(const uint8_t* data) {
+            int32_t value;
+            std::memcpy(&value, data, sizeof(value));
+            return value;
+        }
+
+        EquippedSet equipped_set(const EquipGameData& equip) {
+            EquippedSet out;
+            for (uint32_t index : equip.equipInventoryIndices) {
+                if (index != 0xffffffff) out.indices.insert(uint16_t(index & 0xfff));
+            }
+            // Quick slots and belt: pairs of {handle, inventory index}.
+            const auto addPairs = [&](const uint8_t* data, size_t size) {
+                for (size_t i = 0; i + 8 <= size; i += 8) {
+                    const int32_t index = read_i32(data + i + 4);
+                    if (index >= 0) out.indices.insert(uint16_t(index & 0xfff));
+                }
+            };
+            addPairs(equip.items.unk_18.data(), equip.items.unk_18.size());
+            addPairs(equip.items.unk_6c.data(), equip.items.unk_6c.size());
+            // Attuned spells: pairs of {spell id, -1}.
+            for (size_t i = 0; i + 8 <= equip.magic.unk_18.size(); i += 8) {
+                const int32_t spell = read_i32(equip.magic.unk_18.data() + i);
+                if (spell > 0) out.spells.insert(uint32_t(spell));
+            }
+            return out;
+        }
+
+        std::vector<InventoryItem> decode_items(const std::vector<InventoryEntry>& entries,
+                                                const EquippedSet* equipped = nullptr) {
             std::vector<InventoryItem> items;
             items.reserve(entries.size());
             for (const auto& e : entries) {
                 if (e.itemId == 0 || e.quantity == 0) continue;
                 auto invItemOpt = InventoryItem::fromId(e.itemId, e.quantity);
-                if (invItemOpt.has_value()) items.push_back(invItemOpt.value());
+                if (!invItemOpt.has_value()) continue;
+                InventoryItem& item = invItemOpt.value();
+                item.inventoryIndex = uint16_t(e.index & 0xfff);
+                if (equipped != nullptr) {
+                    item.equipped = equipped->indices.count(item.inventoryIndex) != 0
+                        || ((e.itemId & 0xf0000000) == GOODS_TYPE && equipped->spells.count(e.itemId & 0x0fffffff) != 0);
+                }
+                items.push_back(item);
             }
             return items;
         }
 
         DS3CharacterInfo character_info(const CharacterSlot& slot, const ProfileSummaryEntry& profile, uint8_t index) {
             const auto& st = slot.player.stats;
+            const EquippedSet equipped = equipped_set(slot.player.equip);
             return {
                 .index = index,
                 .name = name_from(profile.name),
@@ -146,9 +194,13 @@ namespace fssm::parse::ds3 {
                 .hollowing = st.hollowing,
                 .estusMax = st.estusMax,
                 .ashenEstusMax = st.ashenEstusMax,
-                .inventoryItems = decode_items(slot.player.equip.inventory.list.normal),
-                .keyItems = decode_items(slot.player.equip.inventory.list.key),
+                .inventoryItems = decode_items(slot.player.equip.inventory.list.normal, &equipped),
+                .keyItems = decode_items(slot.player.equip.inventory.list.key, &equipped),
                 .storageBoxItems = decode_items(slot.player.storage.list.normal),
+                .playTime = profile.playTime,
+                .mapId = profile.mapId,
+                .areaId = profile.areaId,
+                .equipItemIds = slot.player.equip.chrAsm.equipItemIds,
             };
         }
     }
