@@ -96,6 +96,8 @@ ERWidget::ERWidget(Controller* controller, const QString& saveId, QWidget* paren
     );
     m_inventoryWidget = new fssm::ui::er::InventoryWidget(m_charTabs);
     m_charTabs->addTab("Inventory", m_inventoryWidget);
+    m_worldWidget = new fssm::ui::er::WorldProgressWidget(m_charTabs);
+    m_charTabs->addTab("World Progress", m_worldWidget);
 
     QHBoxLayout* mainLayout = new QHBoxLayout(this);
     mainLayout->setContentsMargins(20, 20, 20, 20);
@@ -119,6 +121,7 @@ void ERWidget::onRefresh() {
         const fssm::parse::er::ERCharacterInfo* charInfo = m_model->getCharByIdx(charId.toInt());
         m_charInfoWidget->setCharacter(charInfo);
         m_inventoryWidget->setCharacter(charInfo);
+        m_worldWidget->setCharacter(charInfo);
         return;
     }
     for (int row = 0; row < m_model->rowCount(); ++row) {
@@ -139,10 +142,12 @@ void ERWidget::onSelectionChange(const QItemSelection& selected, const QItemSele
 
         m_charInfoWidget->setCharacter(charInfo);
         m_inventoryWidget->setCharacter(charInfo);
+        m_worldWidget->setCharacter(charInfo);
         return;
     }
     m_charInfoWidget->setCharacter(nullptr);
     m_inventoryWidget->setCharacter(nullptr);
+    m_worldWidget->setCharacter(nullptr);
 
 }
 

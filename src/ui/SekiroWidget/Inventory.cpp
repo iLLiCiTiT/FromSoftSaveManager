@@ -31,7 +31,8 @@ namespace {
 
     // The game's inventory tabs, then its Acquire Skills screen: one category per
     // skill tree, in SkillNode::tree order, shown with the tree's Esoteric Text.
-    const std::array<Page, 2> PAGES = {{
+    // World Progress has no categories (WorldProgressWidget fills the page).
+    const std::array<Page, 3> PAGES = {{
         {"Inventory", {
             {"Quick Items", ":/sekiro_images/category_quick_items", {ItemCategory::QuickItems}},
             {"Key Items", ":/sekiro_images/category_key_items",
@@ -46,8 +47,10 @@ namespace {
             {"Temple Arts", ":/sekiro_inv_images/920", {}, true},
             {"Mushin Arts", ":/sekiro_inv_images/940", {}, true},
         }},
+        {"World", {}},
     }};
     constexpr int SKILLS_PAGE = 1;
+    constexpr int WORLD_PAGE = 2;
     constexpr int SKILL_ROWS = 8;
     constexpr int SKILL_COLUMNS = 4;
 
@@ -102,6 +105,8 @@ namespace {
 InventoryWidget::InventoryWidget(QWidget* parent): QWidget(parent) {
     setAttribute(Qt::WA_TranslucentBackground, true);
     setMouseTracking(true);
+    m_worldWidget = new WorldProgressWidget(this);
+    m_worldWidget->hide();
 }
 
 QSize InventoryWidget::sizeHint() const {
@@ -111,6 +116,7 @@ QSize InventoryWidget::sizeHint() const {
 void InventoryWidget::setCharacter(const fssm::parse::sekiro::SekiroCharacterInfo* charInfo) {
     m_hasCharacter = charInfo != nullptr;
     m_stats = charInfo != nullptr ? *charInfo : fssm::parse::sekiro::SekiroCharacterInfo{};
+    m_worldWidget->setProgress(m_stats.idolsFound, m_stats.bossesDefeated);
     m_allItems = std::move(m_stats.inventoryItems);
     m_stats.inventoryItems.clear();
     m_heldItems.clear();
@@ -124,12 +130,13 @@ void InventoryWidget::setCharacter(const fssm::parse::sekiro::SekiroCharacterInf
 
 void InventoryWidget::selectPage(int page, int category) {
     m_page = std::clamp(page, 0, int(PAGES.size()) - 1);
-    m_category = std::clamp(category, 0, categoryCount(m_page) - 1);
+    m_category = std::clamp(category, 0, std::max(0, categoryCount(m_page) - 1));
     m_scroll = 0;
     m_hoverItem = -1;
     m_layout = computeLayout();
     rebuildVisibleItems();
     m_selectedItem = m_visibleItems.empty() && m_treeNodes.empty() ? -1 : 0;
+    m_worldWidget->setVisible(worldPage() && m_hasCharacter);
     update();
 }
 
@@ -146,6 +153,7 @@ void InventoryWidget::rebuildVisibleItems() {
         m_scroll = 0;
         return;
     }
+    if (worldPage()) return;
     const Category& category = categoryAt(m_page, m_category);
     for (const auto& item : m_allItems) {
         const auto& wanted = category.categories;
@@ -201,11 +209,18 @@ void InventoryWidget::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
     m_layout = computeLayout();
     m_cache.clear();
+    // Below the tabs, where the category label starts on the other pages.
+    const double s = m_layout.scale;
+    m_worldWidget->setGeometry(rect().adjusted(0, int(std::round(44 * s)), 0, -int(std::round(2 * s))));
     m_scroll = std::clamp(m_scroll, 0, maxScroll());
 }
 
 bool InventoryWidget::skillPage() const {
     return m_page == SKILLS_PAGE;
+}
+
+bool InventoryWidget::worldPage() const {
+    return m_page == WORLD_PAGE;
 }
 
 bool InventoryWidget::learned(const SkillNode& node) const {
@@ -309,6 +324,7 @@ void InventoryWidget::paintEvent(QPaintEvent* event) {
         drawShadowText(painter, rect(), Qt::AlignCenter, "No character selected", DIM_TEXT_COLOR);
         return;
     }
+    if (worldPage()) return;
     drawCategories(painter);
     if (skillPage()) {
         drawSkillTree(painter);
@@ -623,7 +639,7 @@ void InventoryWidget::mousePressEvent(QMouseEvent* event) {
 }
 
 void InventoryWidget::wheelEvent(QWheelEvent* event) {
-    if (!m_hasCharacter || skillPage()) return;
+    if (!m_hasCharacter || skillPage() || worldPage()) return;
     const int steps = event->angleDelta().y() / 120;
     m_scroll = std::clamp(m_scroll - steps * m_layout.rowHeight, 0, maxScroll());
     m_hoverItem = itemIndexAt(event->position().toPoint());
