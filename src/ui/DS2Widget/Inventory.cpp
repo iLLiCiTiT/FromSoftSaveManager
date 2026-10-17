@@ -262,7 +262,13 @@ void InventoryWidget::drawGrid(QPainter& painter) {
     const QPixmap selectedBg = scaled(":/ds2_images/ui_item_selected", tileSize);
     const int pedestalW = int(tile * 0.78);
     const QPixmap pedestal = scaled(":/ds2_images/ui_pedestal", QSize(pedestalW, pedestalW * 30 / 70));
-    const int iconH = int(rowH * 0.95);
+    // Icons stand on the pedestal and must stay inside the tile frame: their height is
+    // the space between the frame's top edge (plus a small margin) and the pedestal.
+    const int innerH = rowH - 4;
+    const int pedestalTop = innerH - pedestal.height() - int(tile * 0.04);
+    const int iconBottomOffset = pedestalTop + pedestal.height() / 2;
+    const int iconTopMargin = std::max(3, int(tile * 0.08));
+    const int iconH = std::max(8, iconBottomOffset - iconTopMargin);
     const QSize iconSize(iconH * ICON_SOURCE.width() / ICON_SOURCE.height(), iconH);
 
     const int firstRow = m_scroll / rowH;
@@ -289,7 +295,7 @@ void InventoryWidget::drawGrid(QPainter& painter) {
                                                                       int(item.baseItem.image.size())), iconSize);
             }
             if (!icon.isNull()) {
-                const int iconBottom = pedestalPos.y() + pedestal.height() / 2;
+                const int iconBottom = inner.top() + iconBottomOffset;
                 painter.save();
                 painter.setClipRect(inner, Qt::IntersectClip);
                 painter.drawPixmap(inner.center().x() - icon.width() / 2, iconBottom - icon.height(), icon);
