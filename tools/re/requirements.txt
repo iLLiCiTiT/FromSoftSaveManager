@@ -1,0 +1,8 @@
+# Python 3.11 (C:\Users\iLLiCiT\.pyenv\pyenv-win\versions\3.11.9). Install pyghidra and jpype1
+# from Ghidra's own wheels first:
+#   pip install --no-index --find-links %GHIDRA%\Ghidra\Features\PyGhidra\pypkg\dist pyghidra
+pycryptodome
+pillow
+numpy
+zstandard
+opencv-python-headless
