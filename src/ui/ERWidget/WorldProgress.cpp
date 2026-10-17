@@ -8,6 +8,7 @@
 #include <QWheelEvent>
 #include <cmath>
 
+#include "../../parse/EldenRing/NpcProgress.h"
 #include "../../parse/EldenRing/WorldProgress.h"
 
 namespace fssm::ui::er {
@@ -19,18 +20,23 @@ namespace {
     const QColor TEXT_COLOR(228, 224, 210);
     const QColor DIM_TEXT_COLOR(150, 144, 128);
     const QColor GOLD_COLOR(190, 168, 112);
+    const QColor HOSTILE_COLOR(206, 92, 72);
 
     enum class RowKind {
         Area,       // region with its count
         Grace,
         Boss,
+        Npc,
     };
+
+    using fssm::parse::er::NpcState;
 
     struct Row {
         RowKind kind;
         QString text;
         QString value;
         bool done = false;
+        NpcState npc = NpcState::Unknown;
     };
 
     QFont serifFont(int pixelSize) {
@@ -117,6 +123,47 @@ namespace {
         return rows;
     }
 
+    // NPCs by their status flags under an "NPCs" heading; the state is shown right aligned
+    // (nothing while the NPC's map hasn't loaded yet).
+    std::vector<Row> npcRows(const std::vector<NpcState>& states) {
+        using fssm::parse::er::NPCS;
+        std::vector<Row> rows = {{RowKind::Area, "NPCs", ""}};
+        for (size_t i = 0; i < NPCS.size(); ++i) {
+            const NpcState state = i < states.size() ? states[i] : NpcState::Unknown;
+            QString value;
+            switch (state) {
+                case NpcState::Friendly: value = "Alive"; break;
+                case NpcState::Hostile: value = "Hostile"; break;
+                case NpcState::Dead: value = "Dead"; break;
+                case NpcState::Unknown: break;
+            }
+            rows.push_back({RowKind::Npc, fromView(NPCS[i].name), value,
+                            state == NpcState::Friendly || state == NpcState::Hostile, state});
+        }
+        return rows;
+    }
+
+    // Small circle marking an NPC: filled while alive (red when hostile), crossed out when dead.
+    void drawNpcMark(QPainter& painter, const QRectF& rect, NpcState state) {
+        painter.save();
+        const QRectF circle = rect.adjusted(rect.width() * 0.22, rect.height() * 0.22,
+                                            -rect.width() * 0.22, -rect.height() * 0.22);
+        const double w = std::max(1.0, circle.width() / 8);
+        const QColor edge = state == NpcState::Hostile ? HOSTILE_COLOR
+            : state == NpcState::Friendly ? GOLD_COLOR : QColor(110, 104, 92);
+        painter.setPen(QPen(edge, w));
+        painter.setBrush(state == NpcState::Friendly ? QBrush(QColor(214, 184, 112))
+                         : state == NpcState::Hostile ? QBrush(HOSTILE_COLOR.darker(130)) : QBrush(Qt::NoBrush));
+        painter.drawEllipse(circle);
+        if (state == NpcState::Dead) {
+            const QRectF x = circle.adjusted(circle.width() * 0.25, circle.height() * 0.25,
+                                             -circle.width() * 0.25, -circle.height() * 0.25);
+            painter.drawLine(x.topLeft(), x.bottomRight());
+            painter.drawLine(x.topRight(), x.bottomLeft());
+        }
+        painter.restore();
+    }
+
     // Site of Grace: a golden glow with a spark when discovered, a faint ring otherwise.
     void drawGraceMark(QPainter& painter, const QRectF& rect, bool discovered) {
         painter.save();
@@ -170,6 +217,7 @@ void WorldProgressWidget::setCharacter(const fssm::parse::er::ERCharacterInfo* c
     m_hasCharacter = charInfo != nullptr;
     m_gracesDiscovered = charInfo != nullptr ? charInfo->gracesDiscovered : std::vector<bool>{};
     m_bossesDefeated = charInfo != nullptr ? charInfo->bossesDefeated : std::vector<bool>{};
+    m_npcStates = charInfo != nullptr ? charInfo->npcStates : std::vector<NpcState>{};
     update();
 }
 
@@ -200,7 +248,9 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     int graceCount = 0;
     int bossCount = 0;
     const std::vector<Row> graces = groupedRows(GRACES, GRACE_AREAS, m_gracesDiscovered, RowKind::Grace, graceCount);
-    const std::vector<Row> bosses = groupedRows(BOSSES, BOSS_AREAS, m_bossesDefeated, RowKind::Boss, bossCount);
+    std::vector<Row> bosses = groupedRows(BOSSES, BOSS_AREAS, m_bossesDefeated, RowKind::Boss, bossCount);
+    const std::vector<Row> npcs = npcRows(m_npcStates);
+    bosses.insert(bosses.end(), npcs.begin(), npcs.end());
 
     const int gap = px(16);
     const int columnW = (r.width() - gap) / 2;
@@ -254,12 +304,21 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
             const QRectF icon(full.left() + px(10), full.center().y() - iconSize / 2.0, iconSize, iconSize);
             if (row.kind == RowKind::Grace) {
                 drawGraceMark(painter, icon, row.done);
-            } else {
+            } else if (row.kind == RowKind::Boss) {
                 drawBossMark(painter, icon, row.done);
+            } else {
+                drawNpcMark(painter, icon, row.npc);
             }
             painter.setFont(serifFont(px(15)));
             const int textLeft = int(icon.right()) + px(10);
-            drawText(painter, QRect(textLeft, full.top(), full.right() - textLeft, full.height()),
+            int textRight = full.right();
+            if (!row.value.isEmpty()) {
+                drawText(painter, QRect(textLeft, full.top(), full.right() - textLeft - px(4), full.height()),
+                         Qt::AlignRight | Qt::AlignVCenter, row.value,
+                         row.npc == NpcState::Hostile ? HOSTILE_COLOR : DIM_TEXT_COLOR);
+                textRight -= QFontMetrics(painter.font()).horizontalAdvance(row.value) + px(14);
+            }
+            drawText(painter, QRect(textLeft, full.top(), textRight - textLeft, full.height()),
                      Qt::AlignLeft | Qt::AlignVCenter, row.text, row.done ? TEXT_COLOR : DIM_TEXT_COLOR);
         }
         painter.restore();

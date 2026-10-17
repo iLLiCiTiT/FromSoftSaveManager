@@ -7,6 +7,7 @@
 #include <unordered_set>
 
 #include "EventFlags.h"
+#include "NpcProgress.h"
 #include "WorldProgress.h"
 #include "../Utils.h"
 
@@ -231,6 +232,14 @@ ERCharacterInfo parseERCharacter(const BND4Entry& entry, const UserData10& userD
         }
         for (const auto& boss : BOSSES) {
             output.bossesDefeated.push_back(get_event_flag(eventFlags, boss.flagId).value_or(false));
+        }
+        for (const auto& npc : NPCS) {
+            const auto isSet = [&](uint32_t offset) {
+                return get_event_flag(eventFlags, npc.statusFlag + offset).value_or(false);
+            };
+            output.npcStates.push_back(isSet(3) ? NpcState::Dead
+                                       : isSet(1) || isSet(2) ? NpcState::Hostile
+                                       : isSet(0) ? NpcState::Friendly : NpcState::Unknown);
         }
     }
 

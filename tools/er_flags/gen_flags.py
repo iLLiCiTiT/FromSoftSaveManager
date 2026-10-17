@@ -91,6 +91,14 @@ def flag_blocks(db_dir):
         rank = position // 1000
         if blocks.setdefault(flag // 1000, rank) != rank:
             raise RuntimeError(f"block {flag // 1000} has two positions")
+    # The game's table is sorted by block id, so where two known blocks are as many ranks
+    # apart as ids apart, every id between is in the table (e.g. block 3, the NPC flags
+    # 3000-3999, between blocks 2 and 4).
+    known = sorted(blocks.items())
+    for (id_a, rank_a), (id_b, rank_b) in zip(known, known[1:]):
+        if id_b - id_a == rank_b - rank_a:
+            for k in range(1, id_b - id_a):
+                blocks[id_a + k] = rank_a + k
     return blocks
 
 

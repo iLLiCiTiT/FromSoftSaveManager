@@ -64,6 +64,7 @@ add_executable(FromSoftSaveManager
         src/parse/EldenRing/ItemLookup.cpp
         src/parse/EldenRing/EventFlags.cpp
         src/parse/EldenRing/WorldProgress.cpp
+        src/parse/EldenRing/NpcProgress.cpp
 
         src/resources/resources.qrc
         src/resources/dsr_images.qrc

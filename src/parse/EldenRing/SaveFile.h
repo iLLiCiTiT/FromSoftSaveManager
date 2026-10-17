@@ -9,6 +9,14 @@
 
 
 namespace fssm::parse::er {
+// From an NPC's status flags (Npc in NpcProgress.h).
+enum class NpcState : uint8_t {
+    Unknown,        // none set: the NPC's map hasn't loaded yet
+    Friendly,
+    Hostile,
+    Dead,
+};
+
 struct GaItem {
     uint32_t handle;
     uint32_t itemId;
@@ -95,6 +103,8 @@ struct ERCharacterInfo {
     // when the event flag region could not be located.
     std::vector<bool> gracesDiscovered;
     std::vector<bool> bossesDefeated;
+    // One per NPCS entry (NpcProgress.h); empty like the lists above.
+    std::vector<NpcState> npcStates;
 };
 
 struct MenuSystemSaveLoad {
