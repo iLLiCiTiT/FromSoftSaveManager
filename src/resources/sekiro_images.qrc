@@ -1,5 +1,28 @@
 <RCC>
     <qresource prefix="/sekiro_images">
         <file alias="bg">images/sekiro/menu/bg.png</file>
+        <file alias="arrow">images/sekiro/menu/arrow.png</file>
+        <file alias="category_cursor">images/sekiro/menu/category_cursor.png</file>
+        <file alias="category_key_items">images/sekiro/menu/category_key_items.png</file>
+        <file alias="category_materials">images/sekiro/menu/category_materials.png</file>
+        <file alias="category_prosthetics">images/sekiro/menu/category_prosthetics.png</file>
+        <file alias="category_quick_items">images/sekiro/menu/category_quick_items.png</file>
+        <file alias="detail_panel">images/sekiro/menu/detail_panel.png</file>
+        <file alias="header_bar">images/sekiro/menu/header_bar.png</file>
+        <file alias="icon_attack">images/sekiro/menu/icon_attack.png</file>
+        <file alias="icon_base">images/sekiro/menu/icon_base.png</file>
+        <file alias="icon_sen">images/sekiro/menu/icon_sen.png</file>
+        <file alias="icon_vitality">images/sekiro/menu/icon_vitality.png</file>
+        <file alias="item_row">images/sekiro/menu/item_row.png</file>
+        <file alias="item_row_selected">images/sekiro/menu/item_row_selected.png</file>
+        <file alias="plate">images/sekiro/menu/plate.png</file>
+        <file alias="profile_row">images/sekiro/menu/profile_row.png</file>
+        <file alias="profile_row_selected">images/sekiro/menu/profile_row_selected.png</file>
+        <file alias="skill_frame_hiden">images/sekiro/menu/skill_frame_hiden.png</file>
+        <file alias="skill_frame_ougi">images/sekiro/menu/skill_frame_ougi.png</file>
+        <file alias="stat_bar">images/sekiro/menu/stat_bar.png</file>
+        <file alias="tab">images/sekiro/menu/tab.png</file>
+        <file alias="tab_selected">images/sekiro/menu/tab_selected.png</file>
+        <file alias="title_bar">images/sekiro/menu/title_bar.png</file>
     </qresource>
 </RCC>

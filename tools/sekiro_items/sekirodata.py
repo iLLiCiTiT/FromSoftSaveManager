@@ -149,16 +149,35 @@ ICON_TEXTURE_PATH = "/menu/hi/01_common.tpf.dcx"
 
 
 def icon_atlases(archive):
-    """Return {icon id: (texture name, x, y, w, h)} and {texture name: dds} for SB_Icon* atlases."""
+    """Return {icon id: (texture name, x, y, w, h)} and {texture name: dds} for the item icons.
+
+    Most icons are in the SB_Icon* atlases; a few (e.g. Divine Grass) only exist in other
+    atlases such as SB_TextEffect_02, which are used when SB_Icon* has no copy."""
+    layouts = parse_bnd4(archive.read(ICON_LAYOUT_PATH))
+    sprites = {}
+    names = sorted((n for n in layouts if n.endswith(".layout")), key=lambda n: (not n.startswith("SB_Icon"), n))
+    for name in names:
+        texture = name[:-len(".layout")]
+        for m in re.finditer(r'<SubTexture name="MENU_ItemIcon_(\d+)\.png" x="(\d+)" y="(\d+)" '
+                             r'width="(\d+)" height="(\d+)"', layouts[name].decode("utf-8", "replace")):
+            sprites.setdefault(int(m.group(1)), (texture, int(m.group(2)), int(m.group(3)),
+                                                 int(m.group(4)), int(m.group(5))))
+    textures = dict(tpf_textures(archive.read(ICON_TEXTURE_PATH)))
+    return sprites, textures
+
+
+def menu_sprites(archive):
+    """Return {sprite name: (texture name, x, y, w, h)} of every /menu/hi/01_common layout and
+    {texture name: dds} of its atlases."""
     layouts = parse_bnd4(archive.read(ICON_LAYOUT_PATH))
     sprites = {}
     for name, xml in layouts.items():
-        if not name.startswith("SB_Icon") or not name.endswith(".layout"):
+        if not name.endswith(".layout"):
             continue
         texture = name[:-len(".layout")]
-        for m in re.finditer(r'<SubTexture name="MENU_ItemIcon_(\d+)\.png" x="(\d+)" y="(\d+)" '
+        for m in re.finditer(r'<SubTexture name="([^"]+)\.png" x="(\d+)" y="(\d+)" '
                              r'width="(\d+)" height="(\d+)"', xml.decode("utf-8", "replace")):
-            sprites[int(m.group(1))] = (texture, int(m.group(2)), int(m.group(3)),
-                                        int(m.group(4)), int(m.group(5)))
+            sprites.setdefault(m.group(1), (texture, int(m.group(2)), int(m.group(3)),
+                                            int(m.group(4)), int(m.group(5))))
     textures = dict(tpf_textures(archive.read(ICON_TEXTURE_PATH)))
     return sprites, textures

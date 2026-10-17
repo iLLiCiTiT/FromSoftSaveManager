@@ -44,6 +44,8 @@ add_executable(FromSoftSaveManager
         src/parse/Sekiro/SaveData.cpp
         src/parse/Sekiro/Items.cpp
         src/parse/Sekiro/ItemLookup.cpp
+        src/parse/Sekiro/SaveFile.cpp
+        src/parse/Sekiro/SkillTree.cpp
         src/parse/DS3/Items.cpp
         src/parse/DS3/SaveFile.cpp
         src/parse/DS3/SaveData.cpp
@@ -88,6 +90,8 @@ add_executable(FromSoftSaveManager
         src/ui/DS3Widget/CharacterList.cpp
         src/ui/DS3Widget/HeaderTabs.cpp
         src/ui/SekiroWidget/SekiroWidget.cpp
+        src/ui/SekiroWidget/CharacterList.cpp
+        src/ui/SekiroWidget/Inventory.cpp
         src/ui/ERWidget/ERWidget.cpp
         src/ui/ERWidget/CharInfo.cpp
         src/ui/ERWidget/Inventory.cpp
@@ -98,6 +102,7 @@ if (FSSM_USE_INV_IMAGES)
             src/resources/dsr_inv_images.qrc
             src/resources/ds2_inv_images.qrc
             src/resources/sekiro_inv_images.qrc
+            src/resources/sekiro_skill_images.qrc
             src/resources/er_inv_images.qrc
             src/resources/ds3_inv_images.qrc)
     target_compile_definitions(FromSoftSaveManager PRIVATE
@@ -151,6 +156,7 @@ add_executable(SekiroRoundTrip
         src/parse/Sekiro/SaveData.cpp
         src/parse/Sekiro/Items.cpp
         src/parse/Sekiro/ItemLookup.cpp
+        src/parse/Sekiro/SaveFile.cpp
 )
 target_link_libraries(SekiroRoundTrip tiny-aes)
 target_link_options(SekiroRoundTrip PRIVATE -static-libgcc -static-libstdc++)
