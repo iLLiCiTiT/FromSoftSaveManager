@@ -1,6 +1,8 @@
 #include "SaveFile.h"
 
+#include "EventFlags.h"
 #include "SaveData.h"
+#include "WorldProgress.h"
 
 #include <cstring>
 #include <unordered_set>
@@ -160,6 +162,26 @@ namespace fssm::parse::ds3 {
             return items;
         }
 
+        std::vector<bool> lit_bonfires(const CharacterSlot& slot) {
+            std::vector<bool> lit;
+            lit.reserve(BONFIRES.size());
+            for (const auto& bonfire : BONFIRES) {
+                bool isLit = false;
+                for (const uint32_t flagId : bonfire.flagIds) {
+                    if (flagId != 0 && get_event_flag(slot, flagId).value_or(false)) isLit = true;
+                }
+                lit.push_back(isLit);
+            }
+            return lit;
+        }
+
+        std::vector<bool> defeated_bosses(const CharacterSlot& slot) {
+            std::vector<bool> defeated;
+            defeated.reserve(BOSSES.size());
+            for (const auto& boss : BOSSES) defeated.push_back(get_event_flag(slot, boss.flagId).value_or(false));
+            return defeated;
+        }
+
         DS3CharacterInfo character_info(const CharacterSlot& slot, const ProfileSummaryEntry& profile, uint8_t index) {
             const auto& st = slot.player.stats;
             const EquippedSet equipped = equipped_set(slot.player.equip);
@@ -201,6 +223,8 @@ namespace fssm::parse::ds3 {
                 .mapId = profile.mapId,
                 .areaId = profile.areaId,
                 .equipItemIds = slot.player.equip.chrAsm.equipItemIds,
+                .bonfiresLit = lit_bonfires(slot),
+                .bossesDefeated = defeated_bosses(slot),
             };
         }
     }

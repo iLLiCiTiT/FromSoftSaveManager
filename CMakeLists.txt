@@ -51,6 +51,8 @@ add_executable(FromSoftSaveManager
         src/parse/DS3/SaveFile.cpp
         src/parse/DS3/SaveData.cpp
         src/parse/DS3/Areas.cpp
+        src/parse/DS3/EventFlags.cpp
+        src/parse/DS3/WorldProgress.cpp
         src/parse/EldenRing/SaveFile.cpp
         src/parse/EldenRing/Items.cpp
         src/parse/EldenRing/ItemLookup.cpp

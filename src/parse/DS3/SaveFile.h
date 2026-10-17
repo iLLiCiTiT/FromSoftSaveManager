@@ -67,6 +67,10 @@ namespace fssm::parse::ds3 {
         uint32_t areaId = 0;            // AA * 100 + sub area, e.g. 4005 Firelink Shrine
         // ChrAsm::equipItemIds (weapons, ammunition, armor, rings, ...); 0xffffffff when empty.
         std::array<uint32_t, 0x16> equipItemIds{};
+
+        // From the event flags, one per BONFIRES / BOSSES entry (WorldProgress.h).
+        std::vector<bool> bonfiresLit;
+        std::vector<bool> bossesDefeated;
     };
 
     struct DS3SaveFile {
