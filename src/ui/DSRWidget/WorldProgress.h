@@ -6,7 +6,7 @@
 #include "../../parse/DSR/SaveFile.h"
 
 namespace fssm::ui::dsr {
-// Lit bonfires (grouped by area) and defeated bosses of a character.
+// Lit bonfires (grouped by area), defeated bosses and NPC states of a character.
 class WorldProgressWidget: public QWidget {
     Q_OBJECT
 public:

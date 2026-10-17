@@ -1,11 +1,11 @@
-"""Generate the Dark Souls Remastered bonfire and boss tables from the installed game data.
+"""Generate the Dark Souls Remastered bonfire, boss and NPC tables from the installed game data.
 
 Usage:
     python gen_flags.py "<...>/DARK SOULS REMASTERED" <repo root>
 
 Writes:
     src/parse/DSR/WorldProgress.h      table sizes
-    src/parse/DSR/WorldProgress.cpp    bonfires and bosses
+    src/parse/DSR/WorldProgress.cpp    bonfires, bosses and NPCs
 
 The game has no bonfire param. Bonfires are the RegisterBonfire (2009:03) calls of the map
 event scripts (/event/mAA_BB_00_00.emevd.dcx); the bonfire's entity id is the key of its
@@ -23,7 +23,13 @@ own id is the defeat flag (an event flag is set when its event completes; the gl
 (DisplayBossHealthBar 2003:11, NPC_name_.fmg) of the killed entity or of an entity the
 event waits for (Bed of Chaos). Events without a named health bar are skipped (the unused
 fight 1600810 in New Londo, health bar name 2390 has no text).
+
+NPCs: every NPC owns a block of global event flags in 1000-1999. The map scripts instantiate
+per-NPC events (InitializeEvent parameters: entity, block range, flag); their developer names
+in the .emeld next to each script tell death events from hostile ones (npc_blocks). Names are
+in NPCS below.
 """
+import collections
 import glob
 import os
 import re
@@ -35,6 +41,11 @@ EMEVD_REGISTER_BONFIRE = (2009, 3)
 EMEVD_DISPLAY_BOSS_HEALTH_BAR = (2003, 11)
 EMEVD_HANDLE_BOSS_DEFEAT = (2003, 12)
 EMEVD_IF_CHARACTER_DEAD = (4, 0)
+EMEVD_INITIALIZE_EVENT = (2000, 0)
+EMEVD_SET_EVENT_FLAG = (2003, 2)
+EMEVD_BATCH_SET_EVENT_FLAGS = (2003, 22)
+
+NPC_FLAGS = range(1000, 2000)
 
 # Areas (PlaceName ids) in the order they are usually reached.
 AREAS = [
@@ -146,6 +157,56 @@ BOSS_NAMES = {
     1510801: "Ornstein and Smough",
 }
 
+# NPC flag block (first flag) -> name. The game has names for few NPCs (NPC_name_.fmg is
+# mostly bosses), so each block was identified from its events' developer names (.emeld)
+# and the dialogue of the NPC the events act on (MSB enemy part -> talk id -> the
+# Conversation_.fmg lines its talk script uses, e.g. "I'm Andre, of Astora.").
+NPCS = {
+    1000: "Solaire of Astora",
+    1030: "Darkmoon Knightess",
+    1060: "Oscar, Knight of Astora",
+    1090: "Big Hat Logan",
+    1110: "Griggs of Vinheim",
+    1120: "Dusk of Oolacile",
+    1170: "Rhea of Thorolund",
+    1190: "Petrus of Thorolund",
+    1210: "Vince of Thorolund",
+    1220: "Nico of Thorolund",
+    1230: "Gwynevere",
+    1250: "Laurentius of the Great Swamp",
+    1270: "Fair Lady",
+    1280: "Eingyi",
+    1290: "Quelana of Izalith",
+    1310: "Ingward",
+    1320: "Andre of Astora",
+    1340: "Vamos",
+    1360: "Giant Blacksmith",
+    1380: "Rickert of Vinheim",
+    1400: "Undead Merchant (Male)",
+    1410: "Undead Merchant (Female)",
+    1420: "Crestfallen Merchant",
+    1430: "Domhnall of Zena",
+    1460: "Crestfallen Warrior",
+    1490: "Siegmeyer of Catarina",
+    1540: "Sieglinde of Catarina",
+    1570: "Knight Lautrec of Carim",
+    1600: "Shiva of the East",
+    1620: "Patches",
+    1640: "Kingseeker Frampt",
+    1670: "Darkstalker Kaathe",
+    1700: "Oswald of Carim",
+    1760: "Shiva's Bodyguard",
+    1820: "Hawkeye Gough",
+    1840: "Marvellous Chester",
+    1860: "Lord's Blade Ciaran",
+    1870: "Elizabeth",
+}
+# Blocks left out: 1240 Gwyndolin and 1690 Priscilla are bosses (BOSSES); 1140 Anastacia's
+# events all run when she dies and pick a state the talk script reads back (she can be
+# revived), none of them is named a death.
+NPC_BLOCKS_LEFT_OUT = {1240, 1690}
+NPC_SLOTS = 3
+
 WARP_FLAGS = range(200, 300)
 WARP_TEXTS = range(2000, 2100)
 
@@ -213,6 +274,124 @@ def parse_emevd(d):
             instructions.append((bank, index, struct.unpack_from(f"<{len(args) // 4}i", args)))
         events.append((event_id, instructions))
     return events
+
+
+def parse_emevd_params(d):
+    """{event id: ([(bank, index, raw args)], [(instruction, target byte, source byte, length)])}
+    of a Dark Souls EMEVD, keeping the parameter entries InitializeEvent fills in."""
+    assert d[:4] == b"EVD\0", "expected EMEVD"
+    header = struct.unpack_from("<16I", d, 0x10)
+    event_count, events_offset, instr_offset = header[0], header[1], header[3]
+    param_offset, args_offset = header[9], header[13]
+    events = {}
+    for e in range(event_count):
+        event_id, count, offset, param_count, param_off = struct.unpack_from("<IIIII", d, events_offset + e * 0x1C)
+        instructions = []
+        for i in range(count):
+            bank, index, args_length, args_off = struct.unpack_from("<IIIi", d, instr_offset + offset + i * 0x18)
+            instructions.append((bank, index, d[args_offset + args_off:args_offset + args_off + args_length]))
+        params = [struct.unpack_from("<IIII", d, param_offset + param_off + p * 0x14) for p in range(param_count)]
+        events[event_id] = (instructions, params)
+    return events
+
+
+def instantiate(event, init_args):
+    """The event's instructions as int32 args with InitializeEvent's parameter bytes applied."""
+    instructions, params = event
+    out = []
+    for n, (bank, index, raw) in enumerate(instructions):
+        raw = bytearray(raw)
+        for instruction, target, source, length in params:
+            if instruction == n:
+                raw[target:target + length] = init_args[source:source + length]
+        out.append((bank, index, struct.unpack_from(f"<{len(raw) // 4}i", raw)))
+    return out
+
+
+def parse_emeld(d):
+    """{event id: developer's event name} of a Dark Souls EMELD."""
+    assert d[:4] == b"ELD\0", "expected EMELD"
+    count, offset = struct.unpack_from("<II", d, 0x10)
+    strings_offset = struct.unpack_from("<I", d, 0x2C)[0]
+    out = {}
+    for i in range(count):
+        event_id, name_offset = struct.unpack_from("<II", d, offset + i * 12)
+        start = end = strings_offset + name_offset
+        while d[end:end + 2] != b"\0\0":
+            end += 2
+        out[event_id] = d[start:end].decode("utf-16le")
+    return out
+
+
+def npc_blocks(game_dir):
+    """{first flag: (last flag, dead flags, hostile flags, entities)} of the NPC flag blocks.
+
+    Every instance of an event (InitializeEvent with its parameters) is read with the event's
+    developer name from the matching .emeld: a 死亡 (death) event clears the block with Batch
+    Set Event Flags and sets the dead flag; 敵対 (hostile) events set a hostile flag, except
+    敵対でいなくなる (leaves after turning hostile). The common absolution event (免罪, Oswald)
+    clears the hostile flags; those no other named event sets are hostile flags too (set by the
+    talk scripts)."""
+    scripts = {}
+    for path in sorted(glob.glob(os.path.join(game_dir, "event", "*.emevd.dcx"))):
+        name = os.path.basename(path).split(".")[0]
+        if name != "common" and not re.fullmatch(r"m1\d_\d\d_00_00", name):
+            continue
+        with open(path, "rb") as f:
+            events = parse_emevd_params(undcx(f.read()))
+        with open(path.replace(".emevd.", ".emeld."), "rb") as f:
+            names = parse_emeld(undcx(f.read()))
+        scripts[name] = (events, names)
+    common = scripts["common"][0]
+
+    instances = []      # (event name, instructions)
+    for events, names in scripts.values():
+        for instructions, _params in events.values():
+            for bank, index, raw in instructions:
+                if (bank, index) != EMEVD_INITIALIZE_EVENT:
+                    continue
+                target = struct.unpack_from("<I", raw, 4)[0]
+                if target in events:
+                    instances.append((names.get(target, ""), instantiate(events[target], raw[8:])))
+                elif target in common:
+                    instances.append((scripts["common"][1].get(target, ""), instantiate(common[target], raw[8:])))
+
+    ranges = {}
+    for _name, instructions in instances:
+        for bank, index, args in instructions:
+            if (bank, index) == EMEVD_BATCH_SET_EVENT_FLAGS and args[0] in NPC_FLAGS and args[2] == 0:
+                ranges[args[0]] = max(ranges.get(args[0], args[1]), args[1])
+
+    def block_of(flag):
+        starts = [s for s, e in ranges.items() if s <= flag <= e]
+        return max(starts) if starts else None
+
+    dead, hostile, named, absolved = (collections.defaultdict(set) for _ in range(4))
+    entities = collections.defaultdict(set)
+    for name, instructions in instances:
+        sets = [args[0] for bank, index, args in instructions
+                if (bank, index) == EMEVD_SET_EVENT_FLAG and args[0] in NPC_FLAGS and args[1] == 1]
+        if "免罪" in name:
+            for bank, index, args in instructions:
+                if (bank, index) == EMEVD_SET_EVENT_FLAG and args[0] in NPC_FLAGS and args[1] == 0:
+                    absolved[block_of(args[0])].add(args[0])
+            continue
+        chars = {args[1] for bank, index, args in instructions if bank == 4 and index in (0, 2) and len(args) > 1}
+        for flag in sets:
+            block = block_of(flag)
+            if block is None:
+                continue
+            named[block].add(flag)
+            if "死亡" in name:
+                dead[block].add(flag)
+                entities[block] |= chars
+            elif "敵対" in name and "いなくなる" not in name:
+                hostile[block].add(flag)
+                entities[block] |= chars
+    for block, flags in absolved.items():
+        hostile[block] |= {f for f in flags if f not in named[block] or f in hostile[block]}
+    return {start: (ranges[start], sorted(dead[start]), sorted(hostile[start]), entities[start])
+            for start in sorted(ranges) if dead[start] or hostile[start]}
 
 
 def warp_list(exe):
@@ -291,6 +470,20 @@ def main():
     boss_table = [(bosses[entity][0], AREAS.index(area), BOSS_NAMES.get(entity, bosses[entity][1]))
                   for entity, area in BOSSES.items()]
 
+    blocks = npc_blocks(game_dir)
+    for start in NPC_BLOCKS_LEFT_OUT:
+        if not blocks.pop(start)[3] & set(BOSSES):
+            raise RuntimeError(f"NPC block {start} is no longer a boss")
+    if set(blocks) != set(NPCS):
+        raise RuntimeError(f"NPC blocks changed: unnamed {sorted(set(blocks) - set(NPCS))}, "
+                           f"gone {sorted(set(NPCS) - set(blocks))}")
+    npc_table = []
+    for start, name in NPCS.items():
+        end, dead, hostile, _entities = blocks[start]
+        if len(dead) > NPC_SLOTS or len(hostile) > NPC_SLOTS:
+            raise RuntimeError(f"NPC block {start}: more than {NPC_SLOTS} dead or hostile flags")
+        npc_table.append((start, end, dead, hostile, name))
+
     out_dir = os.path.join(repo, "src", "parse", "DSR")
     write_crlf(os.path.join(out_dir, "WorldProgress.h"), f"""#pragma once
 #include <array>
@@ -311,12 +504,25 @@ namespace fssm::parse::dsr {{
         std::string_view name;
     }};
 
+    // An NPC's event flag block. Some flag in it is set once the NPC's map has loaded; its
+    // death events clear the block and set one of deadFlags, its hostile events set one of
+    // hostileFlags (cleared again by absolution). Unused entries are 0.
+    struct Npc {{
+        uint32_t firstFlag;
+        uint32_t lastFlag;
+        std::array<uint32_t, {NPC_SLOTS}> deadFlags;
+        std::array<uint32_t, {NPC_SLOTS}> hostileFlags;
+        std::string_view name;
+    }};
+
     // Areas in the order they are usually reached.
     extern const std::array<std::string_view, {len(AREAS)}> AREAS;
     // Bonfires by area.
     extern const std::array<Bonfire, {len(bonfire_table)}> BONFIRES;
     // Bosses in the order they are usually met.
     extern const std::array<Boss, {len(boss_table)}> BOSSES;
+    // NPCs with an event flag block, by flag.
+    extern const std::array<Npc, {len(npc_table)}> NPCS;
 }}
 """)
 
@@ -334,9 +540,17 @@ namespace fssm::parse::dsr {{
     lines += ["    };", "", f"    const std::array<Boss, {len(boss_table)}> BOSSES = {{"]
     for flag, area, name in boss_table:
         lines.append(f"        Boss{{{flag}, {area}, {cpp_string(name)}}},")
+    lines += ["    };", "", f"    const std::array<Npc, {len(npc_table)}> NPCS = {{"]
+
+    def flag_array(flags):
+        return "{" + ", ".join(str(f) for f in flags + [0] * (NPC_SLOTS - len(flags))) + "}"
+
+    for start, end, dead, hostile, name in npc_table:
+        lines.append(f"        Npc{{{start}, {end}, {flag_array(dead)}, {flag_array(hostile)}, {cpp_string(name)}}},")
     lines += ["    };", "}", ""]
     write_crlf(os.path.join(out_dir, "WorldProgress.cpp"), "\n".join(lines))
-    print(f"{len(bonfire_table)} bonfires ({len(warp)} named by the warp list), {len(boss_table)} bosses")
+    print(f"{len(bonfire_table)} bonfires ({len(warp)} named by the warp list), {len(boss_table)} bosses, "
+          f"{len(npc_table)} NPCs")
 
 
 def cpp_string(s):

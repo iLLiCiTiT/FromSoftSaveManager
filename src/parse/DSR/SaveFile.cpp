@@ -1,4 +1,5 @@
 #include "SaveFile.h"
+#include <algorithm>
 #include <optional>
 #include <stdexcept>
 
@@ -108,6 +109,25 @@ namespace fssm::parse::dsr {
         defeated.reserve(BOSSES.size());
         for (const auto& boss : BOSSES) defeated.push_back(get_event_flag(slot, boss.flagId).value_or(false));
         return defeated;
+    }
+
+    static std::vector<NpcState> npc_states(const CharacterSlot& slot) {
+        std::vector<NpcState> states;
+        states.reserve(NPCS.size());
+        const auto isSet = [&slot](uint32_t flag) { return flag != 0 && get_event_flag(slot, flag).value_or(false); };
+        const auto anySet = [&isSet](const auto& flags) { return std::any_of(flags.begin(), flags.end(), isSet); };
+        for (const auto& npc : NPCS) {
+            if (anySet(npc.deadFlags)) {
+                states.push_back(NpcState::Dead);
+            } else if (anySet(npc.hostileFlags)) {
+                states.push_back(NpcState::Hostile);
+            } else {
+                bool loaded = false;
+                for (uint32_t flag = npc.firstFlag; flag <= npc.lastFlag && !loaded; ++flag) loaded = isSet(flag);
+                states.push_back(loaded ? NpcState::Alive : NpcState::Unknown);
+            }
+        }
+        return states;
     }
 
     static DSRCharacterInfo character_info_from_slot(int charIdx, const CharacterSlot& slot) {
@@ -223,6 +243,7 @@ namespace fssm::parse::dsr {
         }
         ci.bonfiresLit = lit_bonfires(slot);
         ci.bossesDefeated = defeated_bosses(slot);
+        ci.npcStates = npc_states(slot);
         return ci;
     }
 

@@ -17,10 +17,23 @@ namespace fssm::parse::dsr {
         std::string_view name;
     };
 
+    // An NPC's event flag block. Some flag in it is set once the NPC's map has loaded; its
+    // death events clear the block and set one of deadFlags, its hostile events set one of
+    // hostileFlags (cleared again by absolution). Unused entries are 0.
+    struct Npc {
+        uint32_t firstFlag;
+        uint32_t lastFlag;
+        std::array<uint32_t, 3> deadFlags;
+        std::array<uint32_t, 3> hostileFlags;
+        std::string_view name;
+    };
+
     // Areas in the order they are usually reached.
     extern const std::array<std::string_view, 21> AREAS;
     // Bonfires by area.
     extern const std::array<Bonfire, 44> BONFIRES;
     // Bosses in the order they are usually met.
     extern const std::array<Boss, 26> BOSSES;
+    // NPCs with an event flag block, by flag.
+    extern const std::array<Npc, 38> NPCS;
 }

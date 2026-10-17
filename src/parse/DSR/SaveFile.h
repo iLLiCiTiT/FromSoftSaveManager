@@ -24,6 +24,14 @@ namespace fssm::parse::dsr {
         BaseItem baseItem;
     };
 
+    // From an NPC's event flag block (Npc in WorldProgress.h).
+    enum class NpcState : uint8_t {
+        Unknown,        // no flag of the block set: the NPC's map hasn't loaded yet
+        Alive,
+        Hostile,
+        Dead,
+    };
+
     struct DSRCharacterInfo {
         int index;
         std::u16string name;
@@ -90,10 +98,11 @@ namespace fssm::parse::dsr {
         std::array<uint32_t, 8> equippedGestures;
         std::vector<InventoryItem> bottomlessBoxItems;
 
-        // One per BONFIRES / BOSSES entry (WorldProgress.h): lit in the bonfire DB
-        // (BonfireDb.h), defeat flag set in the event flags.
+        // One per BONFIRES / BOSSES / NPCS entry (WorldProgress.h): lit in the bonfire DB
+        // (BonfireDb.h), defeat flag set and NPC state from the event flags.
         std::vector<bool> bonfiresLit;
         std::vector<bool> bossesDefeated;
+        std::vector<NpcState> npcStates;
     };
 
     struct DSRSaveFile {

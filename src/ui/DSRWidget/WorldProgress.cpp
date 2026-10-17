@@ -16,19 +16,24 @@ namespace {
     const QColor AREA_COLOR(169, 155, 130);
     const QColor RULE_COLOR(169, 155, 130, 110);
     const QColor UNDONE_MARK_COLOR(120, 116, 110);
+    const QColor HOSTILE_COLOR(206, 92, 72);
 
     enum class RowKind {
         Heading,    // "Bonfires 30/ 44"
         Area,       // area with its lit count
         Bonfire,
         Boss,
+        Npc,
     };
+
+    using fssm::parse::dsr::NpcState;
 
     struct Row {
         RowKind kind;
         QString text;
         QString value;
         bool done = false;
+        NpcState npc = NpcState::Unknown;
     };
 
     QString count(int done, int total) {
@@ -74,6 +79,26 @@ namespace {
         return rows;
     }
 
+    // NPCs by their event flags; the state is shown right aligned (nothing while the NPC's
+    // map hasn't loaded yet).
+    std::vector<Row> npcRows(const fssm::parse::dsr::DSRCharacterInfo& c) {
+        using fssm::parse::dsr::NPCS;
+        std::vector<Row> rows = {{RowKind::Heading, "NPCs", ""}};
+        for (size_t i = 0; i < NPCS.size(); ++i) {
+            const NpcState state = i < c.npcStates.size() ? c.npcStates[i] : NpcState::Unknown;
+            QString value;
+            switch (state) {
+                case NpcState::Alive: value = "Alive"; break;
+                case NpcState::Hostile: value = "Hostile"; break;
+                case NpcState::Dead: value = "Dead"; break;
+                case NpcState::Unknown: break;
+            }
+            rows.push_back({RowKind::Npc, fromView(NPCS[i].name), value,
+                            state == NpcState::Alive || state == NpcState::Hostile, state});
+        }
+        return rows;
+    }
+
     // Flame when lit, a grey outline when not.
     void drawBonfireMark(QPainter& painter, const QRectF& rect, bool lit) {
         painter.save();
@@ -110,6 +135,24 @@ namespace {
         painter.setPen(QPen(defeated ? AREA_COLOR : UNDONE_MARK_COLOR, std::max(1.0, r / 4)));
         painter.setBrush(defeated ? QBrush(AREA_COLOR) : QBrush(Qt::NoBrush));
         painter.drawPolygon(diamond);
+        painter.restore();
+    }
+
+    // Small circle marking an NPC: filled while alive (red when hostile), crossed out when dead.
+    void drawNpcMark(QPainter& painter, const QRectF& rect, NpcState state) {
+        painter.save();
+        const double w = std::max(1.0, rect.width() / 8);
+        const QColor edge = state == NpcState::Hostile ? HOSTILE_COLOR
+            : state == NpcState::Alive ? AREA_COLOR : UNDONE_MARK_COLOR;
+        painter.setPen(QPen(edge, w));
+        painter.setBrush(state == NpcState::Alive ? QBrush(AREA_COLOR)
+                         : state == NpcState::Hostile ? QBrush(HOSTILE_COLOR.darker(130)) : QBrush(Qt::NoBrush));
+        painter.drawEllipse(rect);
+        if (state == NpcState::Dead) {
+            const QRectF x = rect.adjusted(rect.width() * 0.25, rect.height() * 0.25, -rect.width() * 0.25, -rect.height() * 0.25);
+            painter.drawLine(x.topLeft(), x.bottomRight());
+            painter.drawLine(x.topRight(), x.bottomLeft());
+        }
         painter.restore();
     }
 }
@@ -170,7 +213,9 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     };
 
     const std::vector<Row> bonfires = bonfireRows(c);
-    const std::vector<Row> bosses = bossRows(c);
+    std::vector<Row> bosses = bossRows(c);
+    const std::vector<Row> npcs = npcRows(c);
+    bosses.insert(bosses.end(), npcs.begin(), npcs.end());
     const int gap = 24;
     const bool twoColumns = body.width() >= 480;
     const int columnWidth = twoColumns ? (body.width() - scrollBarW - gap) / 2 : body.width() - scrollBarW;
@@ -219,18 +264,27 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
                     break;
                 }
                 case RowKind::Bonfire:
-                case RowKind::Boss: {
+                case RowKind::Boss:
+                case RowKind::Npc: {
                     const QRectF icon(x + 10, full.center().y() - iconSize / 2.0, iconSize, iconSize);
+                    const QRectF smallIcon = icon.adjusted(iconSize * 0.2, iconSize * 0.2, -iconSize * 0.2, -iconSize * 0.2);
                     if (row.kind == RowKind::Bonfire) {
                         drawBonfireMark(painter, icon, row.done);
+                    } else if (row.kind == RowKind::Boss) {
+                        drawBossMark(painter, smallIcon, row.done);
                     } else {
-                        drawBossMark(painter, icon.adjusted(iconSize * 0.2, iconSize * 0.2, -iconSize * 0.2, -iconSize * 0.2),
-                                     row.done);
+                        drawNpcMark(painter, smallIcon, row.npc);
                     }
                     painter.setFont(textFont);
-                    painter.setPen(row.done ? TEXT_COLOR : DIM_TEXT_COLOR);
                     const int textLeft = int(icon.right()) + 8;
-                    const QRect textRect(textLeft, full.top(), full.right() - textLeft, full.height());
+                    int valueW = 0;
+                    if (!row.value.isEmpty()) {
+                        valueW = fm.horizontalAdvance(row.value) + 10;
+                        painter.setPen(row.npc == NpcState::Hostile ? HOSTILE_COLOR : row.done ? AREA_COLOR : DIM_TEXT_COLOR);
+                        painter.drawText(full.adjusted(0, 0, -4, 0), Qt::AlignRight | Qt::AlignVCenter, row.value);
+                    }
+                    painter.setPen(row.done ? TEXT_COLOR : DIM_TEXT_COLOR);
+                    const QRect textRect(textLeft, full.top(), full.right() - textLeft - valueW, full.height());
                     painter.drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter,
                                      fm.elidedText(row.text, Qt::ElideRight, textRect.width()));
                     break;

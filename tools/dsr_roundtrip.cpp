@@ -66,6 +66,28 @@ static bool check_file(const std::string& path) {
                 for (const auto& boss : dsr::BOSSES) defeated += dsr::get_event_flag(slot, boss.flagId).value_or(false);
                 info += ", bonfires lit " + std::to_string(lit) + "/" + std::to_string(dsr::BONFIRES.size())
                     + ", bosses " + std::to_string(defeated) + "/" + std::to_string(dsr::BOSSES.size());
+                // NPC blocks: a death event clears the block before setting the dead flag, so
+                // a dead NPC has exactly that one flag of its block set.
+                const auto isSet = [&slot](uint32_t flag) {
+                    return flag != 0 && dsr::get_event_flag(slot, flag).value_or(false);
+                };
+                std::string dead, hostile, odd;
+                for (const auto& npc : dsr::NPCS) {
+                    size_t deadSet = 0, hostileSet = 0, blockSet = 0;
+                    for (uint32_t f : npc.deadFlags) deadSet += isSet(f);
+                    for (uint32_t f : npc.hostileFlags) hostileSet += isSet(f);
+                    for (uint32_t f = npc.firstFlag; f <= npc.lastFlag; ++f) blockSet += isSet(f);
+                    const std::string name(npc.name);
+                    if (deadSet > 0) {
+                        dead += (dead.empty() ? "" : ", ") + name;
+                        if (deadSet != 1 || blockSet != 1) odd += (odd.empty() ? "" : ", ") + name;
+                    } else if (hostileSet > 0) {
+                        hostile += (hostile.empty() ? "" : ", ") + name;
+                    }
+                }
+                info += "\n      dead: " + (dead.empty() ? "-" : dead)
+                    + "\n      hostile: " + (hostile.empty() ? "-" : hostile);
+                if (!odd.empty()) info += "\n      DEAD WITH OTHER BLOCK FLAGS: " + odd;
             }
             if (out == content) {
                 std::printf("  %s OK (%s)\n", entry.name.c_str(), info.c_str());
