@@ -40,6 +40,9 @@ namespace {
     // Reference layout size (the game's inventory at 1080p, scaled down).
     constexpr int DESIGN_W = 560;
     constexpr int DESIGN_H = 470;
+    // Item tile pitch in pixels, independent of the widget size (same as the
+    // Elden Ring inventory); resizing the window adds or removes columns.
+    constexpr int TILE_SIZE = 60;
     // Items that never show in the game's inventory.
     constexpr uint32_t HIDDEN_ITEM_ID = 1073741918;
     constexpr uint32_t ESTUS_FLASK_ID = 1073741974;
@@ -253,10 +256,10 @@ InventoryWidget::Layout InventoryWidget::computeLayout() const {
     const int frameTop = l.tabs.bottom() + 1 + px(8);
     l.gridFrame = QRect(inner.left(), frameTop, inner.width(), l.detail.top() - px(8) - frameTop);
     const QRect frameInner = l.gridFrame.adjusted(px(12), px(10), -px(16), -px(10));
-    // As many columns as fit at a comfortable tile size, never fewer than the game's five.
-    l.columns = std::max(5, frameInner.width() / px(64));
-    l.cellWidth = frameInner.width() / l.columns;
-    l.rowHeight = int(l.cellWidth * 1.05);
+    // Tiles keep one size; resizing the window adds or removes columns.
+    l.cellWidth = TILE_SIZE;
+    l.columns = std::max(1, frameInner.width() / TILE_SIZE);
+    l.rowHeight = TILE_SIZE;
     l.grid = QRect(frameInner.left() + (frameInner.width() - l.cellWidth * l.columns) / 2, frameInner.top(),
                    l.cellWidth * l.columns, std::max(0, frameInner.height()));
     return l;
@@ -389,7 +392,8 @@ void InventoryWidget::drawGrid(QPainter& painter) {
             if (idx >= int(m_visible.size())) break;
             const Entry& entry = *m_visible[idx];
             const QRect cell(l.grid.left() + col * cw, l.grid.top() + row * rh - m_scroll, cw, rh);
-            const QRect tile = cell.adjusted(int(3 * s), int(3 * s), -int(3 * s), -int(3 * s));
+            const int pad = std::max(1, int(cw * 0.03));
+            const QRect tile = cell.adjusted(pad, pad, -pad, -pad);
 
             // Tile background; the selected one glows orange like in the game.
             QLinearGradient bg(tile.topLeft(), tile.bottomLeft());
