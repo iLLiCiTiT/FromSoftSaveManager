@@ -45,6 +45,7 @@ SPRITES = {
     "tab_info": ("MENU_Tab_04", 0.5),
     "tab_cursor": ("MENU_FL_Tab_Cursor", 0.5),
     "tab_base": ("MENU_FL_Tab_base", 0.5),
+    "arrow": ("MENU_Arrow", 1.0),
     # Inventory screen
     "inventory_icon": ("MENU_FL_Inventory", 0.5),
     "slot_base": ("MENU_FL_SlotBase_02", 0.5),

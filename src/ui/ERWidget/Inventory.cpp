@@ -412,19 +412,17 @@ void InventoryWidget::drawTabs(QPainter& painter) {
         painter.setOpacity(1.0);
     }
 
-    // LB / RB buttons on both sides of the strip.
-    painter.setFont(serifFont(int(11 * s)));
-    for (const auto& [rect, label, enabled] : {
-             std::tuple{l.leftButton, QString("LB"), m_category > 0},
-             std::tuple{l.rightButton, QString("RB"), m_category + 1 < int(TABS.size())}}) {
-        const QRect pill(rect.center().x() - int(15 * s), rect.center().y() - int(8 * s), int(30 * s), int(16 * s));
-        painter.save();
-        painter.setPen(QPen(enabled ? TEXT_COLOR : DIM_TEXT_COLOR, std::max(1.0, 1.2 * s)));
-        painter.setBrush(Qt::NoBrush);
-        painter.drawRoundedRect(pill, pill.height() / 2.0, pill.height() / 2.0);
-        painter.restore();
-        drawText(painter, pill, Qt::AlignCenter, label, enabled ? TEXT_COLOR : DIM_TEXT_COLOR);
+    // Previous / next category arrows on both sides of the strip (the game's
+    // menu chevron; the right one mirrored).
+    const QPixmap arrow = scaled(":/er_images/arrow", QSize(l.leftButton.width(), int(l.tabs.height() * 0.5)));
+    const QPixmap rightArrow = arrow.transformed(QTransform().scale(-1, 1));
+    for (const auto& [rect, pix, enabled] : {
+             std::tuple{l.leftButton, arrow, m_category > 0},
+             std::tuple{l.rightButton, rightArrow, m_category + 1 < int(TABS.size())}}) {
+        painter.setOpacity(enabled ? 1.0 : 0.3);
+        painter.drawPixmap(rect.center().x() - pix.width() / 2, rect.center().y() - pix.height() / 2, pix);
     }
+    painter.setOpacity(1.0);
 }
 
 void InventoryWidget::drawGrid(QPainter& painter) {
