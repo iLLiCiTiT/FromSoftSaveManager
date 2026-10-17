@@ -125,15 +125,20 @@ InventoryWidget::Layout InventoryWidget::computeLayout() const {
 
     const int gridTop = l.categories.bottom() + 1 + std::max(6, int(12 * s));
     const int gridBottom = l.nameBar.top() - std::max(4, int(8 * s));
-    l.tileSize = l.categories.width() / COLUMNS;
-    l.rowHeight = int(l.tileSize * 1.1);
-    l.grid = QRect(l.categories.left(), gridTop, l.tileSize * COLUMNS, std::max(0, gridBottom - gridTop));
+    // Tiles keep one size; resizing the window adds or removes columns.
+    l.tileSize = TILE_SIZE;
+    l.rowHeight = int(TILE_SIZE * 1.1);
+    l.columns = std::max(1, l.content.width() / TILE_SIZE);
+    const int gridWidth = l.tileSize * l.columns;
+    l.grid = QRect(l.content.left() + (l.content.width() - gridWidth) / 2, gridTop, gridWidth,
+                   std::max(0, gridBottom - gridTop));
     return l;
 }
 
 int InventoryWidget::maxScroll() const {
     if (m_layout.rowHeight <= 0) return 0;
-    const int rows = int((m_visibleItems.size() + COLUMNS - 1) / COLUMNS);
+    const int columns = std::max(1, m_layout.columns);
+    const int rows = int((m_visibleItems.size() + columns - 1) / columns);
     return std::max(0, rows * m_layout.rowHeight - m_layout.grid.height());
 }
 
@@ -256,8 +261,8 @@ void InventoryWidget::drawGrid(QPainter& painter) {
     const int lastRow = (m_scroll + l.grid.height()) / rowH;
     painter.setFont(serifFont(std::max(11, int(tile * 0.24))));
     for (int row = firstRow; row <= lastRow; ++row) {
-        for (int col = 0; col < COLUMNS; ++col) {
-            const int idx = row * COLUMNS + col;
+        for (int col = 0; col < l.columns; ++col) {
+            const int idx = row * l.columns + col;
             if (idx >= int(m_visibleItems.size())) break;
             const InventoryItem& item = *m_visibleItems[idx];
             const QRect cell(l.grid.left() + col * tile, l.grid.top() + row * rowH - m_scroll, tile, rowH);
@@ -363,8 +368,8 @@ int InventoryWidget::itemIndexAt(const QPoint& pos) const {
     if (!l.grid.contains(pos) || l.tileSize <= 0) return -1;
     const int col = (pos.x() - l.grid.left()) / l.tileSize;
     const int row = (pos.y() - l.grid.top() + m_scroll) / l.rowHeight;
-    if (col < 0 || col >= COLUMNS) return -1;
-    const int idx = row * COLUMNS + col;
+    if (col < 0 || col >= l.columns) return -1;
+    const int idx = row * l.columns + col;
     return idx < int(m_visibleItems.size()) ? idx : -1;
 }
 

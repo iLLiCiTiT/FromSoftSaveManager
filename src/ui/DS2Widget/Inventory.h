@@ -36,6 +36,7 @@ private:
         int categorySize = 0;
         QRect grid;
         int tileSize = 0;
+        int columns = 1;
         int rowHeight = 0;
         QRect nameBar;
     };
@@ -52,7 +53,9 @@ private:
     void drawNameBar(QPainter& painter);
     QString itemTitle(const fssm::parse::ds2::InventoryItem& item) const;
 
-    static constexpr int COLUMNS = 10;
+    // Item tile pitch in pixels, independent of the widget size (same as the
+    // DS3 and Elden Ring inventories); resizing adds or removes columns.
+    static constexpr int TILE_SIZE = 60;
     static constexpr int VISIBLE_CATEGORIES = 10;
 
     std::vector<fssm::parse::ds2::InventoryItem> m_allItems;
