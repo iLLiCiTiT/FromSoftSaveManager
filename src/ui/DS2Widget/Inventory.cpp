@@ -105,7 +105,7 @@ void InventoryWidget::rebuildVisibleItems() {
 InventoryWidget::Layout InventoryWidget::computeLayout() const {
     Layout l;
     const QRect r = rect();
-    l.scale = std::clamp(std::min(double(r.width()) / WINDOW_W, double(r.height()) / WINDOW_H), 0.45, 1.25);
+    l.scale = FIXED_SCALE;
     const double s = l.scale;
     l.titleBar = QRect(r.left() + int(46 * s), r.top() + int(24 * s), r.width() - int(92 * s), int(36 * s));
     l.content = r.adjusted(int(FRAME_LEFT * s) + 4, int(FRAME_TOP * s) + 6,
@@ -113,8 +113,10 @@ InventoryWidget::Layout InventoryWidget::computeLayout() const {
 
     const int arrowW = std::max(10, int(16 * s));
     const int catArea = l.content.width() - 2 * arrowW;
-    l.categorySize = std::min(catArea / VISIBLE_CATEGORIES, int(l.content.height() * 0.2));
-    const int catRowWidth = l.categorySize * VISIBLE_CATEGORIES;
+    // Category tiles keep one size; a wider window shows more of them.
+    l.categorySize = CATEGORY_SIZE;
+    l.visibleCategories = std::clamp(catArea / CATEGORY_SIZE, 1, int(CATEGORY_ORDER.size()));
+    const int catRowWidth = l.categorySize * l.visibleCategories;
     const int catLeft = l.content.left() + (l.content.width() - catRowWidth) / 2;
     l.categories = QRect(catLeft, l.content.top(), catRowWidth, l.categorySize);
     l.leftArrow = QRect(catLeft - arrowW, l.content.top(), arrowW, l.categorySize);
@@ -142,9 +144,14 @@ int InventoryWidget::maxScroll() const {
     return std::max(0, rows * m_layout.rowHeight - m_layout.grid.height());
 }
 
+int InventoryWidget::maxCategoryOffset() const {
+    return std::max(0, int(CATEGORY_ORDER.size()) - m_layout.visibleCategories);
+}
+
 void InventoryWidget::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
     m_layout = computeLayout();
+    m_categoryOffset = std::clamp(m_categoryOffset, 0, maxCategoryOffset());
     m_scaledCache.clear();
     m_scroll = std::clamp(m_scroll, 0, maxScroll());
 }
@@ -198,7 +205,7 @@ void InventoryWidget::drawCategories(QPainter& painter) {
     const int size = l.categorySize;
     const QPixmap tileBg = scaled(":/ds2_images/ui_category_tile", QSize(size - 4, size - 4));
     const QPixmap selectedBg = scaled(":/ds2_images/ui_category_selected", QSize(size - 2, size - 2));
-    for (int i = 0; i < VISIBLE_CATEGORIES; ++i) {
+    for (int i = 0; i < l.visibleCategories; ++i) {
         const int categoryIdx = m_categoryOffset + i;
         if (categoryIdx >= int(CATEGORY_ORDER.size())) break;
         const QRect cell(l.categories.left() + i * size, l.categories.top(), size, size);
@@ -247,7 +254,7 @@ void InventoryWidget::drawCategories(QPainter& painter) {
         painter.drawPath(path);
     };
     drawArrow(l.leftArrow, true, m_categoryOffset > 0);
-    drawArrow(l.rightArrow, false, m_categoryOffset + VISIBLE_CATEGORIES < int(CATEGORY_ORDER.size()));
+    drawArrow(l.rightArrow, false, m_categoryOffset + l.visibleCategories < int(CATEGORY_ORDER.size()));
 }
 
 void InventoryWidget::drawGrid(QPainter& painter) {
@@ -415,7 +422,7 @@ void InventoryWidget::mousePressEvent(QMouseEvent* event) {
         return;
     }
     const QPoint pos = event->pos();
-    const int maxOffset = int(CATEGORY_ORDER.size()) - VISIBLE_CATEGORIES;
+    const int maxOffset = maxCategoryOffset();
     if (m_layout.leftArrow.contains(pos)) {
         m_categoryOffset = std::max(0, m_categoryOffset - 1);
     } else if (m_layout.rightArrow.contains(pos)) {
@@ -439,7 +446,7 @@ void InventoryWidget::wheelEvent(QWheelEvent* event) {
     const QPoint pos = event->position().toPoint();
     const int steps = event->angleDelta().y() / 120;
     if (m_layout.categories.adjusted(-m_layout.leftArrow.width(), 0, m_layout.rightArrow.width(), 0).contains(pos)) {
-        const int maxOffset = int(CATEGORY_ORDER.size()) - VISIBLE_CATEGORIES;
+        const int maxOffset = maxCategoryOffset();
         m_categoryOffset = std::clamp(m_categoryOffset - steps, 0, maxOffset);
     } else {
         m_scroll = std::clamp(m_scroll - steps * m_layout.rowHeight, 0, maxScroll());

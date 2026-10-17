@@ -40,6 +40,9 @@ namespace {
     // Reference layout size (the game's inventory at 1080p, scaled down).
     constexpr int DESIGN_W = 560;
     constexpr int DESIGN_H = 470;
+    // Tabs, padding, fonts and the detail panel keep one size (the look at the default
+    // window size); only the item grid follows the widget size.
+    constexpr double FIXED_SCALE = 0.86;
     // Item tile pitch in pixels, independent of the widget size (same as the
     // Elden Ring inventory); resizing the window adds or removes columns.
     constexpr int TILE_SIZE = 60;
@@ -229,7 +232,7 @@ void InventoryWidget::selectCategory(int category) {
 InventoryWidget::Layout InventoryWidget::computeLayout() const {
     Layout l;
     const QRect r = rect();
-    l.scale = std::clamp(std::min(double(r.width()) / DESIGN_W, double(r.height()) / DESIGN_H), 0.6, 1.4);
+    l.scale = FIXED_SCALE;
     const double s = l.scale;
     const auto px = [s](double v) { return int(std::round(v * s)); };
 

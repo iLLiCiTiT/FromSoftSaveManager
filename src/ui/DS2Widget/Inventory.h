@@ -34,6 +34,7 @@ private:
         QRect rightArrow;
         QRect categories;       // area with the category tiles
         int categorySize = 0;
+        int visibleCategories = 1;
         QRect grid;
         int tileSize = 0;
         int columns = 1;
@@ -46,6 +47,7 @@ private:
     int maxScroll() const;
     int itemIndexAt(const QPoint& pos) const;
     int categoryIndexAt(const QPoint& pos) const;
+    int maxCategoryOffset() const;
     QPixmap scaled(const QString& resource, const QSize& size);
     void drawFrame(QPainter& painter);
     void drawCategories(QPainter& painter);
@@ -56,7 +58,10 @@ private:
     // Item tile pitch in pixels, independent of the widget size (same as the
     // DS3 and Elden Ring inventories); resizing adds or removes columns.
     static constexpr int TILE_SIZE = 60;
-    static constexpr int VISIBLE_CATEGORIES = 10;
+    // Frame, categories, name bar and fonts keep one size (the look at the default
+    // window size); only the item grid follows the widget size.
+    static constexpr double FIXED_SCALE = 0.63;
+    static constexpr int CATEGORY_SIZE = 47;
 
     std::vector<fssm::parse::ds2::InventoryItem> m_allItems;
     std::vector<const fssm::parse::ds2::InventoryItem*> m_visibleItems;

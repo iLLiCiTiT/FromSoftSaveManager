@@ -51,6 +51,9 @@ namespace {
     // Reference layout size; everything scales with the widget.
     constexpr int DESIGN_W = 560;
     constexpr int DESIGN_H = 470;
+    // Tabs, padding, fonts and the detail panel keep one size (the look at the default
+    // window size); only the item grid follows the widget size.
+    constexpr double FIXED_SCALE = 0.86;
     // Item tile pitch in pixels, independent of the widget size; the slot
     // background fills all of it but a small gap.
     constexpr int TILE_SIZE = 60;
@@ -257,7 +260,7 @@ void InventoryWidget::selectItem(int index) {
 InventoryWidget::Layout InventoryWidget::computeLayout() const {
     Layout l;
     const QRect r = rect();
-    l.scale = std::clamp(std::min(double(r.width()) / DESIGN_W, double(r.height()) / DESIGN_H), 0.6, 1.4);
+    l.scale = FIXED_SCALE;
     const double s = l.scale;
     const auto px = [s](double v) { return int(std::round(v * s)); };
 
