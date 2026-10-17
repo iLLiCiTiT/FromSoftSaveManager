@@ -65,6 +65,7 @@ private:
     int m_categoryOffset = 0;       // first visible category
     int m_scroll = 0;               // pixels
     int m_hoverItem = -1;
+    int m_hoverCategory = -1;       // index into CATEGORY_ORDER
     int m_selectedItem = -1;
 
     Layout m_layout;

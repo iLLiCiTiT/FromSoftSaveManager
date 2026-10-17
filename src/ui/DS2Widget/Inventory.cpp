@@ -202,17 +202,25 @@ void InventoryWidget::drawCategories(QPainter& painter) {
         const int categoryIdx = m_categoryOffset + i;
         if (categoryIdx >= int(CATEGORY_ORDER.size())) break;
         const QRect cell(l.categories.left() + i * size, l.categories.top(), size, size);
+        const bool selected = categoryIdx == m_category;
+        const bool hovered = !selected && categoryIdx == m_hoverCategory;
         painter.fillRect(cell.adjusted(1, 1, -1, -1), QColor(14, 13, 12, 200));
-        if (categoryIdx == m_category) {
+        if (selected) {
             painter.drawPixmap(cell.topLeft() + QPoint(1, 1), selectedBg);
         } else {
             painter.drawPixmap(cell.topLeft() + QPoint(2, 2), tileBg);
+            if (hovered) {
+                // A faint version of the selection highlight, like the game's cursor preview.
+                painter.setOpacity(0.45);
+                painter.drawPixmap(cell.topLeft() + QPoint(1, 1), selectedBg);
+                painter.setOpacity(1.0);
+            }
         }
         const QString iconName = QString::fromUtf8(
             fssm::parse::ds2::getCategoryIcon(CATEGORY_ORDER[categoryIdx]).data());
         const QPixmap icon = scaled(":/ds2_images/" + iconName, QSize(size - 8, size - 8));
         painter.drawPixmap(cell.topLeft() + QPoint(4, 4), icon);
-        painter.setPen(QPen(QColor(80, 72, 58), 1));
+        painter.setPen(QPen(hovered ? QColor(214, 170, 96) : QColor(80, 72, 58), 1));
         painter.setBrush(Qt::NoBrush);
         painter.drawRect(cell.adjusted(0, 0, -1, -1));
     }
@@ -387,6 +395,10 @@ void InventoryWidget::mouseMoveEvent(QMouseEvent* event) {
         update();
     }
     const int category = m_hasCharacter ? categoryIndexAt(event->pos()) : -1;
+    if (category != m_hoverCategory) {
+        m_hoverCategory = category;
+        update(m_layout.categories.adjusted(-2, -2, 2, 2));
+    }
     setToolTip(category >= 0 ? categoryLabel(CATEGORY_ORDER[category]) : QString());
     QWidget::mouseMoveEvent(event);
 }
@@ -433,6 +445,7 @@ void InventoryWidget::wheelEvent(QWheelEvent* event) {
 
 void InventoryWidget::leaveEvent(QEvent* event) {
     m_hoverItem = -1;
+    m_hoverCategory = -1;
     update();
     QWidget::leaveEvent(event);
 }
