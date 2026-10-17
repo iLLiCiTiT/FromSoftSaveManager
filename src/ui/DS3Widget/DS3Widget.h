@@ -8,6 +8,7 @@
 #include "CharacterList.h"
 #include "HeaderTabs.h"
 #include "Inventory.h"
+#include "WorldProgress.h"
 #include "../BaseGameWidget.h"
 #include "../Controller.h"
 #include "../Utils.h"
@@ -47,4 +48,5 @@ private:
     fssm::ui::ds3::HeaderTabs* m_charTabs;
     fssm::ui::ds3::InventoryWidget* m_inventoryWidget;
     fssm::ui::ds3::CharacterInfoWidget* m_charInfoWidget;
+    fssm::ui::ds3::WorldProgressWidget* m_worldWidget;
 };

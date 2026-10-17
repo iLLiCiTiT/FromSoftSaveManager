@@ -15,6 +15,7 @@ class HeaderTabs: public QWidget {
 public:
     explicit HeaderTabs(QWidget* parent);
     void addTab(const QString& title, const QString& icon, QWidget* page);
+    void addTab(const QString& title, const QPixmap& icon, QWidget* page);
     void setCurrentIndex(int index);
 
 protected:

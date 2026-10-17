@@ -27,8 +27,14 @@ HeaderTabs::HeaderTabs(QWidget* parent): QWidget(parent) {
 }
 
 void HeaderTabs::addTab(const QString& title, const QString& icon, QWidget* page) {
-    QPixmap pix(":/ds3_images/" + icon);
-    if (!pix.isNull()) pix = pix.scaled(ICON_SIZE, ICON_SIZE, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    addTab(title, QPixmap(":/ds3_images/" + icon), page);
+}
+
+void HeaderTabs::addTab(const QString& title, const QPixmap& icon, QWidget* page) {
+    QPixmap pix = icon;
+    if (!pix.isNull() && pix.height() != ICON_SIZE) {
+        pix = pix.scaled(ICON_SIZE, ICON_SIZE, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    }
     m_tabs.push_back({title, pix});
     m_stack->addWidget(page);
     if (m_current < 0) setCurrentIndex(0);

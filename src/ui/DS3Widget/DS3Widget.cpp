@@ -4,6 +4,7 @@
 #include <QVBoxLayout>
 #include <qevent.h>
 
+#include "Painting.h"
 #include "../ManageBackupsWidget.h"
 #include "../../parse/DS3/Areas.h"
 
@@ -65,6 +66,16 @@ const fssm::parse::ds3::DS3CharacterInfo* CharsListModel::getCharByIdx(const int
 }
 }
 
+namespace {
+    QPixmap bonfireIcon() {
+        QPixmap pix(26, 26);
+        pix.fill(Qt::transparent);
+        QPainter painter(&pix);
+        fssm::ui::ds3::drawBonfire(painter, QRectF(1, 0, 24, 26), true);
+        return pix;
+    }
+}
+
 DS3Widget::DS3Widget(Controller* controller, const QString& saveId, QWidget* parent)
     : BaseGameWidget(controller, saveId, parent)
 {
@@ -99,8 +110,10 @@ DS3Widget::DS3Widget(Controller* controller, const QString& saveId, QWidget* par
     m_charTabs = new fssm::ui::ds3::HeaderTabs(this);
     m_charInfoWidget = new fssm::ui::ds3::CharacterInfoWidget(m_charTabs);
     m_inventoryWidget = new fssm::ui::ds3::InventoryWidget(m_charTabs);
+    m_worldWidget = new fssm::ui::ds3::WorldProgressWidget(m_charTabs);
     m_charTabs->addTab("Character Info", "menu_status", m_charInfoWidget);
     m_charTabs->addTab("Inventory", "menu_invetory", m_inventoryWidget);
+    m_charTabs->addTab("World Progress", bonfireIcon(), m_worldWidget);
 
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->setContentsMargins(20, 20, 20, 20);
@@ -123,6 +136,7 @@ void DS3Widget::showCharacter(const QModelIndex& index) {
     if (charId.isValid() && !charId.isNull()) charInfo = m_model->getCharByIdx(charId.toInt());
     m_inventoryWidget->setCharacter(charInfo);
     m_charInfoWidget->setCharacter(charInfo);
+    m_worldWidget->setCharacter(charInfo);
 }
 
 void DS3Widget::onRefresh() {
@@ -149,6 +163,7 @@ void DS3Widget::onRefresh() {
     }
     m_inventoryWidget->setCharacter(nullptr);
     m_charInfoWidget->setCharacter(nullptr);
+    m_worldWidget->setCharacter(nullptr);
 }
 
 void DS3Widget::onSelectionChange(const QItemSelection& selected, const QItemSelection&) {
@@ -156,6 +171,7 @@ void DS3Widget::onSelectionChange(const QItemSelection& selected, const QItemSel
     if (indexes.isEmpty()) {
         m_inventoryWidget->setCharacter(nullptr);
         m_charInfoWidget->setCharacter(nullptr);
+        m_worldWidget->setCharacter(nullptr);
         return;
     }
     showCharacter(indexes.first());

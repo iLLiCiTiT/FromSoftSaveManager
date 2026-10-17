@@ -7,6 +7,7 @@
 #include <QImage>
 #include <QLinearGradient>
 #include <QPainter>
+#include <QPainterPath>
 #include <QPixmap>
 #include <QRandomGenerator>
 #include <algorithm>
@@ -137,6 +138,43 @@ namespace fssm::ui::ds3 {
         painter.setPen(QPen(QColor(240, 150, 140, 150), std::max(1.0, radius / 8)));
         painter.setBrush(Qt::NoBrush);
         painter.drawEllipse(center, radius * 0.55, radius * 0.55);
+        painter.restore();
+    }
+
+    // Coiled sword in a bonfire: flames when lit, cold ash when not.
+    inline void drawBonfire(QPainter& painter, const QRectF& rect, bool lit) {
+        painter.save();
+        painter.setRenderHint(QPainter::Antialiasing, true);
+        const double w = rect.width();
+        const double h = rect.height();
+        const double cx = rect.center().x();
+        // Ash mound
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(lit ? QColor(70, 56, 46) : QColor(58, 55, 52));
+        painter.drawEllipse(QRectF(cx - w * 0.42, rect.bottom() - h * 0.2, w * 0.84, h * 0.2));
+        if (lit) {
+            QPainterPath flame;
+            const double base = rect.bottom() - h * 0.1;
+            flame.moveTo(cx, rect.top() + h * 0.08);
+            flame.cubicTo(cx + w * 0.18, rect.top() + h * 0.35, cx + w * 0.42, base - h * 0.25, cx + w * 0.3, base);
+            flame.lineTo(cx - w * 0.3, base);
+            flame.cubicTo(cx - w * 0.42, base - h * 0.25, cx - w * 0.18, rect.top() + h * 0.35, cx, rect.top() + h * 0.08);
+            QRadialGradient gradient(QPointF(cx, base - h * 0.15), h * 0.75);
+            gradient.setColorAt(0.0, QColor(255, 236, 160, 240));
+            gradient.setColorAt(0.45, QColor(242, 140, 48, 220));
+            gradient.setColorAt(1.0, QColor(170, 50, 20, 0));
+            painter.setBrush(gradient);
+            painter.drawPath(flame);
+        }
+        // Sword, thrust into the ash at a slight angle
+        const QColor steel = lit ? QColor(60, 44, 34) : QColor(128, 122, 114);
+        painter.setPen(QPen(steel, std::max(1.0, w * 0.09), Qt::SolidLine, Qt::RoundCap));
+        const QPointF tip(cx + w * 0.02, rect.bottom() - h * 0.12);
+        const QPointF hilt(cx - w * 0.06, rect.top() + h * 0.18);
+        painter.drawLine(tip, hilt);
+        painter.setPen(QPen(steel, std::max(1.0, w * 0.07), Qt::SolidLine, Qt::RoundCap));
+        const QPointF guard = hilt + (tip - hilt) * 0.18;
+        painter.drawLine(guard - QPointF(w * 0.16, w * 0.02), guard + QPointF(w * 0.16, -w * 0.02));
         painter.restore();
     }
 }
