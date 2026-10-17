@@ -136,7 +136,7 @@ namespace fssm::parse::dsr {
         Npc{1640, 1649, {0, 0, 0}, {1646, 0, 0}, "Kingseeker Frampt"},
         Npc{1670, 1678, {0, 0, 0}, {1675, 0, 0}, "Darkstalker Kaathe"},
         Npc{1700, 1709, {1702, 0, 0}, {1701, 0, 0}, "Oswald of Carim"},
-        Npc{1760, 1769, {1764, 0, 0}, {1763, 1766, 0}, "Shiva's Bodyguard"},
+        Npc{1760, 1769, {1764, 0, 0}, {1763, 0, 0}, "Shiva's Bodyguard"},
         Npc{1820, 1839, {1823, 0, 0}, {1822, 0, 0}, "Hawkeye Gough"},
         Npc{1840, 1859, {1842, 0, 0}, {1841, 0, 0}, "Marvellous Chester"},
         Npc{1860, 1869, {1864, 0, 0}, {1863, 0, 0}, "Lord's Blade Ciaran"},

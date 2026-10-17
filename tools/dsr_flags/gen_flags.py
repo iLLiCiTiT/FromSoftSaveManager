@@ -366,7 +366,7 @@ def npc_blocks(game_dir):
         starts = [s for s, e in ranges.items() if s <= flag <= e]
         return max(starts) if starts else None
 
-    dead, hostile, named, absolved = (collections.defaultdict(set) for _ in range(4))
+    dead, hostile, stage, named, absolved = (collections.defaultdict(set) for _ in range(5))
     entities = collections.defaultdict(set)
     for name, instructions in instances:
         sets = [args[0] for bank, index, args in instructions
@@ -388,8 +388,14 @@ def npc_blocks(game_dir):
             elif "敵対" in name and "いなくなる" not in name:
                 hostile[block].add(flag)
                 entities[block] |= chars
+            elif name:
+                stage[block].add(flag)
     for block, flags in absolved.items():
         hostile[block] |= {f for f in flags if f not in named[block] or f in hostile[block]}
+    # A flag other named events set as well is a questline stage the hostile event also
+    # moves to (1766: Shiva and his bodyguard are in Darkroot Garden).
+    for block in hostile:
+        hostile[block] -= stage[block]
     return {start: (ranges[start], sorted(dead[start]), sorted(hostile[start]), entities[start])
             for start in sorted(ranges) if dead[start] or hostile[start]}
 
