@@ -52,7 +52,7 @@ namespace {
     constexpr int DESIGN_W = 560;
     constexpr int DESIGN_H = 470;
     // Item tile size in pixels, independent of the widget size.
-    constexpr int TILE_SIZE = 80;
+    constexpr int TILE_SIZE = 68;
 
     const QColor TEXT_COLOR(228, 224, 210);
     const QColor DIM_TEXT_COLOR(150, 144, 128);
@@ -283,7 +283,7 @@ InventoryWidget::Layout InventoryWidget::computeLayout() const {
     l.cellWidth = TILE_SIZE;
     l.columns = std::max(1, gridWidth / TILE_SIZE);
     l.rowHeight = l.cellWidth;
-    l.separatorGap = px(12);
+    l.separatorGap = px(8);
     l.grid = QRect(inner.left() + px(4), gridTop, l.cellWidth * l.columns,
                    std::max(0, l.detail.top() - px(10) - gridTop));
     return l;
@@ -430,16 +430,16 @@ void InventoryWidget::drawGrid(QPainter& painter) {
     painter.setClipRect(l.grid.adjusted(0, 0, 0, 1), Qt::IntersectClip);
     const int cw = l.cellWidth;
     const int rh = l.rowHeight;
-    const QSize slotSize(int(cw * 0.94), int(rh * 0.94));
+    const QSize slotSize(int(cw * 0.97), int(rh * 0.97));
     const QPixmap slot = scaled(":/er_images/slot_base", slotSize).scaled(slotSize);
-    const QSize cursorSize(int(cw * 1.04), int(rh * 1.04));
+    const QSize cursorSize(int(cw * 1.02), int(rh * 1.02));
     const QPixmap cursor = scaled(":/er_images/slot_cursor", cursorSize).scaled(cursorSize);
     const QPixmap separator = scaled(":/er_images/group_line", QSize(l.grid.width(), int(4 * s) + 2))
         .scaled(QSize(l.grid.width(), std::max(1, int(2 * s))));
     const int markSize = int(cw * 0.2);
     const QPixmap pouchMark = scaled(":/er_images/pouch_mark", QSize(markSize, markSize));
     const QPixmap equipMark = scaled(":/er_images/equip_mark", QSize(markSize, markSize));
-    const int iconSize = int(cw * 0.86);
+    const int iconSize = int(cw * 0.9);
     painter.setFont(serifFont(std::max(10, int(cw * 0.19))));
 
     for (int r = 0; r < int(m_rows.size()); ++r) {
