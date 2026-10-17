@@ -3,6 +3,7 @@
 #include "CharInfo.h"
 #include "Covenants.h"
 #include "Inventory.h"
+#include "WorldProgress.h"
 #include "../BaseGameWidget.h"
 #include "../Controller.h"
 #include "../Utils.h"
@@ -46,4 +47,5 @@ private:
     fssm::ui::dsr::CovenantsWidget* m_covenantsWidget;
     fssm::ui::dsr::CharacterInfoWidget* m_charInfoWidget;
     fssm::ui::dsr::InventoryWidget* m_inventoryWidget;
+    fssm::ui::dsr::WorldProgressWidget* m_worldWidget;
 };

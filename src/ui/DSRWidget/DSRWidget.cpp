@@ -97,6 +97,7 @@ DSRWidget::DSRWidget(Controller* controller, const QString& saveId, QWidget* par
     m_covenantsWidget = new fssm::ui::dsr::CovenantsWidget(m_charTabs);
     m_charInfoWidget = new fssm::ui::dsr::CharacterInfoWidget(m_charTabs);
     m_inventoryWidget = new fssm::ui::dsr::InventoryWidget(m_charTabs);
+    m_worldWidget = new fssm::ui::dsr::WorldProgressWidget(m_charTabs);
     // m_charEquipWidget = new QWidget(m_charTabs);
 
     m_charTabs->addTab(
@@ -110,6 +111,10 @@ DSRWidget::DSRWidget(Controller* controller, const QString& saveId, QWidget* par
     m_charTabs->addTab(
         "Covenants",
         m_covenantsWidget
+    );
+    m_charTabs->addTab(
+        "World Progress",
+        m_worldWidget
     );
     // m_charTabs->addTab(
     //     "Equipment",
@@ -168,6 +173,7 @@ void DSRWidget::onRefresh() {
         m_charInfoWidget->setCharacter(charInfo);
         m_inventoryWidget->setCharacter(charInfo);
         m_covenantsWidget->setCharacter(charInfo);
+        m_worldWidget->setCharacter(charInfo);
         return;
     }
     for (int row = 0; row < m_model->rowCount(); ++row) {
@@ -189,9 +195,11 @@ void DSRWidget::onSelectionChange(const QItemSelection &selected, const QItemSel
         m_charInfoWidget->setCharacter(charInfo);
         m_inventoryWidget->setCharacter(charInfo);
         m_covenantsWidget->setCharacter(charInfo);
+        m_worldWidget->setCharacter(charInfo);
         return;
     }
     m_charInfoWidget->setCharacter(nullptr);
     m_inventoryWidget->setCharacter(nullptr);
     m_covenantsWidget->setCharacter(nullptr);
+    m_worldWidget->setCharacter(nullptr);
 }

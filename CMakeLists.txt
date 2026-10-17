@@ -36,6 +36,9 @@ add_executable(FromSoftSaveManager
         src/parse/DSR/Items.cpp
         src/parse/DSR/SaveFile.cpp
         src/parse/DSR/SaveData.cpp
+        src/parse/DSR/EventFlags.cpp
+        src/parse/DSR/BonfireDb.cpp
+        src/parse/DSR/WorldProgress.cpp
         src/parse/DS2/SaveData.cpp
         src/parse/DS2/Items.cpp
         src/parse/DS2/ItemLookup.cpp
@@ -89,6 +92,7 @@ add_executable(FromSoftSaveManager
         src/ui/DSRWidget/Inventory.cpp
         src/ui/DSRWidget/Covenants.cpp
         src/ui/DSRWidget/CharInfo.cpp
+        src/ui/DSRWidget/WorldProgress.cpp
         src/ui/DS2Widget/DS2Widget.cpp
         src/ui/DS2Widget/Inventory.cpp
         src/ui/DS2Widget/PlayerStatus.cpp
@@ -147,6 +151,9 @@ add_executable(DSRRoundTrip
         src/parse/Utils.cpp
         src/parse/SL2File.cpp
         src/parse/DSR/SaveData.cpp
+        src/parse/DSR/EventFlags.cpp
+        src/parse/DSR/BonfireDb.cpp
+        src/parse/DSR/WorldProgress.cpp
 )
 target_link_libraries(DSRRoundTrip tiny-aes)
 target_link_options(DSRRoundTrip PRIVATE -static-libgcc -static-libstdc++)

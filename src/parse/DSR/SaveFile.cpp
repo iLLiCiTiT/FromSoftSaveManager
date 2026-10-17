@@ -2,6 +2,10 @@
 #include <optional>
 #include <stdexcept>
 
+#include "BonfireDb.h"
+#include "EventFlags.h"
+#include "WorldProgress.h"
+
 namespace fssm::parse::dsr {
     void fillBaseItem(InventoryItem& invItem) {
         auto itemOpt = findBaseItem(invItem.itemType, invItem.itemId);
@@ -83,6 +87,27 @@ namespace fssm::parse::dsr {
             out.push_back(ch);
         }
         return out;
+    }
+
+    static std::vector<bool> lit_bonfires(const CharacterSlot& slot) {
+        const std::vector<BonfireDbItem> db = bonfire_db(slot);
+        std::vector<bool> lit;
+        lit.reserve(BONFIRES.size());
+        for (const auto& bonfire : BONFIRES) {
+            bool isLit = false;
+            for (const auto& item : db) {
+                if (item.entityId == bonfire.entityId && item.kindle > 0) isLit = true;
+            }
+            lit.push_back(isLit);
+        }
+        return lit;
+    }
+
+    static std::vector<bool> defeated_bosses(const CharacterSlot& slot) {
+        std::vector<bool> defeated;
+        defeated.reserve(BOSSES.size());
+        for (const auto& boss : BOSSES) defeated.push_back(get_event_flag(slot, boss.flagId).value_or(false));
+        return defeated;
     }
 
     static DSRCharacterInfo character_info_from_slot(int charIdx, const CharacterSlot& slot) {
@@ -196,6 +221,8 @@ namespace fssm::parse::dsr {
             fillBaseItem(invItem);
             ci.bottomlessBoxItems.push_back(invItem);
         }
+        ci.bonfiresLit = lit_bonfires(slot);
+        ci.bossesDefeated = defeated_bosses(slot);
         return ci;
     }
 

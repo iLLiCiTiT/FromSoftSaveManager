@@ -9,7 +9,10 @@
 #include <vector>
 
 #include "../src/parse/SL2File.h"
+#include "../src/parse/DSR/BonfireDb.h"
+#include "../src/parse/DSR/EventFlags.h"
 #include "../src/parse/DSR/SaveData.h"
+#include "../src/parse/DSR/WorldProgress.h"
 
 using namespace fssm::parse;
 
@@ -54,6 +57,15 @@ static bool check_file(const std::string& path) {
                     + ", " + std::to_string(slot.player.unk_618.size()) + " vector entries"
                     + ", " + std::to_string(slot.netChunks.chunks.size()) + " net chunks"
                     + ", " + std::to_string(slot.trailingGarbage.size()) + " trailing bytes";
+                size_t lit = 0;
+                const auto db = dsr::bonfire_db(slot);
+                for (const auto& bonfire : dsr::BONFIRES) {
+                    for (const auto& item : db) lit += item.entityId == bonfire.entityId && item.kindle > 0;
+                }
+                size_t defeated = 0;
+                for (const auto& boss : dsr::BOSSES) defeated += dsr::get_event_flag(slot, boss.flagId).value_or(false);
+                info += ", bonfires lit " + std::to_string(lit) + "/" + std::to_string(dsr::BONFIRES.size())
+                    + ", bosses " + std::to_string(defeated) + "/" + std::to_string(dsr::BOSSES.size());
             }
             if (out == content) {
                 std::printf("  %s OK (%s)\n", entry.name.c_str(), info.c_str());

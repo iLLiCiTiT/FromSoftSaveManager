@@ -89,6 +89,11 @@ namespace fssm::parse::dsr {
         std::vector<AttunementSlot> attunementSlots;
         std::array<uint32_t, 8> equippedGestures;
         std::vector<InventoryItem> bottomlessBoxItems;
+
+        // One per BONFIRES / BOSSES entry (WorldProgress.h): lit in the bonfire DB
+        // (BonfireDb.h), defeat flag set in the event flags.
+        std::vector<bool> bonfiresLit;
+        std::vector<bool> bossesDefeated;
     };
 
     struct DSRSaveFile {
