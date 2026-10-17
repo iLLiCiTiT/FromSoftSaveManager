@@ -1,5 +1,6 @@
 #include "SaveFile.h"
 
+#include <algorithm>
 #include <iostream>
 #include <optional>
 #include <ostream>
@@ -240,6 +241,15 @@ ERCharacterInfo parseERCharacter(const BND4Entry& entry, const UserData10& userD
             output.npcStates.push_back(isSet(3) ? NpcState::Dead
                                        : isSet(1) || isSet(2) ? NpcState::Hostile
                                        : isSet(0) ? NpcState::Friendly : NpcState::Unknown);
+            // The questline stage: the first set flag after the status that has a text
+            // (merchants keep several groups set, Boc a few side flags).
+            std::string_view stage;
+            auto it = std::lower_bound(NPC_STAGES.begin(), NPC_STAGES.end(), npc.statusFlag + 5,
+                                       [](const NpcStage& s, uint32_t flag) { return s.flag < flag; });
+            for (; it != NPC_STAGES.end() && it->flag < npc.statusFlag + 19 && stage.empty(); ++it) {
+                if (get_event_flag(eventFlags, it->flag).value_or(false)) stage = it->text;
+            }
+            output.npcStages.push_back(stage);
         }
     }
 

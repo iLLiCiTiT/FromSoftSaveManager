@@ -37,6 +37,7 @@ namespace {
         QString value;
         bool done = false;
         NpcState npc = NpcState::Unknown;
+        QString detail;     // second, smaller line: an NPC's questline stage
     };
 
     QFont serifFont(int pixelSize) {
@@ -124,8 +125,8 @@ namespace {
     }
 
     // NPCs by their status flags under an "NPCs" heading; the state is shown right aligned
-    // (nothing while the NPC's map hasn't loaded yet).
-    std::vector<Row> npcRows(const std::vector<NpcState>& states) {
+    // (nothing while the NPC's map hasn't loaded yet) and the questline stage below the name.
+    std::vector<Row> npcRows(const std::vector<NpcState>& states, const std::vector<std::string_view>& stages) {
         using fssm::parse::er::NPCS;
         std::vector<Row> rows = {{RowKind::Area, "NPCs", ""}};
         for (size_t i = 0; i < NPCS.size(); ++i) {
@@ -138,7 +139,8 @@ namespace {
                 case NpcState::Unknown: break;
             }
             rows.push_back({RowKind::Npc, fromView(NPCS[i].name), value,
-                            state == NpcState::Friendly || state == NpcState::Hostile, state});
+                            state == NpcState::Friendly || state == NpcState::Hostile, state,
+                            i < stages.size() ? fromView(stages[i]) : QString()});
         }
         return rows;
     }
@@ -218,6 +220,7 @@ void WorldProgressWidget::setCharacter(const fssm::parse::er::ERCharacterInfo* c
     m_gracesDiscovered = charInfo != nullptr ? charInfo->gracesDiscovered : std::vector<bool>{};
     m_bossesDefeated = charInfo != nullptr ? charInfo->bossesDefeated : std::vector<bool>{};
     m_npcStates = charInfo != nullptr ? charInfo->npcStates : std::vector<NpcState>{};
+    m_npcStages = charInfo != nullptr ? charInfo->npcStages : std::vector<std::string_view>{};
     update();
 }
 
@@ -249,7 +252,7 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     int bossCount = 0;
     const std::vector<Row> graces = groupedRows(GRACES, GRACE_AREAS, m_gracesDiscovered, RowKind::Grace, graceCount);
     std::vector<Row> bosses = groupedRows(BOSSES, BOSS_AREAS, m_bossesDefeated, RowKind::Boss, bossCount);
-    const std::vector<Row> npcs = npcRows(m_npcStates);
+    const std::vector<Row> npcs = npcRows(m_npcStates, m_npcStages);
     bosses.insert(bosses.end(), npcs.begin(), npcs.end());
 
     const int gap = px(16);
@@ -257,11 +260,13 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     const int titleH = px(34);
     const int areaH = px(28);
     const int lineH = px(24);
+    const int detailH = px(16);
     const int iconSize = px(18);
     m_lineHeight = lineH;
 
     const auto rowHeight = [&](const Row& row, bool first) {
-        return row.kind == RowKind::Area ? (first ? 0 : px(8)) + areaH : lineH;
+        return row.kind == RowKind::Area ? (first ? 0 : px(8)) + areaH
+             : row.detail.isEmpty() ? lineH : lineH + detailH;
     };
     const auto drawColumn = [&](const std::vector<Row>& rows, int column, const QString& title, const QString& value) {
         const QRect pane(r.left() + column * (columnW + gap), r.top(), columnW, r.height());
@@ -301,7 +306,8 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
                 drawRule(painter, line.left(), line.right(), line.bottom() - 1, 110);
                 continue;
             }
-            const QRectF icon(full.left() + px(10), full.center().y() - iconSize / 2.0, iconSize, iconSize);
+            const QRect line(full.left(), full.top(), full.width(), lineH);
+            const QRectF icon(line.left() + px(10), line.center().y() - iconSize / 2.0, iconSize, iconSize);
             if (row.kind == RowKind::Grace) {
                 drawGraceMark(painter, icon, row.done);
             } else if (row.kind == RowKind::Boss) {
@@ -311,15 +317,20 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
             }
             painter.setFont(serifFont(px(15)));
             const int textLeft = int(icon.right()) + px(10);
-            int textRight = full.right();
+            int textRight = line.right();
             if (!row.value.isEmpty()) {
-                drawText(painter, QRect(textLeft, full.top(), full.right() - textLeft - px(4), full.height()),
+                drawText(painter, QRect(textLeft, line.top(), line.right() - textLeft - px(4), line.height()),
                          Qt::AlignRight | Qt::AlignVCenter, row.value,
                          row.npc == NpcState::Hostile ? HOSTILE_COLOR : DIM_TEXT_COLOR);
                 textRight -= QFontMetrics(painter.font()).horizontalAdvance(row.value) + px(14);
             }
-            drawText(painter, QRect(textLeft, full.top(), textRight - textLeft, full.height()),
+            drawText(painter, QRect(textLeft, line.top(), textRight - textLeft, line.height()),
                      Qt::AlignLeft | Qt::AlignVCenter, row.text, row.done ? TEXT_COLOR : DIM_TEXT_COLOR);
+            if (!row.detail.isEmpty()) {
+                painter.setFont(serifFont(px(12)));
+                drawText(painter, QRect(textLeft, line.bottom() - px(3), full.right() - textLeft - px(4), detailH),
+                         Qt::AlignLeft | Qt::AlignTop, row.detail, row.done ? GOLD_COLOR : DIM_TEXT_COLOR);
+            }
         }
         painter.restore();
 

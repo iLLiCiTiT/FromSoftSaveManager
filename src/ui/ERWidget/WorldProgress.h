@@ -23,6 +23,7 @@ private:
     std::vector<bool> m_gracesDiscovered;
     std::vector<bool> m_bossesDefeated;
     std::vector<fssm::parse::er::NpcState> m_npcStates;
+    std::vector<std::string_view> m_npcStages;
     // Graces and bosses scroll separately. From the last paint: each list's
     // rectangle, scrollable range and one scroll step.
     std::array<int, 2> m_scroll {};

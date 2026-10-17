@@ -12,6 +12,15 @@ namespace fssm::parse::er {
         std::string_view name;
     };
 
+    // A questline stage: a set flag of statusFlag + 5 .. statusFlag + 18
+    // (docs/er-npc-stages.md).
+    struct NpcStage {
+        uint32_t flag;
+        std::string_view text;
+    };
+
     // NPCs with a status flag block, by flag.
     extern const std::array<Npc, 55> NPCS;
+    // Questline stage texts, by flag (not every stage flag has one).
+    extern const std::array<NpcStage, 188> NPC_STAGES;
 }

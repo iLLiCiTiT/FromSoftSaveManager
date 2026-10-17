@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "../SL2File.h"
@@ -105,6 +106,8 @@ struct ERCharacterInfo {
     std::vector<bool> bossesDefeated;
     // One per NPCS entry (NpcProgress.h); empty like the lists above.
     std::vector<NpcState> npcStates;
+    // Questline stage text per NPCS entry (NPC_STAGES), empty when no flag with a text is set.
+    std::vector<std::string_view> npcStages;
 };
 
 struct MenuSystemSaveLoad {
