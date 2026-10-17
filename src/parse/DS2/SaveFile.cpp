@@ -4,6 +4,7 @@
 #include <stdexcept>
 
 #include "StatTables.h"
+#include "WorldProgress.h"
 
 namespace fssm::parse::ds2 {
     static std::u16string name_to_string(const char16_t* name, size_t size) {
@@ -43,6 +44,16 @@ namespace fssm::parse::ds2 {
             }
             if (const auto inventory = read_inventory(character)) {
                 ci.inventoryItems = decode_inventory(*inventory);
+            }
+            const size_t worldIndex = CHARACTER_WORLD_ENTRY_OFFSET + slot;
+            const auto event = worldIndex < sl2.entries.size()
+                                   ? read_event(parse_entry(sl2.entries[worldIndex].content))
+                                   : std::nullopt;
+            if (event) {
+                for (const auto& bonfire : BONFIRES) ci.bonfiresLit.push_back(is_bonfire_lit(*event, bonfire.id));
+                for (const auto& boss : BOSSES) {
+                    ci.bossesDefeated.push_back(get_event_flag(*event, boss.flagId).value_or(false));
+                }
             }
             out.characters.push_back(std::move(ci));
         }

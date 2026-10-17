@@ -7,6 +7,7 @@
 #include "CharacterList.h"
 #include "Inventory.h"
 #include "PlayerStatus.h"
+#include "WorldProgress.h"
 #include "../BaseGameWidget.h"
 #include "../Controller.h"
 #include "../Utils.h"
@@ -46,4 +47,5 @@ private:
     TabWidget* m_charTabs;
     fssm::ui::ds2::PlayerStatusWidget* m_statusWidget;
     fssm::ui::ds2::InventoryWidget* m_inventoryWidget;
+    fssm::ui::ds2::WorldProgressWidget* m_worldWidget;
 };

@@ -98,8 +98,10 @@ DS2Widget::DS2Widget(Controller* controller, const QString& saveId, QWidget* par
     m_charTabs = new TabWidget(this);
     m_statusWidget = new fssm::ui::ds2::PlayerStatusWidget(m_charTabs);
     m_inventoryWidget = new fssm::ui::ds2::InventoryWidget(m_charTabs);
+    m_worldWidget = new fssm::ui::ds2::WorldProgressWidget(m_charTabs);
     m_charTabs->addTab("Player Status", m_statusWidget);
     m_charTabs->addTab("Inventory", m_inventoryWidget);
+    m_charTabs->addTab("World Progress", m_worldWidget);
 
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->setContentsMargins(20, 20, 20, 20);
@@ -122,6 +124,7 @@ void DS2Widget::showCharacter(const QModelIndex& index) {
     if (charId.isValid() && !charId.isNull()) charInfo = m_model->getCharByIdx(charId.toInt());
     m_statusWidget->setCharacter(charInfo);
     m_inventoryWidget->setCharacter(charInfo);
+    m_worldWidget->setCharacter(charInfo);
 }
 
 void DS2Widget::onRefresh() {
@@ -148,13 +151,15 @@ void DS2Widget::onRefresh() {
     }
     m_statusWidget->setCharacter(nullptr);
     m_inventoryWidget->setCharacter(nullptr);
+    m_worldWidget->setCharacter(nullptr);
 }
 
 void DS2Widget::onSelectionChange(const QItemSelection& selected, const QItemSelection&) {
     const auto indexes = selected.indexes();
     if (indexes.isEmpty()) {
         m_statusWidget->setCharacter(nullptr);
-    m_inventoryWidget->setCharacter(nullptr);
+        m_inventoryWidget->setCharacter(nullptr);
+        m_worldWidget->setCharacter(nullptr);
         return;
     }
     showCharacter(indexes.first());

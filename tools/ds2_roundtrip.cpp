@@ -13,6 +13,7 @@
 #include "../src/parse/Utils.h"
 #include "../src/parse/DS2/SaveData.h"
 #include "../src/parse/DS2/Items.h"
+#include "../src/parse/DS2/WorldProgress.h"
 
 using namespace fssm::parse;
 
@@ -62,6 +63,20 @@ static bool check_file(const std::string& path) {
             std::printf("  slot %zu: %s level %u, souls %u, map %08x\n", slot,
                         name_of(s.name.data(), s.name.size()).c_str(), s.level,
                         player ? player->souls : 0, game ? static_cast<uint32_t>(game->mapId) : 0);
+            const size_t worldIndex = ds2::CHARACTER_WORLD_ENTRY_OFFSET + slot;
+            if (worldIndex < sl2.entries.size()) {
+                if (const auto event = ds2::read_event(ds2::parse_entry(sl2.entries[worldIndex].content))) {
+                    size_t lit = 0;
+                    for (const auto& bonfire : ds2::BONFIRES) lit += ds2::is_bonfire_lit(*event, bonfire.id);
+                    std::string defeated;
+                    for (const auto& boss : ds2::BOSSES) {
+                        if (ds2::get_event_flag(*event, boss.flagId).value_or(false)) {
+                            defeated += std::string(boss.name) + "; ";
+                        }
+                    }
+                    std::printf("    bonfires lit %zu/%zu, bosses %s\n", lit, ds2::BONFIRES.size(), defeated.c_str());
+                }
+            }
             if (const auto inventory = ds2::read_inventory(character)) {
                 const auto items = ds2::decode_inventory(*inventory);
                 std::map<int, int> perCategory;

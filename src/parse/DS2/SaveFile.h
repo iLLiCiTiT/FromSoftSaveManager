@@ -25,6 +25,9 @@ namespace fssm::parse::ds2 {
         // intelligence, faith, adaptability
         std::array<uint16_t, 9> stats{};
         std::vector<InventoryItem> inventoryItems;
+        // From SaveDataEvent, one per BONFIRES / BOSSES entry (WorldProgress.h).
+        std::vector<bool> bonfiresLit;
+        std::vector<bool> bossesDefeated;
     };
 
     struct DS2SaveFile {

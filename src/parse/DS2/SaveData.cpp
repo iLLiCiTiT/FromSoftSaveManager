@@ -86,6 +86,27 @@ namespace fssm::parse::ds2 {
         return read_record<InventoryData>(entry, RecordType::ItemInventory);
     }
 
+    std::optional<EventData> read_event(const SaveEntry& entry) {
+        return read_record<EventData>(entry, RecordType::Event);
+    }
+
+    std::optional<bool> get_event_flag(const EventData& event, uint32_t flagId) {
+        const uint32_t group = flagId / 10000;
+        const uint32_t bit = flagId % 10000;
+        const std::array<uint8_t, 0x4e2>* flags = group == 10     ? &event.flags10
+                                                : group == 1000 ? &event.flags1000
+                                                                : nullptr;
+        if (flags == nullptr || bit / 8 >= flags->size()) return std::nullopt;
+        return ((*flags)[bit / 8] & (0x80 >> (bit % 8))) != 0;
+    }
+
+    bool is_bonfire_lit(const EventData& event, uint16_t bonfireId) {
+        for (size_t i = 0; i < event.bonfireIds.size(); ++i) {
+            if (event.bonfireIds[i] == bonfireId) return (event.bonfireLit[i] & 1) != 0;
+        }
+        return false;
+    }
+
     std::optional<ObjData> read_obj(const SaveEntry& entry) {
         const Record* record = entry.find(RecordType::Obj);
         if (record == nullptr) return std::nullopt;

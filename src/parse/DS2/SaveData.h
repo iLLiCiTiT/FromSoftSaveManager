@@ -174,7 +174,53 @@ namespace fssm::parse::ds2 {
         std::array<uint8_t, 0xbc> unk_10000;
     };
     static_assert(sizeof(InventoryData) == 0x100bc);
+
+    // Event flags of one of the (up to 3) loaded maps.
+    struct EventLoadedMap {
+        uint32_t mapCode;                           // e.g. 0x0a040000 for m10_04, 0xffffffff when unused
+        std::array<uint8_t, 0x19> flags1;           // group (map group + 1)
+        std::array<uint8_t, 3> pad_1d;
+        std::array<uint8_t, 0x19> flags2;           // group (map group + 2), cleared on load
+        std::array<uint8_t, 3> pad_39;
+        std::array<uint8_t, 0x100> unk_3c;          // EventManager +0x28 per map block
+    };
+    static_assert(sizeof(EventLoadedMap) == 0x13c);
+
+    // SaveDataEvent payload (FUN_1402e3a70). Event flag ids are group * 10000 + bit,
+    // with bit 0 the high bit of byte 0 (EventFlagManager, FUN_140474230). Groups are
+    // 10 and 1000 (global) and one per map: ((area / 10) * 100 + block) * 100, e.g.
+    // m10_10 -> 11000, plus that + 1 and + 2 while the map is loaded.
+    struct EventData {
+        std::array<uint8_t, 0x4e2> flags10;         // group 10 (100000..109999)
+        std::array<uint8_t, 2> pad_4e2;
+        std::array<uint8_t, 0x4e2> flags1000;       // +0x4e4, second global group (presumably 1000)
+        std::array<uint8_t, 2> pad_9c6;
+        // +0x9c8, map groups. The map -> slot assignment comes from the map manager
+        // (obfuscated) and is not known.
+        std::array<std::array<uint8_t, 0x19>, 42> mapFlags;
+        std::array<uint8_t, 2> pad_de2;
+        // +0xde4, kills per BossBattleParam +0x18 index (FUN_1401826d0)
+        std::array<uint32_t, 0x100> bossKills;
+        std::array<EventLoadedMap, 3> loadedMaps;   // +0x11e4
+        // +0x1598, EventBonfireManager (FUN_14017e540): MapObjectBonfireParam row ids,
+        // the bonfire's state bit 0 (lit) and the rest of that byte.
+        std::array<uint16_t, 0x100> bonfireIds;     // 0 = unused
+        std::array<uint8_t, 0x100> bonfireLit;      // +0x1798
+        std::array<uint8_t, 0x100> bonfireLevel;    // +0x1898
+        std::array<uint64_t, 0x100> bonfireUnk;     // +0x1998
+        uint32_t lastBonfireMap;                    // +0x2198, map code
+        uint32_t lastBonfireId;                     // +0x219c, MapObjectBonfireParam row
+        uint8_t unk_21a0;
+        std::array<uint8_t, 7> pad_21a1;
+        std::array<uint32_t, 8> unk_21a8;
+    };
+    static_assert(sizeof(EventData) == 0x21c8);
 #pragma pack(pop)
+
+    // Flags of the global groups 10 and 1000; nullopt for other ids.
+    std::optional<bool> get_event_flag(const EventData& event, uint32_t flagId);
+    // Whether the bonfire (MapObjectBonfireParam row) is lit.
+    bool is_bonfire_lit(const EventData& event, uint16_t bonfireId);
 
     // SaveDataObj payload (FUN_1402e5a10 + FUN_1401f2ea0): variable length.
     struct ObjData {
@@ -188,5 +234,6 @@ namespace fssm::parse::ds2 {
     std::optional<GameData> read_game(const SaveEntry& entry);
     std::optional<EnemyData> read_enemy(const SaveEntry& entry);
     std::optional<InventoryData> read_inventory(const SaveEntry& entry);
+    std::optional<EventData> read_event(const SaveEntry& entry);    // world entry (USER_DATA011..020)
     std::optional<ObjData> read_obj(const SaveEntry& entry);
 }

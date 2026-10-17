@@ -42,6 +42,7 @@ add_executable(FromSoftSaveManager
         src/parse/DS2/SaveFile.cpp
         src/parse/DS2/Areas.cpp
         src/parse/DS2/StatTables.cpp
+        src/parse/DS2/WorldProgress.cpp
         src/parse/Sekiro/SaveData.cpp
         src/parse/Sekiro/Items.cpp
         src/parse/Sekiro/ItemLookup.cpp
@@ -92,6 +93,7 @@ add_executable(FromSoftSaveManager
         src/ui/DS2Widget/Inventory.cpp
         src/ui/DS2Widget/PlayerStatus.cpp
         src/ui/DS2Widget/CharacterList.cpp
+        src/ui/DS2Widget/WorldProgress.cpp
         src/ui/DS3Widget/DS3Widget.cpp
         src/ui/DS3Widget/Inventory.cpp
         src/ui/DS3Widget/CharInfo.cpp
@@ -156,6 +158,7 @@ add_executable(DS2RoundTrip
         src/parse/DS2/SaveData.cpp
         src/parse/DS2/Items.cpp
         src/parse/DS2/ItemLookup.cpp
+        src/parse/DS2/WorldProgress.cpp
 )
 target_link_libraries(DS2RoundTrip tiny-aes)
 target_link_options(DS2RoundTrip PRIVATE -static-libgcc -static-libstdc++)
