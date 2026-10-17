@@ -80,7 +80,7 @@ namespace fssm::parse::ds2 {
         std::array<uint8_t, 0xa4> unk_000;
         std::array<uint8_t, 0xd0> appearance;       // +0x0a4
         // vigor, endurance, vitality, attunement, strength, dexterity,
-        // adaptability, intelligence, faith, unk, unk
+        // intelligence, faith, adaptability, unk, unk
         std::array<uint16_t, 11> stats;             // +0x174
         std::array<char16_t, 33> name;              // +0x18a
         uint32_t playTime;                          // +0x1cc, seconds (capped at 999:59:59)
@@ -109,14 +109,14 @@ namespace fssm::parse::ds2 {
     // function, so field names are inferred from save contents.
     struct PlayerData {
         // vigor, endurance, vitality, attunement, strength, dexterity,
-        // adaptability, intelligence, faith, unk
+        // intelligence, faith, adaptability, unk
         std::array<uint16_t, 10> stats;
         uint32_t unk_14;
         uint32_t level;
         uint32_t souls;
         uint32_t soulMemory;
         uint32_t unk_24;
-        uint32_t unk_28;
+        uint32_t hp;                                // matches HP on the Player Status screen
         std::array<uint8_t, 0x35c - 0x2c> unk_2c;
     };
     static_assert(sizeof(PlayerData) == 0x35c);

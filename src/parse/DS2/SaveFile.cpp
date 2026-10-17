@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <stdexcept>
 
+#include "StatTables.h"
+
 namespace fssm::parse::ds2 {
     static std::u16string name_to_string(const char16_t* name, size_t size) {
         std::u16string out;
@@ -30,11 +32,14 @@ namespace fssm::parse::ds2 {
             ci.playTime = summary.playTime;
             ci.mapId = summary.mapId;
             std::copy_n(summary.stats.begin(), ci.stats.size(), ci.stats.begin());
+            ci.soulsToNextLevel = soulsToNextLevel(ci.level);
+            ci.equipLoad = equipLoadForVitality(ci.stats[2]);
 
             const SaveEntry character = parse_entry(sl2.entries[CHARACTER_ENTRY_OFFSET + slot].content);
             if (const auto player = read_player(character)) {
                 ci.souls = player->souls;
                 ci.soulMemory = player->soulMemory;
+                ci.hp = player->hp;
             }
             if (const auto inventory = read_inventory(character)) {
                 ci.inventoryItems = decode_inventory(*inventory);

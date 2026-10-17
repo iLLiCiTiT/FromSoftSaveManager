@@ -6,6 +6,7 @@
 
 #include "CharacterList.h"
 #include "Inventory.h"
+#include "PlayerStatus.h"
 #include "../BaseGameWidget.h"
 #include "../Controller.h"
 #include "../Utils.h"
@@ -43,5 +44,6 @@ private:
     fssm::ui::ds2::CharsListModel* m_model;
     QListView* m_view;
     TabWidget* m_charTabs;
+    fssm::ui::ds2::PlayerStatusWidget* m_statusWidget;
     fssm::ui::ds2::InventoryWidget* m_inventoryWidget;
 };
