@@ -114,6 +114,7 @@ namespace fssm::parse::ds3 {
         struct EquippedSet {
             std::unordered_set<uint16_t> indices;
             std::unordered_set<uint32_t> spells;
+            std::unordered_set<uint16_t> quickMenu;
         };
 
         int32_t read_i32(const uint8_t* data) {
@@ -127,15 +128,16 @@ namespace fssm::parse::ds3 {
             for (uint32_t index : equip.equipInventoryIndices) {
                 if (index != 0xffffffff) out.indices.insert(uint16_t(index & 0xfff));
             }
-            // Quick slots and belt: pairs of {handle, inventory index}.
-            const auto addPairs = [&](const uint8_t* data, size_t size) {
+            // Quick item slots (equipped) and the start menu's quick items: pairs of
+            // {handle, inventory index}.
+            const auto addPairs = [&](const uint8_t* data, size_t size, std::unordered_set<uint16_t>& to) {
                 for (size_t i = 0; i + 8 <= size; i += 8) {
                     const int32_t index = read_i32(data + i + 4);
-                    if (index >= 0) out.indices.insert(uint16_t(index & 0xfff));
+                    if (index >= 0) to.insert(uint16_t(index & 0xfff));
                 }
             };
-            addPairs(equip.items.unk_18.data(), equip.items.unk_18.size());
-            addPairs(equip.items.unk_6c.data(), equip.items.unk_6c.size());
+            addPairs(equip.items.unk_18.data(), equip.items.unk_18.size(), out.indices);
+            addPairs(equip.items.unk_6c.data(), equip.items.unk_6c.size(), out.quickMenu);
             // Attuned spells: pairs of {spell id, -1}.
             for (size_t i = 0; i + 8 <= equip.magic.unk_18.size(); i += 8) {
                 const int32_t spell = read_i32(equip.magic.unk_18.data() + i);
@@ -157,6 +159,7 @@ namespace fssm::parse::ds3 {
                 if (equipped != nullptr) {
                     item.equipped = equipped->indices.count(item.inventoryIndex) != 0
                         || ((e.itemId & 0xf0000000) == GOODS_TYPE && equipped->spells.count(e.itemId & 0x0fffffff) != 0);
+                    item.inQuickMenu = equipped->quickMenu.count(item.inventoryIndex) != 0;
                 }
                 items.push_back(item);
             }

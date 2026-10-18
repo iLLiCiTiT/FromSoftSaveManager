@@ -158,11 +158,11 @@ namespace fssm::parse::ds3 {
     };
     static_assert(sizeof(EquipMagicData) == 0x74);
 
-    // NS_SPRJ::EquipItemData (quick slots, belt).
+    // NS_SPRJ::EquipItemData: {handle, inventory index} pairs.
     struct EquipItemData {
-        std::array<uint8_t, 0x50> unk_18;
+        std::array<uint8_t, 0x50> unk_18;       // 10 quick item slots
         uint32_t unk_68;
-        std::array<uint8_t, 0x28> unk_6c;
+        std::array<uint8_t, 0x28> unk_6c;       // 5 quick items of the start menu
         std::array<uint8_t, 8> unk_94;
     };
     static_assert(sizeof(EquipItemData) == 0x84);

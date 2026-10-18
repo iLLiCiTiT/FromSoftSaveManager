@@ -15,7 +15,10 @@ The textures are in /menu/01_common.tpf.dcx (Data1-5 archives, see gen_flags.py)
                                 (41, 4)-(1372, 802) part (the rest is a smoke sprite)
     MENU_ItemParts              atlas with the list scrollbar the screen uses (SCROLLBAR):
                                 track and thumb lie horizontally (the game turns them
-                                upright), the end caps already point up and down
+                                upright), the end caps already point up and down; also
+                                the inventory's wax seals (SEALS): red on equipped items,
+                                grey on items in the menu's quick items (each also has a
+                                darker variant, unused)
 The app has no portraits, so the slots lose the portrait box (x 54-204). Sprites are
 authored for 4K and halved, except the scrollbar, which is thin enough as it is.
 
@@ -41,6 +44,10 @@ SCROLLBAR = {
     "scroll_thumb": ((4, 504, 132, 509), True),
     "scroll_up": ((140, 487, 149, 497), False),
     "scroll_down": ((156, 487, 165, 497), False),
+}
+SEALS = {
+    "seal_equipped": (190, 474, 218, 502),
+    "seal_quick_menu": (270, 474, 298, 502),
 }
 
 
@@ -97,6 +104,10 @@ def main(game_dir, keys_path, repo_root):
         image = parts.crop(box)
         if upright:
             image = image.transpose(Image.ROTATE_90)
+        image.save(os.path.join(out_dir, f"{name}.png"), optimize=True)
+        print(f"{name}: {image.width}x{image.height}")
+    for name, box in SEALS.items():
+        image = parts.crop(box)
         image.save(os.path.join(out_dir, f"{name}.png"), optimize=True)
         print(f"{name}: {image.width}x{image.height}")
 

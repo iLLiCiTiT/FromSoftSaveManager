@@ -16,8 +16,10 @@ namespace fssm::parse::ds3 {
         BaseItem baseItem;
         // Index the game uses to reference the entry from equip slots (InventoryEntry::index & 0xfff).
         uint16_t inventoryIndex = 0xffff;
-        // Equipped, in a quick slot or an attuned spell (red seal in the game's inventory).
+        // Equipped, in a quick item slot or an attuned spell (red seal in the game's inventory).
         bool equipped = false;
+        // In the menu's quick items (grey seal in the game's inventory, unless also equipped).
+        bool inQuickMenu = false;
 
         static std::optional<InventoryItem> fromId(uint32_t itemId, const uint32_t& amount);
     };

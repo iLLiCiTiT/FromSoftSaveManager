@@ -145,23 +145,6 @@ namespace fssm::ui::ds3 {
         }
     }
 
-    // Wax seal the game puts on equipped items.
-    inline void drawSeal(QPainter& painter, const QPointF& center, double radius) {
-        painter.save();
-        painter.setRenderHint(QPainter::Antialiasing, true);
-        QRadialGradient gradient(center - QPointF(radius * 0.3, radius * 0.3), radius * 1.3);
-        gradient.setColorAt(0.0, QColor(214, 70, 70));
-        gradient.setColorAt(0.6, QColor(156, 28, 34));
-        gradient.setColorAt(1.0, QColor(92, 12, 18));
-        painter.setPen(QPen(QColor(60, 6, 10, 220), std::max(1.0, radius / 6)));
-        painter.setBrush(gradient);
-        painter.drawEllipse(center, radius, radius);
-        painter.setPen(QPen(QColor(240, 150, 140, 150), std::max(1.0, radius / 8)));
-        painter.setBrush(Qt::NoBrush);
-        painter.drawEllipse(center, radius * 0.55, radius * 0.55);
-        painter.restore();
-    }
-
     // Coiled sword in a bonfire: flames when lit, cold ash when not.
     inline void drawBonfire(QPainter& painter, const QRectF& rect, bool lit) {
         painter.save();

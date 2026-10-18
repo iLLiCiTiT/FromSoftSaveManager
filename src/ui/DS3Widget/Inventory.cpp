@@ -421,8 +421,12 @@ void InventoryWidget::drawGrid(QPainter& painter) {
             const int iconBottom = dishPos.y() + dish.height() * 2 / 3;
             painter.drawPixmap(tile.center().x() - icon.width() / 2, iconBottom - icon.height(), icon);
 
-            if (entry.item.equipped) {
-                drawSeal(painter, QPointF(tile.left() + cw * 0.15, tile.top() + cw * 0.15), cw * 0.1);
+            if (entry.item.equipped || entry.item.inQuickMenu) {
+                // The game's wax seal: red when equipped, grey when only in the menu's quick items.
+                const int sealSize = int(cw * 0.3);
+                const QString seal = entry.item.equipped ? ":/ds3_images/seal_equipped" : ":/ds3_images/seal_quick_menu";
+                painter.drawPixmap(tile.left() + int(cw * 0.03), tile.top() + int(cw * 0.03),
+                                   scaled(seal, QSize(sealSize, sealSize)));
             }
             const auto [infusion, infusionIcon] = infusionInfo(entry.item.infusion);
             if (!infusionIcon.isEmpty() && inventoryResourcesAvailable()) {
@@ -515,10 +519,12 @@ void InventoryWidget::drawDetail(QPainter& painter) {
     painter.setFont(serifFont(px(15)));
     const QString categoryIcon = fromView(fssm::parse::ds3::getCategoryIcon(category));
     valueRow(col1, 1, scaled(":/ds3_images/" + categoryIcon, QSize(smallIcon, smallIcon)), typeLabel(category), {});
-    if (entry->item.equipped) {
+    if (entry->item.equipped || entry->item.inQuickMenu) {
         const QRect r = line(col1, 2);
-        drawSeal(painter, QPointF(r.left() + smallIcon / 2.0, r.center().y()), smallIcon * 0.4);
-        drawShadowText(painter, r.adjusted(smallIcon + px(4), 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter, "Equipped");
+        const QString seal = entry->item.equipped ? ":/ds3_images/seal_equipped" : ":/ds3_images/seal_quick_menu";
+        painter.drawPixmap(r.left(), r.center().y() - smallIcon / 2, scaled(seal, QSize(smallIcon, smallIcon)));
+        drawShadowText(painter, r.adjusted(smallIcon + px(4), 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter,
+                       entry->item.equipped ? "Equipped" : "Quick menu");
     }
 
     const auto [infusion, infusionIcon] = infusionInfo(entry->item.infusion);

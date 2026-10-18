@@ -41,6 +41,8 @@
         <file alias="load_slot">images/ds3/menu/load_slot.png</file>
         <file alias="load_slot_cursor">images/ds3/menu/load_slot_cursor.png</file>
         <file alias="scroll_down">images/ds3/menu/scroll_down.png</file>
+        <file alias="seal_equipped">images/ds3/menu/seal_equipped.png</file>
+        <file alias="seal_quick_menu">images/ds3/menu/seal_quick_menu.png</file>
         <file alias="scroll_thumb">images/ds3/menu/scroll_thumb.png</file>
         <file alias="scroll_track">images/ds3/menu/scroll_track.png</file>
         <file alias="scroll_up">images/ds3/menu/scroll_up.png</file>
