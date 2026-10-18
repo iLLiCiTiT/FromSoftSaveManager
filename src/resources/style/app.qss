@@ -319,6 +319,22 @@ DSRWidget QScrollBar:vertical {
     border: 1px solid #5D432D;
     border-radius: 0px;
 }
+/* Character list scrollbar like the Data List in the game: dark track in a thin gold frame */
+QScrollBar#ds_list_scrollbar:vertical {
+    width: 12px;
+    background: #141312;
+    border: 1px solid #6E5A36;
+    border-radius: 0px;
+}
+QScrollBar#ds_list_scrollbar::handle:vertical {
+    background: #8A3E18;
+    border-radius: 0px;
+    margin: 2px;
+    min-height: 20px;
+}
+QScrollBar#ds_list_scrollbar::handle:vertical:hover {
+    background: #A04A1E;
+}
 DSRInventoryCategoryButton:hover {
 }
 

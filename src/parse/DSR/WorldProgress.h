@@ -34,6 +34,12 @@ namespace fssm::parse::dsr {
         std::string_view text;
     };
 
+    // Area name (PlaceName text) the Data List screen shows for a profile's areaId.
+    struct PlaceName {
+        uint32_t id;
+        std::string_view name;
+    };
+
     // Areas in the order they are usually reached.
     extern const std::array<std::string_view, 21> AREAS;
     // Bonfires by area.
@@ -44,4 +50,6 @@ namespace fssm::parse::dsr {
     extern const std::array<Npc, 38> NPCS;
     // Questline stage of the flags the scripts set in the NPC blocks, by flag.
     extern const std::array<NpcStage, 145> NPC_STAGES;
+    // Area PlaceNames (ids 1000-1999), by id.
+    extern const std::array<PlaceName, 32> PLACE_NAMES;
 }

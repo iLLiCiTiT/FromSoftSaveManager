@@ -36,6 +36,9 @@ namespace fssm::parse::dsr {
     struct DSRCharacterInfo {
         int index;
         std::u16string name;
+        // From the slot's profile summary (Data List screen).
+        uint32_t playTime = 0;          // seconds
+        std::string_view areaName;      // empty when the PlaceName id is unknown
         uint32_t humanity;
         uint32_t souls;
         uint32_t earnedSouls;

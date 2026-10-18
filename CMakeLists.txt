@@ -91,6 +91,7 @@ add_executable(FromSoftSaveManager
         src/ui/BaseGameWidget.h
         src/ui/ManageBackupsWidget.cpp
         src/ui/DSRWidget/DSRWidget.cpp
+        src/ui/DSRWidget/CharacterList.cpp
         src/ui/DSRWidget/Inventory.cpp
         src/ui/DSRWidget/Covenants.cpp
         src/ui/DSRWidget/CharInfo.cpp

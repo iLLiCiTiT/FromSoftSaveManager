@@ -147,6 +147,12 @@ namespace fssm::parse::dsr {
         return stages;
     }
 
+    static std::string_view place_name(uint32_t placeId) {
+        auto it = std::lower_bound(PLACE_NAMES.begin(), PLACE_NAMES.end(), placeId,
+                                   [](const PlaceName& place, uint32_t id) { return place.id < id; });
+        return it != PLACE_NAMES.end() && it->id == placeId ? it->name : std::string_view();
+    }
+
     static DSRCharacterInfo character_info_from_slot(int charIdx, const CharacterSlot& slot) {
         const PlayerGameData& player = slot.player;
         const PlayerGameDataStats& st = player.stats;
@@ -277,7 +283,11 @@ namespace fssm::parse::dsr {
         for (int charIdx = 0; charIdx < 10; ++charIdx) {
             if (systemSlot.profiles.occupied[charIdx] == 0) continue;
             const CharacterSlot slot = parse_character_slot(sl2.entries[charIdx].content);
-            characters.push_back(character_info_from_slot(charIdx, slot));
+            DSRCharacterInfo info = character_info_from_slot(charIdx, slot);
+            const ProfileSummaryEntry& profile = systemSlot.profiles.profiles[charIdx];
+            info.playTime = profile.playTime;
+            info.areaName = place_name(profile.areaId);
+            characters.push_back(std::move(info));
         }
         DSRSaveFile save_file = {
             .characters = characters,

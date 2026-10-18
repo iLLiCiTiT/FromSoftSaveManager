@@ -400,9 +400,16 @@ namespace fssm::parse::dsr {
         std::array<uint8_t, 0xac> data;
     };
 
+    // Shown on the "Data List" (load game) screen.
     struct ProfileSummaryEntry {
         std::array<char16_t, 17> name;
-        std::array<uint8_t, 400 - 34> unk_22;
+        uint16_t unk_22;
+        uint32_t level;
+        uint32_t playTime;                  // seconds
+        uint32_t unk_2c;
+        uint32_t mapId;                     // 0xAABB0000 for map mAA_BB
+        uint32_t areaId;                    // PlaceName id (e.g. 1020 Firelink Shrine)
+        std::array<uint8_t, 400 - 0x38> unk_38;
     };
     static_assert(sizeof(ProfileSummaryEntry) == 400);
 

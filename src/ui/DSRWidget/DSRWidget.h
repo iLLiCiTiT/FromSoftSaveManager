@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CharacterList.h"
 #include "CharInfo.h"
 #include "Covenants.h"
 #include "Inventory.h"
@@ -10,9 +11,6 @@
 #include "../../parse/Parse.h"
 
 namespace fssm::ui::dsr{
-const int CharIdRole = Qt::UserRole + 1;
-const int CharNameRole = Qt::UserRole + 2;
-
 class CharsListModel: public QStandardItemModel {
     Q_OBJECT
 signals:

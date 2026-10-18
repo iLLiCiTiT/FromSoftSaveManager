@@ -3,6 +3,7 @@
 #include <iostream>
 #include <qevent.h>
 #include <QPainter>
+#include <QScrollBar>
 
 #include "../ManageBackupsWidget.h"
 
@@ -15,7 +16,7 @@ CharsListModel::CharsListModel(Controller* controller, const QString& saveId, QO
     setColumnCount(1);
     QStandardItem* root = invisibleRootItem();
     for (int i = 0; i < 10; ++i) {
-        QStandardItem* item = new QStandardItem("< Empty >");
+        QStandardItem* item = new QStandardItem("");
         item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
         item->setData(QVariant(), CharNameRole);
         item->setData(QVariant(i), CharIdRole);
@@ -30,31 +31,29 @@ void CharsListModel::refresh() {
     DSRCharInfoResult charsInfo = m_controller->getDsrCharacters(m_saveId);
     if (!charsInfo.error.isEmpty()) {
         m_chars = std::vector<fssm::parse::dsr::DSRCharacterInfo>();
-        QStandardItem* item = root->child(0);
-        item->setText(charsInfo.error);
-        for (int i = 1; i < root->rowCount(); ++i) {
+        for (int i = 0; i < root->rowCount(); ++i) {
             QStandardItem* item = root->child(i);
-            item->setText("");
+            item->setText(i == 0 ? charsInfo.error : "");
+            item->setData(QVariant(), CharNameRole);
         }
-        item->setData(QVariant(), CharNameRole);
         emit refreshed();
         return;
     }
     m_chars = charsInfo.characters;
     for (int i = 0; i < root->rowCount(); ++i) {
         QStandardItem* item = root->child(i);
-        bool found = false;
-        for (auto& character: m_chars) {
-            if (i == character.index) {
-                item->setText(QString::fromStdU16String(character.name));
-                item->setData(QString::fromStdU16String(character.name), CharNameRole);
-                found = true;
-                break;
-            }
+        const fssm::parse::dsr::DSRCharacterInfo* character = getCharByIdx(i);
+        if (character == nullptr) {
+            item->setText("");
+            item->setData(QVariant(), CharNameRole);
+            continue;
         }
-        if (found) continue;
-        item->setText("< Empty >");
-        item->setData(QVariant(), CharNameRole);
+        const QString name = QString::fromStdU16String(character->name);
+        item->setText(name);
+        item->setData(name, CharNameRole);
+        item->setData(character->level, CharLevelRole);
+        item->setData(character->playTime, CharPlayTimeRole);
+        item->setData(QString::fromUtf8(character->areaName.data(), int(character->areaName.size())), CharAreaRole);
     }
     emit refreshed();
 };
@@ -78,18 +77,27 @@ DSRWidget::DSRWidget(Controller* controller, const QString& saveId, QWidget* par
     m_view = new QListView(viewWrap);
     m_view->setObjectName("ds_list_view");
     m_view->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    m_view->setTextElideMode(Qt::ElideLeft);
     m_view->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    m_view->setMouseTracking(true);
+    m_view->setFrameShape(QFrame::NoFrame);
+    m_view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    // Styled in app.qss; the bar is already polished by now, so polish it again with its name.
+    QScrollBar* scrollBar = m_view->verticalScrollBar();
+    scrollBar->setObjectName("ds_list_scrollbar");
+    scrollBar->style()->unpolish(scrollBar);
+    scrollBar->style()->polish(scrollBar);
+    m_view->setItemDelegate(new fssm::ui::dsr::CharacterDelegate(m_view));
+    auto* dataListFrame = new fssm::ui::dsr::DataListFrame(m_view, viewWrap);
 
     ManageBackupsButtonsWidget* manageBackupsBtnsWidget = new ManageBackupsButtonsWidget(controller, viewWrap);
+    manageBackupsBtnsWidget->setAttribute(Qt::WA_TranslucentBackground, true);
 
     m_model = new fssm::ui::dsr::CharsListModel(controller, saveId, m_view);
     m_view->setModel(m_model);
 
     QVBoxLayout* viewWrapLayout = new QVBoxLayout(viewWrap);
     viewWrapLayout->setContentsMargins(0, 0, 0, 0);
-    viewWrapLayout->addSpacing(28);
-    viewWrapLayout->addWidget(m_view, 4);
+    viewWrapLayout->addWidget(dataListFrame, 4);
     viewWrapLayout->addWidget(manageBackupsBtnsWidget, 1);
 
     m_charTabs = new TabWidget(this);
@@ -165,6 +173,14 @@ void DSRWidget::paintEvent(QPaintEvent* event) {
 };
 
 void DSRWidget::onRefresh() {
+    // Like the game's list, only slots with a character are shown (or the error in row 0).
+    for (int row = 0; row < m_model->rowCount(); ++row) {
+        const QModelIndex index = m_model->index(row, 0);
+        const bool hasCharacter = index.data(fssm::ui::dsr::CharNameRole).isValid();
+        const bool isError = row == 0 && !hasCharacter && !index.data(Qt::DisplayRole).toString().isEmpty();
+        m_view->setRowHidden(row, !hasCharacter && !isError);
+    }
+
     QItemSelectionModel* selModel = m_view->selectionModel();
     for (auto& index: selModel->selectedIndexes()) {
         QVariant charId = index.data(fssm::ui::dsr::CharIdRole);
@@ -178,7 +194,7 @@ void DSRWidget::onRefresh() {
     }
     for (int row = 0; row < m_model->rowCount(); ++row) {
         QModelIndex index = m_model->index(row, 0);
-        if (index.flags() & Qt::ItemIsSelectable) {
+        if (index.data(fssm::ui::dsr::CharNameRole).isValid()) {
             selModel->setCurrentIndex(index, QItemSelectionModel::ClearAndSelect);
             return;
         }

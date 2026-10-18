@@ -5,7 +5,7 @@ Usage:
 
 Writes:
     src/parse/DSR/WorldProgress.h      table sizes
-    src/parse/DSR/WorldProgress.cpp    bonfires, bosses and NPCs
+    src/parse/DSR/WorldProgress.cpp    bonfires, bosses, NPCs and area names
 
 The game has no bonfire param. Bonfires are the RegisterBonfire (2009:03) calls of the map
 event scripts (/event/mAA_BB_00_00.emevd.dcx); the bonfire's entity id is the key of its
@@ -46,6 +46,8 @@ EMEVD_SET_EVENT_FLAG = (2003, 2)
 EMEVD_BATCH_SET_EVENT_FLAGS = (2003, 22)
 
 NPC_FLAGS = range(1000, 2000)
+# PlaceName ids of areas (2000+ are the Lordvessel warp list's bonfire names).
+AREA_PLACE_IDS = range(1000, 2000)
 COMMON_CONSTRUCTOR = 50
 
 # Areas (PlaceName ids) in the order they are usually reached.
@@ -647,6 +649,9 @@ def main():
     def area_name(place):
         return " ".join(place_names[place].split())
 
+    place_table = [(place, area_name(place)) for place in sorted(place_names)
+                   if place in AREA_PLACE_IDS and area_name(place)]
+
     bonfire_table = []
     for area_index, place in enumerate(AREAS):
         for entity, (area, name) in BONFIRES.items():
@@ -716,6 +721,12 @@ namespace fssm::parse::dsr {{
         std::string_view text;
     }};
 
+    // Area name (PlaceName text) the Data List screen shows for a profile's areaId.
+    struct PlaceName {{
+        uint32_t id;
+        std::string_view name;
+    }};
+
     // Areas in the order they are usually reached.
     extern const std::array<std::string_view, {len(AREAS)}> AREAS;
     // Bonfires by area.
@@ -726,6 +737,8 @@ namespace fssm::parse::dsr {{
     extern const std::array<Npc, {len(npc_table)}> NPCS;
     // Questline stage of the flags the scripts set in the NPC blocks, by flag.
     extern const std::array<NpcStage, {len(stage_table)}> NPC_STAGES;
+    // Area PlaceNames (ids 1000-1999), by id.
+    extern const std::array<PlaceName, {len(place_table)}> PLACE_NAMES;
 }}
 """)
 
@@ -753,6 +766,9 @@ namespace fssm::parse::dsr {{
     lines += ["    };", "", f"    const std::array<NpcStage, {len(stage_table)}> NPC_STAGES = {{"]
     for flag, text in stage_table:
         lines.append(f"        NpcStage{{{flag}, {cpp_string(text)}}},")
+    lines += ["    };", "", f"    const std::array<PlaceName, {len(place_table)}> PLACE_NAMES = {{"]
+    for place, name in place_table:
+        lines.append(f"        PlaceName{{{place}, {cpp_string(name)}}},")
     lines += ["    };", "}", ""]
     write_crlf(os.path.join(out_dir, "WorldProgress.cpp"), "\n".join(lines))
     print(f"{len(bonfire_table)} bonfires ({len(warp)} named by the warp list), {len(boss_table)} bosses, "
