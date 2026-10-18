@@ -54,9 +54,12 @@ namespace {
     constexpr int SKILL_ROWS = 8;
     constexpr int SKILL_COLUMNS = 4;
 
-    // Size the layout is designed for; everything scales from it.
+    // Size the layout is designed for.
     constexpr int DESIGN_W = 600;
     constexpr int DESIGN_H = 430;
+    // Tabs, fonts and panels keep one size (the look at the default window size);
+    // resizing only changes how much fits.
+    constexpr double FIXED_SCALE = 0.89;
 
     const Category& categoryAt(int page, int category) {
         return *(PAGES[page].categories.begin() + category);
@@ -167,7 +170,7 @@ void InventoryWidget::rebuildVisibleItems() {
 InventoryWidget::Layout InventoryWidget::computeLayout() const {
     Layout l;
     const QRect r = rect();
-    l.scale = std::clamp(std::min(double(r.width()) / DESIGN_W, double(r.height()) / DESIGN_H), 0.7, 1.8);
+    l.scale = FIXED_SCALE;
     const double s = l.scale;
     auto px = [s](double v) { return int(std::round(v * s)); };
 

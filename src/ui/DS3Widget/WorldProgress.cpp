@@ -11,8 +11,9 @@
 
 namespace fssm::ui::ds3 {
 namespace {
-    constexpr int DESIGN_W = 620;
-    constexpr int DESIGN_H = 470;
+    // Frame, fonts and rows keep one size (the look at the default window size);
+    // resizing only changes how much fits.
+    constexpr double FIXED_SCALE = 0.82;
     const QColor AREA_COLOR(214, 190, 136);
     const QColor HOSTILE_COLOR(206, 92, 72);
 
@@ -154,7 +155,7 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     painter.setRenderHint(QPainter::Antialiasing, true);
     painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
-    const double s = std::clamp(std::min(double(width()) / DESIGN_W, double(height()) / DESIGN_H), 0.6, 1.4);
+    const double s = FIXED_SCALE;
     const auto px = [s](double v) { return int(std::round(v * s)); };
 
     const QRect panel = rect();

@@ -16,6 +16,9 @@ namespace {
     constexpr int FRAME_TOP = 66;
     constexpr int FRAME_RIGHT = 44;
     constexpr int FRAME_BOTTOM = 44;
+    // Frame, fonts and rows keep one size (the look at the default window size);
+    // resizing only changes how much fits.
+    constexpr double FIXED_SCALE = 0.66;
 
     struct Attribute {
         const char* label;
@@ -104,7 +107,7 @@ void PlayerStatusWidget::paintEvent(QPaintEvent* event) {
     painter.setRenderHint(QPainter::Antialiasing, true);
 
     const QRect r = rect();
-    const double s = std::clamp(std::min(double(r.width()) / WINDOW_W, double(r.height()) / WINDOW_H), 0.45, 1.25);
+    const double s = FIXED_SCALE;
     if (!m_window.isNull()) {
         drawNineSlice(painter, m_window, r, FRAME_LEFT, FRAME_TOP, FRAME_RIGHT, FRAME_BOTTOM, s);
     } else {
@@ -125,7 +128,7 @@ void PlayerStatusWidget::paintEvent(QPaintEvent* event) {
     }
 
     // Row height: 1 top row + header + 9 attribute rows, with a little air.
-    const int rowH = std::max(16, std::min(int(34 * s), content.height() / 12));
+    const int rowH = int(34 * s);
     const int gap = std::max(4, rowH / 4);
     painter.setFont(serifFont(std::max(11, int(rowH * 0.62))));
 

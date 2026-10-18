@@ -13,9 +13,9 @@
 
 namespace fssm::ui::er {
 namespace {
-    // Reference layout size; fonts and rows scale with the widget.
-    constexpr int DESIGN_W = 560;
-    constexpr int DESIGN_H = 470;
+    // Frame, fonts and rows keep one size (the look at the default window size);
+    // resizing only changes how much fits.
+    constexpr double FIXED_SCALE = 0.9;
 
     const QColor TEXT_COLOR(228, 224, 210);
     const QColor DIM_TEXT_COLOR(150, 144, 128);
@@ -236,7 +236,7 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     painter.setRenderHint(QPainter::TextAntialiasing, true);
 
     const QRect r = rect();
-    const double s = std::clamp(std::min(double(r.width()) / DESIGN_W, double(r.height()) / DESIGN_H), 0.7, 1.3);
+    const double s = FIXED_SCALE;
     const auto px = [s](double v) { return int(std::round(v * s)); };
 
     if (!m_hasCharacter || m_gracesDiscovered.empty()) {

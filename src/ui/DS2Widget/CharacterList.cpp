@@ -9,7 +9,8 @@
 namespace fssm::ui::ds2 {
 namespace {
     // ui_data_list.png is 910x640; borders kept unscaled by the nine-slice.
-    constexpr int DATA_LIST_W = 910;
+    // Frame and title keep one size (the look at the default window size).
+    constexpr double FIXED_SCALE = 0.45;
     constexpr int FRAME_LEFT = 50;
     constexpr int FRAME_TOP = 96;
     constexpr int FRAME_RIGHT = 50;
@@ -84,7 +85,7 @@ DataListFrame::DataListFrame(QWidget* content, QWidget* parent): QWidget(parent)
 }
 
 double DataListFrame::scale() const {
-    return std::clamp(double(width()) / DATA_LIST_W, 0.45, 1.0);
+    return FIXED_SCALE;
 }
 
 void DataListFrame::resizeEvent(QResizeEvent* event) {

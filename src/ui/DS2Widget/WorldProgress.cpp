@@ -18,6 +18,9 @@ namespace {
     constexpr int FRAME_TOP = 66;
     constexpr int FRAME_RIGHT = 44;
     constexpr int FRAME_BOTTOM = 44;
+    // Frame, fonts and rows keep one size (the look at the default window size);
+    // resizing only changes how much fits.
+    constexpr double FIXED_SCALE = 0.66;
 
     const QColor PANEL_COLOR(10, 10, 10, 120);
     const QColor HEADER_TOP(70, 84, 96, 230);
@@ -147,7 +150,7 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     painter.setRenderHint(QPainter::Antialiasing, true);
 
     const QRect r = rect();
-    const double s = std::clamp(std::min(double(r.width()) / WINDOW_W, double(r.height()) / WINDOW_H), 0.45, 1.25);
+    const double s = FIXED_SCALE;
     if (!m_window.isNull()) {
         drawNineSlice(painter, m_window, r, FRAME_LEFT, FRAME_TOP, FRAME_RIGHT, FRAME_BOTTOM, s);
     } else {
@@ -186,7 +189,7 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     const std::array<QString, 2> totals = {count(countTrue(m_char.bonfiresLit), int(BONFIRES.size())),
                                            count(countTrue(m_char.bossesDefeated), int(BOSSES.size()))};
 
-    const int headerH = std::max(16, std::min(int(34 * s), content.height() / 12));
+    const int headerH = int(34 * s);
     const int gap = std::max(4, headerH / 4);
     const int lineH = std::max(14, int(headerH * 0.82));
     const int areaH = lineH + gap;

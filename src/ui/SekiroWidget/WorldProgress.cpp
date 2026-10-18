@@ -9,9 +9,9 @@
 
 namespace fssm::ui::sekiro {
 namespace {
-    // Size of the inventory screen below its tabs; everything scales from it.
-    constexpr int DESIGN_W = 600;
-    constexpr int DESIGN_H = 386;
+    // Frame, fonts and rows keep one size (the look at the default window size);
+    // resizing only changes how much fits.
+    constexpr double FIXED_SCALE = 0.89;
 
     enum class RowKind {
         Area,       // travel menu area with its count
@@ -135,7 +135,7 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     painter.setRenderHint(QPainter::TextAntialiasing, true);
 
     const QRect r = rect();
-    const double s = std::clamp(std::min(double(r.width()) / DESIGN_W, double(r.height()) / DESIGN_H), 0.7, 1.8);
+    const double s = FIXED_SCALE;
     const auto px = [s](double v) { return int(std::round(v * s)); };
 
     int idolCount = 0;
