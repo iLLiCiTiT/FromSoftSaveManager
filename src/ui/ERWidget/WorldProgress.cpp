@@ -15,7 +15,7 @@ namespace fssm::ui::er {
 namespace {
     // Frame, fonts and rows keep one size (the look at the default window size);
     // resizing only changes how much fits.
-    constexpr double FIXED_SCALE = 0.9;
+    constexpr double FIXED_SCALE = 0.8;
 
     const QColor TEXT_COLOR(228, 224, 210);
     const QColor DIM_TEXT_COLOR(150, 144, 128);

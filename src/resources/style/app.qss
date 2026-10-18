@@ -304,6 +304,9 @@ ERAttributesLabel QLabel {
 }
 
 /* Dark Souls: Remastered specific styles */
+DSRWidget, DSRWidget QWidget {
+    font-size: 9pt;
+}
 DSRWidget QScrollBar::handle:vertical, DSRWidget QScrollBar::handle:horizontal {
     background: #6B2E0E;
     border-radius: 0px;

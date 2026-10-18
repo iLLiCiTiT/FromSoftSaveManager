@@ -53,7 +53,7 @@ namespace {
     constexpr int DESIGN_H = 470;
     // Tabs, padding, fonts and the detail panel keep one size (the look at the default
     // window size); only the item grid follows the widget size.
-    constexpr double FIXED_SCALE = 0.86;
+    constexpr double FIXED_SCALE = 0.76;
     // Item tile pitch in pixels, independent of the widget size; the slot
     // background fills all of it but a small gap.
     constexpr int TILE_SIZE = 60;

@@ -10,7 +10,7 @@ namespace fssm::ui::ds3 {
 namespace {
     // Frame, fonts and rows keep one size (the look at the default window size);
     // resizing only changes how much fits.
-    constexpr double FIXED_SCALE = 0.82;
+    constexpr double FIXED_SCALE = 0.72;
 
     struct StatRow {
         QString icon;           // :/ds3_images/<icon>, empty for none
