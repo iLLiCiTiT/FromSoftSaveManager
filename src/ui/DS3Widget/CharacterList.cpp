@@ -3,14 +3,26 @@
 #include <QAbstractItemView>
 #include <QPaintEvent>
 #include <QPainter>
+#include <cmath>
 
 #include "Painting.h"
 
 namespace fssm::ui::ds3 {
 namespace {
-    constexpr int ROW_HEIGHT = 66;
+    constexpr int ROW_HEIGHT = 76;
     constexpr int TITLE_HEIGHT = 32;
-    constexpr int STONE_BORDER = 9;
+
+    // Game sprites (tools/ds3_flags/gen_menu.py). The slot is 88 px tall with gold rules
+    // under its two text rows; it stretches only between its ornamented ends.
+    constexpr int SLOT_HEIGHT = 88;
+    constexpr int SLOT_LEFT = 30;
+    constexpr int SLOT_RIGHT = 24;
+    constexpr int SLOT_TOP_ROW_BOTTOM = 31;     // first rule at y 32
+    constexpr int SLOT_BOTTOM_ROW_TOP = 36;
+    constexpr int SLOT_BOTTOM_ROW_BOTTOM = 62;  // second rule at y 63
+    // The panel's frame and inner bevel, kept unscaled by the nine-slice.
+    constexpr int PANEL_BORDER = 56;
+    constexpr double PANEL_SCALE = 0.3;
 
     QString formatPlayTime(uint32_t seconds) {
         return QString("%1:%2:%3").arg(seconds / 3600, 2, 10, QChar('0'))
@@ -18,54 +30,31 @@ namespace {
                                   .arg(seconds % 60, 2, 10, QChar('0'));
     }
 
-    // Slate plate of a save slot: purple-grey stone, dark outline and a light
-    // engraved band just inside the edge.
-    void drawSlate(QPainter& painter, const QRect& r, bool selected, bool hovered) {
-        painter.save();
-        QLinearGradient gradient(r.topLeft(), r.bottomLeft());
-        gradient.setColorAt(0.0, QColor(116, 112, 126));
-        gradient.setColorAt(1.0, QColor(86, 82, 96));
-        painter.setPen(Qt::NoPen);
-        painter.setBrush(gradient);
-        painter.drawRect(r);
-        painter.drawTiledPixmap(r, grainTexture());
-        if (selected || hovered) {
-            QLinearGradient warm(r.topLeft(), r.bottomLeft());
-            const int alpha = selected ? 190 : 80;
-            warm.setColorAt(0.0, QColor(150, 112, 78, alpha));
-            warm.setColorAt(0.55, QColor(170, 118, 66, alpha));
-            warm.setColorAt(1.0, QColor(120, 78, 40, alpha));
-            painter.setBrush(warm);
-            painter.drawRect(r);
-        }
-        painter.setBrush(Qt::NoBrush);
-        painter.setPen(QPen(QColor(20, 18, 22), 1));
-        painter.drawRect(r.adjusted(0, 0, -1, -1));
-        painter.setPen(QPen(QColor(196, 192, 200, 150), 1, Qt::DotLine));
-        painter.drawRect(r.adjusted(3, 3, -4, -4));
-        painter.setPen(QPen(QColor(210, 206, 214, 110), 1));
-        painter.drawRect(r.adjusted(5, 5, -6, -6));
-        if (selected) {
-            painter.setPen(QPen(QColor(214, 170, 96, 200), 1));
-            painter.drawRect(r.adjusted(1, 1, -2, -2));
-        }
-        painter.restore();
+    const QPixmap& slotPixmap() {
+        static const QPixmap pix(":/ds3_images/load_slot");
+        return pix;
+    }
+
+    const QPixmap& slotCursorPixmap() {
+        static const QPixmap pix(":/ds3_images/load_slot_cursor");
+        return pix;
     }
 }
 
 CharacterDelegate::CharacterDelegate(QObject* parent): QStyledItemDelegate(parent) {}
 
 QSize CharacterDelegate::sizeHint(const QStyleOptionViewItem& option, const QModelIndex&) const {
-    return {option.rect.width(), ROW_HEIGHT};
+    // Rows take the viewport's width (see paint); only the height matters here.
+    return {1, ROW_HEIGHT};
 }
 
 void CharacterDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const {
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing, true);
-    // Rows can be laid out wider than the visible list; keep them inside the viewport.
+    // Rows span the visible list, whatever width the view laid them out with.
     QRect r = option.rect;
     if (const auto* view = qobject_cast<const QAbstractItemView*>(option.widget)) {
-        r.setWidth(std::min(r.width(), view->viewport()->width() - r.left()));
+        r.setWidth(view->viewport()->width() - r.left());
     }
     const QVariant name = index.data(CharNameRole);
     if (!name.isValid()) {
@@ -78,40 +67,50 @@ void CharacterDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
     }
     const bool selected = option.state & QStyle::State_Selected;
     const bool hovered = option.state & QStyle::State_MouseOver;
-    const QRect plate = r.adjusted(2, 3, -2, -3);
-    drawSlate(*painter, plate, selected, hovered);
-
-    const QRect text = plate.adjusted(14, 7, -14, -8);
-    const int half = text.height() / 2;
-    const QRect top(text.left(), text.top(), text.width(), half);
-    const QRect bottom(text.left(), text.top() + half, text.width(), text.height() - half);
-    const int leftWidth = text.width() * 42 / 100;
-    const int rightLeft = text.left() + text.width() * 46 / 100;
-
-    painter->setFont(serifFont(16));
-    drawShadowText(*painter, QRect(top.left(), top.top(), leftWidth, top.height()),
-                   Qt::AlignLeft | Qt::AlignVCenter, name.toString());
-    drawShadowText(*painter, QRect(bottom.left(), bottom.top(), leftWidth, bottom.height()),
-                   Qt::AlignLeft | Qt::AlignVCenter, "Level");
-    drawShadowText(*painter, QRect(bottom.left(), bottom.top(), leftWidth - 6, bottom.height()),
-                   Qt::AlignRight | Qt::AlignVCenter, QString::number(index.data(CharLevelRole).toUInt()));
-    painter->setFont(serifFont(15));
-    drawShadowText(*painter, QRect(rightLeft, top.top(), text.right() - rightLeft, top.height()),
-                   Qt::AlignRight | Qt::AlignVCenter, index.data(CharAreaRole).toString());
-    painter->setFont(serifFont(16));
-    drawShadowText(*painter, QRect(rightLeft, bottom.top(), text.right() - rightLeft, bottom.height()),
-                   Qt::AlignRight | Qt::AlignVCenter, formatPlayTime(index.data(CharPlayTimeRole).toUInt()));
-
-    for (const int y : {top.bottom() - 1, bottom.bottom() - 1}) {
-        drawGoldRule(*painter, text.left() - 4, text.left() + leftWidth, y, 210);
-        drawGoldRule(*painter, rightLeft, text.right() + 4, y, 170);
+    const QRect slot = r.adjusted(0, 2, 0, -2);
+    const double s = double(slot.height()) / SLOT_HEIGHT;
+    painter->setRenderHint(QPainter::SmoothPixmapTransform, true);
+    drawNineSlice(*painter, slotPixmap(), slot, SLOT_LEFT, 0, SLOT_RIGHT, 0, s);
+    if (selected || hovered) {
+        // The game's orange glow over the selected slot; fainter on hover.
+        painter->setOpacity(selected ? 1.0 : 0.4);
+        drawNineSlice(*painter, slotCursorPixmap(), slot, SLOT_LEFT, 0, SLOT_RIGHT, 0, s);
+        painter->setOpacity(1.0);
     }
+
+    // Text sits on the slot's gold rules: name and area above the first, level and
+    // play time above the second.
+    const int left = slot.left() + int(std::round((SLOT_LEFT + 4) * s));
+    const int right = slot.right() - int(std::round((SLOT_RIGHT + 2) * s));
+    const QRect top(left, slot.top(), right - left, int(std::round(SLOT_TOP_ROW_BOTTOM * s)));
+    const QRect bottom(left, slot.top() + int(std::round(SLOT_BOTTOM_ROW_TOP * s)), right - left,
+                       int(std::round((SLOT_BOTTOM_ROW_BOTTOM - SLOT_BOTTOM_ROW_TOP) * s)));
+    const int leftWidth = top.width() * 42 / 100;
+    const int rightLeft = left + top.width() * 46 / 100;
+
+    painter->setFont(serifFont(16));
+    // The area takes whatever width the name leaves, so long area names fit beside short names.
+    const int nameWidth = std::min(QFontMetrics(painter->font()).horizontalAdvance(name.toString()), right - left);
+    drawShadowText(*painter, QRect(top.left(), top.top(), nameWidth, top.height()),
+                   Qt::AlignLeft | Qt::AlignBottom, name.toString());
+    drawShadowText(*painter, QRect(bottom.left(), bottom.top(), leftWidth, bottom.height()),
+                   Qt::AlignLeft | Qt::AlignBottom, "Level");
+    drawShadowText(*painter, QRect(bottom.left(), bottom.top(), leftWidth - 6, bottom.height()),
+                   Qt::AlignRight | Qt::AlignBottom, QString::number(index.data(CharLevelRole).toUInt()));
+    painter->setFont(serifFont(15));
+    const int areaLeft = top.left() + nameWidth + 10;
+    drawShadowText(*painter, QRect(areaLeft, top.top(), right - areaLeft, top.height()),
+                   Qt::AlignRight | Qt::AlignBottom, index.data(CharAreaRole).toString());
+    painter->setFont(serifFont(16));
+    drawShadowText(*painter, QRect(rightLeft, bottom.top(), right - rightLeft, bottom.height()),
+                   Qt::AlignRight | Qt::AlignBottom, formatPlayTime(index.data(CharPlayTimeRole).toUInt()));
     painter->restore();
 }
 
 LoadGameFrame::LoadGameFrame(QWidget* content, QWidget* parent): QWidget(parent), m_content(content) {
     setAttribute(Qt::WA_TranslucentBackground, true);
     m_icon = QPixmap(":/ds3_images/menu_status");
+    m_panel = QPixmap(":/ds3_images/load_panel");
     m_content->setParent(this);
     setMinimumWidth(300);
 }
@@ -121,7 +120,8 @@ QSize LoadGameFrame::sizeHint() const {
 }
 
 QRect LoadGameFrame::wellRect() const {
-    return rect().adjusted(STONE_BORDER, TITLE_HEIGHT + STONE_BORDER, -STONE_BORDER, -STONE_BORDER);
+    const int border = int(std::round(PANEL_BORDER * PANEL_SCALE));
+    return rect().adjusted(border, TITLE_HEIGHT + border, -border, -border);
 }
 
 void LoadGameFrame::resizeEvent(QResizeEvent* event) {
@@ -144,41 +144,8 @@ void LoadGameFrame::paintEvent(QPaintEvent* event) {
     drawShadowText(painter, QRect(iconSize + 11, 0, width() - iconSize - 13, TITLE_HEIGHT),
                    Qt::AlignLeft | Qt::AlignVCenter, "Characters");
 
-    // Weathered stone frame.
-    const QRect outer = rect().adjusted(0, TITLE_HEIGHT, 0, 0);
-    QLinearGradient stone(outer.topLeft(), outer.bottomRight());
-    stone.setColorAt(0.0, QColor(96, 86, 80));
-    stone.setColorAt(0.5, QColor(70, 62, 58));
-    stone.setColorAt(1.0, QColor(84, 72, 64));
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(stone);
-    painter.drawRect(outer);
-    painter.drawTiledPixmap(outer, grainTexture());
-    painter.drawTiledPixmap(outer, grainTexture(), QPoint(37, 59));
-    painter.setBrush(Qt::NoBrush);
-    painter.setPen(QPen(QColor(20, 16, 14), 1));
-    painter.drawRect(outer.adjusted(0, 0, -1, -1));
-    painter.setPen(QPen(QColor(170, 160, 150, 110), 1, Qt::DotLine));
-    painter.drawRect(outer.adjusted(3, 3, -4, -4));
-
-    // Dark teal well the slots sit in.
-    const QRect well = wellRect();
-    QLinearGradient teal(well.topLeft(), well.bottomLeft());
-    teal.setColorAt(0.0, QColor(22, 40, 40));
-    teal.setColorAt(0.6, QColor(36, 58, 58));
-    teal.setColorAt(1.0, QColor(46, 70, 70));
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(teal);
-    painter.drawRect(well);
-    painter.drawTiledPixmap(well, grainTexture());
-    // Inner shadow along the top and left edges.
-    QLinearGradient shadow(well.topLeft(), well.topLeft() + QPoint(0, 18));
-    shadow.setColorAt(0.0, QColor(0, 0, 0, 150));
-    shadow.setColorAt(1.0, QColor(0, 0, 0, 0));
-    painter.setBrush(shadow);
-    painter.drawRect(QRect(well.topLeft(), QSize(well.width(), 18)));
-    painter.setBrush(Qt::NoBrush);
-    painter.setPen(QPen(QColor(10, 14, 14), 2));
-    painter.drawRect(well.adjusted(0, 0, -1, -1));
+    // The game's framed panel the slots sit in.
+    drawNineSlice(painter, m_panel, rect().adjusted(0, TITLE_HEIGHT, 0, 0),
+                  PANEL_BORDER, PANEL_BORDER, PANEL_BORDER, PANEL_BORDER, PANEL_SCALE);
 }
 }

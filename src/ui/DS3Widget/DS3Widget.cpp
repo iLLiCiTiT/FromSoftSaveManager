@@ -1,6 +1,7 @@
 #include "DS3Widget.h"
 
 #include <QPainter>
+#include <QScrollBar>
 #include <QVBoxLayout>
 #include <qevent.h>
 
@@ -91,6 +92,12 @@ DS3Widget::DS3Widget(Controller* controller, const QString& saveId, QWidget* par
     m_view->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     m_view->setMouseTracking(true);
     m_view->setFrameShape(QFrame::NoFrame);
+    m_view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    // Styled in app.qss; the bar is already polished by now, so polish it again with its name.
+    QScrollBar* scrollBar = m_view->verticalScrollBar();
+    scrollBar->setObjectName("ds3_list_scrollbar");
+    scrollBar->style()->unpolish(scrollBar);
+    scrollBar->style()->polish(scrollBar);
     m_view->setItemDelegate(new fssm::ui::ds3::CharacterDelegate(m_view));
     auto* loadGameFrame = new fssm::ui::ds3::LoadGameFrame(m_view, viewWrap);
 

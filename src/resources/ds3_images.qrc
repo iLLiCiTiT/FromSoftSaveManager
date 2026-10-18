@@ -37,6 +37,13 @@
         <file alias="inv_shields">images/ds3/menu_icons/inv_shields.png</file>
         <file alias="inv_spells">images/ds3/menu_icons/inv_spells.png</file>
         <file alias="inv_tools">images/ds3/menu_icons/inv_tools.png</file>
+        <file alias="load_panel">images/ds3/menu/load_panel.png</file>
+        <file alias="load_slot">images/ds3/menu/load_slot.png</file>
+        <file alias="load_slot_cursor">images/ds3/menu/load_slot_cursor.png</file>
+        <file alias="scroll_down">images/ds3/menu/scroll_down.png</file>
+        <file alias="scroll_thumb">images/ds3/menu/scroll_thumb.png</file>
+        <file alias="scroll_track">images/ds3/menu/scroll_track.png</file>
+        <file alias="scroll_up">images/ds3/menu/scroll_up.png</file>
         <file alias="menu_equipment">images/ds3/menu_icons/menu_equipment.png</file>
         <file alias="menu_invetory">images/ds3/menu_icons/menu_invetory.png</file>
         <file alias="menu_status">images/ds3/menu_icons/menu_status.png</file>

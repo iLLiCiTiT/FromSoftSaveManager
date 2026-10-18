@@ -338,6 +338,36 @@ QScrollBar#ds_list_scrollbar::handle:vertical:hover {
 DSRInventoryCategoryButton:hover {
 }
 
+/* DS3 character list scrollbar from the game's sprites (tools/ds3_flags/gen_menu.py) */
+QScrollBar#ds3_list_scrollbar:vertical {
+    width: 9px;
+    margin: 10px 0px 10px 0px;
+    border: none;
+    background: transparent;
+    border-image: url(:/ds3_images/scroll_track) 0 0 0 0 stretch stretch;
+}
+QScrollBar#ds3_list_scrollbar::handle:vertical {
+    min-height: 20px;
+    margin: 0px 2px;
+    border-radius: 0px;
+    background: transparent;
+    border-image: url(:/ds3_images/scroll_thumb) 0 0 0 0 stretch stretch;
+}
+QScrollBar#ds3_list_scrollbar::sub-line:vertical {
+    height: 10px;
+    width: 9px;
+    subcontrol-position: top;
+    subcontrol-origin: margin;
+    border-image: url(:/ds3_images/scroll_up) 0 0 0 0 stretch stretch;
+}
+QScrollBar#ds3_list_scrollbar::add-line:vertical {
+    height: 10px;
+    width: 9px;
+    subcontrol-position: bottom;
+    subcontrol-origin: margin;
+    border-image: url(:/ds3_images/scroll_down) 0 0 0 0 stretch stretch;
+}
+
 #dsr_category_icon {
     font-size: 26pt;
 }

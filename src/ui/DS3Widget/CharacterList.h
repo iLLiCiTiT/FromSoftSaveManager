@@ -10,8 +10,8 @@ const int CharLevelRole = Qt::UserRole + 3;
 const int CharAreaRole = Qt::UserRole + 4;
 const int CharPlayTimeRole = Qt::UserRole + 5;
 
-// Character row drawn like a save slot on the game's "Load Game" screen:
-// a slate plate with name and level on the left, area and play time on the right.
+// Character row drawn like a save slot on the game's "Load Game" screen, with the
+// game's slot sprite: name and level on the left, area and play time on the right.
 class CharacterDelegate: public QStyledItemDelegate {
     Q_OBJECT
 public:
@@ -20,7 +20,7 @@ public:
     QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 };
 
-// The "Load Game" window (title, stone frame, dark teal well) drawn around `content`.
+// The "Load Game" panel (title and the game's framed panel sprite) drawn around `content`.
 class LoadGameFrame: public QWidget {
     Q_OBJECT
 public:
@@ -33,5 +33,6 @@ private:
     QRect wellRect() const;
     QWidget* m_content;
     QPixmap m_icon;
+    QPixmap m_panel;
 };
 }

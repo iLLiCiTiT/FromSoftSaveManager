@@ -11,6 +11,7 @@
 #include <QPixmap>
 #include <QRandomGenerator>
 #include <algorithm>
+#include <cmath>
 
 namespace fssm::ui::ds3 {
     inline const QColor TEXT_COLOR(226, 222, 212);
@@ -122,6 +123,26 @@ namespace fssm::ui::ds3 {
             painter.drawRect(corner.adjusted(c / 4, c / 4, -c / 4 - 1, -c / 4 - 1));
         }
         painter.restore();
+    }
+
+    // Draws `pix` into `target` keeping its borders (in source pixels) unstretched, scaled by `scale`.
+    inline void drawNineSlice(QPainter& painter, const QPixmap& pix, const QRect& target,
+                              int left, int top, int right, int bottom, double scale) {
+        const int sw = pix.width();
+        const int sh = pix.height();
+        const int sx[4] = {0, left, sw - right, sw};
+        const int sy[4] = {0, top, sh - bottom, sh};
+        const int dx[4] = {target.left(), target.left() + int(std::round(left * scale)),
+                           target.right() + 1 - int(std::round(right * scale)), target.right() + 1};
+        const int dy[4] = {target.top(), target.top() + int(std::round(top * scale)),
+                           target.bottom() + 1 - int(std::round(bottom * scale)), target.bottom() + 1};
+        for (int row = 0; row < 3; ++row) {
+            for (int col = 0; col < 3; ++col) {
+                const QRect src(sx[col], sy[row], sx[col + 1] - sx[col], sy[row + 1] - sy[row]);
+                const QRect dst(dx[col], dy[row], dx[col + 1] - dx[col], dy[row + 1] - dy[row]);
+                if (!src.isEmpty() && !dst.isEmpty()) painter.drawPixmap(dst, pix, src);
+            }
+        }
     }
 
     // Wax seal the game puts on equipped items.
