@@ -25,6 +25,14 @@ UserData10 parseUserData10(const BND4Entry& entry) {
     output.menuSystemSaveLoad.length = reader.read_u32_le();
     output.menuSystemSaveLoad.data = reader.read_vec_u8(output.menuSystemSaveLoad.length);
     reader.copyTo(&output.slotsSummary.occupied, sizeof(output.slotsSummary.occupied));
+    constexpr size_t SLOT_SUMMARY_SIZE = 0x24c;
+    for (SlotSummary& slot : output.slotsSummary.profiles) {
+        const size_t start = reader.pos();
+        slot.name = reader.read_u16_string(17);
+        slot.level = reader.read_u32_le();
+        slot.playTime = reader.read_u32_le();
+        reader.seek(start + SLOT_SUMMARY_SIZE);
+    }
     // TODO do rest
     return output;
 }
@@ -130,6 +138,7 @@ std::vector<InventoryItem> resolveItems(const EquipInventoryData& data, const ER
 ERCharacterInfo parseERCharacter(const BND4Entry& entry, const UserData10& userData10, const uint8_t& index) {
     ERCharacterInfo output;
     output.index = index;
+    output.playTime = userData10.slotsSummary.profiles[index].playTime;
 
     ContentReader reader = ContentReader(entry.content);
     output.version = reader.read_u32_le();

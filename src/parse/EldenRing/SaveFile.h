@@ -68,6 +68,7 @@ struct ERCharacterInfo {
     std::vector<GaItem> gaItems;
 
     std::u16string name;
+    uint32_t playTime = 0;      // seconds, from the slot's profile summary
     uint32_t runes;
     uint32_t earnedRunes;
 
@@ -157,10 +158,11 @@ struct SummaryEquipmentItem {
     std::array<uint32_t, 6> unknown4;
 };
 
+// Profile summary the "Load Game" screen shows, 0x24c bytes per slot.
 struct SlotSummary {
     std::u16string name;
     uint32_t level;
-    uint32_t unknown1;
+    uint32_t playTime;          // seconds
     uint32_t unknown2;
     uint32_t unknown3;
     uint32_t unknown4;
@@ -179,7 +181,8 @@ struct SlotSummary {
 
 struct SlotsSummary {
     std::array<uint8_t, 10> occupied;
-    // std::array<SlotSummary, 10> slots;
+    // Only name, level and playTime are read.
+    std::array<SlotSummary, 10> profiles {};
 };
 
 struct UserData10 {

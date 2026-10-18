@@ -110,6 +110,7 @@ add_executable(FromSoftSaveManager
         src/ui/SekiroWidget/Inventory.cpp
         src/ui/SekiroWidget/WorldProgress.cpp
         src/ui/ERWidget/ERWidget.cpp
+        src/ui/ERWidget/CharacterList.cpp
         src/ui/ERWidget/CharInfo.cpp
         src/ui/ERWidget/Inventory.cpp
         src/ui/ERWidget/WorldProgress.cpp

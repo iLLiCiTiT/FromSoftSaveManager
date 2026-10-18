@@ -2,14 +2,13 @@
 #include <QListView>
 #include <QStandardItemModel>
 
+#include "CharacterList.h"
 #include "CharInfo.h"
 #include "Inventory.h"
 #include "WorldProgress.h"
 #include "../BaseGameWidget.h"
 
 namespace fssm::ui::er {
-const int CharIdRole = Qt::UserRole + 1;
-
 class CharsListModel: public QStandardItemModel {
     Q_OBJECT
 signals:
