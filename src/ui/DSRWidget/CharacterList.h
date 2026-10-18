@@ -11,7 +11,7 @@ const int CharPlayTimeRole = Qt::UserRole + 4;
 const int CharAreaRole = Qt::UserRole + 5;
 
 // Character row drawn like a slot on the game's "Data List" screen: a carved gold frame
-// over the background, name and level on the left, area and play time on the right.
+// over the background, name and play time on top, level and area below.
 class CharacterDelegate: public QStyledItemDelegate {
     Q_OBJECT
 public:

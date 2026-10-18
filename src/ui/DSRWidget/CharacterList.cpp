@@ -7,6 +7,8 @@
 #include <QPainterPath>
 #include <QRandomGenerator>
 
+#include "../../parse/DSR/WorldProgress.h"
+
 namespace fssm::ui::dsr {
 namespace {
     constexpr int ROW_HEIGHT = 58;
@@ -14,6 +16,11 @@ namespace {
     constexpr int PANEL_PADDING = 8;
     // Width of the carved gold frame around a slot.
     constexpr int FRAME = 5;
+    // Text inset from the frame and the space between a row's two values.
+    constexpr int TEXT_INSET = 8;
+    constexpr int GAP = 10;
+    // Width of the list's scrollbar (app.qss, #ds_list_scrollbar).
+    constexpr int SCROLLBAR_WIDTH = 12;
 
     const QColor TEXT_COLOR(232, 226, 212);
     const QColor DIM_TEXT_COLOR(150, 144, 132);
@@ -146,39 +153,42 @@ void CharacterDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
     const QRect slot = r.adjusted(0, 2, 0, -2);
     drawSlot(*painter, slot, selected, hovered);
 
-    const QRect text = slot.adjusted(FRAME + 8, FRAME + 2, -FRAME - 8, -FRAME - 2);
+    const QRect text = slot.adjusted(FRAME + TEXT_INSET, FRAME + 2, -FRAME - TEXT_INSET, -FRAME - 2);
     const int half = text.height() / 2;
     const QRect top(text.left(), text.top(), text.width(), half);
     const QRect bottom(text.left(), text.top() + half, text.width(), text.height() - half);
-    // Name and level on the left, area and play time on the right, as in the game.
-    const int rightLeft = text.left() + text.width() * 38 / 100;
-    const int valueRight = rightLeft - 10;
-
+    // Name and play time on top, level and area below. Each row pairs a short value with a
+    // long one, so the long one gets whatever the short one leaves and nothing is cut off.
     painter->setFont(serifFont(14));
-    drawText(*painter, QRect(top.left(), top.top(), valueRight - top.left(), top.height()),
-             Qt::AlignLeft | Qt::AlignVCenter, name.toString());
-    drawText(*painter, QRect(rightLeft, top.top(), text.right() - rightLeft, top.height()),
-             Qt::AlignLeft | Qt::AlignVCenter, index.data(CharAreaRole).toString());
+    const QString playTime = formatPlayTime(index.data(CharPlayTimeRole).toUInt());
+    const int timeWidth = QFontMetrics(painter->font()).horizontalAdvance(playTime);
+    drawText(*painter, top, Qt::AlignRight | Qt::AlignVCenter, playTime);
+    drawText(*painter, top.adjusted(0, 0, -(timeWidth + GAP), 0), Qt::AlignLeft | Qt::AlignVCenter, name.toString());
+
     painter->setFont(serifFont(13));
-    drawText(*painter, QRect(bottom.left(), bottom.top(), valueRight - bottom.left(), bottom.height()),
-             Qt::AlignLeft | Qt::AlignVCenter, "Level");
-    drawText(*painter, QRect(bottom.left(), bottom.top(), valueRight - bottom.left(), bottom.height()),
-             Qt::AlignRight | Qt::AlignVCenter, QString::number(index.data(CharLevelRole).toUInt()));
-    drawText(*painter, QRect(rightLeft, bottom.top(), text.right() - rightLeft, bottom.height()),
-             Qt::AlignLeft | Qt::AlignVCenter, "Play Time");
-    drawText(*painter, QRect(rightLeft, bottom.top(), text.right() - rightLeft, bottom.height()),
-             Qt::AlignRight | Qt::AlignVCenter, formatPlayTime(index.data(CharPlayTimeRole).toUInt()));
+    const QString level = QString("Level %1").arg(index.data(CharLevelRole).toUInt());
+    const int levelWidth = QFontMetrics(painter->font()).horizontalAdvance(level);
+    drawText(*painter, bottom, Qt::AlignLeft | Qt::AlignVCenter, level);
+    drawText(*painter, bottom.adjusted(levelWidth + GAP, 0, 0, 0), Qt::AlignRight | Qt::AlignVCenter,
+             index.data(CharAreaRole).toString());
     painter->restore();
 }
 
 DataListFrame::DataListFrame(QWidget* content, QWidget* parent): QWidget(parent), m_content(content) {
     setAttribute(Qt::WA_TranslucentBackground, true);
     m_content->setParent(this);
-    setMinimumWidth(240);
+    setMinimumWidth(sizeHint().width());
 }
 
 QSize DataListFrame::sizeHint() const {
-    return {270, 400};
+    // Wide enough for "Level 999" next to the longest area name, so no slot is cut off.
+    const QFontMetrics fm(serifFont(13));
+    int areaWidth = 0;
+    for (const auto& place : fssm::parse::dsr::PLACE_NAMES) {
+        areaWidth = std::max(areaWidth, fm.horizontalAdvance(QString::fromUtf8(place.name.data(), int(place.name.size()))));
+    }
+    const int textWidth = fm.horizontalAdvance("Level 999") + GAP + areaWidth;
+    return {textWidth + 2 * (FRAME + TEXT_INSET) + SCROLLBAR_WIDTH + 2 * PANEL_PADDING + 2, 400};
 }
 
 QRect DataListFrame::panelRect() const {
