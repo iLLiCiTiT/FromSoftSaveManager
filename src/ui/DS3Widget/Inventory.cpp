@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <tuple>
 #include <unordered_map>
 
 #include "Painting.h"
@@ -324,7 +325,7 @@ void InventoryWidget::paintEvent(QPaintEvent* event) {
     painter.setRenderHint(QPainter::TextAntialiasing, true);
     if (m_layout.cellWidth == 0) m_layout = computeLayout();
 
-    drawStonePanel(painter, m_layout.panel);
+    drawMenuPanel(painter, m_layout.panel, ":/ds3_images/panel_inventory");
     if (!m_hasCharacter) {
         painter.setFont(serifFont(int(20 * m_layout.scale)));
         drawShadowText(painter, m_layout.panel, Qt::AlignCenter, "No character selected", DIM_TEXT_COLOR);
@@ -373,11 +374,6 @@ void InventoryWidget::drawGrid(QPainter& painter) {
     const Layout& l = m_layout;
     const double s = l.scale;
 
-    painter.save();
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(QColor(16, 15, 15, 150));
-    painter.drawRect(l.gridFrame);
-    painter.restore();
     drawOrnateFrame(painter, l.gridFrame, s);
 
     painter.save();
@@ -389,6 +385,38 @@ void InventoryWidget::drawGrid(QPainter& painter) {
     const int iconSize = int(cw * 0.8);
     const int firstRow = m_scroll / rh;
     const int lastRow = (m_scroll + l.grid.height()) / rh;
+    // The game's cell layers (tools/ds3_flags/gen_menu.py) on every cell, filled or not:
+    // a shadow at the top (multiply) and a highlight at the bottom (screen), then grid
+    // lines from a cross centred on each cell corner (multiply). Opacities are the .gfx's.
+    static const QPixmap shadowPix(":/ds3_images/inv_cell_shadow");
+    static const QPixmap highlightPix(":/ds3_images/inv_cell_highlight");
+    static const QPixmap gridPix(":/ds3_images/inv_cell_grid");
+    const auto cellAt = [&](int row, int col) {
+        return QRect(l.grid.left() + col * cw, l.grid.top() + row * rh - m_scroll, cw, rh);
+    };
+    painter.save();
+    for (const auto& [pix, mode, opacity] : {
+             std::tuple{&shadowPix, QPainter::CompositionMode_Multiply, 115 / 256.0},
+             std::tuple{&highlightPix, QPainter::CompositionMode_Screen, 15 / 256.0}}) {
+        painter.setCompositionMode(mode);
+        painter.setOpacity(opacity);
+        for (int row = firstRow; row <= lastRow; ++row) {
+            for (int col = 0; col < l.columns; ++col) {
+                // The masks are 96 x 106 in the game's 100 x 110 cells.
+                const QRect cell = cellAt(row, col);
+                painter.drawPixmap(cell.adjusted(cw * 2 / 100, rh * 2 / 110, -cw * 2 / 100, -rh * 2 / 110), *pix);
+            }
+        }
+    }
+    painter.setCompositionMode(QPainter::CompositionMode_Multiply);
+    painter.setOpacity(26 / 256.0);
+    for (int row = firstRow; row <= lastRow + 1; ++row) {
+        for (int col = 0; col <= l.columns; ++col) {
+            painter.drawPixmap(cellAt(row, col).translated(-cw / 2, -rh / 2), gridPix);
+        }
+    }
+    painter.restore();
+
     painter.setFont(serifFont(std::max(11, int(cw * 0.2))));
     for (int row = firstRow; row <= lastRow; ++row) {
         for (int col = 0; col < l.columns; ++col) {
@@ -399,21 +427,13 @@ void InventoryWidget::drawGrid(QPainter& painter) {
             const int pad = std::max(1, int(cw * 0.03));
             const QRect tile = cell.adjusted(pad, pad, -pad, -pad);
 
-            // Tile background; the selected one glows orange like in the game.
-            QLinearGradient bg(tile.topLeft(), tile.bottomLeft());
-            if (idx == m_selectedItem) {
-                bg.setColorAt(0.0, QColor(196, 110, 44));
-                bg.setColorAt(1.0, QColor(118, 58, 22));
-            } else if (idx == m_hoverItem) {
-                bg.setColorAt(0.0, QColor(96, 70, 48));
-                bg.setColorAt(1.0, QColor(52, 40, 32));
-            } else {
-                bg.setColorAt(0.0, QColor(40, 38, 38, 200));
-                bg.setColorAt(1.0, QColor(26, 25, 25, 200));
+            // The selected cell gets the game's orange square (fainter on hover).
+            static const QPixmap cursorPix(":/ds3_images/inv_cell_cursor");
+            if (idx == m_selectedItem || idx == m_hoverItem) {
+                painter.setOpacity(idx == m_selectedItem ? 1.0 : 0.4);
+                painter.drawPixmap(tile, cursorPix);
+                painter.setOpacity(1.0);
             }
-            painter.setPen(idx == m_selectedItem ? QPen(QColor(230, 160, 90), 1) : QPen(QColor(0, 0, 0, 120), 1));
-            painter.setBrush(bg);
-            painter.drawRect(tile.adjusted(0, 0, -1, -1));
 
             const QPoint dishPos(tile.center().x() - dish.width() / 2, tile.bottom() - dish.height() - int(cw * 0.04));
             painter.drawPixmap(dishPos, dish);

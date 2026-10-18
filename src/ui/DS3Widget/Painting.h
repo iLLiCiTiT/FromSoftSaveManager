@@ -3,6 +3,7 @@
 // (dark stone panels, gold rules, serif text with a soft shadow).
 
 #include <QFont>
+#include <QHash>
 #include <QFontMetrics>
 #include <QImage>
 #include <QLinearGradient>
@@ -143,6 +144,16 @@ namespace fssm::ui::ds3 {
                 if (!src.isEmpty() && !dst.isEmpty()) painter.drawPixmap(dst, pix, src);
             }
         }
+    }
+
+    // One of the game's translucent menu panels (tools/ds3_flags/gen_menu.py) stretched over
+    // `rect`, keeping its ragged edges unstretched.
+    inline void drawMenuPanel(QPainter& painter, const QRect& rect, const QString& resource) {
+        static QHash<QString, QPixmap> cache;
+        auto it = cache.find(resource);
+        if (it == cache.end()) it = cache.insert(resource, QPixmap(resource));
+        constexpr int EDGE = 24;
+        drawNineSlice(painter, *it, rect, EDGE, EDGE, EDGE, EDGE, 1.0);
     }
 
     // Coiled sword in a bonfire: flames when lit, cold ash when not.

@@ -57,7 +57,7 @@ void CharacterInfoWidget::paintEvent(QPaintEvent* event) {
     const auto px = [s](double v) { return int(std::round(v * s)); };
 
     const QRect panel = rect();
-    drawStonePanel(painter, panel);
+    drawMenuPanel(painter, panel, ":/ds3_images/panel_status");
     const QRect inner = panel.adjusted(px(18), px(8), -px(18), -px(12));
     if (!m_character.has_value()) {
         painter.setFont(serifFont(px(20)));

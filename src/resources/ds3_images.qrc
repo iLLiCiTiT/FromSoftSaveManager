@@ -23,6 +23,10 @@
         <file alias="inv_arrows_bolts">images/ds3/menu_icons/inv_arrows_bolts.png</file>
         <file alias="inv_bg_1">images/ds3/menu_icons/inv_bg_1.png</file>
         <file alias="inv_bg_2">images/ds3/menu_icons/inv_bg_2.png</file>
+        <file alias="inv_cell_grid">images/ds3/menu/inv_cell_grid.png</file>
+        <file alias="inv_cell_highlight">images/ds3/menu/inv_cell_highlight.png</file>
+        <file alias="inv_cell_shadow">images/ds3/menu/inv_cell_shadow.png</file>
+        <file alias="inv_cell_cursor">images/ds3/menu/inv_cell_cursor.png</file>
         <file alias="inv_catalysts">images/ds3/menu_icons/inv_catalysts.png</file>
         <file alias="inv_chest">images/ds3/menu_icons/inv_chest.png</file>
         <file alias="inv_covenant">images/ds3/menu_icons/inv_covenant.png</file>
@@ -40,6 +44,8 @@
         <file alias="load_panel">images/ds3/menu/load_panel.png</file>
         <file alias="load_slot">images/ds3/menu/load_slot.png</file>
         <file alias="load_slot_cursor">images/ds3/menu/load_slot_cursor.png</file>
+        <file alias="panel_inventory">images/ds3/menu/panel_inventory.png</file>
+        <file alias="panel_status">images/ds3/menu/panel_status.png</file>
         <file alias="scroll_down">images/ds3/menu/scroll_down.png</file>
         <file alias="seal_equipped">images/ds3/menu/seal_equipped.png</file>
         <file alias="seal_quick_menu">images/ds3/menu/seal_quick_menu.png</file>
