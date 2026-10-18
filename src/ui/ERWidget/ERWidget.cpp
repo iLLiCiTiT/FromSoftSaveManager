@@ -51,6 +51,8 @@ void CharsListModel::refresh() {
         item->setData(name, CharNameRole);
         item->setData(character->level, CharLevelRole);
         item->setData(character->playTime, CharPlayTimeRole);
+        item->setData(QString::fromUtf8(character->placeName.data(), qsizetype(character->placeName.size())),
+                      CharAreaRole);
     }
     emit refreshed();
 }

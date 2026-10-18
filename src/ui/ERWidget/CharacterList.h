@@ -8,9 +8,10 @@ const int CharIdRole = Qt::UserRole + 1;
 const int CharNameRole = Qt::UserRole + 2;
 const int CharLevelRole = Qt::UserRole + 3;
 const int CharPlayTimeRole = Qt::UserRole + 4;
+const int CharAreaRole = Qt::UserRole + 5;
 
 // Character row drawn like a profile on the game's "Load Game" screen: a near-black
-// slot with a thin grey border holding name, level and play time on one line.
+// slot with a thin grey border holding name and area on top, level and play time below.
 class CharacterDelegate: public QStyledItemDelegate {
     Q_OBJECT
 public:

@@ -69,6 +69,7 @@ struct ERCharacterInfo {
 
     std::u16string name;
     uint32_t playTime = 0;      // seconds, from the slot's profile summary
+    std::string_view placeName; // location on the Load Game screen, from the profile summary
     uint32_t runes;
     uint32_t earnedRunes;
 
@@ -164,8 +165,8 @@ struct SlotSummary {
     uint32_t level;
     uint32_t playTime;          // seconds
     uint32_t unknown2;
-    uint32_t unknown3;
-    uint32_t unknown4;
+    uint32_t mapId;             // last map, same as ERCharacterInfo::mapId
+    uint32_t placeNameId;       // PlaceName id of the location shown (findPlaceName)
     uint32_t unknown5;
     std::array<uint8_t, 288> unknown6;
     SummaryEquipmentGaItem equipmentGaItem;
@@ -181,7 +182,7 @@ struct SlotSummary {
 
 struct SlotsSummary {
     std::array<uint8_t, 10> occupied;
-    // Only name, level and playTime are read.
+    // Only name, level, playTime, mapId and placeNameId are read.
     std::array<SlotSummary, 10> profiles {};
 };
 

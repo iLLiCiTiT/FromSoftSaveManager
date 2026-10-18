@@ -9,6 +9,7 @@
 
 #include "EventFlags.h"
 #include "NpcProgress.h"
+#include "PlaceNames.h"
 #include "WorldProgress.h"
 #include "../Utils.h"
 
@@ -31,6 +32,9 @@ UserData10 parseUserData10(const BND4Entry& entry) {
         slot.name = reader.read_u16_string(17);
         slot.level = reader.read_u32_le();
         slot.playTime = reader.read_u32_le();
+        slot.unknown2 = reader.read_u32_le();
+        slot.mapId = reader.read_u32_le();
+        slot.placeNameId = reader.read_u32_le();
         reader.seek(start + SLOT_SUMMARY_SIZE);
     }
     // TODO do rest
@@ -139,6 +143,7 @@ ERCharacterInfo parseERCharacter(const BND4Entry& entry, const UserData10& userD
     ERCharacterInfo output;
     output.index = index;
     output.playTime = userData10.slotsSummary.profiles[index].playTime;
+    output.placeName = findPlaceName(userData10.slotsSummary.profiles[index].placeNameId);
 
     ContentReader reader = ContentReader(entry.content);
     output.version = reader.read_u32_le();

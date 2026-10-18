@@ -7,7 +7,7 @@
 
 namespace fssm::ui::er {
 namespace {
-    constexpr int ROW_HEIGHT = 38;
+    constexpr int ROW_HEIGHT = 58;
     constexpr int TITLE_HEIGHT = 30;
     constexpr int PANEL_PADDING = 8;
 
@@ -115,22 +115,30 @@ void CharacterDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
     const QRect slot = r.adjusted(0, 3, 0, -3);
     drawSlot(*painter, slot, selected, hovered);
 
-    // One line: name, then the level and the play time on the right.
+    // Two lines, each over a grey rule: name and area, then level and play time.
     const QRect text = slot.adjusted(12, 4, -12, -5);
-    const int timeLeft = text.left() + text.width() * 70 / 100;
-    const int levelLeft = text.left() + text.width() * 50 / 100;
+    const int splitX = text.left() + text.width() * 45 / 100;
+    const int lineHeight = text.height() / 2;
+    const QRect top(text.left(), text.top(), text.width(), lineHeight);
+    const QRect bottom(text.left(), text.top() + lineHeight, text.width(), text.height() - lineHeight);
 
     painter->setFont(serifFont(14));
-    drawText(*painter, QRect(text.left(), text.top(), levelLeft - text.left() - 6, text.height()),
+    drawText(*painter, QRect(top.left(), top.top(), splitX - top.left() - 6, top.height()),
              Qt::AlignLeft | Qt::AlignVCenter, name.toString());
     painter->setFont(serifFont(13));
-    drawText(*painter, QRect(levelLeft, text.top(), timeLeft - levelLeft - 6, text.height()),
-             Qt::AlignRight | Qt::AlignVCenter, QString::number(index.data(CharLevelRole).toUInt()));
-    drawText(*painter, QRect(timeLeft, text.top(), text.right() - timeLeft, text.height()),
-             Qt::AlignRight | Qt::AlignVCenter, formatPlayTime(index.data(CharPlayTimeRole).toUInt()));
+    drawText(*painter, QRect(splitX, top.top(), top.right() - splitX, top.height()),
+             Qt::AlignRight | Qt::AlignVCenter, index.data(CharAreaRole).toString());
+    drawText(*painter, QRect(bottom.left(), bottom.top(), splitX - bottom.left() - 6, bottom.height()),
+             Qt::AlignLeft | Qt::AlignVCenter, QString("Level %1").arg(index.data(CharLevelRole).toUInt()),
+             DIM_TEXT_COLOR);
+    drawText(*painter, QRect(splitX, bottom.top(), bottom.right() - splitX, bottom.height()),
+             Qt::AlignRight | Qt::AlignVCenter, formatPlayTime(index.data(CharPlayTimeRole).toUInt()),
+             DIM_TEXT_COLOR);
 
-    drawRule(*painter, text.left(), timeLeft - 6, text.bottom() - 1, true);
-    drawRule(*painter, timeLeft, text.right() + 2, text.bottom() - 1, false);
+    for (const QRect& line : {top, bottom}) {
+        drawRule(*painter, line.left(), splitX - 6, line.bottom() - 1, true);
+        drawRule(*painter, splitX, line.right() + 2, line.bottom() - 1, false);
+    }
     painter->restore();
 }
 
