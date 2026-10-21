@@ -89,8 +89,8 @@ ERWidget::ERWidget(Controller* controller, const QString& saveId, QWidget* paren
 
     QVBoxLayout* viewWrapLayout = new QVBoxLayout(viewWrap);
     viewWrapLayout->setContentsMargins(0, 0, 0, 0);
-    viewWrapLayout->addWidget(loadGameFrame, 4);
-    viewWrapLayout->addWidget(manageBackupsBtnsWidget, 1);
+    viewWrapLayout->addWidget(loadGameFrame, 1);
+    viewWrapLayout->addWidget(manageBackupsBtnsWidget, 0);
 
     m_charTabs = new TabWidget(this);
 

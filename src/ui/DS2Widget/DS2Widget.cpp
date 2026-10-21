@@ -92,8 +92,8 @@ DS2Widget::DS2Widget(Controller* controller, const QString& saveId, QWidget* par
     QVBoxLayout* viewWrapLayout = new QVBoxLayout(viewWrap);
     viewWrapLayout->setContentsMargins(0, 0, 0, 0);
     viewWrapLayout->addSpacing(28);
-    viewWrapLayout->addWidget(dataListFrame, 4);
-    viewWrapLayout->addWidget(manageBackupsBtnsWidget, 1);
+    viewWrapLayout->addWidget(dataListFrame, 1);
+    viewWrapLayout->addWidget(manageBackupsBtnsWidget, 0);
 
     m_charTabs = new TabWidget(this);
     m_statusWidget = new fssm::ui::ds2::PlayerStatusWidget(m_charTabs);
