@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "CharacterList.h"
+#include "HeaderTabs.h"
 #include "Inventory.h"
 #include "PlayerStatus.h"
 #include "WorldProgress.h"
@@ -44,7 +45,7 @@ private:
     QPixmap m_bgPix;
     fssm::ui::ds2::CharsListModel* m_model;
     QListView* m_view;
-    TabWidget* m_charTabs;
+    fssm::ui::ds2::HeaderTabs* m_charTabs;
     fssm::ui::ds2::PlayerStatusWidget* m_statusWidget;
     fssm::ui::ds2::InventoryWidget* m_inventoryWidget;
     fssm::ui::ds2::WorldProgressWidget* m_worldWidget;
