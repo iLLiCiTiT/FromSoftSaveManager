@@ -109,6 +109,8 @@ namespace fssm::parse::dsr {
         std::vector<NpcState> npcStates;
         // Questline stage text per NPCS entry (NPC_STAGES), empty when none is set.
         std::vector<std::string_view> npcStages;
+        // One per NPC_STEPS entry: any of the step's flags set.
+        std::vector<bool> npcStepsDone;
     };
 
     struct DSRSaveFile {

@@ -248,3 +248,50 @@ All four stage events run when she dies; she can be revived with her soul.
 - Lord's Blade Ciaran 1860 starting, 1861 wants to offer (供えたい, at Artorias' grave), 1862 thanked
   you (感謝), 1865 gone (どこにもいない), 1863 hostile, 1864 dead
 - Elizabeth 1870 starting, 1872 dead (also dies when Dusk is dead: 宵闇が死んでたら死ぬ)
+
+## Progress steps (World Progress checklist)
+
+The block keeps only the current stage, so the app shows each NPC's questline as a list of
+steps (`NPC_STEPS` in `tools/dsr_flags/gen_flags.py`, generated into
+`src/parse/DSR/WorldProgress.cpp`). A step is done when any of its flags is set:
+
+- Questline steps list their own stage flag plus every stage the stage events above can only
+  reach after it (read from the events' IfEventFlag conditions on the block), e.g. Siegmeyer
+  "Blighttown: woke him up" = 1502-1507, 1511, 1514. Branches are separate steps (Solaire
+  "Found the Sunlight Maggot" 1002/1011 vs "Ready to fight alongside you" 1012; Frampt
+  "You followed Kaathe instead" 1649/1647).
+- Steps whose stage events wait for a talk script flag also list that flag, which survives
+  the block being cleared: Solaire "Met in the Undead Burg" adds 11010591 (set by his talk
+  script t101600, the condition of 1001).
+- Siegmeyer's death at Ash Lake also counts Sieglinde's 1546 / 1549 (1546 waits for 1511).
+- When an NPC dies the block is cleared, so its questline steps read as not done (except
+  those with a talk flag); the NPC row still shows Dead.
+
+The generator checks every step flag: it must be set by a map script in an NPC block
+(stage, hostile or dead) or by a talk script (`SetEventState(flag, 1)`, ESD command 1:11).
+
+### Items given to NPCs (talk scripts)
+
+The talk scripts (`/script/talk/mAA_BB_00_00.talkesdbnd.dcx`, 64-bit `fsSL` ESD) ask
+"Give <item>?" (ESD command 1:17 with an Event_text id `Give <?gdsparam@ID?>?`); the state
+the yes answer moves to (debug name アイテムを渡すN, "give item N") sets one global flag.
+The generator reads these flags from the scripts (`talk_flags`), so they are not typed in:
+
+| NPC (talk script) | item | flag |
+|---|---|---|
+| Andre of Astora (t101619) | Large Ember (800) | 350 |
+| | Very Large Ember (801) | 351 |
+| | Divine Ember (808) | 358 |
+| | Large Divine Ember (809) | 359 |
+| | Dark Ember (810) | 360 |
+| Giant Blacksmith (t151621) | Crystal Ember (802) | 352 |
+| Rickert of Vinheim (t160622) | Large Magic Ember (806) | 356 |
+| | Enchanted Ember (807) | 357 |
+| Vamos (t130620) | Large Flame Ember (812) | 362 |
+| | Chaos Flame Ember (813) | 363 |
+
+The ember flags are 350 + (item id - 800). Andre's script mentions every ember, but only
+offers to take these five; the others belong to the smith listed. Checked on the user's
+save: e.g. a character with flags 350-352, 357-360 and 362 set, 363 not (Chaos Flame Ember
+not given to Vamos). Flags 353, 355, 361 and 364 are set by the same scripts without a
+give prompt and are not shown.
