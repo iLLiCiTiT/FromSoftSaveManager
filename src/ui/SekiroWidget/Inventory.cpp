@@ -7,6 +7,7 @@
 #include <QWheelEvent>
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <initializer_list>
 
 #include "../Utils.h"
@@ -60,6 +61,14 @@ namespace {
     // Tabs, fonts and panels keep one size (the look at the default window size);
     // resizing only changes how much fits.
     constexpr double FIXED_SCALE = 0.89;
+    // Share of the width taken by the list (or skill tree); the detail panel gets the rest.
+    constexpr double LEFT_SHARE = 0.52;
+    // Skill tree: the smallest node the minimum size keeps (design px), the margin
+    // around the tree, and the distance between columns in node sizes below which
+    // the nodes shrink instead of overlapping (leaves room for the connectors).
+    constexpr int MIN_SKILL_NODE = 30;
+    constexpr int SKILL_MARGIN = 14;
+    constexpr double MIN_SKILL_COLUMN_STEP = 1.5;
 
     const Category& categoryAt(int page, int category) {
         return *(PAGES[page].categories.begin() + category);
@@ -116,6 +125,41 @@ QSize InventoryWidget::sizeHint() const {
     return {DESIGN_W, DESIGN_H};
 }
 
+// Smallest size where nothing overlaps: the tabs, the skill trees with
+// MIN_SKILL_NODE nodes, the Attack Power line of the status bar and the Number
+// Held row beside the smallest item icon. Taken from the fixed-scale layout and
+// fonts, so it follows FIXED_SCALE.
+QSize InventoryWidget::minimumSizeHint() const {
+    const double s = FIXED_SCALE;
+    auto px = [s](double v) { return int(std::round(v * s)); };
+    const QRect probe(0, 0, 1000, 1000);
+    const Layout l = computeLayout(probe, SKILLS_PAGE);
+
+    const double node = MIN_SKILL_NODE * s;
+    const int treeW = int(std::ceil(2 * SKILL_MARGIN * s + node * (1 + (SKILL_COLUMNS - 1) * MIN_SKILL_COLUMN_STEP)));
+    const int treeH = int(std::ceil(node / 0.9 * SKILL_ROWS));
+    // The list is int(width * LEFT_SHARE) minus a constant, the rest of the probe is fixed overhead.
+    const int listOverheadW = int(probe.width() * LEFT_SHARE) - l.list.width();
+    const int treeNeed = int(std::ceil((treeW + listOverheadW) / LEFT_SHARE));
+    const int tabsNeed = l.tabs.back().right() + 1 + px(16);
+
+    // Status bar: three plates, the middle one holds "Attack Power" and its value.
+    const QFontMetrics statusMetrics(serifFont(int(15 * s)));
+    const int statusIcon = (px(56) - px(10)) / 2 - px(2);
+    const int plateNeed = px(22) + statusIcon + px(6) + statusMetrics.horizontalAdvance("Attack Power")
+                          + statusMetrics.horizontalAdvance("999") + px(8);
+    const int statusNeed = 3 * plateNeed + 2 * px(8);
+
+    // Detail panel: stat bar ("Number Held" and its value) left of the smallest icon.
+    const QFontMetrics statMetrics(serifFont(int(14 * s)));
+    const int statBarNeed = px(10) + statMetrics.horizontalAdvance("Number Held")
+                            + statMetrics.horizontalAdvance("000/ 000") + px(16) + px(8);
+    const int detailNeed = statBarNeed + px(8) + px(56) + px(6) + px(28) + px(4);
+    const int detailFit = int(std::ceil(detailNeed / (1 - LEFT_SHARE)));
+
+    return {std::max({treeNeed, tabsNeed, statusNeed, detailFit}), probe.height() - l.list.height() + treeH};
+}
+
 void InventoryWidget::setCharacter(const fssm::parse::sekiro::SekiroCharacterInfo* charInfo) {
     m_hasCharacter = charInfo != nullptr;
     m_stats = charInfo != nullptr ? *charInfo : fssm::parse::sekiro::SekiroCharacterInfo{};
@@ -136,7 +180,7 @@ void InventoryWidget::selectPage(int page, int category) {
     m_category = std::clamp(category, 0, std::max(0, categoryCount(m_page) - 1));
     m_scroll = 0;
     m_hoverItem = -1;
-    m_layout = computeLayout();
+    m_layout = computeLayout(rect(), m_page);
     rebuildVisibleItems();
     m_selectedItem = m_visibleItems.empty() && m_treeNodes.empty() ? -1 : 0;
     m_worldWidget->setVisible(worldPage() && m_hasCharacter);
@@ -167,9 +211,8 @@ void InventoryWidget::rebuildVisibleItems() {
     m_scroll = std::clamp(m_scroll, 0, maxScroll());
 }
 
-InventoryWidget::Layout InventoryWidget::computeLayout() const {
+InventoryWidget::Layout InventoryWidget::computeLayout(const QRect& r, int page) const {
     Layout l;
-    const QRect r = rect();
     l.scale = FIXED_SCALE;
     const double s = l.scale;
     auto px = [s](double v) { return int(std::round(v * s)); };
@@ -179,16 +222,16 @@ InventoryWidget::Layout InventoryWidget::computeLayout() const {
         l.tabs.emplace_back(r.left() + px(16) + i * (tabW + px(10)), r.top(), tabW, px(34));
     }
     // The Acquire Skills screen has no status bar; the tree gets the room.
-    l.status = m_page == SKILLS_PAGE ? QRect(r.left(), r.bottom() + 1, r.width(), 0)
+    l.status = page == SKILLS_PAGE ? QRect(r.left(), r.bottom() + 1, r.width(), 0)
                                      : QRect(r.left(), r.bottom() + 1 - px(56), r.width(), px(56));
 
     const int top = r.top() + px(44);
-    const int leftW = int(r.width() * 0.52);
+    const int leftW = int(r.width() * LEFT_SHARE);
     l.categoryLabel = QRect(r.left() + px(14), top, leftW - px(28), px(22));
     int listTop = l.categoryLabel.bottom() + 1 + px(6);
-    if (categoryCount(m_page) > 1) {
+    if (categoryCount(page) > 1) {
         const int size = px(40);
-        for (int i = 0; i < categoryCount(m_page); ++i) {
+        for (int i = 0; i < categoryCount(page); ++i) {
             l.categories.emplace_back(r.left() + px(26) + i * (size + px(12)), l.categoryLabel.bottom() + 1 + px(4),
                                       size, size);
         }
@@ -210,7 +253,7 @@ int InventoryWidget::maxScroll() const {
 
 void InventoryWidget::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
-    m_layout = computeLayout();
+    m_layout = computeLayout(rect(), m_page);
     m_cache.clear();
     // Below the tabs, where the category label starts on the other pages.
     const double s = m_layout.scale;
@@ -232,10 +275,12 @@ bool InventoryWidget::learned(const SkillNode& node) const {
 
 QPoint InventoryWidget::nodeCenter(const SkillNode& node, int* nodeSize) const {
     const QRect canvas = m_layout.list;
-    const double margin = 14 * m_layout.scale;
+    const double margin = SKILL_MARGIN * m_layout.scale;
     // Proportions of the game's screen: rows ~97 px apart, nodes ~90 px, columns ~276 px.
+    // In a narrow, tall canvas the nodes shrink to keep MIN_SKILL_COLUMN_STEP apart.
     const double rowStep = canvas.height() / double(SKILL_ROWS);
-    const int size = int(rowStep * 0.9);
+    const double widthNode = (canvas.width() - 2 * margin) / (1 + (SKILL_COLUMNS - 1) * MIN_SKILL_COLUMN_STEP);
+    const int size = std::max(1, int(std::min(rowStep * 0.9, widthNode)));
     const double colStep = std::min(rowStep * 2.85, (canvas.width() - size - 2 * margin) / double(SKILL_COLUMNS - 1));
     if (nodeSize != nullptr) *nodeSize = size;
     return {int(canvas.left() + margin + size / 2.0 + node.column * colStep),
@@ -319,7 +364,7 @@ void InventoryWidget::paintEvent(QPaintEvent* event) {
     painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
     painter.setRenderHint(QPainter::Antialiasing, true);
     painter.setRenderHint(QPainter::TextAntialiasing, true);
-    if (m_layout.rowHeight == 0) m_layout = computeLayout();
+    if (m_layout.rowHeight == 0) m_layout = computeLayout(rect(), m_page);
 
     drawTabs(painter);
     if (!m_hasCharacter) {
