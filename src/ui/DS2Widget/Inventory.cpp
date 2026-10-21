@@ -45,6 +45,17 @@ namespace {
     // Item icons are 128x256 with the art roughly in this band.
     const QRect ICON_SOURCE(0, 40, 128, 176);
 
+    constexpr uint32_t ESTUS_FLASK_ID = 60155000;
+
+    // Items you can hold only one of draw no number. The Estus Flask is one
+    // item whose amount is its charges, shown like a stack while it has any.
+    // Spells hold their casts as the amount, which the game doesn't show here.
+    bool showsCount(const InventoryItem& item) {
+        if (item.itemId == ESTUS_FLASK_ID) return item.amount > 0;
+        if (item.baseItem.category == ItemCategory::Spells) return false;
+        return item.baseItem.maxHeld > 1 || item.amount > 1;
+    }
+
     QString categoryLabel(ItemCategory category) {
         switch (category) {
             case ItemCategory::Consumables: return "Consumables";
@@ -318,7 +329,7 @@ void InventoryWidget::drawGrid(QPainter& painter) {
             QString label;
             if (item.durability.has_value()) {
                 if (item.upgradeLevel > 0) label = QString("+%1").arg(item.upgradeLevel);
-            } else {
+            } else if (showsCount(item)) {
                 label = QString::number(item.amount);
             }
             if (!label.isEmpty()) {
@@ -378,7 +389,7 @@ void InventoryWidget::drawNameBar(QPainter& painter) {
     QString detail;
     if (item.durability.has_value()) {
         detail = QString("Durability %1").arg(int(std::round(*item.durability)));
-    } else {
+    } else if (showsCount(item)) {
         detail = QString("x %1").arg(item.amount);
     }
     drawOutlinedText(painter, text, Qt::AlignRight | Qt::AlignVCenter, detail, DIM_TEXT_COLOR);

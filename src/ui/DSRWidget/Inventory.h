@@ -17,6 +17,7 @@ const int ItemDurabilityRole = Qt::UserRole + 5;
 const int ItemBottomlessBoxAmountRole = Qt::UserRole + 6;
 const int ItemImageRole = Qt::UserRole + 7;
 const int ItemCategoryRole = Qt::UserRole + 8;
+const int ItemShowsCountRole = Qt::UserRole + 9;
 
 
 class InventoryModel: public QStandardItemModel {

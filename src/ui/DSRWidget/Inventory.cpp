@@ -126,6 +126,13 @@ QStandardItem* InventoryModel::createModelItem(fssm::parse::dsr::InventoryItem& 
     item->setData(0, ItemBottomlessBoxAmountRole);
     item->setData(itemImage, ItemImageRole);
     item->setData(QVariant::fromValue(inventoryItem.baseItem.category), ItemCategoryRole);
+    // Items you can hold only one of show no number. Spells are listed with a
+    // stack size of 99, but the game shows no count on them.
+    item->setData(
+        inventoryItem.baseItem.max_stack_count > 1
+        && inventoryItem.baseItem.category != parse::dsr::ItemCategory::Spells,
+        ItemShowsCountRole
+    );
     return item;
 }
 QStandardItem* InventoryModel::createUnknownItem(fssm::parse::dsr::InventoryItem& inventoryItem) {
@@ -142,6 +149,7 @@ QStandardItem* InventoryModel::createUnknownItem(fssm::parse::dsr::InventoryItem
     item->setData(inventoryItem.durability, ItemDurabilityRole);
     item->setData(QVariant::fromValue(inventoryItem.baseItem.category), ItemCategoryRole);
     item->setData(QPixmap(":/dsr_images/unknown"), ItemImageRole);
+    item->setData(true, ItemShowsCountRole);
     return item;
 }
 
@@ -288,6 +296,12 @@ void InventoryDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
     QString bottomlessBoxText = QString::number(index.data(ItemBottomlessBoxAmountRole).toInt());
 
     QPoint pos = QPoint(textRect.x(), option.rect.top() + halfHeight + 10);
+    if (!index.data(ItemShowsCountRole).toBool()) {
+        // Only where the item is kept, without a number.
+        const bool inInventory = index.data(ItemAmountRole).toInt() > 0;
+        painter->drawPixmap(pos, inInventory ? invBagPix : btbPix);
+        return;
+    }
     painter->drawPixmap(pos, invBagPix);
     pos.setX(pos.x() + invBagPix.width() + 2);
 

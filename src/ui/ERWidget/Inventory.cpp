@@ -125,10 +125,10 @@ namespace {
     }
 
     // Goods that stack show their count in the grid; gear and key items don't.
+    // Items you can hold only one of draw no number. A flask with no charges
+    // allocated is stored as its "empty" variant, which holds only one.
     bool showsCount(const InventoryItem& item) {
-        const ItemCategory category = item.baseItem.category;
-        if (category == ItemCategory::Tools || category == ItemCategory::Ammunition) return true;
-        return item.baseItem.maxHeld > 1;
+        return item.baseItem.maxHeld > 1 || item.quantity > 1;
     }
 }
 
