@@ -33,8 +33,8 @@ namespace {
             painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
             const QRect bar = rect().adjusted(0, 2, -width() / 4, -2);
             painter.drawPixmap(bar.topLeft(), m_cache.get(":/sekiro_images/title_bar", bar.size()));
-            painter.setFont(serifFont(20));
-            drawShadowText(painter, bar.adjusted(22, 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter, "LOAD GAME");
+            painter.setFont(serifFont(18));
+            drawShadowText(painter, bar.adjusted(22, 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter, "Characters");
         }
     private:
         PixmapCache m_cache;
