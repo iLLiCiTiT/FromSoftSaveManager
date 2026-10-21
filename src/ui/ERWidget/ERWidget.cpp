@@ -65,6 +65,17 @@ const fssm::parse::er::ERCharacterInfo* CharsListModel::getCharByIdx(const int& 
 }
 };
 
+namespace {
+    QPixmap graceIcon() {
+        QPixmap pix(30, 30);
+        pix.fill(Qt::transparent);
+        QPainter painter(&pix);
+        painter.setRenderHint(QPainter::Antialiasing, true);
+        fssm::ui::er::drawGraceMark(painter, QRectF(0, 0, 30, 30), true);
+        return pix;
+    }
+}
+
 ERWidget::ERWidget(Controller* controller, const QString& saveId, QWidget* parent)
     : BaseGameWidget(controller, saveId, parent)
 {
@@ -92,18 +103,13 @@ ERWidget::ERWidget(Controller* controller, const QString& saveId, QWidget* paren
     viewWrapLayout->addWidget(loadGameFrame, 4);
     viewWrapLayout->addWidget(manageBackupsBtnsWidget, 1);
 
-    m_charTabs = new TabWidget(this);
-
+    m_charTabs = new fssm::ui::er::HeaderTabs(this);
     m_charInfoWidget = new fssm::ui::er::CharacterInfoWidget(m_charTabs);
-
-    m_charTabs->addTab(
-        "Character Info",
-        m_charInfoWidget
-    );
     m_inventoryWidget = new fssm::ui::er::InventoryWidget(m_charTabs);
-    m_charTabs->addTab("Inventory", m_inventoryWidget);
     m_worldWidget = new fssm::ui::er::WorldProgressWidget(m_charTabs);
-    m_charTabs->addTab("World Progress", m_worldWidget);
+    m_charTabs->addTab("Character Info", "attrs_icon", m_charInfoWidget);
+    m_charTabs->addTab("Inventory", "inventory_icon", m_inventoryWidget);
+    m_charTabs->addTab("World Progress", graceIcon(), m_worldWidget);
 
     QHBoxLayout* mainLayout = new QHBoxLayout(this);
     mainLayout->setContentsMargins(20, 20, 20, 20);

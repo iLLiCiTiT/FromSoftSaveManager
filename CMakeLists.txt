@@ -116,6 +116,7 @@ add_executable(FromSoftSaveManager
         src/ui/ERWidget/CharInfo.cpp
         src/ui/ERWidget/Inventory.cpp
         src/ui/ERWidget/WorldProgress.cpp
+        src/ui/ERWidget/HeaderTabs.cpp
 )
 
 if (FSSM_USE_INV_IMAGES)

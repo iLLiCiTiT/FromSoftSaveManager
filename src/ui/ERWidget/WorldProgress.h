@@ -6,7 +6,13 @@
 
 #include "../../parse/EldenRing/SaveFile.h"
 
+class QPainter;
+class QRectF;
+
 namespace fssm::ui::er {
+// Site of Grace: a golden glow with a spark when discovered, a faint ring otherwise.
+void drawGraceMark(QPainter& painter, const QRectF& rect, bool discovered);
+
 // Sites of Grace discovered, bosses defeated (base game, grouped by region) and NPC
 // states, from the character's event flags.
 class WorldProgressWidget: public QWidget {
