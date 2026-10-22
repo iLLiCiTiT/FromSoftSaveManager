@@ -18,6 +18,13 @@ enum class NpcState : uint8_t {
     Dead,
 };
 
+// An ending (Ending in NpcProgress.h).
+enum class EndingState : uint8_t {
+    Locked,
+    Available,
+    Reached,
+};
+
 struct GaItem {
     uint32_t handle;
     uint32_t itemId;
@@ -110,6 +117,9 @@ struct ERCharacterInfo {
     std::vector<NpcState> npcStates;
     // Questline stage text per NPCS entry (NPC_STAGES), empty when no flag with a text is set.
     std::vector<std::string_view> npcStages;
+    // One per NPC_STEPS / ENDINGS entry; empty like the lists above.
+    std::vector<bool> npcStepsDone;
+    std::vector<EndingState> endings;
 };
 
 struct MenuSystemSaveLoad {

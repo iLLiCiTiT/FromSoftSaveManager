@@ -7,8 +7,8 @@
 #include "../../parse/EldenRing/SaveFile.h"
 
 namespace fssm::ui::er {
-// Sites of Grace discovered, bosses defeated (base game, grouped by region) and NPC
-// states, from the character's event flags.
+// Sites of Grace discovered, bosses defeated (base game, grouped by region), NPC states
+// with their questline progress, and endings, from the character's event flags.
 class WorldProgressWidget: public QWidget {
     Q_OBJECT
 public:
@@ -24,6 +24,8 @@ private:
     std::vector<bool> m_bossesDefeated;
     std::vector<fssm::parse::er::NpcState> m_npcStates;
     std::vector<std::string_view> m_npcStages;
+    std::vector<bool> m_npcStepsDone;
+    std::vector<fssm::parse::er::EndingState> m_endings;
     // Graces and bosses scroll separately. From the last paint: each list's
     // rectangle, scrollable range and one scroll step.
     std::array<int, 2> m_scroll {};

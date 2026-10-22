@@ -73,6 +73,17 @@ BOSS_AREA_FIXES = {
 
 BLOCK_SIZE = 125    # bytes per 1000 flags
 
+# Block suffix -> position in its map's run of blocks (see flag_blocks).
+MAP_RUN_OVERWORLD = {0: 0, 2: 1, 7: 4, 8: 5, 9: 6}
+MAP_RUN_DUNGEON = {0: 0, 1: 1, 2: 2, 7: 6, 8: 7, 9: 8}
+# Blocks no ER-Save-Editor flag lies in, located on the 5 test characters: the item lot
+# flags (ItemLotParam getItemFlagId) of the block were tried at every rank between the
+# neighbouring known blocks (82 at 32, 580 at 98) against the characters' inventories and
+# storage; one rank matched (320 owned items with their flag set, 1 without). The same
+# test finds the known ranks of blocks 65 and 11007. Block 400 holds the flags of the
+# items NPCs give: letters, quest rewards, the gear they leave behind.
+EXTRA_BLOCKS = {400: 80}
+
 
 def read(db_dir, name):
     with open(os.path.join(db_dir, name), encoding="utf-8") as f:
@@ -99,6 +110,25 @@ def flag_blocks(db_dir):
         if id_b - id_a == rank_b - rank_a:
             for k in range(1, id_b - id_a):
                 blocks[id_a + k] = rank_a + k
+    # A map owns a run of consecutive blocks, map id * 10 + suffix, with a fixed set of
+    # suffixes: overworld tiles (1AAXXYY, 7 blocks) 0, 2, two unknown, 7, 8, 9; legacy
+    # dungeons and the like (AABB, 9 blocks) 0, 1, 2, three unknown, 7, 8, 9. Every known
+    # block fits these runs, so one known block of a map gives the map's other suffixes
+    # (e.g. Ranni's Rise 1034509xxx from block 1034500).
+    runs = {}
+    for block, rank in list(blocks.items()):
+        offsets = (MAP_RUN_OVERWORLD if block >= 1000000 else MAP_RUN_DUNGEON if block >= 10000 else None)
+        if offsets is None or block % 10 not in offsets:
+            continue
+        start = rank - offsets[block % 10]
+        if runs.setdefault(block // 10, (offsets, start)) != (offsets, start):
+            raise RuntimeError(f"block {block} breaks its map's run")
+    for map_id, (offsets, start) in runs.items():
+        for suffix, offset in offsets.items():
+            blocks.setdefault(map_id * 10 + suffix, start + offset)
+    for block, rank in EXTRA_BLOCKS.items():
+        if blocks.setdefault(block, rank) != rank:
+            raise RuntimeError(f"block {block} has two positions")
     return blocks
 
 
