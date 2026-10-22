@@ -28,10 +28,10 @@ namespace {
         ItemCategory::HandsArmor,
         ItemCategory::LegsArmor,
         ItemCategory::Rings,
-        ItemCategory::Ammunition,
         ItemCategory::Spells,
-        ItemCategory::KeyItems,
+        ItemCategory::Ammunition,
         ItemCategory::Materials,
+        ItemCategory::KeyItems,
         ItemCategory::Gestures,
     };
 
