@@ -23,7 +23,8 @@ or DisplayBossHealthBar for the entity, or, where no event does, mentions the en
 no other boss. The row id + 10000000 is not reliable: the scripts never set 12500800
 (Divine Dragon, the event sets 12500880) or 11110801 (Genichiro, Way of Tomoe, 11110800).
 A boss belongs to the travel menu area of most idols in its map. Fights that show the
-same name in the same area are one entry, defeated when any of their flags is set.
+same name in the same area are one entry, defeated when any of their flags is set. Bosses
+are listed by boss flag (the game's order), the final boss last.
 
 Requires pycryptodome.
 """
@@ -54,6 +55,8 @@ AREA_PLACE_NAMES = {
 BOSS_OVERRIDES = {
     1700850: ("Headless Ape", 7),       # bar reads "Guardian Ape"; fought in Guardian Ape's Burrow
 }
+
+FINAL_BOSS = 1120860    # Isshin, the Sword Saint (Ashina Reservoir): listed last in its area
 
 MAX_BOSS_FLAGS = 2
 BOSS_FLAG_MIN, BOSS_FLAG_MAX = 9300, 9400
@@ -246,14 +249,14 @@ def bosses(archives, params, npc_names, idol_table, areas):
         flags = boss_flags(entity, defeat_events, set(entities))
         if not flags:
             raise RuntimeError(f"{name} ({entity}): no defeat event sets a boss flag")
-        merged.setdefault((area, name), (entity, set()))[1].update(flags)
+        merged.setdefault((area, name, entity == FINAL_BOSS), set()).update(flags)
     out = []
-    for (area, name), (entity, flags) in merged.items():
+    for (area, name, final), flags in merged.items():
         if len(flags) > MAX_BOSS_FLAGS:
             raise RuntimeError(f"{name} has {len(flags)} flags")
-        out.append((area, entity, sorted(flags), name))
-    out.sort()
-    return [(area, flags, name) for area, _entity, flags, name in out]
+        out.append((area, final, sorted(flags), name))
+    out.sort()  # boss flags follow the game's order
+    return [(area, flags, name) for area, _final, flags, name in out]
 
 
 def cpp_string(s):
