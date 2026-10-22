@@ -21,7 +21,6 @@ public:
     explicit InventoryWidget(QWidget* parent = nullptr);
     void setCharacter(const fssm::parse::sekiro::SekiroCharacterInfo* charInfo);
     QSize sizeHint() const override;
-    QSize minimumSizeHint() const override;
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -44,7 +43,7 @@ private:
         QRect status;
     };
 
-    Layout computeLayout(const QRect& r, int page) const;
+    Layout computeLayout() const;
     void rebuildVisibleItems();
     int maxScroll() const;
     int itemIndexAt(const QPoint& pos) const;      // list row, or skill node on the Skills tab
