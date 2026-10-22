@@ -18,6 +18,7 @@ namespace fssm::parse::sekiro {
         SpiritEmblems,
         ProstheticTools,
         CombatArts,
+        Skills,         // goods copies of learned skills, not shown in the inventory
         Unknown,
     };
 
