@@ -16,8 +16,9 @@ Names and descriptions come from /msg/engus/item.msgbnd.dcx; icon ids from
 EquipParamGoods (+0x2C) and EquipParamWeapon (+0xBA), sort order (+0x1C) and maximum
 held count (+0x36) and whether the inventory shows the number held (+0x6A == 2: quick
 items, materials, Memories, sake and bait; not Prayer Beads or unique key items; and no
-Spirit Emblem cost at +0x74, which Spiritfalls and Ninjutsu have) from EquipParamGoods in
-GameParam.parambnd; icons from the item
+Spirit Emblem cost at +0x74, which Spiritfalls and Ninjutsu have; and not the reusable
+quick items, +0x2D == 1: Homeward Idol, Illusive Hall Bell, Nightjar Monocular, Hidden
+Tooth) from EquipParamGoods in GameParam.parambnd; icons from the item
 icon atlases of /menu/hi/01_common. Categories follow Sekiro's item id ranges. Rows without an
 English name are internal and skipped.
 
@@ -131,7 +132,8 @@ def main(game_dir, exe_path, repo_root, with_icons=True):
         icon_id = struct.unpack_from("<H", row, 0x2C)[0]
         sort_id = struct.unpack_from("<i", row, 0x1C)[0]
         max_num = struct.unpack_from("<h", row, 0x36)[0]
-        shows_count = row[0x6A] == 2 and row[0x74] == 0
+        reusable_quick_item = row[0x43] == 0 and row[0x2D] == 1
+        shows_count = row[0x6A] == 2 and row[0x74] == 0 and not reusable_quick_item
         items.append(((TYPE_GOODS << 28) | item_id, category, name, icon_id, sort_id, max(0, max_num),
                       shows_count, description(goods_descriptions.get(item_id))))
         seen.add(item_id)
