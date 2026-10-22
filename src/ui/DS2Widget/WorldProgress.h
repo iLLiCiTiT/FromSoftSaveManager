@@ -5,6 +5,7 @@
 #include <array>
 
 #include "../../parse/DS2/SaveFile.h"
+#include "../ScrollHelper.h"
 
 namespace fssm::ui::ds2 {
 // Lit bonfires and defeated bosses of a character, grouped by area, in the
@@ -19,16 +20,17 @@ public:
 protected:
     void paintEvent(QPaintEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
+    void leaveEvent(QEvent* event) override;
 
 private:
     bool m_hasCharacter = false;
     fssm::parse::ds2::DS2CharacterInfo m_char;
     QPixmap m_window;
-    // Bonfires and bosses scroll separately. From the last paint: each list's
-    // rectangle, scrollable range and one scroll step.
-    std::array<int, 2> m_scroll {};
-    std::array<int, 2> m_maxScroll {};
-    std::array<QRect, 2> m_lists;
-    int m_lineHeight = 24;
+    // Bonfires and bosses scroll separately; geometry from the last paint. The lists
+    // are not clickable, so dragging them scrolls.
+    std::array<fssm::ui::PaintedScroll, 2> m_scrolls {fssm::ui::PaintedScroll(this), fssm::ui::PaintedScroll(this)};
 };
 }

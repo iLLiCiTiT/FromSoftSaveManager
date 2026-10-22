@@ -1,5 +1,6 @@
 #include "WorldProgress.h"
 
+#include <QMouseEvent>
 #include <QPaintEvent>
 #include <QPainter>
 #include <QWheelEvent>
@@ -136,11 +137,12 @@ namespace {
 
 WorldProgressWidget::WorldProgressWidget(QWidget* parent): QWidget(parent) {
     setAttribute(Qt::WA_TranslucentBackground, true);
+    m_scroll.setContentDrag(true);
 }
 
 void WorldProgressWidget::setCharacter(const fssm::parse::ds3::DS3CharacterInfo* charInfo) {
     const bool sameCharacter = charInfo != nullptr && m_character.has_value() && m_character->index == charInfo->index;
-    if (!sameCharacter) m_scroll = 0;
+    if (!sameCharacter) m_scroll.reset();
     if (charInfo != nullptr) {
         m_character = *charInfo;
     } else {
@@ -162,7 +164,7 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     drawStonePanel(painter, panel);
     const QRect inner = panel.adjusted(px(18), px(8), -px(18), -px(12));
     if (!m_character.has_value()) {
-        m_maxScroll = 0;
+        m_scroll.clear();
         painter.setFont(serifFont(px(20)));
         drawShadowText(painter, panel, Qt::AlignCenter, "No character selected", DIM_TEXT_COLOR);
         return;
@@ -185,7 +187,6 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     const int detailH = px(17);
     const int iconSize = px(20);
     const int scrollBarW = px(10);
-    m_lineHeight = lineH;
 
     const auto rowHeight = [&](const Row& row, bool first) {
         switch (row.kind) {
@@ -213,13 +214,14 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
         single.insert(single.end(), bosses.begin(), bosses.end());
     }
     const int contentH = twoColumns ? std::max(columnHeight(bonfires), columnHeight(bosses)) : columnHeight(single);
-    m_maxScroll = std::max(0, contentH - body.height());
-    m_scroll = std::clamp(m_scroll, 0, m_maxScroll);
+    const int barW = std::max(2, px(3));
+    m_scroll.setGeometry(body, QRect(body.right() - barW, body.top(), barW, body.height()), contentH);
+    m_scroll.setStep(3 * lineH);
 
     painter.save();
     painter.setClipRect(body.adjusted(0, 0, 0, 1), Qt::IntersectClip);
     const auto drawColumn = [&](const std::vector<Row>& rows, int x) {
-        int y = body.top() - m_scroll;
+        int y = body.top() - m_scroll.value();
         for (size_t i = 0; i < rows.size(); ++i) {
             const Row& row = rows[i];
             const int h = rowHeight(row, i == 0);
@@ -294,23 +296,28 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     painter.restore();
 
     // Thin scroll bar along the right edge, like the inventory grid's.
-    if (m_maxScroll > 0) {
-        const QRect track(body.right() - std::max(2, px(3)), body.top(), std::max(2, px(3)), body.height());
-        const int thumbH = std::max(16, track.height() * track.height() / (track.height() + m_maxScroll));
-        const int thumbY = track.top() + (track.height() - thumbH) * m_scroll / m_maxScroll;
-        painter.fillRect(track, QColor(0, 0, 0, 120));
-        painter.fillRect(QRect(track.left(), thumbY, track.width(), thumbH), QColor(186, 150, 80));
-    }
+    m_scroll.paint(painter, QColor(0, 0, 0, 120), QColor(186, 150, 80));
 }
 
 void WorldProgressWidget::wheelEvent(QWheelEvent* event) {
     if (!m_character.has_value()) return;
-    const int delta = event->angleDelta().y() * 3 * m_lineHeight / 120;
-    const int scroll = std::clamp(m_scroll - delta, 0, m_maxScroll);
-    if (scroll != m_scroll) {
-        m_scroll = scroll;
-        update();
-    }
-    event->accept();
+    m_scroll.wheel(event, true);
+}
+
+void WorldProgressWidget::mousePressEvent(QMouseEvent* event) {
+    if (!m_scroll.mousePress(event)) QWidget::mousePressEvent(event);
+}
+
+void WorldProgressWidget::mouseMoveEvent(QMouseEvent* event) {
+    if (!m_scroll.mouseMove(event)) QWidget::mouseMoveEvent(event);
+}
+
+void WorldProgressWidget::mouseReleaseEvent(QMouseEvent* event) {
+    if (!m_scroll.mouseRelease(event)) QWidget::mouseReleaseEvent(event);
+}
+
+void WorldProgressWidget::leaveEvent(QEvent* event) {
+    m_scroll.leave();
+    QWidget::leaveEvent(event);
 }
 }

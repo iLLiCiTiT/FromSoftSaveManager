@@ -5,6 +5,7 @@
 #include <QWidget>
 #include <vector>
 
+#include "../ScrollHelper.h"
 #include "../../parse/DS2/SaveFile.h"
 
 namespace fssm::ui::ds2 {
@@ -22,6 +23,7 @@ protected:
     void resizeEvent(QResizeEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
     void leaveEvent(QEvent* event) override;
 
@@ -36,6 +38,7 @@ private:
         int categorySize = 0;
         int visibleCategories = 1;
         QRect grid;
+        QRect scrollTrack;          // fixed at the panel's right edge
         int tileSize = 0;
         int columns = 1;
         int rowHeight = 0;
@@ -44,7 +47,7 @@ private:
 
     Layout computeLayout() const;
     void rebuildVisibleItems();
-    int maxScroll() const;
+    void updateScrollRange();
     int itemIndexAt(const QPoint& pos) const;
     int categoryIndexAt(const QPoint& pos) const;
     int maxCategoryOffset() const;
@@ -68,7 +71,7 @@ private:
     bool m_hasCharacter = false;
     int m_category = 0;             // index into CATEGORY_ORDER
     int m_categoryOffset = 0;       // first visible category
-    int m_scroll = 0;               // pixels
+    fssm::ui::PaintedScroll m_scroll {this};    // item grid; range kept by updateScrollRange()
     int m_hoverItem = -1;
     int m_hoverCategory = -1;       // index into CATEGORY_ORDER
     int m_selectedItem = -1;

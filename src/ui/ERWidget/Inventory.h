@@ -5,6 +5,7 @@
 #include <QWidget>
 #include <vector>
 
+#include "../ScrollHelper.h"
 #include "../../parse/EldenRing/SaveFile.h"
 
 namespace fssm::ui::er {
@@ -23,6 +24,7 @@ protected:
     void resizeEvent(QResizeEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
     void leaveEvent(QEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
@@ -52,6 +54,7 @@ private:
         QRect leftButton;
         QRect rightButton;
         QRect grid;
+        QRect scrollTrack;          // fixed at the panel's right edge
         int columns = 5;
         int cellWidth = 0;
         int rowHeight = 0;
@@ -66,7 +69,7 @@ private:
     void keepCategoryVisible();
     void selectItem(int index);
     int contentHeight() const;
-    int maxScroll() const;
+    void updateScrollRange();
     int itemIndexAt(const QPoint& pos) const;
     int tabIndexAt(const QPoint& pos) const;
     QRect cellRect(int row, int column) const;
@@ -83,7 +86,7 @@ private:
     bool m_hasCharacter = false;
     int m_category = 0;             // index into the tab list
     int m_tabOffset = 0;            // first visible tab
-    int m_scroll = 0;               // pixels
+    fssm::ui::PaintedScroll m_scroll {this};    // item grid; range kept by updateScrollRange()
     int m_hoverItem = -1;
     int m_hoverTab = -1;            // index into the tab list
     int m_selectedItem = 0;

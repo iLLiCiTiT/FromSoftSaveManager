@@ -134,7 +134,7 @@ void InventoryWidget::setCharacter(const fssm::parse::sekiro::SekiroCharacterInf
 void InventoryWidget::selectPage(int page, int category) {
     m_page = std::clamp(page, 0, int(PAGES.size()) - 1);
     m_category = std::clamp(category, 0, std::max(0, categoryCount(m_page) - 1));
-    m_scroll = 0;
+    m_scroll.reset();
     m_hoverItem = -1;
     m_layout = computeLayout();
     rebuildVisibleItems();
@@ -153,10 +153,14 @@ void InventoryWidget::rebuildVisibleItems() {
         std::stable_sort(m_treeNodes.begin(), m_treeNodes.end(), [](const SkillNode* a, const SkillNode* b) {
             return std::make_pair(a->column, a->row) < std::make_pair(b->column, b->row);
         });
-        m_scroll = 0;
+        m_scroll.reset();
+        updateScrollRange();
         return;
     }
-    if (worldPage()) return;
+    if (worldPage()) {
+        updateScrollRange();
+        return;
+    }
     const Category& category = categoryAt(m_page, m_category);
     for (const auto& item : m_allItems) {
         const auto& wanted = category.categories;
@@ -164,7 +168,7 @@ void InventoryWidget::rebuildVisibleItems() {
             m_visibleItems.push_back(&item);
         }
     }
-    m_scroll = std::clamp(m_scroll, 0, maxScroll());
+    updateScrollRange();
 }
 
 InventoryWidget::Layout InventoryWidget::computeLayout() const {
@@ -203,9 +207,11 @@ InventoryWidget::Layout InventoryWidget::computeLayout() const {
     return l;
 }
 
-int InventoryWidget::maxScroll() const {
-    if (m_layout.rowHeight <= 0) return 0;
-    return std::max(0, int(m_visibleItems.size()) * m_layout.rowHeight - m_layout.list.height());
+void InventoryWidget::updateScrollRange() {
+    // Empty on the Skills and World pages, which don't scroll.
+    m_scroll.setGeometry(m_layout.list, m_layout.scrollTrack, int(m_visibleItems.size()) * m_layout.rowHeight);
+    m_scroll.setStep(m_layout.rowHeight);
+    m_scroll.setMinimumThumbHeight(int(18 * m_layout.scale));
 }
 
 void InventoryWidget::resizeEvent(QResizeEvent* event) {
@@ -215,7 +221,7 @@ void InventoryWidget::resizeEvent(QResizeEvent* event) {
     // Below the tabs, where the category label starts on the other pages.
     const double s = m_layout.scale;
     m_worldWidget->setGeometry(rect().adjusted(0, int(std::round(44 * s)), 0, -int(std::round(2 * s))));
-    m_scroll = std::clamp(m_scroll, 0, maxScroll());
+    updateScrollRange();
 }
 
 bool InventoryWidget::skillPage() const {
@@ -402,13 +408,13 @@ void InventoryWidget::drawList(QPainter& painter) {
 
     const int rowH = l.rowHeight;
     const int box = rowH - int(4 * s);
-    const int firstRow = m_scroll / rowH;
-    const int lastRow = std::min(int(m_visibleItems.size()) - 1, (m_scroll + l.list.height()) / rowH);
+    const int firstRow = m_scroll.value() / rowH;
+    const int lastRow = std::min(int(m_visibleItems.size()) - 1, (m_scroll.value() + l.list.height()) / rowH);
     const QFont nameFont = serifFont(int(17 * s));
     const QFont countFont = serifFont(int(14 * s));
     for (int row = firstRow; row <= lastRow; ++row) {
         const InventoryItem& item = *m_visibleItems[row];
-        const QRect cell(l.list.left(), l.list.top() + row * rowH - m_scroll, l.list.width(), rowH);
+        const QRect cell(l.list.left(), l.list.top() + row * rowH - m_scroll.value(), l.list.width(), rowH);
         const QRect iconBox(cell.left() + int(18 * s), cell.top() + (rowH - box) / 2, box, box);
         painter.drawPixmap(iconBox.topLeft(), m_cache.get(":/sekiro_images/icon_base", iconBox.size()));
         const QPixmap icon = itemIcon(item, box - int(4 * s));
@@ -438,14 +444,7 @@ void InventoryWidget::drawList(QPainter& painter) {
     }
     painter.restore();
 
-    const int total = maxScroll();
-    if (total > 0) {
-        const QRect track = l.scrollTrack;
-        painter.fillRect(track, QColor(30, 28, 24, 120));
-        const int thumbH = std::max(int(18 * s), track.height() * track.height() / (track.height() + total));
-        const int thumbY = track.top() + (track.height() - thumbH) * m_scroll / total;
-        painter.fillRect(QRect(track.left() - 1, thumbY, track.width() + 2, thumbH), QColor(236, 230, 214));
-    }
+    m_scroll.paint(painter, QColor(30, 28, 24, 120), QColor(236, 230, 214), 1);
 }
 
 void InventoryWidget::drawDetail(QPainter& painter) {
@@ -598,11 +597,12 @@ int InventoryWidget::itemIndexAt(const QPoint& pos) const {
         return -1;
     }
     if (!l.list.contains(pos) || l.rowHeight <= 0) return -1;
-    const int idx = (pos.y() - l.list.top() + m_scroll) / l.rowHeight;
+    const int idx = (pos.y() - l.list.top() + m_scroll.value()) / l.rowHeight;
     return idx < int(m_visibleItems.size()) ? idx : -1;
 }
 
 void InventoryWidget::mouseMoveEvent(QMouseEvent* event) {
+    if (m_scroll.mouseMove(event)) return;
     const int hover = m_hasCharacter ? itemIndexAt(event->pos()) : -1;
     if (hover != m_hoverItem) {
         m_hoverItem = hover;
@@ -618,6 +618,7 @@ void InventoryWidget::mouseMoveEvent(QMouseEvent* event) {
 }
 
 void InventoryWidget::mousePressEvent(QMouseEvent* event) {
+    if (m_hasCharacter && m_scroll.mousePress(event)) return;
     if (!m_hasCharacter || event->button() != Qt::LeftButton) {
         QWidget::mousePressEvent(event);
         return;
@@ -641,16 +642,20 @@ void InventoryWidget::mousePressEvent(QMouseEvent* event) {
     }
 }
 
+void InventoryWidget::mouseReleaseEvent(QMouseEvent* event) {
+    if (!m_scroll.mouseRelease(event)) QWidget::mouseReleaseEvent(event);
+}
+
 void InventoryWidget::wheelEvent(QWheelEvent* event) {
     if (!m_hasCharacter || skillPage() || worldPage()) return;
-    const int steps = event->angleDelta().y() / 120;
-    m_scroll = std::clamp(m_scroll - steps * m_layout.rowHeight, 0, maxScroll());
+    m_scroll.wheel(event, true);
     m_hoverItem = itemIndexAt(event->position().toPoint());
     update();
     event->accept();
 }
 
 void InventoryWidget::leaveEvent(QEvent* event) {
+    m_scroll.leave();
     m_hoverItem = -1;
     update();
     QWidget::leaveEvent(event);

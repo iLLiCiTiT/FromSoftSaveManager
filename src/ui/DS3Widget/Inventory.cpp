@@ -196,7 +196,7 @@ void InventoryWidget::setCharacter(const fssm::parse::ds3::DS3CharacterInfo* cha
     }
     m_selectedItem = 0;
     m_hoverItem = -1;
-    m_scroll = 0;
+    m_scroll.reset();
     rebuildVisibleItems();
     update();
 }
@@ -208,7 +208,7 @@ void InventoryWidget::rebuildVisibleItems() {
         if (entry.item.baseItem.category == category) m_visible.push_back(&entry);
     }
     m_selectedItem = m_visible.empty() ? -1 : std::clamp(m_selectedItem, 0, int(m_visible.size()) - 1);
-    m_scroll = std::clamp(m_scroll, 0, maxScroll());
+    updateScrollRange();
 }
 
 void InventoryWidget::keepCategoryVisible() {
@@ -223,7 +223,7 @@ void InventoryWidget::selectCategory(int category) {
     if (category == m_category) return;
     m_category = category;
     keepCategoryVisible();
-    m_scroll = 0;
+    m_scroll.reset();
     m_selectedItem = 0;
     m_hoverItem = -1;
     rebuildVisibleItems();
@@ -267,14 +267,17 @@ InventoryWidget::Layout InventoryWidget::computeLayout() const {
     l.rowHeight = TILE_SIZE * 11 / 10;
     l.grid = QRect(frameInner.left() + (frameInner.width() - l.cellWidth * l.columns) / 2, frameInner.top(),
                    l.cellWidth * l.columns, std::max(0, frameInner.height()));
+    // In the frame's right margin, so it doesn't move when columns come and go.
+    const int barW = std::max(2, px(3));
+    l.scrollTrack = QRect(frameInner.right() + px(7), frameInner.top(), barW, l.grid.height());
     return l;
 }
 
-int InventoryWidget::maxScroll() const {
-    if (m_layout.rowHeight <= 0) return 0;
+void InventoryWidget::updateScrollRange() {
     const int columns = std::max(1, m_layout.columns);
     const int rows = int((m_visible.size() + columns - 1) / columns);
-    return std::max(0, rows * m_layout.rowHeight - m_layout.grid.height());
+    m_scroll.setGeometry(m_layout.grid, m_layout.scrollTrack, rows * m_layout.rowHeight);
+    m_scroll.setStep(m_layout.rowHeight);
 }
 
 void InventoryWidget::resizeEvent(QResizeEvent* event) {
@@ -282,7 +285,7 @@ void InventoryWidget::resizeEvent(QResizeEvent* event) {
     m_layout = computeLayout();
     keepCategoryVisible();
     m_scaledCache.clear();
-    m_scroll = std::clamp(m_scroll, 0, maxScroll());
+    updateScrollRange();
 }
 
 QPixmap InventoryWidget::scaled(const QString& resource, const QSize& size) {
@@ -383,8 +386,8 @@ void InventoryWidget::drawGrid(QPainter& painter) {
     const int dishW = int(cw * 0.74);
     const QPixmap dish = scaled(":/ds3_images/dish", QSize(dishW, dishW));
     const int iconSize = int(cw * 0.8);
-    const int firstRow = m_scroll / rh;
-    const int lastRow = (m_scroll + l.grid.height()) / rh;
+    const int firstRow = m_scroll.value() / rh;
+    const int lastRow = (m_scroll.value() + l.grid.height()) / rh;
     // The game's cell layers (tools/ds3_flags/gen_menu.py) on every cell, filled or not:
     // a shadow at the top (multiply) and a highlight at the bottom (screen), then grid
     // lines from a cross centred on each cell corner (multiply). Opacities are the .gfx's.
@@ -392,7 +395,7 @@ void InventoryWidget::drawGrid(QPainter& painter) {
     static const QPixmap highlightPix(":/ds3_images/inv_cell_highlight");
     static const QPixmap gridPix(":/ds3_images/inv_cell_grid");
     const auto cellAt = [&](int row, int col) {
-        return QRect(l.grid.left() + col * cw, l.grid.top() + row * rh - m_scroll, cw, rh);
+        return QRect(l.grid.left() + col * cw, l.grid.top() + row * rh - m_scroll.value(), cw, rh);
     };
     painter.save();
     for (const auto& [pix, mode, opacity] : {
@@ -423,7 +426,7 @@ void InventoryWidget::drawGrid(QPainter& painter) {
             const int idx = row * l.columns + col;
             if (idx >= int(m_visible.size())) break;
             const Entry& entry = *m_visible[idx];
-            const QRect cell(l.grid.left() + col * cw, l.grid.top() + row * rh - m_scroll, cw, rh);
+            const QRect cell(l.grid.left() + col * cw, l.grid.top() + row * rh - m_scroll.value(), cw, rh);
             const int pad = std::max(1, int(cw * 0.03));
             const QRect tile = cell.adjusted(pad, pad, -pad, -pad);
 
@@ -470,14 +473,7 @@ void InventoryWidget::drawGrid(QPainter& painter) {
     painter.restore();
 
     // Thin scroll bar along the right edge of the grid frame.
-    const int total = maxScroll();
-    if (total > 0) {
-        const QRect track(l.grid.right() + int(5 * s), l.grid.top(), std::max(2, int(3 * s)), l.grid.height());
-        const int thumbH = std::max(16, track.height() * track.height() / (track.height() + total));
-        const int thumbY = track.top() + (track.height() - thumbH) * m_scroll / total;
-        painter.fillRect(track, QColor(0, 0, 0, 120));
-        painter.fillRect(QRect(track.left(), thumbY, track.width(), thumbH), QColor(186, 150, 80));
-    }
+    m_scroll.paint(painter, QColor(0, 0, 0, 120), QColor(186, 150, 80));
 }
 
 void InventoryWidget::drawDetail(QPainter& painter) {
@@ -582,7 +578,7 @@ int InventoryWidget::itemIndexAt(const QPoint& pos) const {
     const Layout& l = m_layout;
     if (!l.grid.contains(pos) || l.cellWidth <= 0) return -1;
     const int col = (pos.x() - l.grid.left()) / l.cellWidth;
-    const int row = (pos.y() - l.grid.top() + m_scroll) / l.rowHeight;
+    const int row = (pos.y() - l.grid.top() + m_scroll.value()) / l.rowHeight;
     if (col < 0 || col >= l.columns) return -1;
     const int idx = row * l.columns + col;
     return idx < int(m_visible.size()) ? idx : -1;
@@ -596,6 +592,7 @@ int InventoryWidget::tabIndexAt(const QPoint& pos) const {
 }
 
 void InventoryWidget::mouseMoveEvent(QMouseEvent* event) {
+    if (m_scroll.mouseMove(event)) return;
     const int hover = m_hasCharacter ? itemIndexAt(event->pos()) : -1;
     if (hover != m_hoverItem) {
         m_hoverItem = hover;
@@ -611,6 +608,7 @@ void InventoryWidget::mouseMoveEvent(QMouseEvent* event) {
 }
 
 void InventoryWidget::mousePressEvent(QMouseEvent* event) {
+    if (m_hasCharacter && m_scroll.mousePress(event)) return;
     if (!m_hasCharacter || event->button() != Qt::LeftButton) {
         QWidget::mousePressEvent(event);
         return;
@@ -628,6 +626,10 @@ void InventoryWidget::mousePressEvent(QMouseEvent* event) {
     }
 }
 
+void InventoryWidget::mouseReleaseEvent(QMouseEvent* event) {
+    if (!m_scroll.mouseRelease(event)) QWidget::mouseReleaseEvent(event);
+}
+
 void InventoryWidget::wheelEvent(QWheelEvent* event) {
     if (!m_hasCharacter) return;
     const QPoint pos = event->position().toPoint();
@@ -635,7 +637,7 @@ void InventoryWidget::wheelEvent(QWheelEvent* event) {
     if (m_layout.tabs.adjusted(-m_layout.leftArrow.width(), 0, m_layout.rightArrow.width(), 0).contains(pos)) {
         selectCategory(m_category - steps);
     } else {
-        m_scroll = std::clamp(m_scroll - steps * m_layout.rowHeight, 0, maxScroll());
+        m_scroll.wheel(event, true);
         m_hoverItem = itemIndexAt(pos);
         update();
     }
@@ -643,6 +645,7 @@ void InventoryWidget::wheelEvent(QWheelEvent* event) {
 }
 
 void InventoryWidget::leaveEvent(QEvent* event) {
+    m_scroll.leave();
     m_hoverItem = -1;
     m_hoverTab = -1;
     update();
