@@ -258,6 +258,177 @@ NPC_STAGES = {
     1862: "Ringed City: later",
 }
 
+
+def stage_range(first, last, *more):
+    """The questline stages first .. last (the ones the scripts set) and more."""
+    return [flag for flag in range(first, last + 1) if flag in NPC_STAGES] + list(more)
+
+
+# Progress steps of an NPC, by its status flag, in the order they usually happen: quest
+# milestones and things handed over or received. A step is done when any of its flags is
+# set. Every flag comes from the game data (main() checks where):
+# - questline stages (NPC_STAGES). Only the current stage is set, so a "reached" step
+#   lists its stage and the ones after it;
+# - ItemLotParam +0x80, the flag set when the lot is given or picked up ("Received");
+# - ShopLineupParam +0x10, the flag that releases a shop row ("Given"): set when an item
+#   is handed to a teacher or the Shrine Handmaid. The NPC's talk script lists the items
+#   it takes and the shop pages they open in the same order (t400210 Shrine Handmaid,
+#   t400230 Orbeck, t400240 Cornyx, t400250 Karla, t400260 Irina);
+# - flags set by the map scripts: 8200 / 8220 / 8240 are set by common event 20005061
+#   when the invader Creighton / Hodrick / Leonhard dies.
+# See docs/ds3-npc-stages.md.
+NPC_STEPS = {
+    1055: [  # Yuria of Londor
+        ("Met at Firelink Shrine", stage_range(1042, 1045)),
+        ("Received the Morion Blade", [50006040]),
+        ("Left Firelink Shrine", [1044]),
+        ("Kiln: after the Soul of Cinder", [1045]),
+        ("Received Darkdrift", [50006041]),
+        ("Received Yuria's attire", [50006042]),
+    ],
+    1075: [  # Yoel of Londor
+        ("Serving you at Firelink Shrine", [1061, 1062, 1064]),
+        ("Received the Dark Sigil", [50006193]),
+        ("Drew out all your strength", [1062]),
+    ],
+    1115: [  # Hawkwood the Deserter
+        ("Received a Heavy Gem", [50006070]),
+        ("Left Firelink Shrine", [1103, 1104]),
+        ("Received Hawkwood's Shield", [50006074]),
+        ("Received the Twinkling Dragon Torso Stone", [50006071]),
+        ("Waited for a duel in Farron Keep", [1104]),
+        ("Received the Twinkling Dragon Head Stone", [50006072]),
+    ],
+    1135: [  # Sirris of the Sunless Realms
+        ("Met at Firelink Shrine", stage_range(1122, 1130, 1133)),
+        ("Creighton the Wanderer defeated", [8200]),
+        ("Received the Silvercat Ring", [50006080]),
+        ("Holy Knight Hodrick defeated", [8220]),
+        ("Received the Sunset Shield", [50006081]),
+        ("Received the Sunset armour", [50006083]),
+        ("Received the Sunless Talisman", [50006082]),
+        ("Her last duel in the Undead Settlement", [1130]),
+    ],
+    1155: [  # Ringfinger Leonhard
+        ("Received a Cracked Red Eye Orb", [50006090]),
+        ("Received the Lift Chamber Key", [50006091]),
+        ("Met in the Cathedral of the Deep", stage_range(1146, 1153)),
+        ("Took Rosaria's soul", [1152, 1153]),
+        ("Received the Black Eye Orb", [50006092]),
+        ("Defeated in Anor Londo", [8240]),
+        ("Received the Crescent Moon Sword", [50006093]),
+    ],
+    1195: [  # Shrine Handmaid: umbral ashes handed over, in her ash menu's order
+        ("Given Mortician's Ashes", [70000100]),
+        ("Given Dreamchaser's Ashes", [70000101]),
+        ("Given Paladin's Ashes", [70000102]),
+        ("Given Grave Warden's Ashes", [70000103]),
+        ("Given Greirat's Ashes", [70000110]),
+        ("Given Orbeck's Ashes", [70000111]),
+        ("Given Cornyx's Ashes", [70000112]),
+        ("Given Karla's Ashes", [70000113]),
+        ("Given Irina's Ashes", [70000114]),
+        ("Given Patches' Ashes", [70000115]),
+        ("Given Excrement-covered Ashes", [70000104]),
+        ("Given Prisoner Chief's Ashes", [70000105]),
+        ("Given Xanthous Ashes", [70000106]),
+        ("Given Hollow's Ashes", [70000107]),
+        ("Given Dragon Chaser's Ashes", [70000108]),
+        ("Given Yuria's Ashes", [70000116]),
+        ("Given Easterner's Ashes", [70000109]),
+        ("Given Captain's Ashes", [70000120]),
+        ("Given Old Woman's Ashes", [70000121]),
+    ],
+    1215: [  # Greirat of the Undead Settlement
+        ("Freed from his cell", stage_range(1201, 1207)),
+        ("Received the Blue Tearstone Ring", [50006120]),
+        ("Sent to loot the Undead Settlement", stage_range(1203, 1207)),
+        ("Back with new wares", [70000151]),
+        ("Sent to loot Irithyll", stage_range(1205, 1207)),
+        ("Back from Irithyll", [1206, 1207]),
+        ("Sent to loot Lothric Castle", [1207]),
+        ("Lothric Castle loot", [70000152]),
+    ],
+    1235: [  # Orbeck of Vinheim
+        ("Met on the Road of Sacrifices", stage_range(1221, 1224)),
+        ("Given the Sage's Scroll", [70000201]),
+        ("Given Logan's Scroll", [70000202]),
+        ("Given the Crystal Scroll", [70000203]),
+        ("Given the Golden Scroll", [70000204]),
+        ("Received the Young Dragon Ring", [50006130]),
+        ("Received the Slumbering Dragoncrest Ring", [50006131]),
+    ],
+    1255: [  # Cornyx of the Great Swamp
+        ("Freed", [1241]),
+        ("Received a Pyromancy Flame", [50006140]),
+        ("Given the Great Swamp Pyromancy Tome", [70000250]),
+        ("Given the Carthus Pyromancy Tome", [70000251]),
+        ("Given the Izalith Pyromancy Tome", [70000252]),
+    ],
+    1275: [  # Karla
+        ("Freed", [1261]),
+        ("Given the Quelana Pyromancy Tome", [70000300]),
+        ("Given the Grave Warden Pyromancy Tome", [70000301]),
+        ("Given the Deep Braille Divine Tome", [70000302]),
+        ("Given the Londor Braille Divine Tome", [70000303]),
+    ],
+    1295: [  # Irina of Carim
+        ("Freed", stage_range(1281, 1286)),
+        ("Given the Braille Divine Tome of Carim", [70000350]),
+        ("Given the Braille Divine Tome of Lothric", [70000351]),
+        ("Given the Deep Braille Divine Tome", [70000352]),
+        ("Given the Londor Braille Divine Tome", [70000353]),
+        ("Gone dark", [1284, 1285]),
+    ],
+    1315: [  # Eygon of Carim
+        ("Met in the Undead Settlement", stage_range(1301, 1305)),
+        ("At Firelink Shrine", stage_range(1302, 1305)),
+        ("Received Morne's Great Hammer", [50006170]),
+    ],
+    1355: [  # Anri of Astora
+        ("Met on the Road of Sacrifices", stage_range(1341, 1353)),
+        ("Received the Ring of the Evil Eye", [50006190]),
+        ("Met in the Catacombs of Carthus", stage_range(1344, 1353)),
+        ("High Lord Wolnir defeated", stage_range(1346, 1353)),
+        ("Met in Irithyll", stage_range(1348, 1353)),
+        ("Received the Sword of Avowal", [50006301]),
+        ("Wedding", [1349]),
+        ("Received Anri's Straight Sword", [50006030]),
+    ],
+    1375: [  # Unbreakable Patches
+        ("Met in the Cathedral of the Deep", stage_range(1361, 1367, 1370)),
+        ("Arrived at Firelink Shrine", stage_range(1364, 1367)),
+        ("Received a Rusted Coin", [50006200]),
+        ("Received the Horsehoof Ring", [50006202]),
+    ],
+    1395: [  # Siegward of Catarina
+        ("Met on the Undead Settlement tower", stage_range(1382, 1390, 1394)),
+        ("Received Siegbräu", [50006210]),
+        ("Met in the Cathedral of the Deep", stage_range(1383, 1390)),
+        ("Dinner by the fire in Irithyll", stage_range(1386, 1390)),
+        ("Freed from the Irithyll Dungeon well", [1388, 1389]),
+        ("Received a Titanite Slab", [50006215]),
+        ("Received the Catarina armour", [50006217]),
+    ],
+    1495: [  # Horace the Hushed
+        ("Met on the Road of Sacrifices", stage_range(1481, 1485)),
+        ("Met in the Catacombs of Carthus", [1484, 1485]),
+        ("Hollowed at Smouldering Lake", [1485]),
+        ("Received the Llewellyn Shield", [50006260]),
+    ],
+    1815: [  # Amnesiac Lapp
+        ("Met in the Dreg Heap", stage_range(1801, 1811)),
+        ("Feast with you", stage_range(1807, 1811)),
+        ("Received Siegbräu", [50006620]),
+        ("Off to the Purging Monument", stage_range(1808, 1811)),
+        ("Received Lapp's armour", [50006624]),
+    ],
+    1835: [  # Shira, Knight of Filianore
+        ("Received the Sacred Chime of Filianore", [50006630]),
+        ("Received the Crucifix of the Mad King", [50006632]),
+    ],
+}
+
 # Travel menu areas, by BonfireWarpParam +0x14.
 AREAS = [
     "Firelink Shrine",
@@ -476,10 +647,10 @@ def npc_status_blocks(instances):
     return blocks
 
 
-def npc_stage_flags(archives, bases):
-    """Flags of the NPC blocks' stage range (base .. base + 14) the map scripts set."""
+def script_set_flags(archives):
+    """Flags the map scripts set on (Set Event Flag with its arguments filled in)."""
     common = parse_emevd(read_file(archives, COMMON_FUNC))
-    stages = set()
+    flags = set()
     for area in MAP_AREAS:
         for block in MAP_BLOCKS:
             script = read_file(archives, f"/event/m{area:02d}_{block:02d}_00_00.emevd.dcx")
@@ -489,9 +660,40 @@ def npc_stage_flags(archives, bases):
                 for bank, index, args in instrs:
                     if bank == 2003 and index in (2, 62):       # Set (Network-Connected) Event Flag
                         flag, on = struct.unpack_from("<iB", args, 0)
-                        if on == 1 and any(base <= flag < base + NPC_STAGE_COUNT for base in bases):
-                            stages.add(flag)
-    return stages
+                        if on == 1:
+                            flags.add(flag)
+    return flags
+
+
+def npc_stage_flags(set_flags, bases):
+    """Flags of the NPC blocks' stage range (base .. base + 14) the map scripts set."""
+    return {flag for flag in set_flags if any(base <= flag < base + NPC_STAGE_COUNT for base in bases)}
+
+
+def param_flags(params):
+    """Flags set by picking up an item lot (ItemLotParam +0x80) and flags that release a
+    shop row (ShopLineupParam +0x10)."""
+    lots = {struct.unpack_from("<i", row, 0x80)[0]
+            for row in sekirodata.parse_param(params["ItemLotParam.param"]).values()}
+    shops = {struct.unpack_from("<i", row, 0x10)[0]
+             for row in sekirodata.parse_param(params["ShopLineupParam.param"]).values()}
+    return lots, shops
+
+
+def check_npc_steps(npc_table, stages, set_flags, lots, shops):
+    """Every step flag must come from the game data (see NPC_STEPS)."""
+    status_flags = {flag for flag, _ in npc_table}
+    for status, steps in NPC_STEPS.items():
+        if status not in status_flags:
+            raise RuntimeError(f"NPC_STEPS: no NPC with status flag {status}")
+        for text, flags in steps:
+            for flag in flags:
+                if status - NPC_STAGE_COUNT <= flag < status:
+                    ok = flag in stages
+                else:
+                    ok = flag in lots or flag in shops or flag in set_flags
+                if not ok:
+                    raise RuntimeError(f"NPC_STEPS: {text!r}: no game data sets {flag}")
 
 
 def msb_npc_params(data):
@@ -569,11 +771,16 @@ def main():
     params = regulation_params(game_dir)
     table = bonfires(params, menu_text(archives))
     npc_table = npcs(archives, params)
-    stages = npc_stage_flags(archives, [flag - NPC_STAGE_COUNT for flag, _ in npc_table])
+    set_flags = script_set_flags(archives)
+    stages = npc_stage_flags(set_flags, [flag - NPC_STAGE_COUNT for flag, _ in npc_table])
     if stages != set(NPC_STAGES):
         raise RuntimeError(f"NPC stages changed: no text for {sorted(stages - set(NPC_STAGES))}, "
                            f"no script sets {sorted(set(NPC_STAGES) - stages)}")
     stage_table = sorted(NPC_STAGES.items())
+    check_npc_steps(npc_table, stages, set_flags, *param_flags(params))
+    # Steps in NPCS order, then in the order they are listed.
+    step_table = [(status, flags, text) for status, _ in npc_table for text, flags in NPC_STEPS.get(status, [])]
+    max_step_flags = max(len(flags) for _, flags, _ in step_table)
 
     out_dir = os.path.join(repo, "src", "parse", "DS3")
     write_crlf(os.path.join(out_dir, "WorldProgress.h"), f"""#pragma once
@@ -610,6 +817,14 @@ namespace fssm::parse::ds3 {{
         std::string_view text;
     }};
 
+    // A progress step of an NPC: a quest milestone, or an item given or received. Done
+    // when any of its flags is set; 0 when unused (docs/ds3-npc-stages.md).
+    struct NpcStep {{
+        uint32_t statusFlag;            // the NPC's (Npc::statusFlag)
+        std::array<uint32_t, {max_step_flags}> flags;
+        std::string_view text;
+    }};
+
     // Areas of the bonfire travel menu, in menu order.
     extern const std::array<std::string_view, {len(AREAS)}> AREAS;
     // Bonfires in travel menu order.
@@ -620,6 +835,8 @@ namespace fssm::parse::ds3 {{
     extern const std::array<Npc, {len(npc_table)}> NPCS;
     // Questline stage of the flags the scripts set in the NPC blocks, by flag.
     extern const std::array<NpcStage, {len(stage_table)}> NPC_STAGES;
+    // Progress steps, by NPC in NPCS order, then in the order they usually happen.
+    extern const std::array<NpcStep, {len(step_table)}> NPC_STEPS;
 }}
 """)
 
@@ -644,9 +861,14 @@ namespace fssm::parse::ds3 {{
     lines += ["    };", "", f"    const std::array<NpcStage, {len(stage_table)}> NPC_STAGES = {{"]
     for flag, text in stage_table:
         lines.append(f"        NpcStage{{{flag}, {cpp_string(text)}}},")
+    lines += ["    };", "", f"    const std::array<NpcStep, {len(step_table)}> NPC_STEPS = {{"]
+    for status, flags, text in step_table:
+        ids = ", ".join(str(f) for f in flags + [0] * (max_step_flags - len(flags)))
+        lines.append(f"        NpcStep{{{status}, {{{ids}}}, {cpp_string(text)}}},")
     lines += ["    };", "}", ""]
     write_crlf(os.path.join(out_dir, "WorldProgress.cpp"), "\n".join(lines))
-    print(f"{len(table)} bonfires, {len(BOSSES)} bosses, {len(npc_table)} NPCs, {len(stage_table)} NPC stages")
+    print(f"{len(table)} bonfires, {len(BOSSES)} bosses, {len(npc_table)} NPCs, {len(stage_table)} NPC stages, "
+          f"{len(step_table)} NPC steps")
 
 
 if __name__ == "__main__":
