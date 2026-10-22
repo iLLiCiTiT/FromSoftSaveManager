@@ -14,12 +14,16 @@ flag set when the idol is found, +0x8 name (NTC_メニューテキスト.fmg in
 /msg/engus/menu.msgbnd.dcx), +0x10 travel menu sort id, +0x14 travel menu area (0 = rows
 the menu doesn't list). Area names are the PlaceName (地名.fmg) of each area.
 
-Bosses: every GameAreaParam row except 0 and 1 is a boss whose defeat flag is the row id
-+ 10000000 (row 1000800 -> flag 11000800). The row id is also the boss's entity id; its
-name is the text of the event scripts' DisplayBossHealthBar (2003:11) for that entity
-(/event/mAA_BB_00_00.emevd.dcx, NPC名.fmg). A boss belongs to the travel menu area of most
-idols in its map. Fights that show the same name in the same area are one entry, defeated
-when any of their flags is set.
+Bosses: every GameAreaParam row except 0 and 1 is a boss; the row id is also the boss's
+entity id. Its name is the text of the event scripts' DisplayBossHealthBar (2003:11) for
+that entity (/event/mAA_BB_00_00.emevd.dcx, NPC名.fmg). Its defeat flag is the global
+flag 9300-9399 its defeat event sets: the event (with the arguments of each Initialize
+[Common] Event filled in) that sets one of those flags and calls HandleBossDefeat (2003:12)
+or DisplayBossHealthBar for the entity, or, where no event does, mentions the entity and
+no other boss. The row id + 10000000 is not reliable: the scripts never set 12500800
+(Divine Dragon, the event sets 12500880) or 11110801 (Genichiro, Way of Tomoe, 11110800).
+A boss belongs to the travel menu area of most idols in its map. Fights that show the
+same name in the same area are one entry, defeated when any of their flags is set.
 
 Requires pycryptodome.
 """
@@ -48,11 +52,14 @@ AREA_PLACE_NAMES = {
 
 # Bosses whose health bar repeats another fight's name: (name, travel menu area).
 BOSS_OVERRIDES = {
-    11700850: ("Headless Ape", 7),      # bar reads "Guardian Ape"; fought in Guardian Ape's Burrow
+    1700850: ("Headless Ape", 7),       # bar reads "Guardian Ape"; fought in Guardian Ape's Burrow
 }
 
 MAX_BOSS_FLAGS = 2
+BOSS_FLAG_MIN, BOSS_FLAG_MAX = 9300, 9400
 EMEVD_DISPLAY_BOSS_HEALTH_BAR = (2003, 11)
+EMEVD_HANDLE_BOSS_DEFEAT = (2003, 12)
+EMEVD_SET_EVENT_FLAGS = ((2003, 2), (2003, 62))     # Set [Network-Connected] Event Flag
 
 
 def open_archives(game_dir, exe_path):
@@ -122,6 +129,89 @@ def map_block(flag):
     return flag // 10000 % 1000     # AA B of the flag id
 
 
+def parse_emevd(data):
+    """{event id: [(bank, id, args, [(target, source, size)])]} of an EMEVD (64-bit)."""
+    assert data[:4] == b"EVD\0"
+    (event_count, events_offset, _ic, instrs_offset, _uc, _uo, _lc, _lo,
+     _pc, params_offset, _fc, _fo, _al, args_offset) = struct.unpack_from("<14q", data, 0x10)
+    events = {}
+    for i in range(event_count):
+        event_id, count, offset, param_count, param_offset = struct.unpack_from(
+            "<qqqqq", data, events_offset + i * 0x30)
+        instrs = []
+        for k in range(count):
+            bank, index, size, arg_offset, _layer = struct.unpack_from(
+                "<IIqqq", data, instrs_offset + offset + k * 0x20)
+            start = args_offset + arg_offset
+            instrs.append((bank, index, data[start:start + size], []))
+        for k in range(param_count):
+            instr, target, source, size = struct.unpack_from("<qqqi", data, params_offset + param_offset + k * 0x20)
+            instrs[instr][3].append((target, source, size))
+        events[event_id] = instrs
+    return events
+
+
+def substitute(args, params, values):
+    out = bytearray(args)
+    for target, source, size in params:
+        if source + size <= len(values):
+            out[target:target + size] = values[source:source + size]
+    return bytes(out)
+
+
+def event_instances(events, common_func):
+    """Instructions of every event of a script with the arguments of each Initialize Event
+    (2000:00 slot, event id, args) / Initialize Common Event (2000:06 event id, args)
+    filled in, plus the events nothing initializes."""
+    initialized = set()
+    for instrs in events.values():
+        for bank, index, args, _params in instrs:
+            if (bank, index) == (2000, 0):
+                event_id, values, source = struct.unpack_from("<I", args, 4)[0], args[8:], events
+            elif (bank, index) == (2000, 6):
+                event_id, values, source = struct.unpack_from("<I", args, 0)[0], args[4:], common_func
+            else:
+                continue
+            if event_id in source:
+                if source is events:
+                    initialized.add(event_id)
+                yield [(b, i, substitute(a, p, values)) for b, i, a, p in source[event_id]]
+    for event_id, instrs in events.items():
+        if event_id not in initialized:
+            yield [(b, i, a) for b, i, a, _p in instrs]
+
+
+def boss_defeat_events(instances, entities):
+    """(boss flags, entities named by HandleBossDefeat / DisplayBossHealthBar, boss entities
+    in any argument) of every event instance that sets a global boss flag on."""
+    out = []
+    for instrs in instances:
+        flags, named, mentioned = set(), set(), set()
+        for bank, index, args in instrs:
+            if (bank, index) in EMEVD_SET_EVENT_FLAGS and len(args) >= 5 and args[4] == 1:
+                flag = struct.unpack_from("<i", args, 0)[0]
+                if BOSS_FLAG_MIN <= flag < BOSS_FLAG_MAX:
+                    flags.add(flag)
+            elif (bank, index) == EMEVD_HANDLE_BOSS_DEFEAT and len(args) >= 4:
+                named.add(struct.unpack_from("<i", args, 0)[0])
+            elif (bank, index) == EMEVD_DISPLAY_BOSS_HEALTH_BAR and len(args) >= 8:
+                named.add(struct.unpack_from("<i", args, 4)[0])
+            mentioned.update(v for v in struct.unpack_from(f"<{len(args) // 4}i", args) if v in entities)
+        if flags:
+            out.append((flags, named, mentioned))
+    return out
+
+
+def boss_flags(entity, defeat_events, entities):
+    """Boss flags set by the defeat events of an entity (see the module doc)."""
+    others = entities - {entity}
+    named = [flags for flags, names, _mentioned in defeat_events if entity in names]
+    if not named:
+        named = [flags for flags, names, mentioned in defeat_events
+                 if entity in mentioned and not (names | mentioned) & others]
+    return set().union(*named)
+
+
 def bosses(archives, params, npc_names, idol_table, areas):
     # Travel menu area of each map block: the area most of its idols are listed in.
     votes = collections.defaultdict(collections.Counter)
@@ -130,7 +220,9 @@ def bosses(archives, params, npc_names, idol_table, areas):
     block_area = {block: counter.most_common(1)[0][0] for block, counter in votes.items()}
 
     entities = sorted(k for k in sekirodata.parse_param(params["GameAreaParam.param"]) if k > 1)
+    common_func = parse_emevd(read_file(archives, "/event/common_func.emevd.dcx"))
     names = {}
+    defeat_events = []
     for block in sorted({e // 10000 for e in entities}):
         path = f"/event/m{block // 10:02d}_{block % 10:02d}_00_00.emevd.dcx"
         data = read_file(archives, path)
@@ -139,26 +231,29 @@ def bosses(archives, params, npc_names, idol_table, areas):
         for entity, name_id in boss_health_bars(data):
             if name_id in npc_names:
                 names.setdefault(entity, npc_names[name_id])
+        defeat_events += boss_defeat_events(event_instances(parse_emevd(data), common_func), set(entities))
 
     merged = {}
     for entity in entities:
-        flag = 10000000 + entity
-        if flag in BOSS_OVERRIDES:
-            name, menu_area = BOSS_OVERRIDES[flag]
+        if entity in BOSS_OVERRIDES:
+            name, menu_area = BOSS_OVERRIDES[entity]
             area = areas.index(menu_area)
         elif entity in names:
-            name, area = names[entity], block_area[map_block(flag)]
+            name, area = names[entity], block_area[map_block(10000000 + entity)]
         else:
-            print(f"boss flag {flag}: no health bar, skipped")
+            print(f"boss {entity}: no health bar, skipped")
             continue
-        merged.setdefault((area, name), []).append(flag)
+        flags = boss_flags(entity, defeat_events, set(entities))
+        if not flags:
+            raise RuntimeError(f"{name} ({entity}): no defeat event sets a boss flag")
+        merged.setdefault((area, name), (entity, set()))[1].update(flags)
     out = []
-    for (area, name), flags in merged.items():
+    for (area, name), (entity, flags) in merged.items():
         if len(flags) > MAX_BOSS_FLAGS:
             raise RuntimeError(f"{name} has {len(flags)} flags")
-        out.append((area, flags, name))
-    out.sort(key=lambda b: (b[0], b[1][0]))
-    return out
+        out.append((area, entity, sorted(flags), name))
+    out.sort()
+    return [(area, flags, name) for area, _entity, flags, name in out]
 
 
 def cpp_string(s):
