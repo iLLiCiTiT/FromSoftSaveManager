@@ -119,7 +119,7 @@ QSize InventoryWidget::sizeHint() const {
 void InventoryWidget::setCharacter(const fssm::parse::sekiro::SekiroCharacterInfo* charInfo) {
     m_hasCharacter = charInfo != nullptr;
     m_stats = charInfo != nullptr ? *charInfo : fssm::parse::sekiro::SekiroCharacterInfo{};
-    m_worldWidget->setProgress(m_stats.idolsFound, m_stats.bossesDefeated);
+    m_worldWidget->setProgress(m_stats);
     m_allItems = std::move(m_stats.inventoryItems);
     m_stats.inventoryItems.clear();
     m_heldItems.clear();

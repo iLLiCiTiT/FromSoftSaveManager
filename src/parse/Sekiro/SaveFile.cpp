@@ -81,6 +81,47 @@ namespace fssm::parse::sekiro {
             }
             return defeated;
         }
+
+        template <typename Flags>
+        bool any_flag_set(EventFlagView eventFlags, const Flags& flagIds) {
+            for (const uint32_t flagId : flagIds) {
+                if (flagId != 0 && get_event_flag(eventFlags, flagId).value_or(false)) return true;
+            }
+            return false;
+        }
+
+        NpcState npc_state(EventFlagView eventFlags, const Npc& npc) {
+            if (any_flag_set(eventFlags, npc.deadFlags)) return NpcState::Dead;
+            if (any_flag_set(eventFlags, npc.hostileFlags)) return NpcState::Hostile;
+            for (uint32_t flagId = npc.firstFlag; flagId < npc.firstFlag + 20; ++flagId) {
+                if (get_event_flag(eventFlags, flagId).value_or(false)) return NpcState::Alive;
+            }
+            return NpcState::Unknown;
+        }
+
+        std::string_view npc_stage(EventFlagView eventFlags, const Npc& npc) {
+            for (const auto& stage : NPC_STAGES) {
+                if (stage.flagId >= npc.firstFlag && stage.flagId < npc.firstFlag + 20
+                    && get_event_flag(eventFlags, stage.flagId).value_or(false)) {
+                    return stage.text;
+                }
+            }
+            return {};
+        }
+
+        std::vector<bool> found_prosthetic_tools(const ItemList& items) {
+            std::vector<bool> found(PROSTHETIC_TOOLS.size(), false);
+            const auto check = [&](const InventoryEntry& entry) {
+                if (entry.empty() || (entry.itemId >> 28) != 0) return;     // weapons only
+                for (size_t i = 0; i < PROSTHETIC_TOOLS.size(); ++i) {
+                    const uint32_t weaponId = PROSTHETIC_TOOLS[i].weaponId;
+                    if (entry.itemId >= weaponId && entry.itemId < weaponId + 1000) found[i] = true;
+                }
+            };
+            for (const auto& entry : items.normalItems) check(entry);
+            for (const auto& entry : items.keyItems) check(entry);
+            return found;
+        }
     }
 
     std::string_view findPlaceName(uint32_t placeNameId) {
@@ -129,10 +170,16 @@ namespace fssm::parse::sekiro {
             }
             if (const auto gaitem = read_gaitem(character)) {
                 ci.inventoryItems = decode_inventory(gaitem->inventory.items, gaitem->storage);
+                ci.prostheticToolsFound = found_prosthetic_tools(gaitem->inventory.items);
             }
             const auto eventFlags = event_flags(character);
             ci.idolsFound = found_idols(eventFlags);
             ci.bossesDefeated = defeated_bosses(eventFlags);
+            for (const auto& npc : NPCS) {
+                ci.npcStates.push_back(npc_state(eventFlags, npc));
+                ci.npcStages.push_back(npc_stage(eventFlags, npc));
+            }
+            for (const auto& step : NPC_STEPS) ci.npcStepsDone.push_back(any_flag_set(eventFlags, step.flags));
             out.characters.push_back(std::move(ci));
         }
         return out;

@@ -9,6 +9,14 @@
 #include "SaveData.h"
 
 namespace fssm::parse::sekiro {
+    // From an NPC's dead and hostile flags (Npc in WorldProgress.h).
+    enum class NpcState : uint8_t {
+        Unknown,        // no flag of the block set: not met yet
+        Alive,
+        Hostile,
+        Dead,           // or gone for good
+    };
+
     struct SekiroCharacterInfo {
         int index = 0;
         uint32_t playTime = 0;          // seconds
@@ -26,6 +34,13 @@ namespace fssm::parse::sekiro {
         // From the event flags, one per IDOLS / BOSSES entry (WorldProgress.h).
         std::vector<bool> idolsFound;
         std::vector<bool> bossesDefeated;
+        // One per NPCS entry: its state and questline stage text (empty when no stage is set).
+        std::vector<NpcState> npcStates;
+        std::vector<std::string_view> npcStages;
+        // One per NPC_STEPS entry.
+        std::vector<bool> npcStepsDone;
+        // One per PROSTHETIC_TOOLS entry, from the inventory.
+        std::vector<bool> prostheticToolsFound;
     };
 
     struct SekiroSaveFile {
