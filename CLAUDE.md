@@ -43,6 +43,8 @@ DS2 (`DS2/SaveData`), Sekiro (`Sekiro/SaveData`) and DS3 (`DS3/SaveData`) have b
 
 `DS3/SaveData.h/.cpp` models DS3 character slots (`USER_DATA000..009`, 0xc0000 bytes) and the system slot (`USER_DATA010`); `USER_DATA011` (regulation copy) is passed through raw. `DS3RoundTrip` also verifies the header checksum (adler32 * 2, see `compute_character_checksum`). `parse_ds3_file` builds `DS3CharacterInfo` from these structs.
 
+`CharacterCopy.h/.cpp` copies a character slot between files of the same game (DSR, DS3, Sekiro, ER), rewriting the slot's Steam ID and the system entry's Load Game summary; findings per game in `docs/move-characters.md`, verification with the `CharacterCopy` console target (`tools/character_copy.cpp`).
+
 ### UI Backend (`src/ui/`)
 
 - `Controller.h/.cpp` — Central hub, exposed to QML as `contextController`. All QML-callable methods are `Q_INVOKABLE`. Owns `ConfigModel`, `BackupsModel`, `HotkeysThread`, `SaveChangesThread`, and `AudioNotifier`.

@@ -1,4 +1,5 @@
 #include "SekiroWidget.h"
+#include "../CopyCharacterDialog.h"
 
 #include <QHBoxLayout>
 #include <QLabel>
@@ -122,6 +123,7 @@ SekiroWidget::SekiroWidget(Controller* controller, const QString& saveId, QWidge
 
     m_model = new fssm::ui::sekiro::CharsListModel(controller, saveId, m_view);
     m_view->setModel(m_model);
+    fssm::ui::installCharacterCopyMenu(m_view, fssm::ui::sekiro::CharIdRole, controller, saveId, this);
 
     QVBoxLayout* viewWrapLayout = new QVBoxLayout(viewWrap);
     viewWrapLayout->setContentsMargins(0, 0, 0, 0);

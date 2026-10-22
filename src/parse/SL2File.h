@@ -45,4 +45,10 @@ namespace fssm::parse {
 
     // Parse the .sl2 container and detect the game. Does not decrypt inner files yet.
     SL2File parse_sl2_file(const std::string& input_sl2_file);
+
+    // Whole file content, read without blocking the game writing it.
+    std::vector<uint8_t> read_sl2_bytes(const std::string& input_sl2_file);
+
+    // AES-128 key of the game's entries, nullptr for games that don't encrypt them.
+    const unsigned char* entry_aes_key(Game game);
 }

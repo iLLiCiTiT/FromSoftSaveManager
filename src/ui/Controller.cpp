@@ -1,6 +1,10 @@
 #include "Controller.h"
 
+#include <QDateTime>
 #include <QDir>
+#include <QFile>
+#include <QFileInfo>
+#include <QSaveFile>
 #include <filesystem>
 #include <iostream>
 #include <utility>
@@ -361,6 +365,50 @@ bool Controller::changeBackupLabel(const QString& backupId, const QString& label
     auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
     if (!itemOpt.has_value()) return false;
     return m_backupsModel->changeBackupLabel(itemOpt.value().game, backupId, label);
+}
+
+QString Controller::copyCharacter(const QString& srcPath, int srcSlot, const QString& dstPath, int dstSlot,
+                                  const QString& label, QString& backupInfo) {
+    std::vector<uint8_t> data;
+    try {
+        // Computed (and validated) before anything touches the destination.
+        data = fssm::parse::copy_character(srcPath.toStdString(), srcSlot, dstPath.toStdString(), dstSlot);
+    } catch (const std::exception& e) {
+        return QString::fromStdString(e.what());
+    }
+
+    std::optional<SaveFileItem> managed;
+    for (const auto& item : m_configModel->getSaveFileItems()) {
+        if (QFileInfo(item.savePath) == QFileInfo(dstPath)) managed = item;
+    }
+    if (managed.has_value()) {
+        if (!m_backupsModel->createManualBackup(dstPath, managed->game, label).has_value()) {
+            return "Could not create a backup of the destination save, nothing was changed.";
+        }
+        backupInfo = "Backup \"" + label + "\" was added to the app's backups.";
+    } else {
+        const QString backupPath = dstPath + "." + QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss") + ".bak";
+        if (!QFile::copy(dstPath, backupPath)) {
+            return "Could not create the backup " + backupPath + ", nothing was changed.";
+        }
+        backupInfo = "Backup written to " + backupPath + ".";
+    }
+
+    QSaveFile file(dstPath);
+    if (!file.open(QIODevice::WriteOnly)
+        || file.write(reinterpret_cast<const char*>(data.data()), qint64(data.size())) != qint64(data.size())
+        || !file.commit()) {
+        return "Writing the destination save failed: " + file.errorString();
+    }
+    try {
+        fssm::parse::check_entry_md5s(dstPath.toStdString());
+        if (fssm::parse::read_sl2_bytes(dstPath.toStdString()) != data) {
+            return "The written save does not match what was written. Restore the backup.";
+        }
+    } catch (const std::exception& e) {
+        return "The written save failed verification: " + QString::fromStdString(e.what()) + " Restore the backup.";
+    }
+    return "";
 }
 
 // Config changed slots

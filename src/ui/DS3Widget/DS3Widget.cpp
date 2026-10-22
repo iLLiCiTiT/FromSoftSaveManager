@@ -1,4 +1,5 @@
 #include "DS3Widget.h"
+#include "../CopyCharacterDialog.h"
 
 #include <QPainter>
 #include <QScrollBar>
@@ -106,6 +107,7 @@ DS3Widget::DS3Widget(Controller* controller, const QString& saveId, QWidget* par
 
     m_model = new fssm::ui::ds3::CharsListModel(controller, saveId, m_view);
     m_view->setModel(m_model);
+    fssm::ui::installCharacterCopyMenu(m_view, fssm::ui::ds3::CharIdRole, controller, saveId, this);
 
     QVBoxLayout* viewWrapLayout = new QVBoxLayout(viewWrap);
     viewWrapLayout->setContentsMargins(0, 0, 0, 0);

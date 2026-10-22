@@ -139,15 +139,27 @@ std::vector<uint8_t> decrypt_entry_content(
 }
 #endif
 
-SL2File parse_sl2_file(const std::string& input_sl2_file) {
+const unsigned char* entry_aes_key(Game game) {
+    switch (game) {
+        case Game::DSR: return DSR_KEY;
+        case Game::DS2_SOTFS: return DS2_KEY;
+        case Game::DS3: return DS3_KEY;
+        default: return nullptr;
+    }
+}
+
+std::vector<uint8_t> read_sl2_bytes(const std::string& input_sl2_file) {
 #ifdef _WIN32
-    std::vector<uint8_t> content = read_file_shared(input_sl2_file);
+    return read_file_shared(input_sl2_file);
 #else
     std::ifstream f(input_sl2_file, std::ios::binary);
     if (!f) throw std::runtime_error("Failed to open file");
-    std::vector<uint8_t> content((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
-    f.close();
+    return std::vector<uint8_t>((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
 #endif
+}
+
+SL2File parse_sl2_file(const std::string& input_sl2_file) {
+    std::vector<uint8_t> content = read_sl2_bytes(input_sl2_file);
 
     if (content.size() < 64) {
         throw std::runtime_error("File too small to be a valid BND4 container");

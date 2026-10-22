@@ -118,6 +118,13 @@ public:
     void deleteBackupByIds(const std::vector<QString>& backupIds);
     bool changeBackupLabel(const QString& backupId, const QString& label);
 
+    // Copies a character slot between save files of the same game (docs/move-characters.md).
+    // Backs the destination up first: into the app's backups when it is a configured save,
+    // otherwise to a file next to it. Returns an error message, empty on success;
+    // `backupInfo` describes where the backup went.
+    QString copyCharacter(const QString& srcPath, int srcSlot, const QString& dstPath, int dstSlot,
+                          const QString& label, QString& backupInfo);
+
 private slots:
     void onQuickSaveRequest();
     void onQuickLoadRequest();

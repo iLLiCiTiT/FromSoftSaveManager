@@ -1,4 +1,5 @@
 #include "DSRWidget.h"
+#include "../CopyCharacterDialog.h"
 
 #include <iostream>
 #include <qevent.h>
@@ -94,6 +95,7 @@ DSRWidget::DSRWidget(Controller* controller, const QString& saveId, QWidget* par
 
     m_model = new fssm::ui::dsr::CharsListModel(controller, saveId, m_view);
     m_view->setModel(m_model);
+    fssm::ui::installCharacterCopyMenu(m_view, fssm::ui::dsr::CharIdRole, controller, saveId, this);
 
     QVBoxLayout* viewWrapLayout = new QVBoxLayout(viewWrap);
     viewWrapLayout->setContentsMargins(0, 0, 0, 0);

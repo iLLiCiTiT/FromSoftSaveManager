@@ -33,6 +33,7 @@ add_executable(FromSoftSaveManager
 
         src/parse/Utils.cpp
         src/parse/SL2File.cpp
+        src/parse/CharacterCopy.cpp
         src/parse/DSR/Items.cpp
         src/parse/DSR/SaveFile.cpp
         src/parse/DSR/SaveData.cpp
@@ -90,6 +91,7 @@ add_executable(FromSoftSaveManager
         src/ui/SettingsWidget.cpp
         src/ui/BaseGameWidget.h
         src/ui/ManageBackupsWidget.cpp
+        src/ui/CopyCharacterDialog.cpp
         src/ui/DSRWidget/DSRWidget.cpp
         src/ui/DSRWidget/CharacterList.cpp
         src/ui/DSRWidget/Inventory.cpp
@@ -196,6 +198,42 @@ add_executable(DS3RoundTrip
 )
 target_link_libraries(DS3RoundTrip tiny-aes)
 target_link_options(DS3RoundTrip PRIVATE -static-libgcc -static-libstdc++)
+
+# Console tool: copies a character between save files and verifies the written file.
+add_executable(CharacterCopy
+        tools/character_copy.cpp
+        src/parse/Utils.cpp
+        src/parse/SL2File.cpp
+        src/parse/CharacterCopy.cpp
+        src/parse/DSR/Items.cpp
+        src/parse/DSR/SaveFile.cpp
+        src/parse/DSR/SaveData.cpp
+        src/parse/DSR/EventFlags.cpp
+        src/parse/DSR/BonfireDb.cpp
+        src/parse/DSR/WorldProgress.cpp
+        src/parse/DS3/Items.cpp
+        src/parse/DS3/SaveFile.cpp
+        src/parse/DS3/SaveData.cpp
+        src/parse/DS3/Areas.cpp
+        src/parse/DS3/EventFlags.cpp
+        src/parse/DS3/WorldProgress.cpp
+        src/parse/Sekiro/SaveData.cpp
+        src/parse/Sekiro/Items.cpp
+        src/parse/Sekiro/ItemLookup.cpp
+        src/parse/Sekiro/SaveFile.cpp
+        src/parse/Sekiro/SkillTree.cpp
+        src/parse/Sekiro/EventFlags.cpp
+        src/parse/Sekiro/WorldProgress.cpp
+        src/parse/EldenRing/SaveFile.cpp
+        src/parse/EldenRing/Items.cpp
+        src/parse/EldenRing/ItemLookup.cpp
+        src/parse/EldenRing/EventFlags.cpp
+        src/parse/EldenRing/WorldProgress.cpp
+        src/parse/EldenRing/NpcProgress.cpp
+        src/parse/EldenRing/PlaceNames.cpp
+)
+target_link_libraries(CharacterCopy tiny-aes)
+target_link_options(CharacterCopy PRIVATE -static-libgcc -static-libstdc++)
 
 if (WIN32)
     configure_file(

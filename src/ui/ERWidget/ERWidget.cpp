@@ -1,4 +1,5 @@
 #include "ERWidget.h"
+#include "../CopyCharacterDialog.h"
 
 #include <QPainter>
 #include <qevent.h>
@@ -83,6 +84,7 @@ ERWidget::ERWidget(Controller* controller, const QString& saveId, QWidget* paren
 
     m_model = new fssm::ui::er::CharsListModel(controller, saveId, m_view);
     m_view->setModel(m_model);
+    fssm::ui::installCharacterCopyMenu(m_view, fssm::ui::er::CharIdRole, controller, saveId, this);
 
     ManageBackupsButtonsWidget* manageBackupsBtnsWidget = new ManageBackupsButtonsWidget(controller, viewWrap);
     manageBackupsBtnsWidget->setAttribute(Qt::WA_TranslucentBackground, true);
