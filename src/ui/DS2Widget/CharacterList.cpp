@@ -103,9 +103,9 @@ void DataListFrame::paintEvent(QPaintEvent* event) {
     if (!m_window.isNull()) {
         drawNineSlice(painter, m_window, rect(), FRAME_LEFT, FRAME_TOP, FRAME_RIGHT, FRAME_BOTTOM, s);
     }
-    // Title in the blue bar, next to the window's own icon.
+    // Title in the blue bar (the game has "Data List"), next to the window's own icon.
     const QRect title(int(118 * s), int(18 * s), width() - int(160 * s), int(36 * s));
     painter.setFont(serifFont(std::max(17, int(32 * s))));
-    drawOutlinedText(painter, title, Qt::AlignLeft | Qt::AlignVCenter, "Data List", TEXT_COLOR);
+    drawOutlinedText(painter, title, Qt::AlignLeft | Qt::AlignVCenter, "Characters", TEXT_COLOR);
 }
 }
