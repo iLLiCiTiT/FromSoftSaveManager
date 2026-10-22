@@ -84,7 +84,7 @@ namespace fssm::parse::sekiro {
         Boss{{9304, 0}, 4, "Guardian Ape"},
         Boss{{9306, 0}, 5, "Corrupted Monk"},
         Boss{{9307, 0}, 5, "Headless Ape"},
-        Boss{{9309, 0}, 6, "Corrupted Monk"},
+        Boss{{9309, 0}, 6, "True Corrupted Monk"},
         Boss{{9310, 9318}, 6, "Divine Dragon"},
         Boss{{9302, 0}, 7, "Lady Butterfly"},
         Boss{{9317, 0}, 7, "Owl (Father)"},

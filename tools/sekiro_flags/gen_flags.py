@@ -55,6 +55,7 @@ AREA_PLACE_NAMES = {
 # Bosses whose health bar repeats another fight's name: (name, travel menu area).
 BOSS_OVERRIDES = {
     1700850: ("Headless Ape", 7),       # bar reads "Guardian Ape"; fought in Guardian Ape's Burrow
+    2500850: ("True Corrupted Monk", 8),    # bar reads "Corrupted Monk", like the illusion in Ashina Depths
 }
 # Bosses listed in an area other than their map's: travel menu area.
 BOSS_AREAS = {
