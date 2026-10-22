@@ -594,16 +594,15 @@ void InventoryWidget::drawStatus(QPainter& painter) {
         painter.drawPixmap(emblemRow.left(), emblemRow.top() + (plateRowH - rowIcon) / 2,
                            itemIcon(*m_spiritEmblems, rowIcon));
     }
-    const QRect emblemText = emblemRow.adjusted(rowIcon + int(6 * s), 0, 0, 0);
-    drawShadowText(painter, emblemText, Qt::AlignLeft | Qt::AlignVCenter, "Spirit Emblems");
-    drawShadowText(painter, emblemText, Qt::AlignRight | Qt::AlignVCenter,
-                   QString::number(m_spiritEmblems ? m_spiritEmblems->quantity : 0));
+    // Held, then stored in brackets.
+    const QString emblems = m_spiritEmblems
+        ? QString("%1 (%2)").arg(m_spiritEmblems->quantity).arg(m_spiritEmblems->storageQuantity)
+        : QString("0 (0)");
+    drawShadowText(painter, emblemRow, Qt::AlignRight | Qt::AlignVCenter, emblems);
     const QRect senRow = plateRow(1);
     painter.drawPixmap(senRow.left(), senRow.top() + (plateRowH - rowIcon) / 2,
                        m_cache.fit(":/sekiro_images/icon_sen", QSize(rowIcon, rowIcon)));
-    const QRect senText = senRow.adjusted(rowIcon + int(6 * s), 0, 0, 0);
-    drawShadowText(painter, senText, Qt::AlignLeft | Qt::AlignVCenter, "Sen");
-    drawShadowText(painter, senText, Qt::AlignRight | Qt::AlignVCenter, QString::number(m_stats.sen));
+    drawShadowText(painter, senRow, Qt::AlignRight | Qt::AlignVCenter, QString::number(m_stats.sen));
 }
 
 int InventoryWidget::itemIndexAt(const QPoint& pos) const {
