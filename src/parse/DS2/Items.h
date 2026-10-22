@@ -68,7 +68,7 @@ namespace fssm::parse::ds2 {
     struct BaseItem {
         uint32_t id = 0;
         uint16_t maxHeld = 1;       // ItemParam stack limit (99 for goods, 999 for ammo)
-        uint16_t order = 0;         // ItemParam sort order
+        uint16_t order = 0;         // ItemParam sort id (+0x2c), the in-game order within a tab
         ItemCategory category = ItemCategory::Unknown;
         std::string_view label = "Unknown";
         std::string_view image;     // alias in :/ds2_inv_images (128x256 icon), empty if none
