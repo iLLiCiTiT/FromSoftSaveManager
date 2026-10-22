@@ -157,9 +157,12 @@ void HeaderTabs::paintEvent(QPaintEvent* event) {
             painter.drawPixmap(QRect(x1, RULE_Y - TITLE_LINE_HEIGHT / 2, x2 - x1, TITLE_LINE_HEIGHT), m_titleLine);
         }
         painter.setOpacity(current ? 1.0 : (hovered ? 0.85 : 0.5));
+        // Icon and title are centered on the band (above the rule), not the whole row.
+        const QRect content(r.left(), bar.top(), r.width(), RULE_Y - bar.top());
         const QPixmap& icon = m_tabs[i].icon;
-        painter.drawPixmap(r.left() + (ICON_SIZE - icon.width()) / 2, r.top() + (BAR_HEIGHT - icon.height()) / 2, icon);
-        drawText(painter, r.adjusted(ICON_SIZE + ICON_GAP, 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter,
+        painter.drawPixmap(content.left() + (ICON_SIZE - icon.width()) / 2,
+                           content.top() + (content.height() - icon.height()) / 2, icon);
+        drawText(painter, content.adjusted(ICON_SIZE + ICON_GAP, 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter,
                  m_tabs[i].title, current ? TEXT_COLOR : DIM_TEXT_COLOR);
         painter.setOpacity(1.0);
     }
