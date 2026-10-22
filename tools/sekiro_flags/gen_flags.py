@@ -58,7 +58,7 @@ BOSS_OVERRIDES = {
 }
 # Bosses listed in an area other than their map's: travel menu area.
 BOSS_AREAS = {
-    1120860: 3,                         # Isshin, the Sword Saint, at Ashina Reservoir
+    1120860: 3,                         # Isshin, the Sword Saint, at Ashina Reservoir (the final boss)
 }
 
 MAX_BOSS_FLAGS = 2
@@ -126,7 +126,8 @@ def idols(params, menu_text, place_names):
             raise RuntimeError(f"unknown travel menu area {area}")
         out.append((sort_id, flag, area, " ".join(menu_text[text_id].split())))
     out.sort()
-    areas = sorted({area for _sort, _flag, area, _name in out} | set(BOSS_AREAS.values()))
+    areas = sorted({area for _sort, _flag, area, _name in out})
+    areas += sorted(set(BOSS_AREAS.values()) - set(areas))     # boss-only areas last
     area_names = [" ".join(place_names[AREA_PLACE_NAMES[a]].split()) for a in areas]
     return [(flag, areas.index(area), name) for _sort, flag, area, name in out], areas, area_names
 
