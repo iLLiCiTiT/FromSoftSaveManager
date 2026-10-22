@@ -24,7 +24,7 @@ no other boss. The row id + 10000000 is not reliable: the scripts never set 1250
 (Divine Dragon, the event sets 12500880) or 11110801 (Genichiro, Way of Tomoe, 11110800).
 A boss belongs to the travel menu area of most idols in its map. Fights that show the
 same name in the same area are one entry, defeated when any of their flags is set. Bosses
-are listed by boss flag (the game's order), the final boss last.
+are listed by boss flag (the game's order).
 
 Requires pycryptodome.
 """
@@ -43,6 +43,7 @@ HIDDEN_AREA = 0
 AREA_PLACE_NAMES = {
     1: 1100,    # Ashina Outskirts
     2: 1110,    # Ashina Castle
+    3: 1120,    # Ashina Reservoir: no idols (the menu lists them under Ashina Castle), bosses only
     4: 1300,    # Abandoned Dungeon
     5: 2000,    # Senpou Temple, Mt. Kongo
     6: 1700,    # Sunken Valley
@@ -55,8 +56,10 @@ AREA_PLACE_NAMES = {
 BOSS_OVERRIDES = {
     1700850: ("Headless Ape", 7),       # bar reads "Guardian Ape"; fought in Guardian Ape's Burrow
 }
-
-FINAL_BOSS = 1120860    # Isshin, the Sword Saint (Ashina Reservoir): listed last in its area
+# Bosses listed in an area other than their map's: travel menu area.
+BOSS_AREAS = {
+    1120860: 3,                         # Isshin, the Sword Saint, at Ashina Reservoir
+}
 
 MAX_BOSS_FLAGS = 2
 BOSS_FLAG_MIN, BOSS_FLAG_MAX = 9300, 9400
@@ -123,7 +126,7 @@ def idols(params, menu_text, place_names):
             raise RuntimeError(f"unknown travel menu area {area}")
         out.append((sort_id, flag, area, " ".join(menu_text[text_id].split())))
     out.sort()
-    areas = sorted({area for _sort, _flag, area, _name in out})
+    areas = sorted({area for _sort, _flag, area, _name in out} | set(BOSS_AREAS.values()))
     area_names = [" ".join(place_names[AREA_PLACE_NAMES[a]].split()) for a in areas]
     return [(flag, areas.index(area), name) for _sort, flag, area, name in out], areas, area_names
 
@@ -246,17 +249,19 @@ def bosses(archives, params, npc_names, idol_table, areas):
         else:
             print(f"boss {entity}: no health bar, skipped")
             continue
+        if entity in BOSS_AREAS:
+            area = areas.index(BOSS_AREAS[entity])
         flags = boss_flags(entity, defeat_events, set(entities))
         if not flags:
             raise RuntimeError(f"{name} ({entity}): no defeat event sets a boss flag")
-        merged.setdefault((area, name, entity == FINAL_BOSS), set()).update(flags)
+        merged.setdefault((area, name), set()).update(flags)
     out = []
-    for (area, name, final), flags in merged.items():
+    for (area, name), flags in merged.items():
         if len(flags) > MAX_BOSS_FLAGS:
             raise RuntimeError(f"{name} has {len(flags)} flags")
-        out.append((area, final, sorted(flags), name))
+        out.append((area, sorted(flags), name))
     out.sort()  # boss flags follow the game's order
-    return [(area, flags, name) for area, _final, flags, name in out]
+    return out
 
 
 def cpp_string(s):
