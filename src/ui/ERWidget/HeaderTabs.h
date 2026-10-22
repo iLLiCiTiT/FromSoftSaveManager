@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QImage>
 #include <QPixmap>
 #include <QWidget>
 #include <vector>
@@ -35,6 +36,7 @@ private:
 
     QStackedWidget* m_stack;
     QPixmap m_titleLine;
+    QImage m_band;  // cached backdrop for the current width
     std::vector<Tab> m_tabs;
     int m_current = -1;
     int m_hover = -1;

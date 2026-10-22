@@ -97,17 +97,32 @@ void HeaderTabs::paintEvent(QPaintEvent* event) {
     painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
     painter.setRenderHint(QPainter::TextAntialiasing, true);
 
-    // Dark band fading out to the right, with a faint gold rule along its bottom.
+    // Dark band with soft, blurred edges so it blends into the background (fades out to
+    // the right most), with a faint gold rule along its bottom.
     const QRect bar(0, 0, width(), BAR_HEIGHT);
-    QLinearGradient band(bar.topLeft(), bar.topRight());
-    band.setColorAt(0.0, QColor(10, 10, 8, 190));
-    band.setColorAt(0.6, QColor(10, 10, 8, 140));
-    band.setColorAt(1.0, QColor(10, 10, 8, 0));
-    painter.fillRect(bar, band);
+    if (m_band.size() != bar.size()) {
+        m_band = QImage(bar.size(), QImage::Format_ARGB32_Premultiplied);
+        m_band.fill(Qt::transparent);
+        QPainter bandPainter(&m_band);
+        QLinearGradient band(0, 0, bar.width(), 0);
+        band.setColorAt(0.0, QColor(10, 10, 8, 0));
+        band.setColorAt(std::min(0.5, 40.0 / std::max(1, bar.width())), QColor(10, 10, 8, 170));
+        band.setColorAt(0.55, QColor(10, 10, 8, 120));
+        band.setColorAt(1.0, QColor(10, 10, 8, 0));
+        bandPainter.fillRect(m_band.rect(), band);
+        QLinearGradient feather(0, 0, 0, bar.height());
+        feather.setColorAt(0.0, QColor(0, 0, 0, 0));
+        feather.setColorAt(0.35, QColor(0, 0, 0, 255));
+        feather.setColorAt(0.75, QColor(0, 0, 0, 255));
+        feather.setColorAt(1.0, QColor(0, 0, 0, 90));
+        bandPainter.setCompositionMode(QPainter::CompositionMode_DestinationIn);
+        bandPainter.fillRect(m_band.rect(), feather);
+    }
+    painter.drawImage(bar.topLeft(), m_band);
     QLinearGradient rule(bar.topLeft(), bar.topRight());
     QColor ruleColor = GOLD_COLOR;
-    ruleColor.setAlpha(110);
-    rule.setColorAt(0.0, ruleColor);
+    ruleColor.setAlpha(80);
+    rule.setColorAt(0.04, ruleColor);
     rule.setColorAt(0.6, ruleColor);
     ruleColor.setAlpha(0);
     rule.setColorAt(1.0, ruleColor);
