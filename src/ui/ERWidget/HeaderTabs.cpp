@@ -106,7 +106,7 @@ void HeaderTabs::paintEvent(QPaintEvent* event) {
         QPainter bandPainter(&m_band);
         QLinearGradient band(0, 0, bar.width(), 0);
         band.setColorAt(0.0, QColor(10, 10, 8, 0));
-        band.setColorAt(std::min(0.5, 40.0 / std::max(1, bar.width())), QColor(10, 10, 8, 170));
+        band.setColorAt(std::min(0.5, 10.0 / std::max(1, bar.width())), QColor(10, 10, 8, 170));
         band.setColorAt(0.55, QColor(10, 10, 8, 120));
         band.setColorAt(1.0, QColor(10, 10, 8, 0));
         bandPainter.fillRect(m_band.rect(), band);
