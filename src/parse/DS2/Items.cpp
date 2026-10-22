@@ -1017,7 +1017,7 @@ namespace fssm::parse::ds2 {
         BaseItem{50910000, 1, 9000, ItemCategory::KeyItems, "Ashen Mist Heart", "50910000"},
         BaseItem{50920000, 99, 550, ItemCategory::Consumables, "Soul of a Giant", "50920000"},
         BaseItem{50930000, 1, 9000, ItemCategory::KeyItems, "Tseldora Den Key", "50930000"},
-        BaseItem{50940000, 1, 1600, ItemCategory::KeyItems, "Champion's Tablet", "50940000"},
+        BaseItem{50940000, 1, 1600, ItemCategory::Consumables, "Champion's Tablet", "50940000"},
         BaseItem{50950000, 1, 9000, ItemCategory::KeyItems, "Ladder Miniature", "50950000"},
         BaseItem{50960000, 99, 1500, ItemCategory::Consumables, "Soul Vessel", "50960000"},
         BaseItem{50970000, 1, 9000, ItemCategory::KeyItems, "Undead Lockaway Key", "50970000"},

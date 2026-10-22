@@ -81,7 +81,7 @@ namespace fssm::parse::ds2 {
 
     // An inventory slot resolved against the item database.
     struct InventoryItem {
-        uint32_t slot = 0;              // index in InventoryData::entries
+        uint32_t slot = 0;              // index in InventoryData::entries, then keyEntries
         uint32_t itemId = 0;
         uint32_t amount = 1;            // stack size (1 for equipment)
         std::optional<float> durability;

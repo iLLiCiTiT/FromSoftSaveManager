@@ -44,9 +44,11 @@ KIND_SPELL = 9
 KIND_GESTURE = 10
 
 
-# Goods: byte 2 of ItemParam field 20 (+0x50) holds use flags; 0x2 is set only on the
-# items the game lists under Key Items (keys, Ladder Miniature, Champion's Tablet ...).
-GOODS_KEY_ITEM_FLAG = 0x2
+# Goods: byte 2 of ItemParam field 20 (+0x50) holds use flags. The items the game lists
+# under Key Items (keys, Ladder Miniature, Crushed Eye Orb ...) have 0x2 and not 0x4
+# (0x4: usable from the menu, e.g. Champion's Tablet, which is a consumable).
+GOODS_KEY_ITEM_FLAGS = 0x6
+GOODS_KEY_ITEM = 0x2
 # Goods sorted in this group are the upgrade materials (titanite, infusion stones, Fire Seed).
 MATERIALS_ORDER = 1200
 
@@ -59,7 +61,7 @@ def category(item_id, kind, goods_flags=0, order=0):
             return "RangedWeapons"  # bows, greatbows, crossbows
         return "Weapons"
     if kind == KIND_GOODS:
-        if goods_flags & GOODS_KEY_ITEM_FLAG:
+        if goods_flags & GOODS_KEY_ITEM_FLAGS == GOODS_KEY_ITEM:
             return "KeyItems"
         if order == MATERIALS_ORDER:
             return "Materials"
