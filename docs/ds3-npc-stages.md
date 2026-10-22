@@ -21,6 +21,50 @@ What each questline flag of an NPC's block means (blocks: `docs/event-flags.md`,
 - Some texts are less certain than others: where the trigger is only a talk flag or the
   progress ladder, the text says where the NPC is or that you talked, not more.
 
+## Progress steps
+
+The World Progress tab also lists progress steps under each main NPC (`NPC_STEPS` in
+`tools/ds3_flags/gen_flags.py`, 113 steps for 18 NPCs): quest milestones and one-off
+events. A step is done when any of its flags is set, and every flag comes from one of
+these sources (the generator fails otherwise):
+
+- **Questline stages.** Only the current stage is set, so a "reached" step lists its stage
+  and every stage after it (e.g. Anri "Met in Irithyll" = 1348-1353).
+- **Item lots** (`ItemLotParam` +0x80, set when the lot is given or picked up): the
+  "Received ..." steps, e.g. Sirris' Silvercat Ring 50006080, Sunset Shield 50006081,
+  Sunset armour 50006083, Sunless Talisman 50006082; Leonhard's Cracked Red Eye Orb
+  50006090, Lift Chamber Key 50006091, Black Eye Orb 50006092, Crescent Moon Sword
+  50006093; Hawkwood's Twinkling Dragon Torso Stone 50006071 and Head Stone 50006072;
+  Greirat's Blue Tearstone Ring 50006120; the Dark Sigil 50006193; the Sword of Avowal
+  50006301; Siegward's Titanite Slab 50006215 and Catarina armour 50006217.
+  Most NPCs' lots are rows 5xx00 / 6xx00 with flags 50006xx0..9.
+- **Shop releases** (`ShopLineupParam` +0x10, the flag that makes a shop row available):
+  the "Given ..." steps. The talk script of the NPC (`/script/talk/m40_00_00_00.talkesdbnd.dcx`)
+  lists the items it accepts and the shop pages they open in the same order, which
+  pairs each item with its flag:
+
+  | NPC (talk script) | items in menu order -> flags |
+  |---|---|
+  | Shrine Handmaid (t400210) | Mortician's, Dreamchaser's, Paladin's, Grave Warden's, Greirat's, Orbeck's, Cornyx's, Karla's, Irina's, Patches', Excrement-covered, Prisoner Chief's, Xanthous, Hollow's, Dragon Chaser's, Yuria's, Easterner's, Captain's, Old Woman's Ashes -> 70000100, 101, 102, 103, 110, 111, 112, 113, 114, 115, 104, 105, 106, 107, 108, 116, 109, 120, 121 |
+  | Orbeck (t400230) | Sage's, Logan's, Crystal, Golden Scroll -> 70000201..204 |
+  | Cornyx (t400240) | Great Swamp, Carthus, Izalith Pyromancy Tome -> 70000250..252 |
+  | Karla (t400250) | Quelana, Grave Warden Pyromancy Tome, Deep, Londor Braille Divine Tome -> 70000300..303 |
+  | Irina (t400260) | Braille Divine Tome of Carim, of Lothric, Deep, Londor -> 70000350, 351, 352, 353 |
+
+  The shop rows the flags release agree (e.g. 70000105 releases Karla's set for the
+  Prisoner Chief's Ashes, 70000203 the crystal sorceries for the Crystal Scroll).
+  Greirat's wares: map events 14005700 (m40_00) and 13705630 (m37_00) set 70000151 when he
+  is back from the Undead Settlement, 13415640 (m34_01) sets 70000152 with his death in
+  Lothric Castle (the Handmaid then sells that loot).
+- **Map script flags**: common event 20005061 sets 8200 when Creighton the Wanderer
+  (entity 3700161) dies, 8220 for Holy Knight Hodrick (3100741), 8240 for Ringfinger
+  Leonhard in Anor Londo (3700725).
+
+Checked on the user's 6 characters: every step agrees with the NPC's current stage and
+status. A stage text that disagreed was left out: Siegward's 1389 ("Fought Yhorm with
+you") is never current on characters that finished his quest (they stay on 1388 and he
+is dead), so it is not a step.
+
 ## Stages
 
 Triggers are the conditions of the setting event (`+k` = that NPC's stage k, `+15`..`+19`

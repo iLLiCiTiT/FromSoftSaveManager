@@ -223,6 +223,20 @@ namespace fssm::parse::ds3 {
             return stages;
         }
 
+        // A progress step is done when any of its flags is set.
+        std::vector<bool> npc_steps_done(const CharacterSlot& slot) {
+            std::vector<bool> done;
+            done.reserve(NPC_STEPS.size());
+            for (const auto& step : NPC_STEPS) {
+                bool isDone = false;
+                for (const uint32_t flag : step.flags) {
+                    if (flag != 0 && get_event_flag(slot, flag).value_or(false)) isDone = true;
+                }
+                done.push_back(isDone);
+            }
+            return done;
+        }
+
         DS3CharacterInfo character_info(const CharacterSlot& slot, const ProfileSummaryEntry& profile, uint8_t index) {
             const auto& st = slot.player.stats;
             const EquippedSet equipped = equipped_set(slot.player.equip);
@@ -268,6 +282,7 @@ namespace fssm::parse::ds3 {
                 .bossesDefeated = defeated_bosses(slot),
                 .npcStates = npc_states(slot),
                 .npcStages = npc_stages(slot),
+                .npcStepsDone = npc_steps_done(slot),
             };
         }
     }

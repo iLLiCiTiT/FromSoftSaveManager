@@ -24,6 +24,7 @@ namespace {
         Bonfire,
         Boss,
         Npc,
+        Step,       // an NPC's progress step, checked when done
     };
 
     using fssm::parse::ds3::NpcState;
@@ -35,6 +36,8 @@ namespace {
         bool done = false;
         NpcState npc = NpcState::Unknown;
         QString detail;     // second, smaller line: an NPC's questline stage
+        QString detailValue;    // right aligned on the detail line: done steps of the NPC
+        bool lastStep = false;  // last step of its NPC, followed by a small gap
     };
 
     QString count(int done, int total) {
@@ -80,9 +83,11 @@ namespace {
     }
 
     // NPCs by their status flags; the state is shown right aligned (nothing while the
-    // NPC's map hasn't loaded yet) and the questline stage below the name.
+    // NPC's map hasn't loaded yet), the questline stage below the name and the NPC's
+    // progress steps under that as a checklist.
     std::vector<Row> npcRows(const fssm::parse::ds3::DS3CharacterInfo& c) {
         using fssm::parse::ds3::NPCS;
+        using fssm::parse::ds3::NPC_STEPS;
         std::vector<Row> rows = {{RowKind::Heading, "NPCs", ""}};
         for (size_t i = 0; i < NPCS.size(); ++i) {
             const NpcState state = i < c.npcStates.size() ? c.npcStates[i] : NpcState::Unknown;
@@ -98,6 +103,22 @@ namespace {
             rows.push_back({RowKind::Npc, QString::fromUtf8(name.data(), int(name.size())), value,
                             state == NpcState::Friendly || state == NpcState::Hostile, state,
                             QString::fromUtf8(stage.data(), int(stage.size()))});
+            const size_t npcRow = rows.size() - 1;
+            int done = 0;
+            int total = 0;
+            for (size_t s = 0; s < NPC_STEPS.size(); ++s) {
+                if (NPC_STEPS[s].statusFlag != NPCS[i].statusFlag) continue;
+                const bool isDone = s < c.npcStepsDone.size() && c.npcStepsDone[s];
+                const auto& text = NPC_STEPS[s].text;
+                rows.push_back({RowKind::Step, QString::fromUtf8(text.data(), int(text.size())), "", isDone});
+                done += isDone;
+                ++total;
+            }
+            if (total > 0) {
+                rows.back().lastStep = true;
+                rows[npcRow].detailValue = count(done, total);
+                if (rows[npcRow].detail.isEmpty()) rows[npcRow].detail = " ";
+            }
         }
         return rows;
     }
@@ -117,6 +138,27 @@ namespace {
             const QRectF x = rect.adjusted(rect.width() * 0.25, rect.height() * 0.25, -rect.width() * 0.25, -rect.height() * 0.25);
             painter.drawLine(x.topLeft(), x.bottomRight());
             painter.drawLine(x.topRight(), x.bottomLeft());
+        }
+        painter.restore();
+    }
+
+    // Small square box of a progress step, with a gold tick when done.
+    void drawStepMark(QPainter& painter, const QRectF& rect, bool done) {
+        painter.save();
+        painter.setRenderHint(QPainter::Antialiasing, true);
+        const double w = std::max(1.0, rect.width() / 9);
+        painter.setPen(QPen(done ? GOLD_COLOR : QColor(110, 104, 96), w));
+        painter.setBrush(QColor(0, 0, 0, 90));
+        painter.drawRect(rect);
+        if (done) {
+            QPen tick(QColor(232, 200, 120), w * 1.8);
+            tick.setCapStyle(Qt::RoundCap);
+            tick.setJoinStyle(Qt::RoundJoin);
+            painter.setPen(tick);
+            const QPolygonF mark({{rect.left() + rect.width() * 0.2, rect.top() + rect.height() * 0.52},
+                                  {rect.left() + rect.width() * 0.42, rect.top() + rect.height() * 0.75},
+                                  {rect.left() + rect.width() * 0.82, rect.top() + rect.height() * 0.24}});
+            painter.drawPolyline(mark);
         }
         painter.restore();
     }
@@ -185,6 +227,8 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     const int areaGap = px(8);
     const int lineH = px(25);
     const int detailH = px(17);
+    const int stepH = px(21);
+    const int stepGap = px(8);
     const int iconSize = px(20);
     const int scrollBarW = px(10);
 
@@ -192,6 +236,7 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
         switch (row.kind) {
             case RowKind::Heading: return (first ? 0 : px(16)) + headingH;
             case RowKind::Area: return areaGap + areaH;
+            case RowKind::Step: return row.lastStep ? stepH + stepGap : stepH;
             default: return row.detail.isEmpty() ? lineH : lineH + detailH;
         }
     };
@@ -277,11 +322,30 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
                     if (!row.detail.isEmpty()) {
                         painter.setFont(serifFont(px(14)));
                         const QFontMetrics dfm(painter.font());
-                        const QRect detailRect(textLeft, line.bottom() - px(3), full.right() - textLeft - px(4), detailH);
+                        QRect detailRect(textLeft, line.bottom() - px(3), full.right() - textLeft - px(4), detailH);
+                        if (!row.detailValue.isEmpty()) {
+                            drawShadowText(painter, detailRect, Qt::AlignRight | Qt::AlignTop, row.detailValue, AREA_COLOR);
+                            detailRect.setRight(detailRect.right() - dfm.horizontalAdvance(row.detailValue) - px(12));
+                        }
                         drawShadowText(painter, detailRect, Qt::AlignLeft | Qt::AlignTop,
                                        dfm.elidedText(row.detail, Qt::ElideRight, detailRect.width()),
                                        row.done ? AREA_COLOR : DIM_TEXT_COLOR);
                     }
+                    break;
+                }
+                case RowKind::Step: {
+                    // Indented under the NPC's name.
+                    const int left = x + px(10) + iconSize + px(10);
+                    const int box = px(12);
+                    const QRect line(full.left(), full.top(), full.width(), stepH);
+                    const QRectF mark(left, line.center().y() - box / 2.0, box, box);
+                    drawStepMark(painter, mark, row.done);
+                    painter.setFont(serifFont(px(15)));
+                    const QFontMetrics fm(painter.font());
+                    const QRect textRect(int(mark.right()) + px(8), line.top(), line.right() - int(mark.right()) - px(12), line.height());
+                    drawShadowText(painter, textRect, Qt::AlignLeft | Qt::AlignVCenter,
+                                   fm.elidedText(row.text, Qt::ElideRight, textRect.width()),
+                                   row.done ? TEXT_COLOR : DIM_TEXT_COLOR);
                     break;
                 }
             }
