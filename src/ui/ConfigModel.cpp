@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <qevent.h>
+#include <QDir>
 #include <windows.h>
 #include <shlobj.h>
 #include <nlohmann/json.hpp>
@@ -58,6 +59,10 @@ static QString getAppDataPath(const QString& subfolder) {
 }
 
 static QString getAppConfigDir() {
+    // Development override, so the app can run against a scratch config and backups
+    const char* overrideDir = getenv("FSSM_CONFIG_DIR");
+    if (overrideDir && *overrideDir)
+        return QString::fromLocal8Bit(overrideDir);
     QString saveDir = QString::fromStdString(getenv("LOCALAPPDATA"));
     saveDir.append("\\FromSoftSaveManager\\FromSoftSaveManager");
     return saveDir;
@@ -125,6 +130,9 @@ ConfigSettingsData ConfigModel::getConfigSettingsData() {
         .autobackupEnabled = m_configData.autobackup.enabled,
         .autobackupFrequency = m_configData.autobackup.frequency,
         .maxAutobackups = m_configData.autobackup.maxBackups,
+
+        .backupsDir = m_configData.backupsDir,
+        .backupsDirDefault = m_appDataDir,
     };
 }
 
@@ -172,7 +180,18 @@ void ConfigModel::saveConfigData(const ConfigConfirmData& confirmData) {
         l_autobackupChanged = true;
         m_configData.autobackup.maxBackups = confirmData.maxAutobackups.value();
     }
-    bool changed = l_pathsChanged || l_hotkeyChanged || l_autobackupChanged;
+    bool l_backupsDirChanged = false;
+    if (confirmData.backupsDir.has_value()) {
+        QString backupsDir = confirmData.backupsDir.value();
+        // Default folder is stored as empty so it follows the app data folder
+        if (QDir::cleanPath(backupsDir) == QDir::cleanPath(m_appDataDir))
+            backupsDir = "";
+        if (backupsDir != m_configData.backupsDir) {
+            l_backupsDirChanged = true;
+            m_configData.backupsDir = backupsDir;
+        }
+    }
+    bool changed = l_pathsChanged || l_hotkeyChanged || l_autobackupChanged || l_backupsDirChanged;
     if (!changed) return;
 
     saveConfig();
@@ -180,13 +199,14 @@ void ConfigModel::saveConfigData(const ConfigConfirmData& confirmData) {
     if (l_pathsChanged) emit pathsChanged();
     if (l_hotkeyChanged) emit hotkeysChanged();
     if (l_autobackupChanged) emit autoBackupChanged();
+    if (l_backupsDirChanged) emit backupsDirChanged();
     emit configChanged();
 }
 
 void ConfigModel::saveConfig() {
     std::string dirPath = getAppConfigDir().toStdString();
     if (!std::filesystem::exists(dirPath)) {
-        std::filesystem::create_directory(dirPath);
+        std::filesystem::create_directories(dirPath);
     }
     json jsonData = p_configToJson();
     std::ofstream o(m_appConfigPath.toStdString());
@@ -200,6 +220,19 @@ QString ConfigModel::getAppDataDirPath() const {
 
 QString ConfigModel::getBackupDirPath() {
     return m_appBackupsDir;
+}
+
+QString ConfigModel::getBackupsDir() const {
+    if (m_configData.backupsDir.isEmpty()) return m_appDataDir;
+    return m_configData.backupsDir;
+}
+
+QString ConfigModel::getBackupsDbPath() const {
+    return backupsDbPath(getBackupsDir());
+}
+
+QString ConfigModel::backupsDbPath(const QString& backupsDir) {
+    return QDir::toNativeSeparators(QDir(backupsDir).filePath("backups.db"));
 }
 
 std::vector<SaveFileItem> ConfigModel::getSaveFileItems() {
@@ -382,6 +415,11 @@ void ConfigModel::p_loadConfig() {
     if (maxAutobackupsIt != autobackupData.end() && maxAutobackupsIt->is_number())
         autobackup.maxBackups = maxAutobackupsIt.value();
 
+    // Backups folder
+    auto backupsDirIt = data.find("backups_dir");
+    if (backupsDirIt != data.end() && backupsDirIt->is_string())
+        m_configData.backupsDir = QString::fromStdString(backupsDirIt.value());
+
     // Last selected save id
     auto lastIdIt = data.find("last_selected_save_id");
     if (lastIdIt != data.end() && lastIdIt->is_string())
@@ -412,6 +450,7 @@ json ConfigModel::p_configToJson() {
     data["hotkeys"] = hotkeys;
     data["autobackup"] = autobackup;
     data["last_selected_save_id"] = m_configData.lastSaveId.toStdString();
+    data["backups_dir"] = m_configData.backupsDir.toStdString();
     return data;
 }
 

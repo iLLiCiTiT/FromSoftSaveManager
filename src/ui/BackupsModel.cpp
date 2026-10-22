@@ -21,7 +21,8 @@ static std::string filenameByGame(const fssm::Game& game) {
 }
 
 static BackupMetadata makeMetadata(const fssm::Game& game, const BackupType& backupType,
-                                   const std::string& filename, const std::string& label) {
+                                   const std::string& filename, const std::string& label,
+                                   const std::string& folder) {
     return BackupMetadata {
         .id         = generateUUID(),
         .game       = game,
@@ -30,6 +31,7 @@ static BackupMetadata makeMetadata(const fssm::Game& game, const BackupType& bac
         .filename   = filename,
         .datetime   = QDateTime::currentDateTimeUtc().toString(Qt::ISODate).toStdString(),
         .epoch      = std::time(nullptr),
+        .folder     = folder,
     };
 }
 
@@ -117,7 +119,8 @@ void BackupsModel::updateAutobackupConfig(const ConfigAutobackup& autobackupConf
 std::optional<BackupMetadata> BackupsModel::createBackup(const QString& savePath,
                                                          const fssm::Game& game,
                                                          const BackupType& backupType,
-                                                         const QString& label) {
+                                                         const QString& label,
+                                                         const QString& folder) {
     if (savePath.isEmpty() || !std::filesystem::exists(savePath.toStdString()))
         return std::nullopt;
 
@@ -131,7 +134,7 @@ std::optional<BackupMetadata> BackupsModel::createBackup(const QString& savePath
     if (labelStd.empty() && backupType == BackupType::MANUAL)
         labelStd = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss").toStdString();
 
-    BackupMetadata meta = makeMetadata(game, backupType, filename, labelStd);
+    BackupMetadata meta = makeMetadata(game, backupType, filename, labelStd, folder.toStdString());
 
     if (!m_db->insertBackup(meta, saveData)) return std::nullopt;
 
@@ -156,8 +159,9 @@ void BackupsModel::createQuickSaveBackup(const QString& savePath, const fssm::Ga
 
 std::optional<BackupMetadata> BackupsModel::createManualBackup(const QString& savePath,
                                                                 const fssm::Game& game,
-                                                                const QString& label) {
-    return createBackup(savePath, game, BackupType::MANUAL, label);
+                                                                const QString& label,
+                                                                const QString& folder) {
+    return createBackup(savePath, game, BackupType::MANUAL, label, folder);
 }
 
 bool BackupsModel::changeBackupLabel(const fssm::Game& game, const QString& backupId, const QString& label) {
@@ -235,12 +239,36 @@ void BackupsModel::deleteBackupByIds(const fssm::Game& game, const std::vector<Q
     m_db->deleteBackups(ids);
 }
 
+std::vector<QString> BackupsModel::getFolders(const fssm::Game& game) {
+    return m_db->getFolders(game);
+}
+
+bool BackupsModel::createFolder(const fssm::Game& game, const QString& name) {
+    return m_db->createFolder(game, name);
+}
+
+bool BackupsModel::renameFolder(const fssm::Game& game, const QString& oldName, const QString& newName) {
+    return m_db->renameFolder(game, oldName, newName);
+}
+
+bool BackupsModel::deleteFolder(const fssm::Game& game, const QString& name) {
+    return m_db->deleteFolder(game, name);
+}
+
+bool BackupsModel::moveBackupsToFolder(const std::vector<QString>& backupIds, const QString& folder) {
+    QStringList ids;
+    for (auto& id : backupIds)
+        ids.append(id);
+    return m_db->moveBackups(ids, folder);
+}
+
 void BackupsModel::cleanupAutoBackups(const fssm::Game& game) {
     if (m_maxAutoBackups < 1) return;
 
     std::vector<BackupMetadata> autosaves;
     for (auto& item : m_db->getBackups(game)) {
-        if (item.backupType == BackupType::AUTOSAVE)
+        // Autosaves the user moved into a folder are kept
+        if (item.backupType == BackupType::AUTOSAVE && item.folder.empty())
             autosaves.push_back(item);
     }
 

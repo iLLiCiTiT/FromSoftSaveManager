@@ -5,6 +5,11 @@
 #include <QFileDialog>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QDir>
+#include <QFileInfo>
+#include <QApplication>
+#include <QLocale>
+#include <QMessageBox>
 
 
 SavePathInput::SavePathInput(const QString& gameTitle, QWidget* parent): QFrame(parent) {
@@ -338,6 +343,64 @@ void AutoBackupWidget::applyChanges(const ConfigSettingsData& configData, Config
     }
 };
 
+BackupsDirWidget::BackupsDirWidget(const ConfigSettingsData& configData, QWidget* parent): QWidget(parent) {
+    QLabel* dirLabel = new QLabel("Backups folder", this);
+    dirLabel->setToolTip("Folder where backups of all saves are stored.\nLeave empty to use the default folder.");
+
+    QFrame* inputFrame = new QFrame(this);
+    m_dirInput = new QLineEdit(inputFrame);
+    m_dirInput->setAttribute(Qt::WA_TranslucentBackground, true);
+
+    SquareButton* openBtn = new SquareButton(inputFrame);
+    openBtn->setIcon(QIcon(":/icons/folder_256x256.png"));
+    openBtn->setToolTip("Select backups folder..");
+    openBtn->setAttribute(Qt::WA_TranslucentBackground, true);
+
+    QHBoxLayout* inputLayout = new QHBoxLayout(inputFrame);
+    inputLayout->setContentsMargins(0, 0, 0, 0);
+    inputLayout->setSpacing(0);
+    inputLayout->addWidget(m_dirInput, 1);
+    inputLayout->addWidget(openBtn, 0);
+
+    updateConfigInfo(configData);
+
+    QGridLayout* layout = new QGridLayout(this);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(dirLabel, 0, 0);
+    layout->addWidget(inputFrame, 0, 1);
+    layout->setColumnStretch(0, 0);
+    layout->setColumnStretch(1, 1);
+
+    connect(openBtn, SIGNAL(clicked()), this, SLOT(selectDir()));
+}
+
+void BackupsDirWidget::updateConfigInfo(const ConfigSettingsData& configData) {
+    m_defaultDir = configData.backupsDirDefault;
+    m_dirInput->setPlaceholderText("< Default: " + QDir::toNativeSeparators(m_defaultDir) + " >");
+    m_dirInput->setText(QDir::toNativeSeparators(configData.backupsDir));
+}
+
+QString BackupsDirWidget::getBackupsDir() const {
+    QString dir = m_dirInput->text().trimmed();
+    if (dir.isEmpty()) dir = m_defaultDir;
+    return QDir::cleanPath(dir);
+}
+
+bool BackupsDirWidget::isChanged(const ConfigSettingsData& configData) const {
+    QString current = configData.backupsDir.isEmpty() ? configData.backupsDirDefault : configData.backupsDir;
+    return getBackupsDir().compare(QDir::cleanPath(current), Qt::CaseInsensitive) != 0;
+}
+
+void BackupsDirWidget::applyChanges(const ConfigSettingsData& configData, ConfigConfirmData& confirmData) {
+    if (isChanged(configData))
+        confirmData.backupsDir = QDir::toNativeSeparators(getBackupsDir());
+}
+
+void BackupsDirWidget::selectDir() {
+    QString dir = QFileDialog::getExistingDirectory(this, "Select backups folder", getBackupsDir());
+    if (!dir.isEmpty()) m_dirInput->setText(QDir::toNativeSeparators(dir));
+}
+
 SettingsWidget::SettingsWidget(Controller* controller, QWidget* parent): QWidget(parent), m_controller(controller) {
     m_configData = m_controller->getConfigSettingsData();
     QLabel* pathsLabel = new QLabel("Paths", this);
@@ -351,6 +414,10 @@ SettingsWidget::SettingsWidget(Controller* controller, QWidget* parent): QWidget
     QLabel* autoBackupLabel = new QLabel("Autobackup", this);
     autoBackupLabel->setObjectName("settings_header");
     m_autobackupWidget = new AutoBackupWidget(m_configData, this);
+
+    QLabel* backupsLabel = new QLabel("Backups", this);
+    backupsLabel->setObjectName("settings_header");
+    m_backupsDirWidget = new BackupsDirWidget(m_configData, this);
 
     QWidget* btnsWidget = new QWidget(this);
 
@@ -376,6 +443,9 @@ SettingsWidget::SettingsWidget(Controller* controller, QWidget* parent): QWidget
     layout->addSpacing(10);
     layout->addWidget(autoBackupLabel, 0);
     layout->addWidget(m_autobackupWidget, 0);
+    layout->addSpacing(10);
+    layout->addWidget(backupsLabel, 0);
+    layout->addWidget(m_backupsDirWidget, 0);
     layout->addStretch(1);
     layout->addWidget(btnsWidget, 0);
 
@@ -384,11 +454,62 @@ SettingsWidget::SettingsWidget(Controller* controller, QWidget* parent): QWidget
 };
 
 void SettingsWidget::onSave() {
+    if (!p_confirmBackupsDirChange()) return;
     ConfigConfirmData confirmData;
     m_pathsWidget->applyChanges(m_configData, confirmData);
     m_hotkeysWidget->applyChanges(m_configData, confirmData);
     m_autobackupWidget->applyChanges(m_configData, confirmData);
+    m_backupsDirWidget->applyChanges(m_configData, confirmData);
     m_controller->saveConfigData(confirmData);
+    // Compare next save against what was just stored
+    discardChanges();
+}
+
+// Existing backups are never moved or deleted. They can be copied to the new folder,
+//  otherwise they stay in the old folder and are available again when switching back.
+bool SettingsWidget::p_confirmBackupsDirChange() {
+    if (!m_backupsDirWidget->isChanged(m_configData)) return true;
+    QString newDir = m_backupsDirWidget->getBackupsDir();
+    QString oldDir = QDir::toNativeSeparators(m_controller->getBackupsDir());
+    QString newDirLabel = QDir::toNativeSeparators(newDir);
+
+    if (QFileInfo::exists(ConfigModel::backupsDbPath(newDir))) {
+        auto btn = QMessageBox::question(
+            this,
+            "Change Backups Folder",
+            "The folder\n" + newDirLabel + "\nalready contains backups, they will be used.\n\n"
+            "Current backups stay untouched in\n" + oldDir,
+            QMessageBox::Ok | QMessageBox::Cancel,
+            QMessageBox::Ok
+        );
+        return btn == QMessageBox::Ok;
+    }
+
+    QString sizeLabel = QLocale().formattedDataSize(
+        QFileInfo(ConfigModel::backupsDbPath(m_controller->getBackupsDir())).size()
+    );
+    auto btn = QMessageBox::question(
+        this,
+        "Change Backups Folder",
+        "Copy current backups (" + sizeLabel + ") to\n" + newDirLabel + "?\n\n"
+        "Current backups stay untouched in\n" + oldDir + "\n"
+        "If not copied, the new folder starts empty.",
+        QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
+        QMessageBox::Yes
+    );
+    if (btn == QMessageBox::Cancel) return false;
+    if (btn == QMessageBox::Yes) {
+        QString error;
+        // Copy is synchronous, large databases take a while
+        QApplication::setOverrideCursor(Qt::WaitCursor);
+        bool copied = m_controller->copyBackupsTo(newDir, error);
+        QApplication::restoreOverrideCursor();
+        if (!copied) {
+            QMessageBox::warning(this, "Copy Failed", error + "\n\nBackups folder was not changed.");
+            return false;
+        }
+    }
+    return true;
 }
 
 void SettingsWidget::discardChanges() {
@@ -396,4 +517,5 @@ void SettingsWidget::discardChanges() {
     m_pathsWidget->updateConfigInfo(m_configData);
     m_hotkeysWidget->updateConfigInfo(m_configData);
     m_autobackupWidget->updateConfigInfo(m_configData);
+    m_backupsDirWidget->updateConfigInfo(m_configData);
 }

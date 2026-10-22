@@ -37,4 +37,6 @@ struct BackupMetadata {
     std::string filename;
     std::string datetime;
     time_t epoch;
+    // Name of the user folder the backup is categorized in, empty means "Unsorted"
+    std::string folder;
 };

@@ -54,6 +54,8 @@ struct ConfigData {
     ConfigGameSavePaths gameSaveFiles {};
     ConfigHotkeys hotkeys {};
     ConfigAutobackup autobackup {};
+    // Folder where backups are stored, empty means the app data folder
+    QString backupsDir = "";
 };
 
 // --------------------------
@@ -78,6 +80,9 @@ struct ConfigSettingsData {
     bool autobackupEnabled;
     int autobackupFrequency;
     int maxAutobackups;
+
+    QString backupsDir;
+    QString backupsDirDefault;
 };
 
 struct ConfigConfirmData {
@@ -94,6 +99,7 @@ struct ConfigConfirmData {
     std::optional<int> autobackupFrequency;
     std::optional<int> maxAutobackups;
 
+    std::optional<QString> backupsDir;
 };
 
 class ConfigModel: public QObject {
@@ -102,12 +108,18 @@ signals:
     void pathsChanged();
     void hotkeysChanged();
     void autoBackupChanged();
+    void backupsDirChanged();
     void configChanged();
 public:
     explicit ConfigModel(QObject* parent);
 
     QString getAppDataDirPath() const;
+    // Folder with backups of the old (pre-database) format
     QString getBackupDirPath();
+    // Folder where backups database is stored
+    QString getBackupsDir() const;
+    QString getBackupsDbPath() const;
+    static QString backupsDbPath(const QString& backupsDir);
 
     QString getLastSelectedSaveId() const;
     void setLastSelectedSaveId(const QString& saveId);
