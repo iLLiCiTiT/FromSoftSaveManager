@@ -112,7 +112,7 @@ void HeaderTabs::paintEvent(QPaintEvent* event) {
         bandPainter.fillRect(m_band.rect(), band);
         QLinearGradient feather(0, 0, 0, bar.height());
         feather.setColorAt(0.0, QColor(0, 0, 0, 0));
-        feather.setColorAt(0.35, QColor(0, 0, 0, 255));
+        feather.setColorAt(10.0 / BAR_HEIGHT, QColor(0, 0, 0, 255));
         feather.setColorAt(0.75, QColor(0, 0, 0, 255));
         feather.setColorAt(1.0, QColor(0, 0, 0, 90));
         bandPainter.setCompositionMode(QPainter::CompositionMode_DestinationIn);
