@@ -25,6 +25,7 @@ namespace {
         Bonfire,
         Boss,
         Npc,
+        NpcStep,    // a questline step or event of the NPC above, checked when done
     };
 
     using fssm::parse::dsr::NpcState;
@@ -82,9 +83,11 @@ namespace {
     }
 
     // NPCs by their event flags; the state is shown right aligned (nothing while the NPC's
-    // map hasn't loaded yet) and the questline stage below the name.
+    // map hasn't loaded yet), the questline stage below the name and the NPC's progress
+    // steps as a checklist under it.
     std::vector<Row> npcRows(const fssm::parse::dsr::DSRCharacterInfo& c) {
         using fssm::parse::dsr::NPCS;
+        using fssm::parse::dsr::NPC_STEPS;
         std::vector<Row> rows = {{RowKind::Heading, "NPCs", ""}};
         for (size_t i = 0; i < NPCS.size(); ++i) {
             const NpcState state = i < c.npcStates.size() ? c.npcStates[i] : NpcState::Unknown;
@@ -98,6 +101,11 @@ namespace {
             const std::string_view stage = i < c.npcStages.size() ? c.npcStages[i] : std::string_view();
             rows.push_back({RowKind::Npc, fromView(NPCS[i].name), value,
                             state == NpcState::Alive || state == NpcState::Hostile, state, fromView(stage)});
+            for (size_t s = 0; s < NPC_STEPS.size(); ++s) {
+                if (NPC_STEPS[s].npcFlag != NPCS[i].firstFlag) continue;
+                const bool done = s < c.npcStepsDone.size() && c.npcStepsDone[s];
+                rows.push_back({RowKind::NpcStep, fromView(NPC_STEPS[s].text), "", done});
+            }
         }
         return rows;
     }
@@ -138,6 +146,27 @@ namespace {
         painter.setPen(QPen(defeated ? AREA_COLOR : UNDONE_MARK_COLOR, std::max(1.0, r / 4)));
         painter.setBrush(defeated ? QBrush(AREA_COLOR) : QBrush(Qt::NoBrush));
         painter.drawPolygon(diamond);
+        painter.restore();
+    }
+
+    // Small square marking an NPC's progress step: filled and ticked when done.
+    void drawStepMark(QPainter& painter, const QRectF& rect, bool done) {
+        painter.save();
+        const double w = std::max(1.0, rect.width() / 8);
+        painter.setPen(QPen(done ? AREA_COLOR : UNDONE_MARK_COLOR, w));
+        painter.setBrush(done ? QBrush(AREA_COLOR.darker(160)) : QBrush(Qt::NoBrush));
+        painter.drawRect(rect);
+        if (done) {
+            QPen tick(TEXT_COLOR, w * 1.4);
+            tick.setCapStyle(Qt::RoundCap);
+            tick.setJoinStyle(Qt::RoundJoin);
+            painter.setPen(tick);
+            painter.setBrush(Qt::NoBrush);
+            const double x = rect.left();
+            const double y = rect.top();
+            const double s = rect.width();
+            painter.drawPolyline(QPolygonF({{x + s * 0.22, y + s * 0.52}, {x + s * 0.42, y + s * 0.72}, {x + s * 0.78, y + s * 0.3}}));
+        }
         painter.restore();
     }
 
@@ -200,6 +229,7 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     const QFontMetrics detailFm(detailFont);
     const int lineH = fm.height() + 6;
     const int detailH = detailFm.height() + 2;
+    const int stepH = detailFm.height() + 3;
     const int areaH = lineH + 2;
     const int areaGap = 8;
     const int headingH = QFontMetrics(headingFont).height() + 10;
@@ -210,6 +240,7 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
         switch (row.kind) {
             case RowKind::Heading: return (first ? 0 : 16) + headingH;
             case RowKind::Area: return areaGap + areaH;
+            case RowKind::NpcStep: return stepH;
             default: return row.detail.isEmpty() ? lineH : lineH + detailH;
         }
     };
@@ -268,6 +299,19 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
                                      fm.elidedText(row.text, Qt::ElideRight, line.width() - valueW - 4));
                     painter.drawText(line.adjusted(0, 0, -4, 0), Qt::AlignRight | Qt::AlignVCenter, row.value);
                     drawRule(line.left(), line.right(), line.bottom() - 1);
+                    break;
+                }
+                case RowKind::NpcStep: {
+                    // Under the NPC's name, a little below the stage line.
+                    const int markSize = std::max(6, detailFm.height() - 6);
+                    const int left = x + 10 + iconSize + 8;
+                    const QRectF mark(left, full.center().y() - markSize / 2.0, markSize, markSize);
+                    drawStepMark(painter, mark, row.done);
+                    const QRect textRect(int(mark.right()) + 6, full.top(), full.right() - int(mark.right()) - 10, full.height());
+                    painter.setFont(detailFont);
+                    painter.setPen(row.done ? TEXT_COLOR : DIM_TEXT_COLOR);
+                    painter.drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter,
+                                     detailFm.elidedText(row.text, Qt::ElideRight, textRect.width()));
                     break;
                 }
                 case RowKind::Bonfire:

@@ -383,6 +383,133 @@ NPC_STAGES = {
     1870: "Not met yet",
 }
 
+# Progress steps shown under an NPC (docs/dsr-npc-stages.md, "Progress steps"): a step is
+# done when any of its flags is set. The block keeps only the current stage, so a questline
+# step lists its own stage and every stage the scripts can only reach after it; talk script
+# flags (set by SetEventState in the NPC's talk script, kept after the block is cleared)
+# are added where a stage event waits for them. ("give", item) is the flag the NPC's talk
+# script sets when you give it that item (its "Give <item>?" prompt). Every flag must be
+# set by a map script in an NPC block or by a talk script.
+NPC_STEPS = {
+    1000: [     # Solaire of Astora
+        ("Met in the Undead Burg", [11010591, 1001, 1008, 1007, 1009, 1002, 1003, 1012, 1011]),
+        ("Met again in Anor Londo", [1008, 1007, 1009, 1002, 1003, 1012, 1011]),
+        ("Offered his covenant at the Sunlight Altar", [1007, 1009, 1002, 1003, 1012, 1011]),
+        ("Came looking for his sun in Lost Izalith", [1009, 1002, 1003, 1012, 1011]),
+        ("Found the Sunlight Maggot", [1002, 1011]),
+        ("Ready to fight alongside you", [1012]),
+    ],
+    1090: [     # Big Hat Logan
+        ("Freed in Sen's Fortress", [1091, 1092, 1093, 1094, 1095]),
+        ("Firelink Shrine: taught sorceries", [1092, 1093, 1094, 1095]),
+        ("Freed again in the Duke's Archives", [1094, 1095]),
+        ("Duke's Archives: teaches sorceries", [1095]),
+    ],
+    1110: [     # Griggs of Vinheim
+        ("Freed in the Undead Burg", [1111, 1112, 1113]),
+        ("Firelink Shrine: teaches sorceries", [1112, 1113]),
+        ("Teaches advanced sorceries", [1113]),
+    ],
+    1120: [     # Dusk of Oolacile
+        ("Freed from the Golden Crystal Golem", [1121, 1122, 1123, 1126, 1127, 1128, 1129, 1130]),
+        ("Taken to Oolacile", [1127, 1128, 1129, 1130]),
+        ("Rescued in Oolacile", [1128, 1129, 1130]),
+    ],
+    1170: [     # Rhea of Thorolund
+        ("Arrived at Firelink Shrine", [1171, 1173, 1174, 1175]),
+        ("Left for the Catacombs", [1173, 1174, 1175]),
+        ("Rescued in the Tomb of the Giants", [1174, 1175]),
+        ("Undead Parish: teaches miracles", [1175]),
+        ("Hollowed in the Duke's Archives", [1181]),
+    ],
+    1190: [     # Petrus of Thorolund
+        ("Left with Rhea", [1192, 1193, 1194, 1196]),
+        ("Came back alone", [1193, 1194, 1196]),
+        ("Showed his true nature", [1194, 1196]),
+        ("Killed after betraying Rhea", [1196]),
+    ],
+    1250: [     # Laurentius of the Great Swamp
+        ("Freed in the Depths", [1251, 1252, 1256, 1257]),
+        ("Firelink Shrine: teaches pyromancy", [1252, 1256, 1257]),
+        ("Went to Blighttown after Chaos", [1256, 1257]),
+    ],
+    1280: [     # Eingyi
+        ("Met in Quelaag's Domain", [1281, 1286]),
+        ("Friendly, you are an egg-bearer", [1286]),
+    ],
+    1290: [     # Quelana of Izalith
+        ("Teaches pyromancy", [1291, 1292, 1293]),
+        ("Thanked you for the Bed of Chaos", [1292, 1293]),
+    ],
+    1310: [     # Ingward
+        ("Asked you to defeat the Darkwraiths", [1312, 1313]),
+        ("Firelink Shrine: heals curses", [1313]),
+    ],
+    1320: [     # Andre of Astora
+        ("give", 800), ("give", 801), ("give", 808), ("give", 809), ("give", 810),
+    ],
+    1340: [     # Vamos
+        ("give", 812), ("give", 813),
+    ],
+    1360: [     # Giant Blacksmith
+        ("give", 802),
+    ],
+    1380: [     # Rickert of Vinheim
+        ("give", 806), ("give", 807),
+    ],
+    1430: [     # Domhnall of Zena
+        ("Moved to Firelink Shrine", [1431]),
+    ],
+    1460: [     # Crestfallen Warrior
+        ("Went hollow in New Londo", [1464]),
+    ],
+    1490: [     # Siegmeyer of Catarina
+        ("Anor Londo: helped him", [1494, 1497, 1501, 1502, 1503, 1504, 1505, 1506, 1507, 1511, 1514]),
+        ("Firelink Shrine: rested", [1497, 1501, 1502, 1503, 1504, 1505, 1506, 1507, 1511, 1514]),
+        ("Blighttown: woke him up", [1502, 1503, 1504, 1505, 1506, 1507, 1511, 1514]),
+        ("Lost Izalith: the Chaos Bugs are dead", [1505, 1506, 1507, 1511, 1514]),
+        ("Hollowed, killed at Ash Lake", [1511, 1546, 1549]),
+    ],
+    1540: [     # Sieglinde of Catarina
+        ("Freed in the Duke's Archives", [1542, 1543, 1544, 1545, 1546, 1549]),
+        ("Firelink Shrine: looking for her father", [1544, 1545, 1546, 1549]),
+        ("Found her father", [1545, 1546, 1549]),
+        ("Ended her father's suffering at Ash Lake", [1546, 1549]),
+    ],
+    1570: [     # Knight Lautrec of Carim
+        ("Freed in the Undead Parish", [1571, 1572, 1573, 1578]),
+        ("Went after the Fire Keeper", [1573, 1578]),
+    ],
+    1620: [     # Patches
+        ("Tomb of the Giants: kicked you down", [1624, 1626]),
+        ("Firelink Shrine: sells his wares", [1626]),
+    ],
+    1640: [     # Kingseeker Frampt
+        ("Gave you the first task", [1642, 1643, 1644, 1645, 1649, 1647]),
+        ("Wants the Lordvessel placed", [1643, 1644, 1645]),
+        ("Gave you the second task", [1644, 1645]),
+        ("Pleased, task done", [1645]),
+        ("You followed Kaathe instead", [1649, 1647]),
+    ],
+    1670: [     # Darkstalker Kaathe
+        ("Gave you the first task", [1671, 1672, 1673, 1674, 1678, 1677]),
+        ("Gave you the second task", [1673, 1674]),
+        ("Pleased, task done", [1674]),
+        ("You followed Frampt instead", [1678]),
+    ],
+    1820: [     # Hawkeye Gough
+        ("Freed, thanked you", [1821]),
+    ],
+    1860: [     # Lord's Blade Ciaran
+        ("At Artorias' grave", [1861, 1862, 1865]),
+        ("Thanked you", [1862]),
+    ],
+}
+
+TALK_SET_EVENT_STATE = (1, 11)
+TALK_SHOW_YES_NO = (1, 17)          # (window, Event_text id, ...)
+TALK_DEBUG_NAME = (1, 0)
+
 WARP_FLAGS = range(200, 300)
 WARP_TEXTS = range(2000, 2100)
 
@@ -497,6 +624,82 @@ def parse_emeld(d):
             end += 2
         out[event_id] = d[start:end].decode("utf-16le")
     return out
+
+
+def esd_value(b):
+    """Value of an ESD expression that is a single constant (int or UTF-16 string), else None."""
+    if len(b) == 2 and b[0] < 0x80 and b[1] == 0xA1:
+        return b[0] - 64
+    if len(b) == 6 and b[0] == 0x82 and b[5] == 0xA1:
+        return struct.unpack_from("<i", b, 1)[0]
+    if b[:1] == b"\xA5" and b[-3:] == b"\0\0\xA1":
+        return b[1:-3].decode("utf-16le")
+    return None
+
+
+def parse_esd(d):
+    """{state id: (entry commands, [next state ids])} of every state of a DSR talk script
+    (fsSL, 64-bit layout); commands are (bank, id, [constant args or None])."""
+    assert d[:4] == b"fsSL" and struct.unpack_from("<i", d, 0x1C)[0] == 0x48, "expected 64-bit fsSL ESD"
+    group_count = struct.unpack_from("<i", d, 0x28)[0]
+    base = 0x6C
+
+    def q(*offsets):
+        return struct.unpack_from(f"<{len(offsets)}q", d, base + offsets[0])
+
+    def commands(offset, count):
+        out = []
+        for k in range(count):
+            bank, command, args_offset, args_count = struct.unpack_from("<iiqq", d, base + offset + k * 0x18)
+            args = []
+            for a in range(args_count):
+                start, length = struct.unpack_from("<qq", d, base + args_offset + a * 0x10)
+                args.append(esd_value(d[base + start:base + start + length]))
+            out.append((bank, command, args))
+        return out
+
+    states = {}
+    for group in range(group_count):
+        _group_id, states_offset, state_count, _ = struct.unpack_from("<4q", d, base + 0x48 + group * 0x20)
+        for s in range(state_count):
+            state_id, conditions_offset, condition_count, entry_offset, entry_count = \
+                struct.unpack_from("<5q", d, base + states_offset + s * 0x48)
+            following = []
+            for c in range(condition_count):
+                condition = struct.unpack_from("<q", d, base + conditions_offset + c * 8)[0]
+                target = struct.unpack_from("<q", d, base + condition)[0]
+                if target >= 0:
+                    following.append(struct.unpack_from("<q", d, base + target)[0])
+            states[state_id] = (commands(entry_offset, entry_count), following)
+    return states
+
+
+def talk_flags(game_dir):
+    """(flags the talk scripts set on, {item id: flag}) where the flag is set by the state the
+    "Give <item>?" prompt (Event_text `Give <?gdsparam@ID?>?`) moves to when you accept: its
+    debug name is アイテムを渡すN (give item N), the refusal is アイテムを渡さないN."""
+    event_text = parse_fmg1(parse_bnd3(read(game_dir, "msg/ENGLISH/menu.msgbnd.dcx"))["Event_text_.fmg"])
+    set_on, give = set(), {}
+    for path in sorted(glob.glob(os.path.join(game_dir, "script", "talk", "*.talkesdbnd.dcx"))):
+        for d in parse_bnd3(read(game_dir, path)).values():
+            states = parse_esd(d)
+            for entry, _following in states.values():
+                set_on |= {args[0] for (bank, command, args) in entry
+                           if (bank, command) == TALK_SET_EVENT_STATE and args[1] == 1 and isinstance(args[0], int)}
+            for entry, following in states.values():
+                for bank, command, args in entry:
+                    m = re.fullmatch(r"Give <\?gdsparam@(\d+)\?>\?", event_text.get(args[1], "") if
+                                     (bank, command) == TALK_SHOW_YES_NO and isinstance(args[1], int) else "")
+                    if not m:
+                        continue
+                    for target in following:
+                        target_entry = states.get(target, ([], []))[0]
+                        names = [a[0] for b, c, a in target_entry if (b, c) == TALK_DEBUG_NAME]
+                        flags = [a[0] for b, c, a in target_entry if (b, c) == TALK_SET_EVENT_STATE and a[1] == 1]
+                        if names and re.fullmatch(r"アイテムを渡す\d", names[0]) and len(flags) == 1:
+                            if give.setdefault(int(m.group(1)), flags[0]) != flags[0]:
+                                raise RuntimeError(f"item {m.group(1)}: two give flags")
+    return set_on, give
 
 
 def npc_blocks(game_dir):
@@ -684,6 +887,24 @@ def main():
         raise RuntimeError(f"stage texts for flags no script sets: {sorted(set(NPC_STAGES) - known)}")
     stage_table = sorted(NPC_STAGES.items())
 
+    goods_names = parse_fmg1(item_msg["Item_name_.fmg"])
+    talk_set, give_flags = talk_flags(game_dir)
+    block_set = {f for b in blocks.values() for f in b[1] + b[2] + b[4]}
+    step_table = []
+    for start in NPCS:
+        for text, flags in NPC_STEPS.get(start, []):
+            if text == "give":
+                if flags not in give_flags:
+                    raise RuntimeError(f"NPC block {start}: no talk script takes item {flags}")
+                text, flags = f"Given the {goods_names[flags]}", [give_flags[flags]]
+            unknown = [f for f in flags if f not in block_set and f not in talk_set]
+            if unknown:
+                raise RuntimeError(f"NPC block {start} step {text!r}: no script sets {unknown}")
+            step_table.append((start, flags, text))
+    if set(NPC_STEPS) - set(NPCS):
+        raise RuntimeError(f"steps for unknown NPC blocks {sorted(set(NPC_STEPS) - set(NPCS))}")
+    step_slots = max(len(flags) for _start, flags, _text in step_table)
+
     out_dir = os.path.join(repo, "src", "parse", "DSR")
     write_crlf(os.path.join(out_dir, "WorldProgress.h"), f"""#pragma once
 #include <array>
@@ -722,6 +943,14 @@ namespace fssm::parse::dsr {{
     }};
 
     // Area name (PlaceName text) the Data List screen shows for a profile's areaId.
+    // A progress step of an NPC (docs/dsr-npc-stages.md): done when any of flags is set.
+    // Unused entries are 0.
+    struct NpcStep {{
+        uint32_t npcFlag;               // firstFlag of the NPCS entry
+        std::array<uint32_t, {step_slots}> flags;
+        std::string_view text;
+    }};
+
     struct PlaceName {{
         uint32_t id;
         std::string_view name;
@@ -737,6 +966,8 @@ namespace fssm::parse::dsr {{
     extern const std::array<Npc, {len(npc_table)}> NPCS;
     // Questline stage of the flags the scripts set in the NPC blocks, by flag.
     extern const std::array<NpcStage, {len(stage_table)}> NPC_STAGES;
+    // Questline steps and events of the NPCs, in NPCS order, then in the order they happen.
+    extern const std::array<NpcStep, {len(step_table)}> NPC_STEPS;
     // Area PlaceNames (ids 1000-1999), by id.
     extern const std::array<PlaceName, {len(place_table)}> PLACE_NAMES;
 }}
@@ -766,6 +997,10 @@ namespace fssm::parse::dsr {{
     lines += ["    };", "", f"    const std::array<NpcStage, {len(stage_table)}> NPC_STAGES = {{"]
     for flag, text in stage_table:
         lines.append(f"        NpcStage{{{flag}, {cpp_string(text)}}},")
+    lines += ["    };", "", f"    const std::array<NpcStep, {len(step_table)}> NPC_STEPS = {{"]
+    for start, flags, text in step_table:
+        padded = ", ".join(str(f) for f in flags + [0] * (step_slots - len(flags)))
+        lines.append(f"        NpcStep{{{start}, {{{padded}}}, {cpp_string(text)}}},")
     lines += ["    };", "", f"    const std::array<PlaceName, {len(place_table)}> PLACE_NAMES = {{"]
     for place, name in place_table:
         lines.append(f"        PlaceName{{{place}, {cpp_string(name)}}},")
