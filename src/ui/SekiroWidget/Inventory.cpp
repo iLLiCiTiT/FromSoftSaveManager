@@ -69,10 +69,9 @@ namespace {
         return int(PAGES[page].categories.size());
     }
 
+    // The game's own flag (see tools/sekiro_items/gen_items.py).
     bool showsCount(const InventoryItem& item) {
-        const ItemCategory c = item.baseItem.category;
-        if (c == ItemCategory::ProstheticTools || c == ItemCategory::CombatArts) return false;
-        return item.quantity > 1 || item.baseItem.maxNum > 1;
+        return item.baseItem.showsCount;
     }
 
     QString label(std::string_view text) {

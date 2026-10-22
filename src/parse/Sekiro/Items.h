@@ -28,6 +28,7 @@ namespace fssm::parse::sekiro {
         std::string_view image;     // alias in :/sekiro_inv_images (160x160), empty if none
         int32_t order = 0;          // in-game sort order (EquipParamGoods sortId, weapon id for weapons)
         uint16_t maxNum = 0;        // maximum number held, 0 when not limited
+        bool showsCount = false;    // the inventory list draws the number held
         std::string_view description;
     };
 
