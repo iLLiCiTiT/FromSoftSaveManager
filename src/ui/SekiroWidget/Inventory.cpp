@@ -70,6 +70,8 @@ namespace {
     }
 
     // The game's own flag (see tools/sekiro_items/gen_items.py).
+    constexpr uint32_t SPIRIT_EMBLEM_ID = 0x400003e8;
+
     bool showsCount(const InventoryItem& item) {
         return item.baseItem.showsCount;
     }
@@ -122,7 +124,11 @@ void InventoryWidget::setCharacter(const fssm::parse::sekiro::SekiroCharacterInf
     m_allItems = std::move(m_stats.inventoryItems);
     m_stats.inventoryItems.clear();
     m_heldItems.clear();
-    for (const auto& item : m_allItems) m_heldItems.insert(item.itemId);
+    m_spiritEmblems.reset();
+    for (const auto& item : m_allItems) {
+        m_heldItems.insert(item.itemId);
+        if (item.itemId == SPIRIT_EMBLEM_ID) m_spiritEmblems = item;
+    }
     std::stable_sort(m_allItems.begin(), m_allItems.end(), [](const InventoryItem& a, const InventoryItem& b) {
         if (a.baseItem.order != b.baseItem.order) return a.baseItem.order < b.baseItem.order;
         return a.itemId < b.itemId;
@@ -576,14 +582,28 @@ void InventoryWidget::drawStatus(QPainter& painter) {
     statLine(0, "icon_vitality", "Vitality", m_stats.vitality);
     statLine(1, "icon_attack", "Attack Power", m_stats.attackPower);
 
-    // Sen.
-    const int senIcon = std::min(senPlate.height() - int(14 * s), int(34 * s));
-    const QRect senRow = senPlate.adjusted(int(14 * s), 0, -int(16 * s), 0);
-    painter.drawPixmap(senRow.left(), senRow.center().y() - senIcon / 2,
-                       m_cache.fit(":/sekiro_images/icon_sen", QSize(senIcon, senIcon)));
-    painter.setFont(serifFont(int(20 * s)));
-    drawShadowText(painter, senRow.adjusted(senIcon + int(8 * s), 0, 0, 0), Qt::AlignRight | Qt::AlignVCenter,
-                   QString::number(m_stats.sen));
+    // Spirit Emblems held (not listed in the game's inventory) and sen.
+    const int plateRowH = (senPlate.height() - int(10 * s)) / 2;
+    const int rowIcon = plateRowH - int(2 * s);
+    auto plateRow = [&](int line) {
+        return QRect(senPlate.left() + int(14 * s), senPlate.top() + int(5 * s) + line * plateRowH,
+                     senPlate.width() - int(30 * s), plateRowH);
+    };
+    const QRect emblemRow = plateRow(0);
+    if (m_spiritEmblems) {
+        painter.drawPixmap(emblemRow.left(), emblemRow.top() + (plateRowH - rowIcon) / 2,
+                           itemIcon(*m_spiritEmblems, rowIcon));
+    }
+    const QRect emblemText = emblemRow.adjusted(rowIcon + int(6 * s), 0, 0, 0);
+    drawShadowText(painter, emblemText, Qt::AlignLeft | Qt::AlignVCenter, "Spirit Emblems");
+    drawShadowText(painter, emblemText, Qt::AlignRight | Qt::AlignVCenter,
+                   QString::number(m_spiritEmblems ? m_spiritEmblems->quantity : 0));
+    const QRect senRow = plateRow(1);
+    painter.drawPixmap(senRow.left(), senRow.top() + (plateRowH - rowIcon) / 2,
+                       m_cache.fit(":/sekiro_images/icon_sen", QSize(rowIcon, rowIcon)));
+    const QRect senText = senRow.adjusted(rowIcon + int(6 * s), 0, 0, 0);
+    drawShadowText(painter, senText, Qt::AlignLeft | Qt::AlignVCenter, "Sen");
+    drawShadowText(painter, senText, Qt::AlignRight | Qt::AlignVCenter, QString::number(m_stats.sen));
 }
 
 int InventoryWidget::itemIndexAt(const QPoint& pos) const {

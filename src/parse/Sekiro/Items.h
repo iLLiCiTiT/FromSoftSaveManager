@@ -18,7 +18,7 @@ namespace fssm::parse::sekiro {
         SpiritEmblems,
         ProstheticTools,
         CombatArts,
-        Skills,         // goods copies of learned skills, not shown in the inventory
+        Hidden,         // goods the game doesn't list (skills, Night Eye, duplicate memos ...)
         Unknown,
     };
 

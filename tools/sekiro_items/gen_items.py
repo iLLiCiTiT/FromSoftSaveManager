@@ -127,11 +127,11 @@ def main(game_dir, exe_path, repo_root, with_icons=True):
         # whatever the id block, e.g. Dragon's Blood Droplet.
         if category not in (None, "SpiritEmblems") and row[0x43] == 0:
             category = "QuickItems"
-        # Skills the game also keeps as goods (+0x2D 6 or 7 in the 2xxx block: Dragon Flash,
-        # One Mind, Ninjutsu, Shinobi Medicine, Breath of Life ...) are listed under
-        # Skills, not in the inventory.
-        if category == "KeyItems" and item_id // 1000 == 2 and row[0x2D] in (6, 7):
-            category = "Skills"
+        # Goods type +0x3A: 0 quick item, 1 key item, 2 material, 7/8 not listed in the
+        # inventory (Spirit Emblems, skills and Ninjutsu the game also keeps as goods,
+        # Night Eye, Resurrection, the first copy of memos that come in two).
+        if category is not None and row[0x3A] in (7, 8):
+            category = "Hidden"
         if not name or name in ("-", "<?null?>") or category is None:
             continue
         icon_id = struct.unpack_from("<H", row, 0x2C)[0]
