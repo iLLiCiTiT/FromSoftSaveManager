@@ -41,11 +41,11 @@ namespace {
             {"Prosthetic Tools", ":/sekiro_images/category_prosthetics", {ItemCategory::ProstheticTools}},
         }},
         {"Skills", {
-            {"Shinobi Arts", ":/sekiro_inv_images/910", {}, true},
-            {"Prosthetic Arts", ":/sekiro_inv_images/930", {}, true},
-            {"Ashina Arts", ":/sekiro_inv_images/900", {}, true},
-            {"Temple Arts", ":/sekiro_inv_images/920", {}, true},
-            {"Mushin Arts", ":/sekiro_inv_images/940", {}, true},
+            {"Shinobi Arts", ":/sekiro_images/tree_shinobi", {}, true},
+            {"Prosthetic Arts", ":/sekiro_images/tree_prosthetic", {}, true},
+            {"Ashina Arts", ":/sekiro_images/tree_ashina", {}, true},
+            {"Temple Arts", ":/sekiro_images/tree_temple", {}, true},
+            {"Mushin Arts", ":/sekiro_images/tree_mushin", {}, true},
         }},
         {"World", {}},
     }};
