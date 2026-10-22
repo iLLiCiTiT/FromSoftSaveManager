@@ -60,6 +60,10 @@ namespace {
     // Tabs, fonts and panels keep one size (the look at the default window size);
     // resizing only changes how much fits.
     constexpr double FIXED_SCALE = 0.89;
+    // Skill tree: margin around the tree, and the distance between columns in node
+    // sizes below which the nodes shrink instead of overlapping (room for the connectors).
+    constexpr int SKILL_MARGIN = 14;
+    constexpr double MIN_SKILL_COLUMN_STEP = 1.5;
 
     const Category& categoryAt(int page, int category) {
         return *(PAGES[page].categories.begin() + category);
@@ -238,10 +242,12 @@ bool InventoryWidget::learned(const SkillNode& node) const {
 
 QPoint InventoryWidget::nodeCenter(const SkillNode& node, int* nodeSize) const {
     const QRect canvas = m_layout.list;
-    const double margin = 14 * m_layout.scale;
+    const double margin = SKILL_MARGIN * m_layout.scale;
     // Proportions of the game's screen: rows ~97 px apart, nodes ~90 px, columns ~276 px.
+    // Nodes follow the height, but shrink with the width too so the columns never overlap.
     const double rowStep = canvas.height() / double(SKILL_ROWS);
-    const int size = int(rowStep * 0.9);
+    const double widthNode = (canvas.width() - 2 * margin) / (1 + (SKILL_COLUMNS - 1) * MIN_SKILL_COLUMN_STEP);
+    const int size = std::max(1, int(std::min(rowStep * 0.9, widthNode)));
     const double colStep = std::min(rowStep * 2.85, (canvas.width() - size - 2 * margin) / double(SKILL_COLUMNS - 1));
     if (nodeSize != nullptr) *nodeSize = size;
     return {int(canvas.left() + margin + size / 2.0 + node.column * colStep),
