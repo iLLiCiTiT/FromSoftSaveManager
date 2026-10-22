@@ -10,13 +10,15 @@
 
 namespace fssm::ui::er {
 namespace {
-    // Fixed pixel sizes: the header keeps one size when the window is resized.
-    constexpr int BAR_HEIGHT = 42;
-    constexpr int ICON_SIZE = 30;
-    constexpr int ICON_GAP = 8;
-    constexpr int TAB_SPACING = 30;
-    constexpr int FONT_SIZE = 19;
-    constexpr int TITLE_LINE_HEIGHT = 14;
+    // Fixed pixel sizes: the header keeps one size when the window is resized. Height,
+    // font and rule position match the "Characters" title next to it (CharacterList.cpp).
+    constexpr int BAR_HEIGHT = 30;
+    constexpr int RULE_Y = BAR_HEIGHT - 5;
+    constexpr int ICON_SIZE = 24;
+    constexpr int ICON_GAP = 6;
+    constexpr int TAB_SPACING = 24;
+    constexpr int FONT_SIZE = 17;
+    constexpr int TITLE_LINE_HEIGHT = 10;
 
     const QColor TEXT_COLOR(228, 224, 210);
     const QColor DIM_TEXT_COLOR(150, 144, 128);
@@ -46,7 +48,7 @@ HeaderTabs::HeaderTabs(QWidget* parent): QWidget(parent) {
     m_stack = new QStackedWidget(this);
     m_stack->setAttribute(Qt::WA_TranslucentBackground, true);
     QVBoxLayout* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(0, BAR_HEIGHT + 8, 0, 0);
+    layout->setContentsMargins(0, BAR_HEIGHT, 0, 0);
     layout->addWidget(m_stack);
 }
 
@@ -99,7 +101,7 @@ void HeaderTabs::paintEvent(QPaintEvent* event) {
 
     // Dark band with soft, blurred edges so it blends into the background (fades out to
     // the right most), with a faint gold rule along its bottom.
-    const QRect bar(0, 0, width(), BAR_HEIGHT);
+    const QRect bar(0, 0, width(), RULE_Y + 1);
     if (m_band.size() != bar.size()) {
         m_band = QImage(bar.size(), QImage::Format_ARGB32_Premultiplied);
         m_band.fill(Qt::transparent);
@@ -112,7 +114,7 @@ void HeaderTabs::paintEvent(QPaintEvent* event) {
         bandPainter.fillRect(m_band.rect(), band);
         QLinearGradient feather(0, 0, 0, bar.height());
         feather.setColorAt(0.0, QColor(0, 0, 0, 0));
-        feather.setColorAt(10.0 / BAR_HEIGHT, QColor(0, 0, 0, 255));
+        feather.setColorAt(10.0 / bar.height(), QColor(0, 0, 0, 255));
         feather.setColorAt(0.75, QColor(0, 0, 0, 255));
         feather.setColorAt(1.0, QColor(0, 0, 0, 90));
         bandPainter.setCompositionMode(QPainter::CompositionMode_DestinationIn);
@@ -126,7 +128,7 @@ void HeaderTabs::paintEvent(QPaintEvent* event) {
     rule.setColorAt(0.6, ruleColor);
     ruleColor.setAlpha(0);
     rule.setColorAt(1.0, ruleColor);
-    painter.fillRect(QRect(0, bar.bottom(), width(), 1), rule);
+    painter.fillRect(QRect(0, RULE_Y, width(), 1), rule);
 
     painter.setFont(serifFont(FONT_SIZE));
     for (int i = 0; i < int(m_tabs.size()); ++i) {
@@ -136,8 +138,8 @@ void HeaderTabs::paintEvent(QPaintEvent* event) {
         // The current tab sits on the game's glowing title line, with a soft light behind it.
         if (current || hovered) {
             painter.setOpacity(current ? 1.0 : 0.4);
-            const QRect glowRect(r.left() - 24, bar.top(), r.width() + 48, BAR_HEIGHT);
-            QRadialGradient glow(QPointF(glowRect.center().x(), bar.bottom()), glowRect.width() / 2.0);
+            const QRect glowRect(r.left() - 24, bar.top(), r.width() + 48, bar.height());
+            QRadialGradient glow(QPointF(glowRect.center().x(), RULE_Y), glowRect.width() / 2.0);
             glow.setColorAt(0.0, QColor(GOLD_COLOR.red(), GOLD_COLOR.green(), GOLD_COLOR.blue(), 60));
             glow.setColorAt(1.0, QColor(GOLD_COLOR.red(), GOLD_COLOR.green(), GOLD_COLOR.blue(), 0));
             painter.save();
@@ -151,8 +153,8 @@ void HeaderTabs::paintEvent(QPaintEvent* event) {
             line.setColorAt(0.0, QColor(214, 190, 130, 0));
             line.setColorAt(0.5, QColor(232, 212, 160, 235));
             line.setColorAt(1.0, QColor(214, 190, 130, 0));
-            painter.fillRect(QRect(x1, bar.bottom() - 1, x2 - x1, 2), line);
-            painter.drawPixmap(QRect(x1, bar.bottom() - TITLE_LINE_HEIGHT / 2, x2 - x1, TITLE_LINE_HEIGHT), m_titleLine);
+            painter.fillRect(QRect(x1, RULE_Y - 1, x2 - x1, 2), line);
+            painter.drawPixmap(QRect(x1, RULE_Y - TITLE_LINE_HEIGHT / 2, x2 - x1, TITLE_LINE_HEIGHT), m_titleLine);
         }
         painter.setOpacity(current ? 1.0 : (hovered ? 0.85 : 0.5));
         const QPixmap& icon = m_tabs[i].icon;
