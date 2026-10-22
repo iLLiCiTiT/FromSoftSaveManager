@@ -16,10 +16,13 @@ Param fields used (found by correlating with the icon atlases and known items):
     EquipParamWeapon     +0xBE iconId, +0x1A6 wepType
     EquipParamProtector  +0xA6 iconIdM
     EquipParamAccessory  +0x26 iconId
-    EquipParamGem        +0x18 iconId
+    EquipParamGem        +0x04 iconId (+0x18 is the skill id)
     EquipParamGoods      +0x20 sortId, +0x72 sortGroupId (the in-game inventory sorts by
                          sortId and draws a separator wherever sortGroupId changes),
-                         +0x3A maxNum (No. Held), +0x70 maxRepositoryNum (Stored)
+                         +0x3A maxNum (No. Held), +0x70 maxRepositoryNum (Stored),
+                         +0x48 bit 7: the grid shows the number held (consumables,
+                         materials, Stonesword Keys, pots, single-use DLC blessings ...;
+                         not unique tools like the Telescope or Spectral Steed Whistle)
     EquipParamWeapon     +0x08 sortId, +0x190 sortGroupId, +0x235 maxArrowQuantity
     EquipParamProtector  +0x04 sortId, +0xD8 sortGroupId
     EquipParamAccessory  +0x1C sortId, +0x33 sortGroupId
@@ -49,10 +52,10 @@ TYPE_GOODS = 0x4
 TYPE_GEM = 0x8
 
 GOODS_TYPES = {
-    0: "Tools", 9: "Tools", 11: "Tools",
-    1: "KeyItems",
+    0: "Tools", 9: "Tools",
+    1: "KeyItems", 11: "KeyItems",  # 11: empty pots and perfume bottles
     2: "CraftingMaterials",
-    3: "Remembrances",
+    3: "Remembrances",          # listed under Tools in the game
     5: "Sorceries", 17: "Sorceries",
     7: "SpiritAshes", 8: "SpiritAshes",
     10: "CrystalTears",
@@ -61,6 +64,12 @@ GOODS_TYPES = {
     15: "GreatRunes",
     16: "Incantations", 18: "Incantations",
 }
+SPELL_GOODS_TYPES = (5, 16, 17, 18)
+
+
+def clean_effect(text):
+    # Drop the "Examine using <key icon>" hint of maps and notes.
+    return re.sub(r"\n?Examine using <\?keyicon@\d+\?>", "", text)
 
 
 def weapon_category(wep_type):
@@ -169,9 +178,9 @@ def main(game_dir, repo_root, with_icons=True, icon_size=128):
         return struct.unpack_from("<H", row, offset)[0]
 
     def add(type_nibble, item_id, category, name, icon_id, sort_id, sort_group, effect="",
-            max_held=0, max_stored=0):
+            max_held=0, max_stored=0, shows_count=False):
         items.append(((type_nibble << 28) | item_id, category, name, icon_id, sort_id, sort_group,
-                      effect, max_held, max_stored))
+                      clean_effect(effect), max_held, max_stored, shows_count))
 
     def tables(kind):
         return names.get(f"{kind}Name.fmg", {}), names.get(f"{kind}Info.fmg", {})
@@ -181,8 +190,11 @@ def main(game_dir, repo_root, with_icons=True, icon_size=128):
         name = goods_names.get(item_id)
         category = GOODS_TYPES.get(row[0x3E])
         if name and category:
+            max_held = u16(row, 0x3A)
+            # Spells have a stack size of 99 but show no number.
+            shows_count = bool(row[0x48] & 0x80) or (max_held > 1 and row[0x3E] not in SPELL_GOODS_TYPES)
             add(TYPE_GOODS, item_id, category, name, u16(row, 0x30), i32(row, 0x20), row[0x72],
-                goods_info.get(item_id, ""), u16(row, 0x3A), u16(row, 0x70))
+                goods_info.get(item_id, ""), max_held, u16(row, 0x70), shows_count)
 
     weapon_names, weapon_info = tables("Weapon")
     for item_id, row in sorted(rows("EquipParamWeapon.param").items()):
@@ -192,7 +204,7 @@ def main(game_dir, repo_root, with_icons=True, icon_size=128):
             # Arrows and bolts stack; other weapons are one item per handle.
             max_held = row[0x235] if category == "Ammunition" else 0
             add(TYPE_WEAPON, item_id, category, name, u16(row, 0xBE), i32(row, 0x08), row[0x190],
-                weapon_info.get(item_id, ""), max_held)
+                weapon_info.get(item_id, ""), max_held, shows_count=max_held > 1)
 
     protector_names, protector_info = tables("Protector")
     for item_id, row in sorted(rows("EquipParamProtector.param").items()):
@@ -212,7 +224,7 @@ def main(game_dir, repo_root, with_icons=True, icon_size=128):
     for item_id, row in sorted(rows("EquipParamGem.param").items()):
         name = gem_names.get(item_id)
         if name:
-            add(TYPE_GEM, item_id, "AshesOfWar", name, u16(row, 0x18), i32(row, 0x28), row[0x07],
+            add(TYPE_GEM, item_id, "AshesOfWar", name, u16(row, 0x04), i32(row, 0x28), row[0x07],
                 gem_info.get(item_id, ""))
 
     if with_icons:
@@ -231,11 +243,12 @@ def main(game_dir, repo_root, with_icons=True, icon_size=128):
         "namespace fssm::parse::er {",
         f"    const std::array<BaseItem, {len(items)}> ALL_ITEMS = {{",
     ]
-    for item_id, category, name, icon_id, sort_id, sort_group, effect, max_held, max_stored in sorted(items):
+    for (item_id, category, name, icon_id, sort_id, sort_group, effect, max_held, max_stored,
+         shows_count) in sorted(items):
         image = str(icon_id) if icon_id in icons else ""
         lines.append(f"        BaseItem{{0x{item_id:08x}, ItemCategory::{category}, "
                      f"{cpp_string(name)}, {cpp_string(image)}, {sort_id}, {sort_group}, "
-                     f"{max_held}, {max_stored}, {cpp_string(effect)}}},")
+                     f"{max_held}, {max_stored}, {'true' if shows_count else 'false'}, {cpp_string(effect)}}},")
     lines += ["    };", "}", ""]
     out_path = os.path.join(repo_root, "src", "parse", "EldenRing", "Items.cpp")
     with open(out_path, "w", encoding="utf-8", newline="\r\n") as f:

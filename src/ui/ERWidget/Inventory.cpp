@@ -27,12 +27,12 @@ namespace {
     // Same order as the in-game inventory tabs.
     const std::array<Tab, 19> TABS = {{
         {"Recent Items", "tab_recent", {}},
-        {"Tools", "tab_tools", {ItemCategory::Tools}},
+        {"Tools", "tab_tools", {ItemCategory::Tools, ItemCategory::Remembrances}},
         {"Ashes", "tab_ashes", {ItemCategory::SpiritAshes}},
         {"Crafting Materials", "tab_crafting", {ItemCategory::CraftingMaterials}},
         {"Bolstering Materials", "tab_bolstering", {ItemCategory::UpgradeMaterials}},
-        {"Key Items", "tab_key_items", {ItemCategory::KeyItems, ItemCategory::Remembrances,
-                                        ItemCategory::GreatRunes, ItemCategory::CrystalTears}},
+        {"Key Items", "tab_key_items", {ItemCategory::KeyItems, ItemCategory::GreatRunes,
+                                        ItemCategory::CrystalTears}},
         {"Sorceries", "tab_sorceries", {ItemCategory::Sorceries}},
         {"Incantations", "tab_incantations", {ItemCategory::Incantations}},
         {"Ashes of War", "tab_ashes_of_war", {ItemCategory::AshesOfWar}},
@@ -124,11 +124,12 @@ namespace {
         return (item.itemId >> 28) == 0 && item.baseItem.category != ItemCategory::Ammunition;
     }
 
-    // Goods that stack show their count in the grid; gear and key items don't.
-    // Items you can hold only one of draw no number. A flask with no charges
-    // allocated is stored as its "empty" variant, which holds only one.
+    // The game's own flag (see tools/er_items/gen_items.py): consumables,
+    // materials and arrows show their count, gear, spells and unique tools don't,
+    // even when holding several. A flask with no charges allocated is stored as
+    // its "empty" variant, which shows no number.
     bool showsCount(const InventoryItem& item) {
-        return item.baseItem.maxHeld > 1 || item.quantity > 1;
+        return item.baseItem.showsCount;
     }
 }
 

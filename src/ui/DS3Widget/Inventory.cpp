@@ -138,13 +138,10 @@ namespace {
         return item.itemId == ESTUS_FLASK_ID || item.itemId == ASHEN_ESTUS_FLASK_ID;
     }
 
-    // Items you can hold only one of draw no number. Spells and most key items
-    // are listed with a stack size of 99 in the item database, but the game
-    // shows no count on them, so key items show one only when holding several.
+    // Items you can hold only one of draw no number; key items always show theirs.
     bool showsCount(const InventoryItem& item, uint32_t maxHeld) {
         const ItemCategory category = item.baseItem.category;
-        if (category == ItemCategory::Spells) return false;
-        if (category == ItemCategory::KeyItems) return item.amount > 1;
+        if (category == ItemCategory::KeyItems) return true;
         return maxHeld > 1 || item.amount > 1 || category == ItemCategory::ArrowsBolts;
     }
 
