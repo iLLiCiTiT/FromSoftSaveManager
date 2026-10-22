@@ -14,7 +14,7 @@ namespace {
     // font and rule position match the "Characters" title next to it (CharacterList.cpp).
     constexpr int BAR_HEIGHT = 30;
     constexpr int RULE_Y = BAR_HEIGHT - 5;
-    constexpr int ICON_SIZE = 24;
+    constexpr int ICON_SIZE = 18;
     constexpr int ICON_GAP = 6;
     constexpr int TAB_SPACING = 24;
     constexpr int FONT_SIZE = 17;
