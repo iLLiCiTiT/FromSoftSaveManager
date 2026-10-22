@@ -4,6 +4,7 @@
 
 #include "CharacterList.h"
 #include "CharInfo.h"
+#include "HeaderTabs.h"
 #include "Inventory.h"
 #include "WorldProgress.h"
 #include "../BaseGameWidget.h"
@@ -37,7 +38,7 @@ private slots:
     void onRefresh();
 private:
     QListView* m_view = nullptr;
-    TabWidget* m_charTabs = nullptr;
+    fssm::ui::er::HeaderTabs* m_charTabs = nullptr;
     fssm::ui::er::CharsListModel* m_model = nullptr;
     fssm::ui::er::CharacterInfoWidget* m_charInfoWidget = nullptr;
     fssm::ui::er::InventoryWidget* m_inventoryWidget = nullptr;

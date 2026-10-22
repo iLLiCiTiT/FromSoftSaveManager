@@ -166,36 +166,37 @@ namespace {
         }
         painter.restore();
     }
+}
 
-    // Site of Grace: a golden glow with a spark when discovered, a faint ring otherwise.
-    void drawGraceMark(QPainter& painter, const QRectF& rect, bool discovered) {
-        painter.save();
-        const QPointF c = rect.center();
-        const double r = rect.width() / 2;
-        if (discovered) {
-            QRadialGradient glow(c, r);
-            glow.setColorAt(0.0, QColor(255, 244, 200, 255));
-            glow.setColorAt(0.3, QColor(232, 196, 110, 220));
-            glow.setColorAt(1.0, QColor(200, 160, 70, 0));
-            painter.setPen(Qt::NoPen);
-            painter.setBrush(glow);
-            painter.drawEllipse(c, r, r);
-            QPainterPath spark;
-            spark.moveTo(c.x(), c.y() - r * 0.85);
-            spark.quadTo(c.x() + r * 0.12, c.y() - r * 0.12, c.x() + r * 0.85, c.y());
-            spark.quadTo(c.x() + r * 0.12, c.y() + r * 0.12, c.x(), c.y() + r * 0.85);
-            spark.quadTo(c.x() - r * 0.12, c.y() + r * 0.12, c.x() - r * 0.85, c.y());
-            spark.quadTo(c.x() - r * 0.12, c.y() - r * 0.12, c.x(), c.y() - r * 0.85);
-            painter.setBrush(QColor(255, 248, 220, 230));
-            painter.drawPath(spark);
-        } else {
-            painter.setPen(QPen(QColor(110, 104, 92), std::max(1.0, r / 6)));
-            painter.setBrush(Qt::NoBrush);
-            painter.drawEllipse(c, r * 0.45, r * 0.45);
-        }
-        painter.restore();
+void drawGraceMark(QPainter& painter, const QRectF& rect, bool discovered) {
+    painter.save();
+    const QPointF c = rect.center();
+    const double r = rect.width() / 2;
+    if (discovered) {
+        QRadialGradient glow(c, r);
+        glow.setColorAt(0.0, QColor(255, 244, 200, 255));
+        glow.setColorAt(0.3, QColor(232, 196, 110, 220));
+        glow.setColorAt(1.0, QColor(200, 160, 70, 0));
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(glow);
+        painter.drawEllipse(c, r, r);
+        QPainterPath spark;
+        spark.moveTo(c.x(), c.y() - r * 0.85);
+        spark.quadTo(c.x() + r * 0.12, c.y() - r * 0.12, c.x() + r * 0.85, c.y());
+        spark.quadTo(c.x() + r * 0.12, c.y() + r * 0.12, c.x(), c.y() + r * 0.85);
+        spark.quadTo(c.x() - r * 0.12, c.y() + r * 0.12, c.x() - r * 0.85, c.y());
+        spark.quadTo(c.x() - r * 0.12, c.y() - r * 0.12, c.x(), c.y() - r * 0.85);
+        painter.setBrush(QColor(255, 248, 220, 230));
+        painter.drawPath(spark);
+    } else {
+        painter.setPen(QPen(QColor(110, 104, 92), std::max(1.0, r / 6)));
+        painter.setBrush(Qt::NoBrush);
+        painter.drawEllipse(c, r * 0.45, r * 0.45);
     }
+    painter.restore();
+}
 
+namespace {
     // Small diamond marking a boss: filled gold when defeated.
     void drawBossMark(QPainter& painter, const QRectF& rect, bool defeated) {
         painter.save();
