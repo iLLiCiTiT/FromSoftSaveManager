@@ -94,6 +94,10 @@ void InventoryWidget::setCharacter(const fssm::parse::ds2::DS2CharacterInfo* cha
     m_hasCharacter = charInfo != nullptr;
     m_allItems = charInfo != nullptr ? charInfo->inventoryItems : std::vector<InventoryItem>{};
     std::stable_sort(m_allItems.begin(), m_allItems.end(), [](const InventoryItem& a, const InventoryItem& b) {
+        // Each tab shows one category. Gestures are listed in the order they were
+        // learned (their slot order), everything else by the game's sort id.
+        if (a.baseItem.category != b.baseItem.category) return a.baseItem.category < b.baseItem.category;
+        if (a.baseItem.category == ItemCategory::Gestures) return a.slot < b.slot;
         if (a.baseItem.order != b.baseItem.order) return a.baseItem.order < b.baseItem.order;
         return a.itemId < b.itemId;
     });
