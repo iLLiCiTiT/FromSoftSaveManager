@@ -106,7 +106,7 @@ DS2Widget::DS2Widget(Controller* controller, const QString& saveId, QWidget* par
     m_charTabs->addTab("World Progress", HeaderTabs::Medallion::Scroll, m_worldWidget);
 
     QHBoxLayout* layout = new QHBoxLayout(this);
-    layout->setContentsMargins(20, 20, 20, 20);
+    layout->setContentsMargins(20, 8, 20, 20);
     layout->addWidget(viewWrap, 0);
     layout->addWidget(m_charTabs, 1);
 
