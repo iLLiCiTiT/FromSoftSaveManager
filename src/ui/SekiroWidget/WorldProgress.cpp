@@ -67,7 +67,8 @@ namespace {
 
     // Prosthetic tools found, then every NPC with its state, current stage and steps.
     std::vector<Row> panelRows(const std::vector<bool>& toolsFound, const std::vector<fssm::parse::sekiro::NpcState>& states,
-                               const std::vector<std::string_view>& stages, const std::vector<bool>& stepsDone) {
+                               const std::vector<std::string_view>& stages, const std::vector<bool>& dragonrot,
+                               const std::vector<bool>& stepsDone) {
         using fssm::parse::sekiro::NPC_STEPS;
         using fssm::parse::sekiro::NPCS;
         using fssm::parse::sekiro::NpcState;
@@ -87,6 +88,7 @@ namespace {
             const NpcState state = i < states.size() ? states[i] : NpcState::Unknown;
             const QString value = state == NpcState::Dead      ? "Dead or gone"
                                 : state == NpcState::Hostile   ? "Hostile"
+                                : isSet(dragonrot, i)          ? "Dragonrot"
                                 : state == NpcState::Unknown   ? "Not met"
                                                                : "";
             rows.push_back({RowKind::Npc, label(NPCS[i].name), value, state != NpcState::Unknown});
@@ -154,7 +156,8 @@ WorldProgressWidget::WorldProgressWidget(QWidget* parent): QWidget(parent) {
 
 void WorldProgressWidget::setProgress(const fssm::parse::sekiro::SekiroCharacterInfo& character) {
     if (character.idolsFound != m_idolsFound || character.bossesDefeated != m_bossesDefeated
-        || character.npcStepsDone != m_npcStepsDone || character.npcStages != m_npcStages) {
+        || character.npcStepsDone != m_npcStepsDone || character.npcStages != m_npcStages
+        || character.npcDragonrot != m_npcDragonrot) {
         for (auto& scroll : m_scrolls) scroll.reset();
     }
     m_idolsFound = character.idolsFound;
@@ -162,6 +165,7 @@ void WorldProgressWidget::setProgress(const fssm::parse::sekiro::SekiroCharacter
     m_toolsFound = character.prostheticToolsFound;
     m_npcStates = character.npcStates;
     m_npcStages = character.npcStages;
+    m_npcDragonrot = character.npcDragonrot;
     m_npcStepsDone = character.npcStepsDone;
     update();
 }
@@ -189,7 +193,8 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     int bossCount = 0;
     const std::vector<Row> idols = groupedRows(IDOLS, m_idolsFound, RowKind::Idol, idolCount);
     std::vector<Row> bosses = groupedRows(BOSSES, m_bossesDefeated, RowKind::Boss, bossCount);
-    const std::vector<Row> toolAndNpcRows = panelRows(m_toolsFound, m_npcStates, m_npcStages, m_npcStepsDone);
+    const std::vector<Row> toolAndNpcRows = panelRows(m_toolsFound, m_npcStates, m_npcStages, m_npcDragonrot,
+                                                      m_npcStepsDone);
     bosses.insert(bosses.end(), toolAndNpcRows.begin(), toolAndNpcRows.end());
 
     const int leftW = int(r.width() * 0.52);
@@ -273,7 +278,10 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
                 const QFontMetrics fm(painter.font());
                 const int valueW = row.value.isEmpty() ? 0 : fm.horizontalAdvance(row.value) + px(10);
                 const QRect value(full.left(), full.top(), full.width() - px(12), full.height());
-                const QColor valueColor = row.value == "Hostile" ? QColor(222, 120, 96) : QColor(150, 144, 130);
+                // Hostile in red, Dragonrot in ochre.
+                const QColor valueColor = row.value == "Hostile"     ? QColor(222, 120, 96)
+                                        : row.value == "Dragonrot"   ? QColor(214, 176, 92)
+                                                                     : QColor(150, 144, 130);
                 drawShadowText(painter, value, Qt::AlignRight | Qt::AlignVCenter, row.value, valueColor);
                 painter.setFont(serifFont(px(15)));
                 const QRect text(full.left() + px(22), full.top(), full.width() - px(34) - valueW, full.height());

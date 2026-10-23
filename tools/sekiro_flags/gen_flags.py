@@ -35,6 +35,12 @@ generator fails when a listed flag is set by no map script (/event/*.emevd.dcx w
 common_func) and no talk script (/script/talk/*.talkesdbnd.dcx), or when a script sets a
 stage flag of a listed NPC that has no text.
 
+Dragonrot: each sickened NPC has 5 flags; common event 50 sets group, then group + 1 and
+group + 2 as the sickness spreads (one per death of the player), and a cure event per NPC
+(common 9050 .. 9066) clears them (Batch Set Event Flags off). The cure event checks the
+player's "Rot Essence: <name>" key item (IfPlayerHasItem goods 9500 ..) and the NPC's flag
+blocks, which tie each group to its NPC. An NPC is sick while any flag of its group is set.
+
 Prosthetic tools: the ten base tools are the weapons 70000, 71000, ... 79000 (names from
 武器名.fmg); a tool counts as found when the inventory holds it or one of its upgrades
 (weapon ids base .. base + 999, upgrades of the tool keep its first three digits).
@@ -275,6 +281,11 @@ NPC_STEPS = {
 }
 MAX_NPC_FLAGS = 2
 MAX_STEP_FLAGS = 6
+
+DRAGONROT_CURE_EVENTS = range(9050, 9070)    # common.emevd, one per NPC that can sicken
+DRAGONROT_FLAG_MIN, DRAGONROT_FLAG_MAX = 70002000, 70003000
+DRAGONROT_GROUP = 5
+ROT_ESSENCE_PREFIX = "Rot Essence:"
 
 TALK_SET_EVENT_FLAG = (1, 11)       # SetEventFlag(flag, state)
 TALK_CALL_MACHINE_BANK = 6          # call to a state machine of the same script
@@ -596,6 +607,31 @@ def talk_set_flags(archives):
     return out
 
 
+def dragonrot_groups(archives, goods_names):
+    """{NPC block base: first Dragonrot flag} from the cure events in common.emevd: each
+    clears one group of 5 flags, checks one "Rot Essence" key item and the blocks of the NPC
+    (and its other self, e.g. Anayama in the Hirata Estate)."""
+    common = parse_emevd(read_file(archives, "/event/common.emevd.dcx"))
+    out = {}
+    for event_id in DRAGONROT_CURE_EVENTS:
+        instrs = common.get(event_id)
+        if instrs is None:
+            continue
+        groups = {struct.unpack_from("<i", a, 0)[0] for b, i, a, _p in instrs
+                  if (b, i) == (2003, 22) and a[8] == 0
+                  and struct.unpack_from("<i", a, 4)[0] - struct.unpack_from("<i", a, 0)[0] == DRAGONROT_GROUP - 1}
+        groups = {g for g in groups if DRAGONROT_FLAG_MIN <= g < DRAGONROT_FLAG_MAX}
+        items = {struct.unpack_from("<i", a, 4)[0] for b, i, a, _p in instrs if (b, i) == (3, 4)}
+        blocks = {struct.unpack_from("<i", a, 4)[0] // 20 * 20 for b, i, a, _p in instrs
+                  if b in (3, 1003) and len(a) >= 8 and NPC_FLAG_MIN <= struct.unpack_from("<i", a, 4)[0] < NPC_FLAG_MAX}
+        if len(groups) != 1 or len(items) != 1 or not goods_names.get(next(iter(items)), "").startswith(ROT_ESSENCE_PREFIX):
+            raise RuntimeError(f"common event {event_id} is not a Dragonrot cure event")
+        for base in blocks:
+            if out.setdefault(base, next(iter(groups))) != next(iter(groups)):
+                raise RuntimeError(f"NPC block {base}: two Dragonrot groups")
+    return out
+
+
 def npc_tables(archives):
     """(npcs, stages, steps) checked against the scripts."""
     event_set = event_set_flags(archives)
@@ -627,6 +663,13 @@ def npc_tables(archives):
     if set(NPC_STEPS) - set(bases):
         raise RuntimeError(f"steps for unknown NPC blocks: {sorted(set(NPC_STEPS) - set(bases))}")
     return NPCS, sorted(NPC_STAGES.items()), steps
+
+
+def cpp_npc_rows(npc_table, rot_groups):
+    out = []
+    for base, name, dead, hostile in npc_table:
+        out.append((base, name, dead, hostile, rot_groups.get(base, 0)))
+    return out
 
 
 def prosthetic_tools(weapon_names):
@@ -664,6 +707,7 @@ def main():
     idol_table, areas, area_names = idols(params, menu_text, place_names)
     boss_table = bosses(archives, params, npc_names, idol_table, areas)
     npc_table, stage_table, step_table = npc_tables(archives)
+    npc_rows = cpp_npc_rows(npc_table, dragonrot_groups(archives, sekirodata.parse_fmg2(item["アイテム名.fmg"])))
     tool_table = prosthetic_tools(sekirodata.parse_fmg2(item["武器名.fmg"]))
 
     out_dir = os.path.join(repo, "src", "parse", "Sekiro")
@@ -696,6 +740,8 @@ namespace fssm::parse::sekiro {{
         std::string_view name;
         std::array<uint32_t, {MAX_NPC_FLAGS}> deadFlags;
         std::array<uint32_t, {MAX_NPC_FLAGS}> hostileFlags;
+        // First of the 5 Dragonrot flags (sick while any is set), 0 when it can't sicken.
+        uint32_t dragonrotFlag;
     }};
 
     struct NpcStage {{
@@ -754,9 +800,9 @@ namespace fssm::parse::sekiro {{
         return ", ".join(str(f) for f in flags + [0] * (size - len(flags)))
 
     lines += ["    };", "", f"    const std::array<Npc, {len(npc_table)}> NPCS = {{"]
-    for base, name, dead, hostile in npc_table:
+    for base, name, dead, hostile, rot in npc_rows:
         lines.append(f"        Npc{{{base}, {cpp_string(name)}, {{{padded(dead, MAX_NPC_FLAGS)}}}, "
-                     f"{{{padded(hostile, MAX_NPC_FLAGS)}}}}},")
+                     f"{{{padded(hostile, MAX_NPC_FLAGS)}}}, {rot}}},")
     lines += ["    };", "", f"    const std::array<NpcStage, {len(stage_table)}> NPC_STAGES = {{"]
     for flag, text in stage_table:
         lines.append(f"        NpcStage{{{flag}, {cpp_string(text)}}},")
@@ -768,6 +814,7 @@ namespace fssm::parse::sekiro {{
         lines.append(f"        ProstheticTool{{{weapon_id}, {cpp_string(name)}}},")
     lines += ["    };", "}", ""]
     write_crlf(os.path.join(out_dir, "WorldProgress.cpp"), "\n".join(lines))
+    print(f"{sum(1 for row in npc_rows if row[4])} NPCs can get Dragonrot")
     print(f"{len(idol_table)} idols, {len(boss_table)} bosses, {len(npc_table)} NPCs, "
           f"{len(stage_table)} stages, {len(step_table)} steps, {len(tool_table)} prosthetic tools")
 

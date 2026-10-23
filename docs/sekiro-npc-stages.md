@@ -273,6 +273,34 @@ Hostile: 1596 (after "I drank it all...!", m15_00 11505732; `Talk_まともな�
 
 Hostile: 1935, 1936. Dead or gone: 1939.
 
+## Dragonrot
+
+Each NPC that can sicken has 5 flags (70002000 + 5k). Common event 50 picks the NPCs that
+sicken as Dragonrot spreads and sets the group's first flag, then + 1 and + 2 on later
+spreads; the NPC's cure event in common.emevd (9050 .. 9066) clears the group (Batch Set
+Event Flags off). Each cure event checks one "Rot Essence: <name>" key item (goods 9500 ..)
+and the NPC's flag blocks, which tie the group to the NPC; the generator reads this table
+from the events (`dragonrot_groups`). The app shows "Dragonrot" while any flag of the
+group is set (after Dead or gone and Hostile).
+
+| group | Rot Essence | cure event | NPC block |
+|---|---|---|---|
+| 70002000 | Sculptor | 9050 | 1000 Sculptor |
+| 70002005 | Timid Maid | 9058 | 1120 Inosuke's Mother |
+| 70002010 | Fine Son | 9056 | 1160 / 1180 Inosuke (not listed) |
+| 70002015 | Newcomer | 9051 | 1200 Anayama |
+| 70002020 | Faithful One | 9059 | 1360 (not listed) |
+| 70002025 | Lost Child | 9053 | 1440 Kotaro |
+| 70002030 | Charmed One | 9054 | 1420 Jinzaemon |
+| 70002035 | Surgeons | 9055 | 1460 Doujun |
+| 70002040 | Thirsty One | 9057 | 1580 Shosuke |
+| 70002045 | Black Hat | 9052 | 1380 Blackhat Badger |
+| 70002050 .. 70002075 | Crow, Wartorn, Jail, Toxic, Pious, Drunk Mob | 9060 .. 9065 | 1800 .. 1900 Memorial Mobs (not listed) |
+| 70002080 | Info Broker | 9066 | 1920 Fujioka |
+
+Checked on the test save: the late-game character has no flag of these groups set; a new
+character (51 minutes in) has 70002000 and 70002005, the Sculptor and Inosuke's Mother.
+
 ## Prosthetic tools
 
 The ten tools are weapons 70000 (Loaded Shuriken), 71000, ... 79000 (Finger Whistle); their

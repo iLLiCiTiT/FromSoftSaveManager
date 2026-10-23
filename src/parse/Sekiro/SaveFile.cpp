@@ -99,6 +99,16 @@ namespace fssm::parse::sekiro {
             return NpcState::Unknown;
         }
 
+        // Common event 50 sets dragonrotFlag, + 1 and + 2 as the sickness spreads; curing
+        // the NPC clears the group of 5.
+        bool npc_has_dragonrot(EventFlagView eventFlags, const Npc& npc) {
+            if (npc.dragonrotFlag == 0) return false;
+            for (uint32_t flagId = npc.dragonrotFlag; flagId < npc.dragonrotFlag + 5; ++flagId) {
+                if (get_event_flag(eventFlags, flagId).value_or(false)) return true;
+            }
+            return false;
+        }
+
         std::string_view npc_stage(EventFlagView eventFlags, const Npc& npc) {
             for (const auto& stage : NPC_STAGES) {
                 if (stage.flagId >= npc.firstFlag && stage.flagId < npc.firstFlag + 20
@@ -178,6 +188,7 @@ namespace fssm::parse::sekiro {
             for (const auto& npc : NPCS) {
                 ci.npcStates.push_back(npc_state(eventFlags, npc));
                 ci.npcStages.push_back(npc_stage(eventFlags, npc));
+                ci.npcDragonrot.push_back(npc_has_dragonrot(eventFlags, npc));
             }
             for (const auto& step : NPC_STEPS) ci.npcStepsDone.push_back(any_flag_set(eventFlags, step.flags));
             out.characters.push_back(std::move(ci));

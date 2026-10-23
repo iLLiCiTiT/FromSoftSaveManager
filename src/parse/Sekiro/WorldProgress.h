@@ -27,6 +27,8 @@ namespace fssm::parse::sekiro {
         std::string_view name;
         std::array<uint32_t, 2> deadFlags;
         std::array<uint32_t, 2> hostileFlags;
+        // First of the 5 Dragonrot flags (sick while any is set), 0 when it can't sicken.
+        uint32_t dragonrotFlag;
     };
 
     struct NpcStage {

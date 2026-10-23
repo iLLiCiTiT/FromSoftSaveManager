@@ -32,6 +32,7 @@ private:
     std::vector<bool> m_toolsFound;
     std::vector<fssm::parse::sekiro::NpcState> m_npcStates;
     std::vector<std::string_view> m_npcStages;
+    std::vector<bool> m_npcDragonrot;
     std::vector<bool> m_npcStepsDone;
     // Idols and the detail panel scroll separately; geometry from the last paint. The
     // lists are not clickable, so dragging them scrolls.

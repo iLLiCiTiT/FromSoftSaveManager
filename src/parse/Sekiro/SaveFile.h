@@ -37,6 +37,8 @@ namespace fssm::parse::sekiro {
         // One per NPCS entry: its state and questline stage text (empty when no stage is set).
         std::vector<NpcState> npcStates;
         std::vector<std::string_view> npcStages;
+        // One per NPCS entry: sick with Dragonrot (a flag of its Dragonrot group set).
+        std::vector<bool> npcDragonrot;
         // One per NPC_STEPS entry.
         std::vector<bool> npcStepsDone;
         // One per PROSTHETIC_TOOLS entry, from the inventory.
