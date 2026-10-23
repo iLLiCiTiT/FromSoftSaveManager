@@ -115,17 +115,25 @@ NPCS = [
     (1040, "Divine Child of Rejuvenation", [], []),
     (1060, "Hanbei the Undying", [], []),
     (1120, "Inosuke's Mother", [], []),                     # Talk_鈴ばばあ, "Oh... is that you, Inosuke?"
+    (1160, "Inosuke Nogami", [], []),                       # Talk_鈴ばばあの息子, "My name is Inosuke Nogami."
     (1200, "Anayama the Peddler", [1219], []),
     (1240, "Owl (Father)", [9317], []),                     # Hirata Estate, Talk_忍軍の長
     (1260, "Emma, the Gentle Blade", [9315], [1276]),       # NpcParam "Emma the Physician"
     (1280, "Isshin Ashina", [1299], [1296]),
     (1340, "Great Shinobi Owl", [1359], [1356]),            # Ashina Castle, Talk_忍軍の長
+    (1360, "Faithful One", [1379], []),                     # Talk_八百比丘尼, key item "Rot Essence: Faithful One"
     (1380, "Blackhat Badger", [1399], [1395, 1396]),
     (1420, "Jinzaemon Kumano", [1439], [1435, 1436]),       # Talk_魅了された侍, "My name is Jinzaemon Kumano."
     (1440, "Kotaro", [1459], []),                           # Talk_さらわれ下男, Anayama: "Take a look at Kotaro here."
     (1460, "Doujun", [1479], [1475, 1476]),                 # Talk_不死実験の医僧, "I am Doujun."
     (1580, "Basket Wearer Shosuke", [1599], [1596]),
     (1660, "Tengu of Ashina", [], []),                      # Talk_スキル爺(剣聖), "I am the Tengu of Ashina!"
+    (1800, "Crow's Bed Memorial Mob", [], []),
+    (1820, "Battlefield Memorial Mob", [], []),
+    (1840, "Dungeon Memorial Mob", [], []),
+    (1860, "Toxic Memorial Mob", [], []),
+    (1880, "Shugendo Memorial Mob", [], []),
+    (1900, "Exiled Memorial Mob", [], []),
     (1920, "Fujioka the Info Broker", [1939], [1935, 1936]),
 ]
 
@@ -152,6 +160,9 @@ NPC_STAGES = {
     1120: "Ashina Outskirts",
     1121: "Ashina Outskirts, after Lady Butterfly",
     1122: "Ashina Outskirts, later",
+    1160: "Ashina Outskirts",
+    1161: "Ashina Outskirts, after Lady Butterfly",
+    1162: "Ashina Outskirts, later",
     1200: "Ashina Outskirts",
     1201: "With Kotaro, after the Divine Dragon",
     1202: "Gone, killed in the Hirata Estate",
@@ -175,6 +186,9 @@ NPC_STAGES = {
     1341: "After the Mortal Blade, Lotus, Shelter Stone",
     1342: "Fought you",
     1354: "Defeated",
+    1360: "Praying for the Divine Child",
+    1361: "After you met the Divine Child",
+    1363: "After the Divine Child's \"Yes, I've found them.\"",
     1380: "Ashina Castle",
     1381: "Senpou Temple",
     1382: "Senpou Temple, at the cliff",
@@ -207,6 +221,12 @@ NPC_STAGES = {
     1660: "Ashina Castle",
     1661: "After Isshin asked about the Mortal Blade",
     1674: "After the Mortal Blade, Lotus, Shelter Stone",
+    1800: "Ashina Outskirts, by the Outskirts Wall",
+    1820: "Ashina Outskirts, by the castle gate",
+    1840: "Ashina Castle, by the Abandoned Dungeon",
+    1860: "Sunken Valley",
+    1880: "Senpou Temple, Shugendo",
+    1900: "Mibu Village",
     1920: "Ashina Castle",
     1921: "Dilapidated Temple",
 }
@@ -233,6 +253,9 @@ NPC_STEPS = {
     1120: [
         ("Lady Butterfly defeated", [1121]),
     ],
+    1160: [
+        ("Lady Butterfly defeated", [1161]),
+    ],
     1200: [
         ("Kotaro sent to him", [71100283]),
     ],
@@ -251,6 +274,10 @@ NPC_STEPS = {
     ],
     1340: [
         ("Great Shinobi Owl defeated", [9308]),
+    ],
+    1360: [
+        ("You met the Divine Child", [1361, 1363]),
+        ("The Divine Child found them", [1363]),
     ],
     1380: [
         ("Moved on to Senpou Temple", [1381, 1382, 1383]),

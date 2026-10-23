@@ -57,7 +57,8 @@ cycle.
 
 NpcParam +0x8 (`NPC名.fmg`) of the characters the events act on: Sculptor, Kuro the Divine
 Heir, Divine Child of Rejuvenation, Hanbei the Undying, Anayama the Peddler, Emma the
-Physician, Isshin Ashina, Blackhat Badger, Basket Wearer Shosuke, Fujioka the Info Broker
+Physician, Isshin Ashina, Blackhat Badger, Basket Wearer Shosuke, Fujioka the Info Broker,
+the six Memorial Mobs
 (the boss names "Owl (Father)", "Great Shinobi - Owl" and "Emma, the Gentle Blade" are their
 health bar names). The others have name id 0 and are named by their own dialogue (each
 speaker's lines share a 100000 id range in `会話.fmg`) and the MSB talk event of their talk
@@ -66,16 +67,22 @@ script (`EVENT_PARAM_ST` entries named `Talk_<name>`):
 | block | name | talk event | line |
 |---|---|---|---|
 | 1120 | Inosuke's Mother | `Talk_鈴ばばあ` (t110160) | "Oh... is that you, Inosuke?" |
+| 1160 | Inosuke Nogami | `Talk_鈴ばばあの息子` (t110181, t100180) | "My name is Inosuke Nogami." (18010004) |
+| 1360 | Faithful One | `Talk_八百比丘尼` (t111290, t130290, t170290, t200290) | no name in her lines; named after her key item "Rot Essence: Faithful One" (goods 9516, cure event 9059 checks block 1360) |
 | 1240, 1340 | Owl | `Talk_忍軍の長` (t100120, t111120) | "As your father, I order you to forsake your master." |
 | 1420 | Jinzaemon Kumano | `Talk_魅了された侍` (t112300, t130300, t150300) | "My name is Jinzaemon Kumano." (30010005) |
 | 1440 | Kotaro | `Talk_さらわれ下男` (t200260, t130260) | Anayama: "Take a look at Kotaro here." |
 | 1460 | Doujun | `Talk_不死実験の医僧` (t130600) | "I am Doujun." (31010003) |
 | 1660 | Tengu of Ashina | `Talk_スキル爺(剣聖)` (t110240) | "I am the Tengu of Ashina!" (24100016) |
 
+The Memorial Mobs (1800 .. 1900) are tied to their names by their Rot Essence key items
+(Crow, Wartorn, Jail, Toxic, Pious, Drunk Mob: cure events 9060 .. 9065 check blocks 1800 ..
+1900) and their maps (MSB enemy parts with those NpcParam names); their stage text is the
+nearest Sculptor's Idol.
+
 Blocks left out: 1140 / 1180 (Inosuke and his mother in the Hirata Estate memory, a single
-stage each), 1160 (Inosuke in the Outskirts), 1220 (Anayama in the Hirata Estate), 1300,
-1360, 1400, 1480, 1500, 1560, 1600, 1620, 1640, 1740, 1760, 1780, 1800-1900, 1940, 1980
-(side characters, Pot Nobles, the Fountainhead maids) and 1520 / 1540 (Lady Butterfly and
+stage each), 1220 (Anayama in the Hirata Estate), 1300, 1400, 1480, 1500, 1560, 1600, 1620,
+1640, 1740, 1760, 1780, 1940, 1980 (side characters, Pot Nobles, the Fountainhead maids) and 1520 / 1540 (Lady Butterfly and
 Gyoubu, bosses).
 
 ## Stages
@@ -132,6 +139,16 @@ Steps: the chain above (1022 -> 1026 -> 1025 -> 1023) and the four endings.
 | 1122 | Ashina Outskirts, later | 1159 (the Hirata Estate memory's block, set by its talk script) |
 
 1139 is set together with 1121 and when she dies, so it is not shown as a state.
+
+### Inosuke Nogami (1160-1179)
+
+| flag | stage | trigger |
+|---|---|---|
+| 1160 | Ashina Outskirts | starting state (20006103) |
+| 1161 | Ashina Outskirts, after Lady Butterfly | set with his mother's 1121 (20006101) |
+| 1162 | Ashina Outskirts, later | 1199 (the Hirata Estate memory's block, set by its talk script) |
+
+1179 is set together with 1161 / 1162 and when he dies, so it is not shown as a state.
 
 ### Anayama the Peddler (1200-1219)
 
@@ -191,6 +208,16 @@ Hostile: 1296. Dead or gone: 1299 (set by the Isshin Ashina and Sword Saint even
 | 1354 | Defeated | 9308 (m11_01 11115850) |
 
 Hostile: 1356. Dead or gone: 1359.
+
+### Faithful One (1360-1379)
+
+| flag | stage | trigger |
+|---|---|---|
+| 1360 | Praying for the Divine Child | starting state (20006112, in m11_01, m13_00, m17_00, m20_00) |
+| 1361 | After you met the Divine Child | 1360 AND (72000041, the Divine Child's "Shinobi of the Divine Heir.", OR 71110102, "Did you meet with the Divine Child of the rejuvenating waters?") OR (8301 AND 72000101) |
+| 1363 | After the Divine Child's "Yes, I've found them." | 1361 AND 72000042 (t200220) |
+
+Dead or gone: 1379.
 
 ### Blackhat Badger (1380-1399)
 
@@ -264,6 +291,19 @@ Hostile: 1596 (after "I drank it all...!", m15_00 11505732; `Talk_まともな�
 | 1661 | After Isshin asked about the Mortal Blade | 1660 AND 71100505 (t110240) AND 8400 |
 | 1674 | After the Mortal Blade, Lotus, Shelter Stone | 1660 or 1661, AND 8301 AND 71100533 (t111242 "Certainly.") |
 
+### Memorial Mobs (1800, 1820, 1840, 1860, 1880, 1900)
+
+One stage each, set when their map first runs (20006129 .. 20006134).
+
+| flag | name | stage |
+|---|---|---|
+| 1800 | Crow's Bed Memorial Mob | Ashina Outskirts, by the Outskirts Wall |
+| 1820 | Battlefield Memorial Mob | Ashina Outskirts, by the castle gate |
+| 1840 | Dungeon Memorial Mob | Ashina Castle, by the Abandoned Dungeon |
+| 1860 | Toxic Memorial Mob | Sunken Valley |
+| 1880 | Shugendo Memorial Mob | Senpou Temple, Shugendo |
+| 1900 | Exiled Memorial Mob | Mibu Village |
+
 ### Fujioka the Info Broker (1920-1939)
 
 | flag | stage | trigger |
@@ -287,15 +327,15 @@ group is set (after Dead or gone and Hostile).
 |---|---|---|---|
 | 70002000 | Sculptor | 9050 | 1000 Sculptor |
 | 70002005 | Timid Maid | 9058 | 1120 Inosuke's Mother |
-| 70002010 | Fine Son | 9056 | 1160 / 1180 Inosuke (not listed) |
+| 70002010 | Fine Son | 9056 | 1160 Inosuke Nogami |
 | 70002015 | Newcomer | 9051 | 1200 Anayama |
-| 70002020 | Faithful One | 9059 | 1360 (not listed) |
+| 70002020 | Faithful One | 9059 | 1360 Faithful One |
 | 70002025 | Lost Child | 9053 | 1440 Kotaro |
 | 70002030 | Charmed One | 9054 | 1420 Jinzaemon |
 | 70002035 | Surgeons | 9055 | 1460 Doujun |
 | 70002040 | Thirsty One | 9057 | 1580 Shosuke |
 | 70002045 | Black Hat | 9052 | 1380 Blackhat Badger |
-| 70002050 .. 70002075 | Crow, Wartorn, Jail, Toxic, Pious, Drunk Mob | 9060 .. 9065 | 1800 .. 1900 Memorial Mobs (not listed) |
+| 70002050 .. 70002075 | Crow, Wartorn, Jail, Toxic, Pious, Drunk Mob | 9060 .. 9065 | 1800 .. 1900 Memorial Mobs |
 | 70002080 | Info Broker | 9066 | 1920 Fujioka |
 
 Checked on the test save: the late-game character has no flag of these groups set; a new

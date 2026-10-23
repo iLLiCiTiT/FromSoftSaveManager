@@ -91,27 +91,35 @@ namespace fssm::parse::sekiro {
         Boss{{9312, 0}, 8, "Isshin, the Sword Saint"},
     };
 
-    const std::array<Npc, 17> NPCS = {
+    const std::array<Npc, 25> NPCS = {
         Npc{1000, "Sculptor", {1019, 0}, {0, 0}, 70002000},
         Npc{1020, "Kuro, the Divine Heir", {0, 0}, {0, 0}, 0},
         Npc{1040, "Divine Child of Rejuvenation", {0, 0}, {0, 0}, 0},
         Npc{1060, "Hanbei the Undying", {0, 0}, {0, 0}, 0},
         Npc{1120, "Inosuke's Mother", {0, 0}, {0, 0}, 70002005},
+        Npc{1160, "Inosuke Nogami", {0, 0}, {0, 0}, 70002010},
         Npc{1200, "Anayama the Peddler", {1219, 0}, {0, 0}, 70002015},
         Npc{1240, "Owl (Father)", {9317, 0}, {0, 0}, 0},
         Npc{1260, "Emma, the Gentle Blade", {9315, 0}, {1276, 0}, 0},
         Npc{1280, "Isshin Ashina", {1299, 0}, {1296, 0}, 0},
         Npc{1340, "Great Shinobi Owl", {1359, 0}, {1356, 0}, 0},
+        Npc{1360, "Faithful One", {1379, 0}, {0, 0}, 70002020},
         Npc{1380, "Blackhat Badger", {1399, 0}, {1395, 1396}, 70002045},
         Npc{1420, "Jinzaemon Kumano", {1439, 0}, {1435, 1436}, 70002030},
         Npc{1440, "Kotaro", {1459, 0}, {0, 0}, 70002025},
         Npc{1460, "Doujun", {1479, 0}, {1475, 1476}, 70002035},
         Npc{1580, "Basket Wearer Shosuke", {1599, 0}, {1596, 0}, 70002040},
         Npc{1660, "Tengu of Ashina", {0, 0}, {0, 0}, 0},
+        Npc{1800, "Crow's Bed Memorial Mob", {0, 0}, {0, 0}, 70002050},
+        Npc{1820, "Battlefield Memorial Mob", {0, 0}, {0, 0}, 70002055},
+        Npc{1840, "Dungeon Memorial Mob", {0, 0}, {0, 0}, 70002060},
+        Npc{1860, "Toxic Memorial Mob", {0, 0}, {0, 0}, 70002065},
+        Npc{1880, "Shugendo Memorial Mob", {0, 0}, {0, 0}, 70002070},
+        Npc{1900, "Exiled Memorial Mob", {0, 0}, {0, 0}, 70002075},
         Npc{1920, "Fujioka the Info Broker", {1939, 0}, {1935, 1936}, 70002080},
     };
 
-    const std::array<NpcStage, 77> NPC_STAGES = {
+    const std::array<NpcStage, 89> NPC_STAGES = {
         NpcStage{1000, "Dilapidated Temple"},
         NpcStage{1001, "After the Divine Dragon"},
         NpcStage{1020, "Ashina Castle, his room"},
@@ -132,6 +140,9 @@ namespace fssm::parse::sekiro {
         NpcStage{1120, "Ashina Outskirts"},
         NpcStage{1121, "Ashina Outskirts, after Lady Butterfly"},
         NpcStage{1122, "Ashina Outskirts, later"},
+        NpcStage{1160, "Ashina Outskirts"},
+        NpcStage{1161, "Ashina Outskirts, after Lady Butterfly"},
+        NpcStage{1162, "Ashina Outskirts, later"},
         NpcStage{1200, "Ashina Outskirts"},
         NpcStage{1201, "With Kotaro, after the Divine Dragon"},
         NpcStage{1202, "Gone, killed in the Hirata Estate"},
@@ -155,6 +166,9 @@ namespace fssm::parse::sekiro {
         NpcStage{1341, "After the Mortal Blade, Lotus, Shelter Stone"},
         NpcStage{1342, "Fought you"},
         NpcStage{1354, "Defeated"},
+        NpcStage{1360, "Praying for the Divine Child"},
+        NpcStage{1361, "After you met the Divine Child"},
+        NpcStage{1363, "After the Divine Child's \"Yes, I've found them.\""},
         NpcStage{1380, "Ashina Castle"},
         NpcStage{1381, "Senpou Temple"},
         NpcStage{1382, "Senpou Temple, at the cliff"},
@@ -187,11 +201,17 @@ namespace fssm::parse::sekiro {
         NpcStage{1660, "Ashina Castle"},
         NpcStage{1661, "After Isshin asked about the Mortal Blade"},
         NpcStage{1674, "After the Mortal Blade, Lotus, Shelter Stone"},
+        NpcStage{1800, "Ashina Outskirts, by the Outskirts Wall"},
+        NpcStage{1820, "Ashina Outskirts, by the castle gate"},
+        NpcStage{1840, "Ashina Castle, by the Abandoned Dungeon"},
+        NpcStage{1860, "Sunken Valley"},
+        NpcStage{1880, "Senpou Temple, Shugendo"},
+        NpcStage{1900, "Mibu Village"},
         NpcStage{1920, "Ashina Castle"},
         NpcStage{1921, "Dilapidated Temple"},
     };
 
-    const std::array<NpcStep, 35> NPC_STEPS = {
+    const std::array<NpcStep, 38> NPC_STEPS = {
         NpcStep{1020, {1022, 1026, 1025, 1023, 0, 0}, "Genichiro defeated at the castle keep"},
         NpcStep{1020, {1026, 1025, 1023, 0, 0, 0}, "Mortal Blade, Lotus, Shelter Stone"},
         NpcStep{1020, {1025, 1023, 0, 0, 0, 0}, "Great Shinobi Owl defeated"},
@@ -204,6 +224,7 @@ namespace fssm::parse::sekiro {
         NpcStep{1040, {1043, 1044, 0, 0, 0, 0}, "Told her \"Yes, I've found them.\""},
         NpcStep{1040, {1044, 0, 0, 0, 0, 0}, "In pain beyond the door"},
         NpcStep{1120, {1121, 0, 0, 0, 0, 0}, "Lady Butterfly defeated"},
+        NpcStep{1160, {1161, 0, 0, 0, 0, 0}, "Lady Butterfly defeated"},
         NpcStep{1200, {71100283, 0, 0, 0, 0, 0}, "Kotaro sent to him"},
         NpcStep{1240, {9317, 0, 0, 0, 0, 0}, "Owl (Father) defeated"},
         NpcStep{1260, {1261, 1263, 1265, 1268, 1270, 1272}, "Moved to Ashina Castle"},
@@ -213,6 +234,8 @@ namespace fssm::parse::sekiro {
         NpcStep{1280, {9312, 0, 0, 0, 0, 0}, "Isshin, the Sword Saint defeated"},
         NpcStep{1280, {9316, 0, 0, 0, 0, 0}, "Isshin Ashina defeated (Shura)"},
         NpcStep{1340, {9308, 0, 0, 0, 0, 0}, "Great Shinobi Owl defeated"},
+        NpcStep{1360, {1361, 1363, 0, 0, 0, 0}, "You met the Divine Child"},
+        NpcStep{1360, {1363, 0, 0, 0, 0, 0}, "The Divine Child found them"},
         NpcStep{1380, {1381, 1382, 1383, 0, 0, 0}, "Moved on to Senpou Temple"},
         NpcStep{1380, {1382, 0, 0, 0, 0, 0}, "Waiting to cross the cliff"},
         NpcStep{1380, {1383, 0, 0, 0, 0, 0}, "Met again after the Divine Dragon"},

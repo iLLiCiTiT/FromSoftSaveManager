@@ -57,11 +57,11 @@ namespace fssm::parse::sekiro {
     // Bosses by area.
     extern const std::array<Boss, 16> BOSSES;
     // NPCs with a flag block, by flag.
-    extern const std::array<Npc, 17> NPCS;
+    extern const std::array<Npc, 25> NPCS;
     // Questline stage of the flags the scripts set in the NPC blocks, by flag.
-    extern const std::array<NpcStage, 77> NPC_STAGES;
+    extern const std::array<NpcStage, 89> NPC_STAGES;
     // Progress steps of the NPCs, in NPCS order, then in the order they happen.
-    extern const std::array<NpcStep, 35> NPC_STEPS;
+    extern const std::array<NpcStep, 38> NPC_STEPS;
     // The ten prosthetic tools, in menu order.
     extern const std::array<ProstheticTool, 10> PROSTHETIC_TOOLS;
 }
