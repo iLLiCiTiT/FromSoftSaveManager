@@ -19,12 +19,12 @@ namespace {
         {168, 2, 54, 56},
         {222, 2, 54, 56},
     }};
-    constexpr int ICON_SIZE = 40;
-    constexpr int TEXT_GAP = 4;
-    constexpr int TEXT_PADDING = 14;
-    constexpr int TAB_SPACING = 10;
-    constexpr int FONT_SIZE = 18;
-    constexpr int BAND_HEIGHT = 30;
+    constexpr int ICON_SIZE = 28;
+    constexpr int TEXT_GAP = 2;
+    constexpr int TEXT_PADDING = 9;
+    constexpr int TAB_SPACING = 8;
+    constexpr int FONT_SIZE = 14;
+    constexpr int BAND_HEIGHT = 22;
 }
 
 HeaderTabs::HeaderTabs(QWidget* parent): QWidget(parent) {
