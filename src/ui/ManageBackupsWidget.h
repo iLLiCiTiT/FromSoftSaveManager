@@ -37,7 +37,7 @@ signals:
 public:
     explicit BackupsOverlayModel(Controller* controller, QObject* parent = nullptr);
     QModelIndex addBackupItem(BackupMetadata& backupItem);
-    void setBackupItems(std::vector<BackupMetadata>& backupItems, const std::vector<QString>& folders);
+    void setBackupItems(std::vector<BackupMetadata>& backupItems, const std::vector<QString>& folders, const QString& defaultFolder);
     QModelIndex folderIndex(const QString& folder) const;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
@@ -54,6 +54,7 @@ private:
     int m_autosaveCount = 0;
     int m_quicksaveCount = 0;
     std::unordered_map<QString, QStandardItem*> m_folderItems;
+    QString m_defaultFolder;
 
     QStandardItem* createModelItem(BackupMetadata& backupItem, int& autosaveCount, int& quicksaveCount);
     QStandardItem* createFolderItem(const QString& folder);
@@ -99,7 +100,8 @@ private:
     void p_loadBackup(const QString& backupId);
     void p_deleteItems(const QModelIndexList& indexes);
     void p_moveBackups(const std::vector<QString>& backupIds, const QString& folder);
-    QString p_currentFolder() const;
+    // Folder of current selection, nullopt means the default folder is used
+    std::optional<QString> p_currentFolder() const;
     void p_editFolder(const QString& folder);
 };
 

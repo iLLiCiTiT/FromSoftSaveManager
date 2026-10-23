@@ -9,37 +9,19 @@
 static const QString CONNECTION_NAME = "fssm_backups";
 
 BackupsDb::BackupsDb(const QString& dbPath) {
-    open(dbPath);
-}
-
-BackupsDb::~BackupsDb() {
-    close();
-}
-
-bool BackupsDb::open(const QString& dbPath) {
-    m_dbPath = dbPath;
     m_db = QSqlDatabase::addDatabase("QSQLITE", CONNECTION_NAME);
     m_db.setDatabaseName(dbPath);
     if (!m_db.open()) {
         std::cerr << "BackupsDb: failed to open: "
                   << m_db.lastError().text().toStdString() << "\n";
-        m_valid = false;
-        return false;
+        return;
     }
     m_valid = createSchema();
-    return m_valid;
 }
 
-void BackupsDb::close() {
+BackupsDb::~BackupsDb() {
     m_db.close();
-    m_db = QSqlDatabase();
     QSqlDatabase::removeDatabase(CONNECTION_NAME);
-    m_valid = false;
-}
-
-bool BackupsDb::reopen(const QString& dbPath) {
-    close();
-    return open(dbPath);
 }
 
 bool BackupsDb::createSchema() {
@@ -79,8 +61,9 @@ bool BackupsDb::createSchema() {
     // Folders are stored separately so empty folders survive
     ok = q.exec(
         "CREATE TABLE IF NOT EXISTS backup_folders ("
-        "  game TEXT NOT NULL,"
-        "  name TEXT NOT NULL,"
+        "  game       TEXT    NOT NULL,"
+        "  name       TEXT    NOT NULL,"
+        "  is_default INTEGER NOT NULL DEFAULT 0,"
         "  PRIMARY KEY (game, name)"
         ")"
     );
@@ -238,6 +221,7 @@ bool BackupsDb::renameFolder(const fssm::Game& game, const QString& oldName, con
     if (oldName.isEmpty() || newName.isEmpty()) return false;
     if (oldName == newName) return true;
     QString gameStr = QString::fromStdString(game.toString());
+    bool wasDefault = getDefaultFolder(game) == oldName;
     if (!m_db.transaction()) return false;
     QSqlQuery q(m_db);
     // Renaming onto an existing folder merges the two
@@ -247,6 +231,12 @@ bool BackupsDb::renameFolder(const fssm::Game& game, const QString& oldName, con
     bool ok = q.exec();
     if (ok) {
         q.prepare("INSERT OR IGNORE INTO backup_folders (game, name) VALUES (?, ?)");
+        q.addBindValue(gameStr);
+        q.addBindValue(newName);
+        ok = q.exec();
+    }
+    if (ok && wasDefault) {
+        q.prepare("UPDATE backup_folders SET is_default = 1 WHERE game = ? AND name = ?");
         q.addBindValue(gameStr);
         q.addBindValue(newName);
         ok = q.exec();
@@ -304,6 +294,41 @@ bool BackupsDb::moveBackups(const QStringList& ids, const QString& folder) {
     if (!q.exec()) {
         std::cerr << "BackupsDb: moveBackups failed: "
                   << q.lastError().text().toStdString() << "\n";
+        return false;
+    }
+    return true;
+}
+
+QString BackupsDb::getDefaultFolder(const fssm::Game& game) const {
+    QSqlQuery q(m_db);
+    q.prepare("SELECT name FROM backup_folders WHERE game = ? AND is_default = 1 LIMIT 1");
+    q.addBindValue(QString::fromStdString(game.toString()));
+    if (!q.exec() || !q.next()) return "";
+    return q.value(0).toString();
+}
+
+bool BackupsDb::setDefaultFolder(const fssm::Game& game, const QString& name) {
+    QString gameStr = QString::fromStdString(game.toString());
+    if (!m_db.transaction()) return false;
+    QSqlQuery q(m_db);
+    bool ok = true;
+    if (!name.isEmpty()) {
+        // Folder might be known only from backups
+        q.prepare("INSERT OR IGNORE INTO backup_folders (game, name) VALUES (?, ?)");
+        q.addBindValue(gameStr);
+        q.addBindValue(name);
+        ok = q.exec();
+    }
+    if (ok) {
+        q.prepare("UPDATE backup_folders SET is_default = (name = ?) WHERE game = ?");
+        q.addBindValue(name);
+        q.addBindValue(gameStr);
+        ok = q.exec();
+    }
+    if (!ok || !m_db.commit()) {
+        std::cerr << "BackupsDb: setDefaultFolder failed: "
+                  << q.lastError().text().toStdString() << "\n";
+        m_db.rollback();
         return false;
     }
     return true;

@@ -120,7 +120,7 @@ std::optional<BackupMetadata> BackupsModel::createBackup(const QString& savePath
                                                          const fssm::Game& game,
                                                          const BackupType& backupType,
                                                          const QString& label,
-                                                         const QString& folder) {
+                                                         const std::optional<QString>& folder) {
     if (savePath.isEmpty() || !std::filesystem::exists(savePath.toStdString()))
         return std::nullopt;
 
@@ -134,7 +134,8 @@ std::optional<BackupMetadata> BackupsModel::createBackup(const QString& savePath
     if (labelStd.empty() && backupType == BackupType::MANUAL)
         labelStd = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss").toStdString();
 
-    BackupMetadata meta = makeMetadata(game, backupType, filename, labelStd, folder.toStdString());
+    QString targetFolder = folder.has_value() ? folder.value() : m_db->getDefaultFolder(game);
+    BackupMetadata meta = makeMetadata(game, backupType, filename, labelStd, targetFolder.toStdString());
 
     if (!m_db->insertBackup(meta, saveData)) return std::nullopt;
 
@@ -160,7 +161,7 @@ void BackupsModel::createQuickSaveBackup(const QString& savePath, const fssm::Ga
 std::optional<BackupMetadata> BackupsModel::createManualBackup(const QString& savePath,
                                                                 const fssm::Game& game,
                                                                 const QString& label,
-                                                                const QString& folder) {
+                                                                const std::optional<QString>& folder) {
     return createBackup(savePath, game, BackupType::MANUAL, label, folder);
 }
 
@@ -262,13 +263,23 @@ bool BackupsModel::moveBackupsToFolder(const std::vector<QString>& backupIds, co
     return m_db->moveBackups(ids, folder);
 }
 
+QString BackupsModel::getDefaultFolder(const fssm::Game& game) {
+    return m_db->getDefaultFolder(game);
+}
+
+bool BackupsModel::setDefaultFolder(const fssm::Game& game, const QString& name) {
+    return m_db->setDefaultFolder(game, name);
+}
+
 void BackupsModel::cleanupAutoBackups(const fssm::Game& game) {
     if (m_maxAutoBackups < 1) return;
 
+    // Only autosaves in the folder where new autosaves go are rotated,
+    //  autosaves the user moved elsewhere are kept
+    std::string autosaveFolder = m_db->getDefaultFolder(game).toStdString();
     std::vector<BackupMetadata> autosaves;
     for (auto& item : m_db->getBackups(game)) {
-        // Autosaves the user moved into a folder are kept
-        if (item.backupType == BackupType::AUTOSAVE && item.folder.empty())
+        if (item.backupType == BackupType::AUTOSAVE && item.folder == autosaveFolder)
             autosaves.push_back(item);
     }
 

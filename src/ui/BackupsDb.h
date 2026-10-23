@@ -15,9 +15,6 @@ public:
     ~BackupsDb();
 
     bool isValid() const { return m_valid; }
-    QString dbPath() const { return m_dbPath; }
-    // Close the current database and open (or create) the one at 'dbPath'
-    bool reopen(const QString& dbPath);
 
     bool beginTransaction();
     bool commit();
@@ -36,12 +33,13 @@ public:
     // Removes the folder, its backups are moved to "Unsorted" (never deleted)
     bool deleteFolder(const fssm::Game& game, const QString& name);
     bool moveBackups(const QStringList& ids, const QString& folder);
+    // Folder where new backups of the game go, empty means "Unsorted"
+    QString getDefaultFolder(const fssm::Game& game) const;
+    // Empty 'name' unsets the default folder
+    bool setDefaultFolder(const fssm::Game& game, const QString& name);
 
 private:
     QSqlDatabase m_db;
-    QString m_dbPath;
     bool m_valid = false;
-    bool open(const QString& dbPath);
-    void close();
     bool createSchema();
 };

@@ -186,6 +186,12 @@ QStandardItem* BackupsOverlayModel::createModelItem(BackupMetadata& backupItem, 
 
 QStandardItem* BackupsOverlayModel::createFolderItem(const QString& folder) {
     QStandardItem* item = new QStandardItem(QIcon(":/icons/folder_256x256.png"), folder);
+    if (folder == m_defaultFolder) {
+        QFont font = item->font();
+        font.setBold(true);
+        item->setFont(font);
+        item->setToolTip("Default folder, new backups go here");
+    }
     item->setColumnCount(columnCount());
     item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable | Qt::ItemIsDropEnabled);
     item->setData(FolderKind, ItemKindRole);
@@ -196,7 +202,10 @@ QStandardItem* BackupsOverlayModel::createFolderItem(const QString& folder) {
 
 void BackupsOverlayModel::updateFolderCount(QStandardItem* folderItem) {
     int count = folderItem->rowCount();
-    folderItem->setData(count == 1 ? QString("1 backup") : QString::number(count) + " backups", BackupDateRole);
+    QString label = count == 1 ? QString("1 backup") : QString::number(count) + " backups";
+    if (folderItem->data(FolderNameRole).toString() == m_defaultFolder)
+        label += " (default)";
+    folderItem->setData(label, BackupDateRole);
 }
 
 QModelIndex BackupsOverlayModel::folderIndex(const QString& folder) const {
@@ -217,7 +226,8 @@ QModelIndex BackupsOverlayModel::addBackupItem(BackupMetadata& backupItem) {
     return item->index();
 }
 
-void BackupsOverlayModel::setBackupItems(std::vector<BackupMetadata>& backupItems, const std::vector<QString>& folders) {
+void BackupsOverlayModel::setBackupItems(std::vector<BackupMetadata>& backupItems, const std::vector<QString>& folders, const QString& defaultFolder) {
+    m_defaultFolder = defaultFolder;
     m_autosaveCount = 0;
     m_quicksaveCount = 0;
     m_folderItems.clear();
@@ -286,11 +296,11 @@ ManageBackupsOverlayWidget::ManageBackupsOverlayWidget(Controller* controller, Q
 
     QPixmap createIcon = QPixmap(":/images/common/save.png");
     QPushButton* createBackupBtn = new QPushButton(createIcon, "Save", btnsWidget);
-    createBackupBtn->setToolTip("Create a backup of the current save\nin the selected folder");
+    createBackupBtn->setToolTip("Create a backup of the current save\nin the selected folder, or in the default folder");
     // createBackupBtn->setStyleSheet("background: #38BA7C; color: #2B2D30;");
 
     QPushButton* createFolderBtn = new QPushButton(QIcon(":/icons/folder_256x256.png"), "Folder", btnsWidget);
-    createFolderBtn->setToolTip("Create a folder to categorize backups.\nDrag backups onto a folder to move them.");
+    createFolderBtn->setToolTip("Create a folder to categorize backups.\nDrag backups onto a folder to move them.\nRight click a folder to make it the default for new backups.");
 
     QPixmap deleteIcon = QPixmap(":/images/common/delete.png");
     m_deleteBackupsBtn = new QPushButton(deleteIcon, "Delete", btnsWidget);
@@ -391,7 +401,7 @@ void ManageBackupsOverlayWidget::keyPressEvent(QKeyEvent *event) {
 void ManageBackupsOverlayWidget::refresh() {
     auto items = m_controller->getBackupItems();
     auto folders = m_controller->getBackupFolders();
-    m_backupsModel->setBackupItems(items, folders);
+    m_backupsModel->setBackupItems(items, folders, m_controller->getDefaultBackupFolder());
     // Signals are blocked so restoring the state doesn't change remembered collapsed folders
     m_backupsView->blockSignals(true);
     for (auto& folder: folders) {
@@ -437,12 +447,12 @@ void ManageBackupsOverlayWidget::onDeleteBackups() {
     p_deleteItems(m_backupsView->selectionModel()->selectedRows());
 }
 
-QString ManageBackupsOverlayWidget::p_currentFolder() const {
+std::optional<QString> ManageBackupsOverlayWidget::p_currentFolder() const {
     QModelIndex index = m_backupsView->currentIndex();
-    if (!index.isValid() || !m_backupsView->selectionModel()->isSelected(index)) return "";
+    if (!index.isValid() || !m_backupsView->selectionModel()->isSelected(index)) return std::nullopt;
     if (index.data(ItemKindRole).toInt() != FolderKind)
         index = index.parent();
-    if (!index.isValid()) return "";
+    if (!index.isValid()) return std::nullopt;
     return index.data(FolderNameRole).toString();
 }
 
@@ -517,11 +527,19 @@ void ManageBackupsOverlayWidget::onCustomContextMenu(const QPoint& point) {
     if (posIndex.data(ItemKindRole).toInt() == FolderKind) {
         QString folder = posIndex.data(FolderNameRole).toString();
         QMenu contextMenu(this);
+        QAction* defaultAction = contextMenu.addAction("Default for new backups");
+        defaultAction->setCheckable(true);
+        defaultAction->setChecked(folder == m_controller->getDefaultBackupFolder());
+        contextMenu.addSeparator();
         QAction* renameAction = contextMenu.addAction("Rename..");
         QAction* newFolderAction = contextMenu.addAction("New folder");
         QAction* removeAction = contextMenu.addAction("Remove folder (keep backups)");
         auto* triggered = contextMenu.exec(globPoint);
-        if (triggered == renameAction) {
+        if (triggered == defaultAction) {
+            // Unchecking makes "Unsorted" the default again
+            m_controller->setDefaultBackupFolder(defaultAction->isChecked() ? folder : "");
+            refresh();
+        } else if (triggered == renameAction) {
             m_backupsView->edit(posIndex);
         } else if (triggered == newFolderAction) {
             onCreateFolder();

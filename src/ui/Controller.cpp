@@ -1,8 +1,6 @@
 #include "Controller.h"
 
 #include <QDir>
-#include <QFile>
-#include <QFileInfo>
 #include <filesystem>
 #include <iostream>
 #include <utility>
@@ -108,9 +106,10 @@ void SaveChangesThread::run() {
 Controller::Controller(QObject* parent): QObject(parent) {
     m_configModel = new ConfigModel(this);
     auto saveFileItems = m_configModel->getSaveFileItems();
-    QString backupsDir = m_configModel->getBackupsDir();
-    QDir().mkpath(backupsDir);
-    m_backupsDb = new BackupsDb(m_configModel->getBackupsDbPath());
+    // Config folder may not exist yet (e.g. FSSM_CONFIG_DIR pointing to a new folder)
+    QDir().mkpath(m_configModel->getAppDataDirPath());
+    QString dbPath = m_configModel->getAppDataDirPath() + "\\backups.db";
+    m_backupsDb = new BackupsDb(dbPath);
     m_backupsModel = new BackupsModel(saveFileItems, m_configModel->getAutosaveConfig(), m_backupsDb, this);
     m_hotkeysThread = new HotkeysThread(m_configModel->getHotkeysConfig(), this);
     m_saveChangesThread = new SaveChangesThread(saveFileItems, this);
@@ -118,7 +117,6 @@ Controller::Controller(QObject* parent): QObject(parent) {
     connect(m_configModel, SIGNAL(pathsChanged()), this, SLOT(onGamePathsChange()));
     connect(m_configModel, SIGNAL(hotkeysChanged()), this, SLOT(onHotkeysChange()));
     connect(m_configModel, SIGNAL(autoBackupChanged()), this, SLOT(onAutobackupChange()));
-    connect(m_configModel, SIGNAL(backupsDirChanged()), this, SLOT(onBackupsDirChange()));
 
     connect(m_hotkeysThread, SIGNAL(quickSaveRequested()), this, SLOT(onQuickSaveRequest()));
     connect(m_hotkeysThread, SIGNAL(quickLoadRequested()), this, SLOT(onQuickLoadRequest()));
@@ -339,7 +337,7 @@ std::vector<BackupMetadata> Controller::getBackupItems() {
     return m_backupsModel->getBackupItems(itemOpt.value().game);
 }
 
-std::optional<BackupMetadata> Controller::createManualBackup(const QString& folder) {
+std::optional<BackupMetadata> Controller::createManualBackup(const std::optional<QString>& folder) {
     if (m_currentSaveId.isEmpty()) return std::nullopt;
     auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
     if (!itemOpt.has_value()) return std::nullopt;
@@ -399,27 +397,18 @@ bool Controller::moveBackupsToFolder(const std::vector<QString>& backupIds, cons
     return m_backupsModel->moveBackupsToFolder(backupIds, folder);
 }
 
-QString Controller::getBackupsDir() const {
-    return m_configModel->getBackupsDir();
+QString Controller::getDefaultBackupFolder() {
+    if (m_currentSaveId.isEmpty()) return "";
+    auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
+    if (!itemOpt.has_value()) return "";
+    return m_backupsModel->getDefaultFolder(itemOpt.value().game);
 }
 
-bool Controller::copyBackupsTo(const QString& backupsDir, QString& error) const {
-    QString srcPath = m_backupsDb->dbPath();
-    QString dstPath = ConfigModel::backupsDbPath(backupsDir);
-    if (QFileInfo::exists(dstPath)) {
-        error = "Backups already exist in the selected folder.";
-        return false;
-    }
-    if (!QFileInfo::exists(srcPath)) return true;
-    if (!QDir().mkpath(backupsDir)) {
-        error = "Could not create folder " + backupsDir;
-        return false;
-    }
-    if (!QFile::copy(srcPath, dstPath)) {
-        error = "Could not copy " + srcPath + " to " + dstPath;
-        return false;
-    }
-    return true;
+bool Controller::setDefaultBackupFolder(const QString& name) {
+    if (m_currentSaveId.isEmpty()) return false;
+    auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
+    if (!itemOpt.has_value()) return false;
+    return m_backupsModel->setDefaultFolder(itemOpt.value().game, name);
 }
 
 // Config changed slots
@@ -436,12 +425,6 @@ void Controller::onHotkeysChange() {
 void Controller::onAutobackupChange() {
     m_backupsModel->updateAutobackupConfig(m_configModel->getAutosaveConfig());
     emit autobackupConfigChanged();
-}
-
-void Controller::onBackupsDirChange() {
-    QDir().mkpath(m_configModel->getBackupsDir());
-    m_backupsDb->reopen(m_configModel->getBackupsDbPath());
-    emit backupsDirChanged();
 }
 
 // Save file changed

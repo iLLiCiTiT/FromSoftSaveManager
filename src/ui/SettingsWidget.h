@@ -84,22 +84,6 @@ private:
     FocusSpinBox* m_maxAutobackupInput;
 };
 
-class BackupsDirWidget: public QWidget {
-    Q_OBJECT
-public:
-    explicit BackupsDirWidget(const ConfigSettingsData& configData, QWidget* parent);
-    void updateConfigInfo(const ConfigSettingsData& configData);
-    // Folder that would be used after save, default folder if input is empty
-    QString getBackupsDir() const;
-    bool isChanged(const ConfigSettingsData& configData) const;
-    void applyChanges(const ConfigSettingsData& configData, ConfigConfirmData& confirmData);
-private slots:
-    void selectDir();
-private:
-    QString m_defaultDir;
-    QLineEdit* m_dirInput;
-};
-
 class SettingsWidget: public QWidget {
     Q_OBJECT
 public:
@@ -114,8 +98,6 @@ private:
     SavePathInputsWidget* m_pathsWidget;
     HotkeysWidget* m_hotkeysWidget;
     AutoBackupWidget* m_autobackupWidget;
-    BackupsDirWidget* m_backupsDirWidget;
-    bool p_confirmBackupsDirChange();
 
 private slots:
     void virtual onSave();

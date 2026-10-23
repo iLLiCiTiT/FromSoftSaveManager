@@ -92,7 +92,6 @@ signals:
     void pathsConfigChanged();
     void hotkeysConfigChanged();
     void autobackupConfigChanged();
-    void backupsDirChanged();
 
 public:
     explicit Controller(QObject* parent = nullptr);
@@ -114,7 +113,7 @@ public:
     ERCharInfoResult getERCharacters(const QString& saveId) const;
 
     std::vector<BackupMetadata> getBackupItems();
-    std::optional<BackupMetadata> createManualBackup(const QString& folder = "");
+    std::optional<BackupMetadata> createManualBackup(const std::optional<QString>& folder = std::nullopt);
     void restoreBackupById(const QString& backupId);
     void deleteBackupByIds(const std::vector<QString>& backupIds);
     bool changeBackupLabel(const QString& backupId, const QString& label);
@@ -124,10 +123,8 @@ public:
     bool renameBackupFolder(const QString& oldName, const QString& newName);
     bool deleteBackupFolder(const QString& name);
     bool moveBackupsToFolder(const std::vector<QString>& backupIds, const QString& folder);
-
-    QString getBackupsDir() const;
-    // Copy current backups database into 'backupsDir'. Never overwrites an existing database.
-    bool copyBackupsTo(const QString& backupsDir, QString& error) const;
+    QString getDefaultBackupFolder();
+    bool setDefaultBackupFolder(const QString& name);
 
 private slots:
     void onQuickSaveRequest();
@@ -135,7 +132,6 @@ private slots:
     void onGamePathsChange();
     void onHotkeysChange();
     void onAutobackupChange();
-    void onBackupsDirChange();
     void onSaveFileChange(const QString& saveId);
     void onBackupCreate(bool success, BackupType backupType);
     void onBackupLoad(bool success);
