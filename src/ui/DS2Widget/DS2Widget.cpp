@@ -91,20 +91,22 @@ DS2Widget::DS2Widget(Controller* controller, const QString& saveId, QWidget* par
 
     QVBoxLayout* viewWrapLayout = new QVBoxLayout(viewWrap);
     viewWrapLayout->setContentsMargins(0, 0, 0, 0);
-    viewWrapLayout->addSpacing(28);
+    // Lines the Data List frame up with the pages below the header tabs.
+    viewWrapLayout->addSpacing(fssm::ui::ds2::HeaderTabs::HEADER_HEIGHT);
     viewWrapLayout->addWidget(dataListFrame, 4);
     viewWrapLayout->addWidget(manageBackupsBtnsWidget, 1);
 
-    m_charTabs = new TabWidget(this);
+    using fssm::ui::ds2::HeaderTabs;
+    m_charTabs = new HeaderTabs(this);
     m_statusWidget = new fssm::ui::ds2::PlayerStatusWidget(m_charTabs);
     m_inventoryWidget = new fssm::ui::ds2::InventoryWidget(m_charTabs);
     m_worldWidget = new fssm::ui::ds2::WorldProgressWidget(m_charTabs);
-    m_charTabs->addTab("Player Status", m_statusWidget);
-    m_charTabs->addTab("Inventory", m_inventoryWidget);
-    m_charTabs->addTab("World Progress", m_worldWidget);
+    m_charTabs->addTab("Player Status", HeaderTabs::Medallion::Status, m_statusWidget);
+    m_charTabs->addTab("Inventory", HeaderTabs::Medallion::Inventory, m_inventoryWidget);
+    m_charTabs->addTab("World Progress", HeaderTabs::Medallion::Scroll, m_worldWidget);
 
     QHBoxLayout* layout = new QHBoxLayout(this);
-    layout->setContentsMargins(20, 20, 20, 20);
+    layout->setContentsMargins(20, 8, 20, 20);
     layout->addWidget(viewWrap, 0);
     layout->addWidget(m_charTabs, 1);
 
