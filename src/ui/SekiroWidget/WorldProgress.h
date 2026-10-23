@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "Painting.h"
+#include "../ScrollHelper.h"
 #include "../../parse/Sekiro/SaveFile.h"
 
 namespace fssm::ui::sekiro {
@@ -21,6 +22,10 @@ protected:
     void paintEvent(QPaintEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
+    void leaveEvent(QEvent* event) override;
 private:
     std::vector<bool> m_idolsFound;
     std::vector<bool> m_bossesDefeated;
@@ -28,12 +33,9 @@ private:
     std::vector<fssm::parse::sekiro::NpcState> m_npcStates;
     std::vector<std::string_view> m_npcStages;
     std::vector<bool> m_npcStepsDone;
-    // Idols and the detail panel scroll separately. From the last paint: each list's
-    // rectangle, scrollable range and one scroll step.
-    std::array<int, 2> m_scroll {};
-    std::array<int, 2> m_maxScroll {};
-    std::array<QRect, 2> m_lists;
-    int m_lineHeight = 26;
+    // Idols and the detail panel scroll separately; geometry from the last paint. The
+    // lists are not clickable, so dragging them scrolls.
+    std::array<fssm::ui::PaintedScroll, 2> m_scrolls {fssm::ui::PaintedScroll(this), fssm::ui::PaintedScroll(this)};
     PixmapCache m_cache;
 };
 }

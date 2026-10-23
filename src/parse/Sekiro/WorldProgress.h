@@ -49,7 +49,7 @@ namespace fssm::parse::sekiro {
     };
 
     // Areas of the idol travel menu, in menu order.
-    extern const std::array<std::string_view, 8> AREAS;
+    extern const std::array<std::string_view, 9> AREAS;
     // Sculptor's Idols in travel menu order.
     extern const std::array<Idol, 55> IDOLS;
     // Bosses by area.

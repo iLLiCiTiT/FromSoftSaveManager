@@ -14,7 +14,11 @@ Writes:
 
 Names and descriptions come from /msg/engus/item.msgbnd.dcx; icon ids from
 EquipParamGoods (+0x2C) and EquipParamWeapon (+0xBA), sort order (+0x1C) and maximum
-held count (+0x36) from EquipParamGoods in GameParam.parambnd; icons from the item
+held count (+0x36) and whether the inventory shows the number held (+0x6A == 2: quick
+items, materials, Memories, sake and bait; not Prayer Beads or unique key items; and no
+Spirit Emblem cost at +0x74, which Spiritfalls and Ninjutsu have; and not the reusable
+quick items, +0x2D == 1: Homeward Idol, Illusive Hall Bell, Nightjar Monocular, Hidden
+Tooth) from EquipParamGoods in GameParam.parambnd; icons from the item
 icon atlases of /menu/hi/01_common. Categories follow Sekiro's item id ranges. Rows without an
 English name are internal and skipped.
 
@@ -119,13 +123,24 @@ def main(game_dir, exe_path, repo_root, with_icons=True):
     for item_id, row in sorted(goods.items()):
         name = goods_names.get(item_id)
         category = goods_category(item_id)
+        # Usable from the quick item slots (+0x43 == 0): listed with the quick items
+        # whatever the id block, e.g. Dragon's Blood Droplet.
+        if category not in (None, "SpiritEmblems") and row[0x43] == 0:
+            category = "QuickItems"
+        # Goods type +0x3A: 0 quick item, 1 key item, 2 material, 7/8 not listed in the
+        # inventory (Spirit Emblems, skills and Ninjutsu the game also keeps as goods,
+        # Night Eye, Resurrection, the first copy of memos that come in two).
+        if category is not None and row[0x3A] in (7, 8):
+            category = "Hidden"
         if not name or name in ("-", "<?null?>") or category is None:
             continue
         icon_id = struct.unpack_from("<H", row, 0x2C)[0]
         sort_id = struct.unpack_from("<i", row, 0x1C)[0]
         max_num = struct.unpack_from("<h", row, 0x36)[0]
+        reusable_quick_item = row[0x43] == 0 and row[0x2D] == 1
+        shows_count = row[0x6A] == 2 and row[0x74] == 0 and not reusable_quick_item
         items.append(((TYPE_GOODS << 28) | item_id, category, name, icon_id, sort_id, max(0, max_num),
-                      description(goods_descriptions.get(item_id))))
+                      shows_count, description(goods_descriptions.get(item_id))))
         seen.add(item_id)
     for item_id, row in sorted(weapons.items()):
         name = weapon_names.get(item_id)
@@ -133,7 +148,7 @@ def main(game_dir, exe_path, repo_root, with_icons=True):
             continue
         icon_id = struct.unpack_from("<H", row, 0xBA)[0]
         items.append(((TYPE_WEAPON << 28) | item_id, weapon_category(item_id), name, icon_id, item_id, 0,
-                      description(weapon_descriptions.get(item_id))))
+                      False, description(weapon_descriptions.get(item_id))))
 
     if with_icons:
         sprites, textures = sekirodata.icon_atlases(archive)
@@ -151,10 +166,11 @@ def main(game_dir, exe_path, repo_root, with_icons=True):
         "namespace fssm::parse::sekiro {",
         f"    const std::array<BaseItem, {len(items)}> ALL_ITEMS = {{",
     ]
-    for item_id, category, name, icon_id, sort_id, max_num, desc in sorted(items):
+    for item_id, category, name, icon_id, sort_id, max_num, shows_count, desc in sorted(items):
         image = str(icon_id) if icon_id in icons else ""
         lines.append(f"        BaseItem{{0x{item_id:08x}, ItemCategory::{category}, "
-                     f"{cpp_string(name)}, {cpp_string(image)}, {sort_id}, {max_num},")
+                     f"{cpp_string(name)}, {cpp_string(image)}, {sort_id}, {max_num}, "
+                     f"{'true' if shows_count else 'false'},")
         lines.append(f"                 {cpp_string(desc)}}},")
     lines += ["    };", "}", ""]
     out_path = os.path.join(repo_root, "src", "parse", "Sekiro", "Items.cpp")

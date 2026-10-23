@@ -1,5 +1,6 @@
 #include "WorldProgress.h"
 
+#include <QMouseEvent>
 #include <QPaintEvent>
 #include <QPainter>
 #include <QWheelEvent>
@@ -128,6 +129,7 @@ namespace {
 
 WorldProgressWidget::WorldProgressWidget(QWidget* parent): QWidget(parent) {
     setAttribute(Qt::WA_TranslucentBackground, true);
+    for (auto& scroll : m_scrolls) scroll.setContentDrag(true);
     m_window = QPixmap(":/ds2_images/ui_window");
 }
 
@@ -137,7 +139,7 @@ QSize WorldProgressWidget::sizeHint() const {
 
 void WorldProgressWidget::setCharacter(const fssm::parse::ds2::DS2CharacterInfo* charInfo) {
     const bool sameCharacter = charInfo != nullptr && m_hasCharacter && m_char.index == charInfo->index;
-    if (!sameCharacter) m_scroll = {};
+    if (!sameCharacter) for (auto& scroll : m_scrolls) scroll.reset();
     m_hasCharacter = charInfo != nullptr;
     if (charInfo != nullptr) m_char = *charInfo;
     update();
@@ -163,8 +165,7 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
 
     const QRect content = r.adjusted(int(FRAME_LEFT * s) + 4, int(FRAME_TOP * s) + 6,
                                      -(int(FRAME_RIGHT * s) + 4), -(int(FRAME_BOTTOM * s) + 2));
-    m_lists = {};
-    m_maxScroll = {};
+    for (auto& scroll : m_scrolls) scroll.clear();
     if (!m_hasCharacter) {
         painter.setFont(serifFont(int(20 * s)));
         painter.setPen(DIM_TEXT_COLOR);
@@ -193,7 +194,6 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     const int gap = std::max(4, headerH / 4);
     const int lineH = std::max(14, int(headerH * 0.82));
     const int areaH = lineH + gap;
-    m_lineHeight = lineH;
     const int colW = (content.width() - gap) / 2;
 
     for (int c = 0; c < 2; ++c) {
@@ -205,18 +205,19 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
         drawSectionHeader(painter, QRect(col.left(), col.top(), col.width(), headerH), titles[c], totals[c]);
 
         const QRect list = col.adjusted(gap, headerH + gap / 2, -gap, -gap / 2);
-        m_lists[c] = list;
+        PaintedScroll& scroll = m_scrolls[c];
         const std::vector<Row>& rows = columns[c];
         int contentH = 0;
         for (const Row& row : rows) contentH += row.kind == RowKind::Area ? areaH : lineH;
-        m_maxScroll[c] = std::max(0, contentH - list.height());
-        m_scroll[c] = std::clamp(m_scroll[c], 0, m_maxScroll[c]);
+        const int barW = std::max(3, gap / 2);
+        scroll.setGeometry(list, QRect(list.right() - barW + 1, list.top(), barW, list.height()), contentH);
+        scroll.setStep(3 * lineH);
 
         painter.save();
         painter.setClipRect(list, Qt::IntersectClip);
-        int y = list.top() - m_scroll[c];
+        int y = list.top() - scroll.value();
         const int iconSize = int(lineH * 0.72);
-        const int scrollBarW = m_maxScroll[c] > 0 ? std::max(3, gap / 2) + gap / 2 : 0;
+        const int scrollBarW = scroll.scrollable() ? barW + gap / 2 : 0;
         for (const Row& row : rows) {
             const int h = row.kind == RowKind::Area ? areaH : lineH;
             const QRect full(list.left(), y, list.width() - scrollBarW, h);
@@ -249,25 +250,36 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
         }
         painter.restore();
 
-        if (m_maxScroll[c] > 0) {
-            const int barW = std::max(3, gap / 2);
-            const QRect track(list.right() - barW + 1, list.top(), barW, list.height());
-            const int thumbH = std::max(16, track.height() * track.height() / (track.height() + m_maxScroll[c]));
-            const int thumbY = track.top() + (track.height() - thumbH) * m_scroll[c] / m_maxScroll[c];
-            painter.fillRect(track, QColor(0, 0, 0, 120));
-            painter.fillRect(QRect(track.left(), thumbY, track.width(), thumbH), QColor(150, 134, 100));
-        }
+        scroll.paint(painter, QColor(0, 0, 0, 120), QColor(150, 134, 100));
     }
 }
 
 void WorldProgressWidget::wheelEvent(QWheelEvent* event) {
-    const int column = event->position().toPoint().x() < m_lists[1].left() ? 0 : 1;
-    const int delta = event->angleDelta().y() * 3 * m_lineHeight / 120;
-    const int scroll = std::clamp(m_scroll[column] - delta, 0, m_maxScroll[column]);
-    if (scroll != m_scroll[column]) {
-        m_scroll[column] = scroll;
-        update();
+    const int column = event->position().toPoint().x() < m_scrolls[1].viewport().left() ? 0 : 1;
+    m_scrolls[column].wheel(event, true);
+}
+
+void WorldProgressWidget::mousePressEvent(QMouseEvent* event) {
+    for (auto& scroll : m_scrolls) {
+        if (scroll.mousePress(event)) return;
     }
-    event->accept();
+    QWidget::mousePressEvent(event);
+}
+
+void WorldProgressWidget::mouseMoveEvent(QMouseEvent* event) {
+    bool used = false;
+    for (auto& scroll : m_scrolls) used = scroll.mouseMove(event) || used;
+    if (!used) QWidget::mouseMoveEvent(event);
+}
+
+void WorldProgressWidget::mouseReleaseEvent(QMouseEvent* event) {
+    bool used = false;
+    for (auto& scroll : m_scrolls) used = scroll.mouseRelease(event) || used;
+    if (!used) QWidget::mouseReleaseEvent(event);
+}
+
+void WorldProgressWidget::leaveEvent(QEvent* event) {
+    for (auto& scroll : m_scrolls) scroll.leave();
+    QWidget::leaveEvent(event);
 }
 }

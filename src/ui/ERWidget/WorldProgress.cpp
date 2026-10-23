@@ -1,6 +1,7 @@
 #include "WorldProgress.h"
 
 #include <QLinearGradient>
+#include <QMouseEvent>
 #include <QPaintEvent>
 #include <QPainter>
 #include <QPainterPath>
@@ -165,36 +166,37 @@ namespace {
         }
         painter.restore();
     }
+}
 
-    // Site of Grace: a golden glow with a spark when discovered, a faint ring otherwise.
-    void drawGraceMark(QPainter& painter, const QRectF& rect, bool discovered) {
-        painter.save();
-        const QPointF c = rect.center();
-        const double r = rect.width() / 2;
-        if (discovered) {
-            QRadialGradient glow(c, r);
-            glow.setColorAt(0.0, QColor(255, 244, 200, 255));
-            glow.setColorAt(0.3, QColor(232, 196, 110, 220));
-            glow.setColorAt(1.0, QColor(200, 160, 70, 0));
-            painter.setPen(Qt::NoPen);
-            painter.setBrush(glow);
-            painter.drawEllipse(c, r, r);
-            QPainterPath spark;
-            spark.moveTo(c.x(), c.y() - r * 0.85);
-            spark.quadTo(c.x() + r * 0.12, c.y() - r * 0.12, c.x() + r * 0.85, c.y());
-            spark.quadTo(c.x() + r * 0.12, c.y() + r * 0.12, c.x(), c.y() + r * 0.85);
-            spark.quadTo(c.x() - r * 0.12, c.y() + r * 0.12, c.x() - r * 0.85, c.y());
-            spark.quadTo(c.x() - r * 0.12, c.y() - r * 0.12, c.x(), c.y() - r * 0.85);
-            painter.setBrush(QColor(255, 248, 220, 230));
-            painter.drawPath(spark);
-        } else {
-            painter.setPen(QPen(QColor(110, 104, 92), std::max(1.0, r / 6)));
-            painter.setBrush(Qt::NoBrush);
-            painter.drawEllipse(c, r * 0.45, r * 0.45);
-        }
-        painter.restore();
+void drawGraceMark(QPainter& painter, const QRectF& rect, bool discovered) {
+    painter.save();
+    const QPointF c = rect.center();
+    const double r = rect.width() / 2;
+    if (discovered) {
+        QRadialGradient glow(c, r);
+        glow.setColorAt(0.0, QColor(255, 244, 200, 255));
+        glow.setColorAt(0.3, QColor(232, 196, 110, 220));
+        glow.setColorAt(1.0, QColor(200, 160, 70, 0));
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(glow);
+        painter.drawEllipse(c, r, r);
+        QPainterPath spark;
+        spark.moveTo(c.x(), c.y() - r * 0.85);
+        spark.quadTo(c.x() + r * 0.12, c.y() - r * 0.12, c.x() + r * 0.85, c.y());
+        spark.quadTo(c.x() + r * 0.12, c.y() + r * 0.12, c.x(), c.y() + r * 0.85);
+        spark.quadTo(c.x() - r * 0.12, c.y() + r * 0.12, c.x() - r * 0.85, c.y());
+        spark.quadTo(c.x() - r * 0.12, c.y() - r * 0.12, c.x(), c.y() - r * 0.85);
+        painter.setBrush(QColor(255, 248, 220, 230));
+        painter.drawPath(spark);
+    } else {
+        painter.setPen(QPen(QColor(110, 104, 92), std::max(1.0, r / 6)));
+        painter.setBrush(Qt::NoBrush);
+        painter.drawEllipse(c, r * 0.45, r * 0.45);
     }
+    painter.restore();
+}
 
+namespace {
     // Small diamond marking a boss: filled gold when defeated.
     void drawBossMark(QPainter& painter, const QRectF& rect, bool defeated) {
         painter.save();
@@ -210,11 +212,12 @@ namespace {
 
 WorldProgressWidget::WorldProgressWidget(QWidget* parent): QWidget(parent) {
     setAttribute(Qt::WA_TranslucentBackground, true);
+    for (auto& scroll : m_scrolls) scroll.setContentDrag(true);
 }
 
 void WorldProgressWidget::setCharacter(const fssm::parse::er::ERCharacterInfo* charInfo) {
     const int index = charInfo != nullptr ? charInfo->index : -1;
-    if (index != m_index) m_scroll = {};
+    if (index != m_index) for (auto& scroll : m_scrolls) scroll.reset();
     m_index = index;
     m_hasCharacter = charInfo != nullptr;
     m_gracesDiscovered = charInfo != nullptr ? charInfo->gracesDiscovered : std::vector<bool>{};
@@ -240,7 +243,7 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     const auto px = [s](double v) { return int(std::round(v * s)); };
 
     if (!m_hasCharacter || m_gracesDiscovered.empty()) {
-        m_maxScroll = {};
+        for (auto& scroll : m_scrolls) scroll.clear();
         painter.setFont(serifFont(px(18)));
         drawText(painter, r, Qt::AlignCenter,
                  m_hasCharacter ? "World progress is not available for this character" : "No character selected",
@@ -262,7 +265,6 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     const int lineH = px(24);
     const int detailH = px(16);
     const int iconSize = px(18);
-    m_lineHeight = lineH;
 
     const auto rowHeight = [&](const Row& row, bool first) {
         return row.kind == RowKind::Area ? (first ? 0 : px(8)) + areaH
@@ -279,16 +281,17 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
 
         const QRect list(pane.left() + px(8), titleRect.bottom() + px(8), pane.width() - px(16),
                          std::max(0, pane.bottom() - titleRect.bottom() - px(14)));
-        m_lists[column] = list;
+        PaintedScroll& scroll = m_scrolls[column];
         int contentH = 0;
         for (size_t i = 0; i < rows.size(); ++i) contentH += rowHeight(rows[i], i == 0);
-        m_maxScroll[column] = std::max(0, contentH - list.height());
-        m_scroll[column] = std::clamp(m_scroll[column], 0, m_maxScroll[column]);
+        const int barW = std::max(2, px(3));
+        scroll.setGeometry(list, QRect(list.right() - barW, list.top(), barW, list.height()), contentH);
+        scroll.setStep(3 * lineH);
 
         painter.save();
         painter.setClipRect(list.adjusted(0, 0, 0, 1), Qt::IntersectClip);
-        const int scrollBarW = m_maxScroll[column] > 0 ? px(10) : 0;
-        int y = list.top() - m_scroll[column];
+        const int scrollBarW = scroll.scrollable() ? px(10) : 0;
+        int y = list.top() - scroll.value();
         for (size_t i = 0; i < rows.size(); ++i) {
             const Row& row = rows[i];
             const int h = rowHeight(row, i == 0);
@@ -335,26 +338,38 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
         painter.restore();
 
         // Thin scroll bar along the right edge, like the inventory grid's.
-        if (m_maxScroll[column] > 0) {
-            const QRect track(list.right() - std::max(2, px(3)), list.top(), std::max(2, px(3)), list.height());
-            const int thumbH = std::max(16, track.height() * track.height() / (track.height() + m_maxScroll[column]));
-            const int thumbY = track.top() + (track.height() - thumbH) * m_scroll[column] / m_maxScroll[column];
-            painter.fillRect(track, QColor(0, 0, 0, 120));
-            painter.fillRect(QRect(track.left(), thumbY, track.width(), thumbH), GOLD_COLOR);
-        }
+        scroll.paint(painter, QColor(0, 0, 0, 120), GOLD_COLOR);
     };
     drawColumn(graces, 0, "Sites of Grace", count(graceCount, int(GRACES.size())));
     drawColumn(bosses, 1, "Bosses", count(bossCount, int(BOSSES.size())));
 }
 
 void WorldProgressWidget::wheelEvent(QWheelEvent* event) {
-    const int column = event->position().toPoint().x() < m_lists[1].left() ? 0 : 1;
-    const int delta = event->angleDelta().y() * 3 * m_lineHeight / 120;
-    const int scroll = std::clamp(m_scroll[column] - delta, 0, m_maxScroll[column]);
-    if (scroll != m_scroll[column]) {
-        m_scroll[column] = scroll;
-        update();
+    const int column = event->position().toPoint().x() < m_scrolls[1].viewport().left() ? 0 : 1;
+    m_scrolls[column].wheel(event, true);
+}
+
+void WorldProgressWidget::mousePressEvent(QMouseEvent* event) {
+    for (auto& scroll : m_scrolls) {
+        if (scroll.mousePress(event)) return;
     }
-    event->accept();
+    QWidget::mousePressEvent(event);
+}
+
+void WorldProgressWidget::mouseMoveEvent(QMouseEvent* event) {
+    bool used = false;
+    for (auto& scroll : m_scrolls) used = scroll.mouseMove(event) || used;
+    if (!used) QWidget::mouseMoveEvent(event);
+}
+
+void WorldProgressWidget::mouseReleaseEvent(QMouseEvent* event) {
+    bool used = false;
+    for (auto& scroll : m_scrolls) used = scroll.mouseRelease(event) || used;
+    if (!used) QWidget::mouseReleaseEvent(event);
+}
+
+void WorldProgressWidget::leaveEvent(QEvent* event) {
+    for (auto& scroll : m_scrolls) scroll.leave();
+    QWidget::leaveEvent(event);
 }
 }

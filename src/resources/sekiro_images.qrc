@@ -24,5 +24,10 @@
         <file alias="tab">images/sekiro/menu/tab.png</file>
         <file alias="tab_selected">images/sekiro/menu/tab_selected.png</file>
         <file alias="title_bar">images/sekiro/menu/title_bar.png</file>
+        <file alias="tree_ashina">images/sekiro/menu/tree_ashina.png</file>
+        <file alias="tree_mushin">images/sekiro/menu/tree_mushin.png</file>
+        <file alias="tree_prosthetic">images/sekiro/menu/tree_prosthetic.png</file>
+        <file alias="tree_shinobi">images/sekiro/menu/tree_shinobi.png</file>
+        <file alias="tree_temple">images/sekiro/menu/tree_temple.png</file>
     </qresource>
 </RCC>

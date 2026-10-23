@@ -32,6 +32,14 @@ namespace fssm::parse::ds3 {
         std::string_view text;
     };
 
+    // A progress step of an NPC: a quest milestone, or an item given or received. Done
+    // when any of its flags is set; 0 when unused (docs/ds3-npc-stages.md).
+    struct NpcStep {
+        uint32_t statusFlag;            // the NPC's (Npc::statusFlag)
+        std::array<uint32_t, 12> flags;
+        std::string_view text;
+    };
+
     // Areas of the bonfire travel menu, in menu order.
     extern const std::array<std::string_view, 14> AREAS;
     // Bonfires in travel menu order.
@@ -42,4 +50,6 @@ namespace fssm::parse::ds3 {
     extern const std::array<Npc, 30> NPCS;
     // Questline stage of the flags the scripts set in the NPC blocks, by flag.
     extern const std::array<NpcStage, 156> NPC_STAGES;
+    // Progress steps, by NPC in NPCS order, then in the order they usually happen.
+    extern const std::array<NpcStep, 113> NPC_STEPS;
 }

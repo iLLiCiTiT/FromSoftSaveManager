@@ -1,9 +1,11 @@
 #pragma once
 
 #include <QWidget>
+#include <optional>
 #include <unordered_set>
 #include <vector>
 
+#include "../ScrollHelper.h"
 #include "Painting.h"
 #include "WorldProgress.h"
 #include "../../parse/Sekiro/SaveFile.h"
@@ -27,6 +29,7 @@ protected:
     void resizeEvent(QResizeEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
     void leaveEvent(QEvent* event) override;
 
@@ -45,7 +48,7 @@ private:
 
     Layout computeLayout() const;
     void rebuildVisibleItems();
-    int maxScroll() const;
+    void updateScrollRange();
     int itemIndexAt(const QPoint& pos) const;      // list row, or skill node on the Skills tab
     bool skillPage() const;
     bool worldPage() const;
@@ -68,10 +71,12 @@ private:
     std::vector<const fssm::parse::sekiro::SkillNode*> m_treeNodes;     // Skills tab, current tree
     std::unordered_set<uint32_t> m_heldItems;     // item ids in the inventory (learned skills)
     fssm::parse::sekiro::SekiroCharacterInfo m_stats;   // without items
+    // Spirit Emblems held; the game shows them on the HUD, not in the inventory.
+    std::optional<fssm::parse::sekiro::InventoryItem> m_spiritEmblems;
     bool m_hasCharacter = false;
     int m_page = 0;                 // index into PAGES
     int m_category = 0;             // index into the page's categories
-    int m_scroll = 0;               // pixels
+    fssm::ui::PaintedScroll m_scroll {this};    // item grid; range kept by updateScrollRange()
     int m_hoverItem = -1;           // list row, or index into m_treeNodes on the Skills tab
     int m_selectedItem = -1;
 

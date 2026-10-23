@@ -147,6 +147,17 @@ namespace fssm::parse::dsr {
         return stages;
     }
 
+    static std::vector<bool> npc_steps_done(const CharacterSlot& slot) {
+        std::vector<bool> done;
+        done.reserve(NPC_STEPS.size());
+        for (const auto& step : NPC_STEPS) {
+            done.push_back(std::any_of(step.flags.begin(), step.flags.end(), [&slot](uint32_t flag) {
+                return flag != 0 && get_event_flag(slot, flag).value_or(false);
+            }));
+        }
+        return done;
+    }
+
     static std::string_view place_name(uint32_t placeId) {
         auto it = std::lower_bound(PLACE_NAMES.begin(), PLACE_NAMES.end(), placeId,
                                    [](const PlaceName& place, uint32_t id) { return place.id < id; });
@@ -268,6 +279,7 @@ namespace fssm::parse::dsr {
         ci.bossesDefeated = defeated_bosses(slot);
         ci.npcStates = npc_states(slot);
         ci.npcStages = npc_stages(slot);
+        ci.npcStepsDone = npc_steps_done(slot);
         return ci;
     }
 

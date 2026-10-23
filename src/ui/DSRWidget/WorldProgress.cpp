@@ -1,5 +1,6 @@
 #include "WorldProgress.h"
 
+#include <QMouseEvent>
 #include <QPaintEvent>
 #include <QPainter>
 #include <QPainterPath>
@@ -24,6 +25,7 @@ namespace {
         Bonfire,
         Boss,
         Npc,
+        NpcStep,    // a questline step or event of the NPC above, checked when done
     };
 
     using fssm::parse::dsr::NpcState;
@@ -81,9 +83,11 @@ namespace {
     }
 
     // NPCs by their event flags; the state is shown right aligned (nothing while the NPC's
-    // map hasn't loaded yet) and the questline stage below the name.
+    // map hasn't loaded yet), the questline stage below the name and the NPC's progress
+    // steps as a checklist under it.
     std::vector<Row> npcRows(const fssm::parse::dsr::DSRCharacterInfo& c) {
         using fssm::parse::dsr::NPCS;
+        using fssm::parse::dsr::NPC_STEPS;
         std::vector<Row> rows = {{RowKind::Heading, "NPCs", ""}};
         for (size_t i = 0; i < NPCS.size(); ++i) {
             const NpcState state = i < c.npcStates.size() ? c.npcStates[i] : NpcState::Unknown;
@@ -97,6 +101,11 @@ namespace {
             const std::string_view stage = i < c.npcStages.size() ? c.npcStages[i] : std::string_view();
             rows.push_back({RowKind::Npc, fromView(NPCS[i].name), value,
                             state == NpcState::Alive || state == NpcState::Hostile, state, fromView(stage)});
+            for (size_t s = 0; s < NPC_STEPS.size(); ++s) {
+                if (NPC_STEPS[s].npcFlag != NPCS[i].firstFlag) continue;
+                const bool done = s < c.npcStepsDone.size() && c.npcStepsDone[s];
+                rows.push_back({RowKind::NpcStep, fromView(NPC_STEPS[s].text), "", done});
+            }
         }
         return rows;
     }
@@ -140,6 +149,27 @@ namespace {
         painter.restore();
     }
 
+    // Small square marking an NPC's progress step: filled and ticked when done.
+    void drawStepMark(QPainter& painter, const QRectF& rect, bool done) {
+        painter.save();
+        const double w = std::max(1.0, rect.width() / 8);
+        painter.setPen(QPen(done ? AREA_COLOR : UNDONE_MARK_COLOR, w));
+        painter.setBrush(done ? QBrush(AREA_COLOR.darker(160)) : QBrush(Qt::NoBrush));
+        painter.drawRect(rect);
+        if (done) {
+            QPen tick(TEXT_COLOR, w * 1.4);
+            tick.setCapStyle(Qt::RoundCap);
+            tick.setJoinStyle(Qt::RoundJoin);
+            painter.setPen(tick);
+            painter.setBrush(Qt::NoBrush);
+            const double x = rect.left();
+            const double y = rect.top();
+            const double s = rect.width();
+            painter.drawPolyline(QPolygonF({{x + s * 0.22, y + s * 0.52}, {x + s * 0.42, y + s * 0.72}, {x + s * 0.78, y + s * 0.3}}));
+        }
+        painter.restore();
+    }
+
     // Small circle marking an NPC: filled while alive (red when hostile), crossed out when dead.
     void drawNpcMark(QPainter& painter, const QRectF& rect, NpcState state) {
         painter.save();
@@ -161,11 +191,12 @@ namespace {
 
 WorldProgressWidget::WorldProgressWidget(QWidget* parent): QWidget(parent) {
     setAttribute(Qt::WA_TranslucentBackground, true);
+    m_scroll.setContentDrag(true);
 }
 
 void WorldProgressWidget::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo) {
     const bool sameCharacter = charInfo != nullptr && m_character.has_value() && m_character->index == charInfo->index;
-    if (!sameCharacter) m_scroll = 0;
+    if (!sameCharacter) m_scroll.reset();
     if (charInfo != nullptr) {
         m_character = *charInfo;
     } else {
@@ -181,7 +212,7 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
 
     const QRect body = rect().adjusted(4, 4, -4, -4);
     if (!m_character.has_value()) {
-        m_maxScroll = 0;
+        m_scroll.clear();
         painter.setPen(DIM_TEXT_COLOR);
         painter.drawText(body, Qt::AlignCenter, "No character selected");
         return;
@@ -198,17 +229,18 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     const QFontMetrics detailFm(detailFont);
     const int lineH = fm.height() + 6;
     const int detailH = detailFm.height() + 2;
+    const int stepH = detailFm.height() + 3;
     const int areaH = lineH + 2;
     const int areaGap = 8;
     const int headingH = QFontMetrics(headingFont).height() + 10;
     const int iconSize = fm.height() - 2;
     const int scrollBarW = 10;
-    m_lineHeight = lineH;
 
     const auto rowHeight = [&](const Row& row, bool first) {
         switch (row.kind) {
             case RowKind::Heading: return (first ? 0 : 16) + headingH;
             case RowKind::Area: return areaGap + areaH;
+            case RowKind::NpcStep: return stepH;
             default: return row.detail.isEmpty() ? lineH : lineH + detailH;
         }
     };
@@ -231,8 +263,8 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
         single.insert(single.end(), bosses.begin(), bosses.end());
     }
     const int contentH = twoColumns ? std::max(columnHeight(bonfires), columnHeight(bosses)) : columnHeight(single);
-    m_maxScroll = std::max(0, contentH - body.height());
-    m_scroll = std::clamp(m_scroll, 0, m_maxScroll);
+    m_scroll.setGeometry(body, QRect(body.right() - 3, body.top(), 3, body.height()), contentH);
+    m_scroll.setStep(3 * lineH);
 
     painter.save();
     painter.setClipRect(body.adjusted(0, 0, 0, 1), Qt::IntersectClip);
@@ -241,7 +273,7 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
         painter.drawLine(left, y, right, y);
     };
     const auto drawColumn = [&](const std::vector<Row>& rows, int x) {
-        int y = body.top() - m_scroll;
+        int y = body.top() - m_scroll.value();
         for (size_t i = 0; i < rows.size(); ++i) {
             const Row& row = rows[i];
             const int h = rowHeight(row, i == 0);
@@ -267,6 +299,19 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
                                      fm.elidedText(row.text, Qt::ElideRight, line.width() - valueW - 4));
                     painter.drawText(line.adjusted(0, 0, -4, 0), Qt::AlignRight | Qt::AlignVCenter, row.value);
                     drawRule(line.left(), line.right(), line.bottom() - 1);
+                    break;
+                }
+                case RowKind::NpcStep: {
+                    // Under the NPC's name, a little below the stage line.
+                    const int markSize = std::max(6, detailFm.height() - 6);
+                    const int left = x + 10 + iconSize + 8;
+                    const QRectF mark(left, full.center().y() - markSize / 2.0, markSize, markSize);
+                    drawStepMark(painter, mark, row.done);
+                    const QRect textRect(int(mark.right()) + 6, full.top(), full.right() - int(mark.right()) - 10, full.height());
+                    painter.setFont(detailFont);
+                    painter.setPen(row.done ? TEXT_COLOR : DIM_TEXT_COLOR);
+                    painter.drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter,
+                                     detailFm.elidedText(row.text, Qt::ElideRight, textRect.width()));
                     break;
                 }
                 case RowKind::Bonfire:
@@ -315,23 +360,28 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     painter.restore();
 
     // Thin scroll bar along the right edge.
-    if (m_maxScroll > 0) {
-        const QRect track(body.right() - 3, body.top(), 3, body.height());
-        const int thumbH = std::max(16, track.height() * track.height() / (track.height() + m_maxScroll));
-        const int thumbY = track.top() + (track.height() - thumbH) * m_scroll / m_maxScroll;
-        painter.fillRect(track, QColor(0, 0, 0, 120));
-        painter.fillRect(QRect(track.left(), thumbY, track.width(), thumbH), AREA_COLOR);
-    }
+    m_scroll.paint(painter, QColor(0, 0, 0, 120), AREA_COLOR);
 }
 
 void WorldProgressWidget::wheelEvent(QWheelEvent* event) {
     if (!m_character.has_value()) return;
-    const int delta = event->angleDelta().y() * 3 * m_lineHeight / 120;
-    const int scroll = std::clamp(m_scroll - delta, 0, m_maxScroll);
-    if (scroll != m_scroll) {
-        m_scroll = scroll;
-        update();
-    }
-    event->accept();
+    m_scroll.wheel(event, true);
+}
+
+void WorldProgressWidget::mousePressEvent(QMouseEvent* event) {
+    if (!m_scroll.mousePress(event)) QWidget::mousePressEvent(event);
+}
+
+void WorldProgressWidget::mouseMoveEvent(QMouseEvent* event) {
+    if (!m_scroll.mouseMove(event)) QWidget::mouseMoveEvent(event);
+}
+
+void WorldProgressWidget::mouseReleaseEvent(QMouseEvent* event) {
+    if (!m_scroll.mouseRelease(event)) QWidget::mouseReleaseEvent(event);
+}
+
+void WorldProgressWidget::leaveEvent(QEvent* event) {
+    m_scroll.leave();
+    QWidget::leaveEvent(event);
 }
 }

@@ -170,8 +170,11 @@ namespace fssm::parse::ds2 {
     static_assert(sizeof(InventoryEntry) == 0x10);
 
     struct InventoryData {
-        std::array<InventoryEntry, 0x1000> entries;
-        std::array<uint8_t, 0xbc> unk_10000;
+        std::array<InventoryEntry, 0xf00> entries;
+        uint32_t unk_f000;
+        // Key items and gestures, a separate list right after the other items.
+        std::array<InventoryEntry, 0x100> keyEntries;   // +0xf004
+        std::array<uint8_t, 0xb8> unk_10004;
     };
     static_assert(sizeof(InventoryData) == 0x100bc);
 

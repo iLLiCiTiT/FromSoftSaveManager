@@ -3,6 +3,7 @@
 #include <QWidget>
 #include <optional>
 
+#include "../ScrollHelper.h"
 #include "../../parse/DS3/SaveFile.h"
 
 namespace fssm::ui::ds3 {
@@ -16,11 +17,13 @@ public:
 protected:
     void paintEvent(QPaintEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
+    void leaveEvent(QEvent* event) override;
 private:
     std::optional<fssm::parse::ds3::DS3CharacterInfo> m_character;
-    int m_scroll = 0;
-    // From the last paint: scrollable range and one scroll step.
-    int m_maxScroll = 0;
-    int m_lineHeight = 26;
+    // Geometry from the last paint; the lists are not clickable, so dragging them scrolls.
+    fssm::ui::PaintedScroll m_scroll {this};
 };
 }

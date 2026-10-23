@@ -27,12 +27,12 @@ namespace {
     // Same order as the in-game inventory tabs.
     const std::array<Tab, 19> TABS = {{
         {"Recent Items", "tab_recent", {}},
-        {"Tools", "tab_tools", {ItemCategory::Tools}},
+        {"Tools", "tab_tools", {ItemCategory::Tools, ItemCategory::Remembrances}},
         {"Ashes", "tab_ashes", {ItemCategory::SpiritAshes}},
         {"Crafting Materials", "tab_crafting", {ItemCategory::CraftingMaterials}},
         {"Bolstering Materials", "tab_bolstering", {ItemCategory::UpgradeMaterials}},
-        {"Key Items", "tab_key_items", {ItemCategory::KeyItems, ItemCategory::Remembrances,
-                                        ItemCategory::GreatRunes, ItemCategory::CrystalTears}},
+        {"Key Items", "tab_key_items", {ItemCategory::KeyItems, ItemCategory::GreatRunes,
+                                        ItemCategory::CrystalTears}},
         {"Sorceries", "tab_sorceries", {ItemCategory::Sorceries}},
         {"Incantations", "tab_incantations", {ItemCategory::Incantations}},
         {"Ashes of War", "tab_ashes_of_war", {ItemCategory::AshesOfWar}},
@@ -124,11 +124,12 @@ namespace {
         return (item.itemId >> 28) == 0 && item.baseItem.category != ItemCategory::Ammunition;
     }
 
-    // Goods that stack show their count in the grid; gear and key items don't.
+    // The game's own flag (see tools/er_items/gen_items.py): consumables,
+    // materials and arrows show their count, gear, spells and unique tools don't,
+    // even when holding several. A flask with no charges allocated is stored as
+    // its "empty" variant, which shows no number.
     bool showsCount(const InventoryItem& item) {
-        const ItemCategory category = item.baseItem.category;
-        if (category == ItemCategory::Tools || category == ItemCategory::Ammunition) return true;
-        return item.baseItem.maxHeld > 1;
+        return item.baseItem.showsCount;
     }
 }
 
@@ -165,7 +166,7 @@ void InventoryWidget::setCharacter(const fssm::parse::er::ERCharacterInfo* charI
     }
     m_selectedItem = 0;
     m_hoverItem = -1;
-    m_scroll = 0;
+    m_scroll.reset();
     rebuildVisibleItems();
     update();
 }
@@ -196,7 +197,7 @@ void InventoryWidget::rebuildVisibleItems() {
     }
     layoutRows();
     m_selectedItem = m_visible.empty() ? -1 : std::clamp(m_selectedItem, 0, int(m_visible.size()) - 1);
-    m_scroll = std::clamp(m_scroll, 0, maxScroll());
+    updateScrollRange();
 }
 
 void InventoryWidget::layoutRows() {
@@ -233,7 +234,7 @@ void InventoryWidget::selectCategory(int category) {
     if (category == m_category) return;
     m_category = category;
     keepCategoryVisible();
-    m_scroll = 0;
+    m_scroll.reset();
     m_selectedItem = 0;
     m_hoverItem = -1;
     rebuildVisibleItems();
@@ -247,13 +248,12 @@ void InventoryWidget::selectItem(int index) {
     for (int r = 0; r < int(m_rows.size()); ++r) {
         const Row& row = m_rows[r];
         if (m_selectedItem < row.first || m_selectedItem >= row.first + row.count) continue;
-        if (row.top < m_scroll) m_scroll = row.top;
-        if (row.top + m_layout.rowHeight > m_scroll + m_layout.grid.height()) {
-            m_scroll = row.top + m_layout.rowHeight - m_layout.grid.height();
+        if (row.top < m_scroll.value()) m_scroll.setValue(row.top);
+        if (row.top + m_layout.rowHeight > m_scroll.value() + m_layout.grid.height()) {
+            m_scroll.setValue(row.top + m_layout.rowHeight - m_layout.grid.height());
         }
         break;
     }
-    m_scroll = std::clamp(m_scroll, 0, maxScroll());
     update();
 }
 
@@ -294,6 +294,9 @@ InventoryWidget::Layout InventoryWidget::computeLayout() const {
     l.separatorGap = px(8);
     l.grid = QRect(inner.left() + px(4), gridTop, l.cellWidth * l.columns,
                    std::max(0, l.detail.top() - px(10) - gridTop));
+    // At the panel's right edge, so it doesn't move when columns come and go.
+    const int barW = std::max(3, px(5));
+    l.scrollTrack = QRect(inner.right() + 1 - px(4) - barW, gridTop, barW, l.grid.height());
     return l;
 }
 
@@ -302,8 +305,9 @@ int InventoryWidget::contentHeight() const {
     return m_rows.back().top + m_layout.rowHeight;
 }
 
-int InventoryWidget::maxScroll() const {
-    return std::max(0, contentHeight() - m_layout.grid.height());
+void InventoryWidget::updateScrollRange() {
+    m_scroll.setGeometry(m_layout.grid, m_layout.scrollTrack, contentHeight());
+    m_scroll.setStep(m_layout.rowHeight);
 }
 
 void InventoryWidget::resizeEvent(QResizeEvent* event) {
@@ -312,7 +316,7 @@ void InventoryWidget::resizeEvent(QResizeEvent* event) {
     keepCategoryVisible();
     m_scaledCache.clear();
     layoutRows();
-    m_scroll = std::clamp(m_scroll, 0, maxScroll());
+    updateScrollRange();
 }
 
 QPixmap InventoryWidget::scaled(const QString& resource, const QSize& size) {
@@ -353,7 +357,7 @@ const InventoryWidget::Entry* InventoryWidget::currentEntry() const {
 
 QRect InventoryWidget::cellRect(int row, int column) const {
     const Layout& l = m_layout;
-    return QRect(l.grid.left() + column * l.cellWidth, l.grid.top() + m_rows[row].top - m_scroll,
+    return QRect(l.grid.left() + column * l.cellWidth, l.grid.top() + m_rows[row].top - m_scroll.value(),
                  l.cellWidth, l.rowHeight);
 }
 
@@ -450,7 +454,7 @@ void InventoryWidget::drawGrid(QPainter& painter) {
 
     for (int r = 0; r < int(m_rows.size()); ++r) {
         const Row& row = m_rows[r];
-        const int top = l.grid.top() + row.top - m_scroll;
+        const int top = l.grid.top() + row.top - m_scroll.value();
         if (top > l.grid.bottom()) break;
         if (row.groupStart) {
             painter.setOpacity(0.55);
@@ -494,16 +498,8 @@ void InventoryWidget::drawGrid(QPainter& painter) {
     }
     painter.restore();
 
-    // Scroll bar right of the grid.
-    const int total = maxScroll();
-    if (total > 0) {
-        const QRect track(l.grid.right() + int(8 * s), l.grid.top(), std::max(3, int(5 * s)), l.grid.height());
-        const int thumbH = std::max(16, track.height() * track.height() / (track.height() + total));
-        const int thumbY = track.top() + (track.height() - thumbH) * m_scroll / total;
-        painter.fillRect(track, QColor(0, 0, 0, 140));
-        painter.fillRect(QRect(track.left() + track.width() / 4, thumbY, std::max(1, track.width() / 2), thumbH),
-                         QColor(196, 160, 96));
-    }
+    // Scroll bar at the panel's right edge.
+    m_scroll.paint(painter, QColor(0, 0, 0, 140), QColor(196, 160, 96), -(l.scrollTrack.width() / 4));
 }
 
 void InventoryWidget::drawDetail(QPainter& painter) {
@@ -590,7 +586,7 @@ int InventoryWidget::itemIndexAt(const QPoint& pos) const {
     const Layout& l = m_layout;
     if (!l.grid.contains(pos) || l.cellWidth <= 0) return -1;
     const int col = (pos.x() - l.grid.left()) / l.cellWidth;
-    const int y = pos.y() - l.grid.top() + m_scroll;
+    const int y = pos.y() - l.grid.top() + m_scroll.value();
     for (const Row& row : m_rows) {
         if (y < row.top || y >= row.top + l.rowHeight) continue;
         return col < row.count ? row.first + col : -1;
@@ -606,6 +602,7 @@ int InventoryWidget::tabIndexAt(const QPoint& pos) const {
 }
 
 void InventoryWidget::mouseMoveEvent(QMouseEvent* event) {
+    if (m_scroll.mouseMove(event)) return;
     const int hover = m_hasCharacter ? itemIndexAt(event->pos()) : -1;
     if (hover != m_hoverItem) {
         m_hoverItem = hover;
@@ -621,6 +618,7 @@ void InventoryWidget::mouseMoveEvent(QMouseEvent* event) {
 }
 
 void InventoryWidget::mousePressEvent(QMouseEvent* event) {
+    if (m_hasCharacter && m_scroll.mousePress(event)) return;
     if (!m_hasCharacter || event->button() != Qt::LeftButton) {
         QWidget::mousePressEvent(event);
         return;
@@ -638,6 +636,10 @@ void InventoryWidget::mousePressEvent(QMouseEvent* event) {
     }
 }
 
+void InventoryWidget::mouseReleaseEvent(QMouseEvent* event) {
+    if (!m_scroll.mouseRelease(event)) QWidget::mouseReleaseEvent(event);
+}
+
 void InventoryWidget::wheelEvent(QWheelEvent* event) {
     if (!m_hasCharacter) return;
     const QPoint pos = event->position().toPoint();
@@ -645,7 +647,7 @@ void InventoryWidget::wheelEvent(QWheelEvent* event) {
     if (m_layout.tabs.adjusted(-m_layout.leftButton.width(), 0, m_layout.rightButton.width(), 0).contains(pos)) {
         selectCategory(m_category - steps);
     } else {
-        m_scroll = std::clamp(m_scroll - steps * m_layout.rowHeight, 0, maxScroll());
+        m_scroll.wheel(event, true);
         m_hoverItem = itemIndexAt(pos);
         update();
     }
@@ -678,6 +680,7 @@ void InventoryWidget::keyPressEvent(QKeyEvent* event) {
 }
 
 void InventoryWidget::leaveEvent(QEvent* event) {
+    m_scroll.leave();
     m_hoverItem = -1;
     m_hoverTab = -1;
     update();

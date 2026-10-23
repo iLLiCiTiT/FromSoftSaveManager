@@ -35,6 +35,14 @@ namespace fssm::parse::dsr {
     };
 
     // Area name (PlaceName text) the Data List screen shows for a profile's areaId.
+    // A progress step of an NPC (docs/dsr-npc-stages.md): done when any of flags is set.
+    // Unused entries are 0.
+    struct NpcStep {
+        uint32_t npcFlag;               // firstFlag of the NPCS entry
+        std::array<uint32_t, 11> flags;
+        std::string_view text;
+    };
+
     struct PlaceName {
         uint32_t id;
         std::string_view name;
@@ -50,6 +58,8 @@ namespace fssm::parse::dsr {
     extern const std::array<Npc, 38> NPCS;
     // Questline stage of the flags the scripts set in the NPC blocks, by flag.
     extern const std::array<NpcStage, 145> NPC_STAGES;
+    // Questline steps and events of the NPCs, in NPCS order, then in the order they happen.
+    extern const std::array<NpcStep, 71> NPC_STEPS;
     // Area PlaceNames (ids 1000-1999), by id.
     extern const std::array<PlaceName, 32> PLACE_NAMES;
 }

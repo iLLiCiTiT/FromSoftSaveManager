@@ -44,6 +44,7 @@ namespace fssm::parse::er {
         uint8_t sortGroup = 0;
         uint16_t maxHeld = 0;       // stack size (goods, arrows/bolts); 0 for gear
         uint16_t maxStored = 0;     // stack size in the storage chest (goods)
+        bool showsCount = false;    // the inventory grid draws the number held
         std::string_view effect;    // short "Item Effect" text, may be empty
     };
 

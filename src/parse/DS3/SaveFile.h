@@ -85,6 +85,8 @@ namespace fssm::parse::ds3 {
         std::vector<NpcState> npcStates;
         // Questline stage text per NPCS entry (NPC_STAGES), empty when none is set.
         std::vector<std::string_view> npcStages;
+        // Done or not per NPC_STEPS entry.
+        std::vector<bool> npcStepsDone;
     };
 
     struct DS3SaveFile {
