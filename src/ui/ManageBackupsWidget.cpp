@@ -349,22 +349,30 @@ void ManageBackupsOverlayWidget::onCustomContextMenu(const QPoint& point) {
 ManageBackupsButtonsWidget::ManageBackupsButtonsWidget(Controller* controller, QWidget* parent): QFrame(parent), m_controller(controller)
 {
     m_hotkeysLabel = new QLabel(this);
-    m_hotkeysLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    m_hotkeysLabel->setWordWrap(true);
+    m_hotkeysLabel->setAlignment(Qt::AlignCenter);
+
+    QWidget* btnsWidget = new QWidget(this);
 
     QPixmap showIcon = QPixmap(":/images/common/menu.png");
-    QPushButton* showBackupsBtn = new QPushButton(showIcon, "Backups", this);
+    QPushButton* showBackupsBtn = new QPushButton(showIcon, "Backups", btnsWidget);
     showBackupsBtn->setToolTip("Show available backups");
 
-    // One compact row right under the character list: hint on the left, button on the right.
-    QHBoxLayout* layout = new QHBoxLayout(this);
-    layout->setContentsMargins(4, 4, 4, 4);
-    layout->addWidget(m_hotkeysLabel, 1);
-    layout->addWidget(showBackupsBtn, 0, Qt::AlignRight | Qt::AlignVCenter);
+    QHBoxLayout* btnsLayout = new QHBoxLayout(btnsWidget);
+    btnsLayout->setContentsMargins(0, 0, 0, 0);
+    btnsLayout->addStretch(1);
+    btnsLayout->addWidget(showBackupsBtn, 0);
+    btnsLayout->addStretch(1);
 
+    QVBoxLayout* layout = new QVBoxLayout(this);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(m_hotkeysLabel, 0);
+    layout->addWidget(btnsWidget, 0);
+
+    // Only as tall as the hint and the button, so the character list above gets the rest.
     this->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     this->setAttribute(Qt::WA_TranslucentBackground, true);
     m_hotkeysLabel->setAttribute(Qt::WA_TranslucentBackground, true);
+    btnsWidget->setAttribute(Qt::WA_TranslucentBackground, true);
     connect(showBackupsBtn, SIGNAL(clicked()), this, SLOT(onShowBackups()));
     connect(m_controller, SIGNAL(hotkeysConfigChanged()), this, SLOT(onHotkeysChange()));
 
@@ -386,12 +394,12 @@ void ManageBackupsButtonsWidget::onHotkeysChange() {
     QString label;
     if (quicksave.key() != Qt::Key_unknown) {
         label.push_back(QKeySequence(quicksave).toString());
-        label.push_back(" quicksave");
+        label.push_back(" to quicksave");
     }
     if (quickload.key() != Qt::Key_unknown) {
-        if (!label.isEmpty()) label.push_back(", ");
+        if (!label.isEmpty()) label.push_back(" and ");
         label.push_back(QKeySequence(quickload).toString());
-        label.push_back(" quickload");
+        label.push_back(" to quickload");
     }
     label.push_front("<i>");
     label.push_back("</i>");
