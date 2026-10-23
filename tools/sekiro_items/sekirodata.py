@@ -33,9 +33,10 @@ def embedded_rsa_keys(exe_path):
     with open(exe_path, "rb") as f:
         data = f.read()
     keys = []
-    pattern = rb"-----BEGIN RSA PUBLIC KEY-----[A-Za-z0-9+/=\r\n]+-----END RSA PUBLIC KEY-----"
+    # Some of the keys (Data2, Data3, Data5) have a stray space in their base64 text.
+    pattern = rb"-----BEGIN RSA PUBLIC KEY-----[A-Za-z0-9+/= \r\n]+-----END RSA PUBLIC KEY-----"
     for m in re.finditer(pattern, data):
-        der = base64.b64decode(b"".join(l for l in m.group().splitlines() if b"---" not in l))
+        der = base64.b64decode(b"".join(l.replace(b" ", b"") for l in m.group().splitlines() if b"---" not in l))
         p = 1
         ln = der[p]
         p += 1

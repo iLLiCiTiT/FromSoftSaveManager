@@ -14,8 +14,8 @@ namespace fssm::ui::er {
 // Site of Grace: a golden glow with a spark when discovered, a faint ring otherwise.
 void drawGraceMark(QPainter& painter, const QRectF& rect, bool discovered);
 
-// Sites of Grace discovered, bosses defeated (base game, grouped by region) and NPC
-// states, from the character's event flags.
+// Sites of Grace discovered, bosses defeated (base game, grouped by region), NPC states
+// with their questline progress, and endings, from the character's event flags.
 class WorldProgressWidget: public QWidget {
     Q_OBJECT
 public:
@@ -35,6 +35,8 @@ private:
     std::vector<bool> m_bossesDefeated;
     std::vector<fssm::parse::er::NpcState> m_npcStates;
     std::vector<std::string_view> m_npcStages;
+    std::vector<bool> m_npcStepsDone;
+    std::vector<fssm::parse::er::EndingState> m_endings;
     // Graces and bosses scroll separately; geometry from the last paint. The lists
     // are not clickable, so dragging them scrolls.
     std::array<fssm::ui::PaintedScroll, 2> m_scrolls {fssm::ui::PaintedScroll(this), fssm::ui::PaintedScroll(this)};

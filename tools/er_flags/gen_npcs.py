@@ -5,7 +5,7 @@ Usage:
 
 Writes:
     src/parse/EldenRing/NpcProgress.h      table sizes
-    src/parse/EldenRing/NpcProgress.cpp    NPCs
+    src/parse/EldenRing/NpcProgress.cpp    NPCs, questline stages, progress steps, endings
 
 Every NPC owns a block of 20 global event flags in 3000-4999 (base % 20 == 0). The first
 five (S = base .. base + 4) are its status: the scripts clear them (Batch Set Event Flags
@@ -418,6 +418,225 @@ for flag in (4725, 4726, 4727, 4728, 4730, 4731, 4732, 4733, 4735, 4736, 4737, 4
     NPC_STAGES[flag] = None
 
 
+def after(*flags):
+    """Questline stages: the step is done while the NPC is at any of them."""
+    return flags
+
+
+# Progress steps shown under an NPC, in questline order: (text, flags), done when any flag
+# is set. Default stages ("+1 AND 3000" in docs/er-npc-stages.md, set when the NPC's map
+# first loads) don't count as met. Unlike the stages, which replace each other, these flags stay set. Sources
+# (docs/er-npc-stages.md, "Progress steps"):
+#   - stages of the NPC's block (after(...)): the stage and the ones the scripts only move
+#     to from it, so the step stays done as the questline goes on;
+#   - item lot flags (ItemLotParam getItemFlagId): set once the item is received, from the
+#     NPC (block 400) or picked up; the text names the item;
+#   - boss flags (BOSSES in WorldProgress.cpp) and 9130, set when Starscourge Radahn dies
+#     (common event 3040 / m60_52_38);
+#   - world flags whose meaning several NPCs' stage events agree on (named below).
+# The generator fails when a flag is in no known flag block or the game data never uses
+# it. All were checked against the 5 test characters.
+RADAHN = 9130
+NPC_STEPS = {
+    # Ranni the Witch. 1042369411: sets her stage "Church of Elleh: met" (and Kalé's); 1034509410:
+    # met at Ranni's Rise (moves Seluvis, Blaidd and Iji to their Ranni's Rise stages);
+    # 1034509416: her service accepted (Ranni "You serve her", Blaidd "serving Ranni").
+    3740: [
+        ("Met Renna at the Church of Elleh", (1042369411,)),
+        ("Met Ranni at her Rise", (1034509410,)),
+        ("Entered her service", (1034509416,)),
+        ("Starscourge Radahn defeated", (RADAHN,)),
+        ("Fingerslayer Blade found in Nokron", (12027080,)),
+        ("Received the Carian Inverted Statue", (400391,)),
+        ("Found Miniature Ranni", (400394,)),
+        ("Astel, Naturalborn of the Void defeated", (12040800,)),
+        ("Received the Dark Moon Greatsword", (400393,)),
+    ],
+    # Blaidd the Half-Wolf
+    3600: [
+        ("Met in the Mistwood", after(*range(3605, 3618))),
+        ("Bloodhound Knight Darriwil defeated", (1044350800,)),
+        ("At Ranni's Rise", after(*range(3609, 3618))),
+        ("Starscourge Radahn defeated", (RADAHN,)),
+        ("Royal Greatsword obtained", (400158,)),
+    ],
+    # Preceptor Seluvis
+    3560: [
+        ("Met at Ranni's Rise", after(3566, 3567, 3568, 3569)),
+        ("Received Seluvis's Potion", (400140,)),
+        ("Received Seluvis's Introduction", (400143,)),
+        ("Received the Amber Draught", (400145,)),
+        ("Seluvis's Bell Bearing obtained", (400148,)),
+    ],
+    # Fia, Deathbed Companion
+    4120: [
+        ("Met at Roundtable Hold", after(*range(4126, 4133), 4137)),
+        ("Received the Baldachin's Blessing", (400333,)),
+        ("Received the Weathered Dagger", (400331,)),
+        ("Met again in Deeproot Depths", after(*range(4127, 4133), 4137)),
+        ("Fia's Champions defeated", after(*range(4128, 4133), 4137)),
+        ("Lichdragon Fortissax defeated", (12030850,)),
+        ("Received the Mending Rune of the Death-Prince", (9502,)),
+    ],
+    # D, Hunter of the Dead
+    4040: [
+        ("Tibia Mariner (Summonwater Village) defeated", (1045390800,)),
+        ("Moved to Roundtable Hold", after(4047, 4048)),
+        ("Watching over Fia", after(4048)),
+        ("D's Bell Bearing obtained", (400349,)),
+    ],
+    # Sorcerer Rogier
+    3900: [
+        ("Moved to Roundtable Hold", after(3906, 3907, 3908, 3909)),
+        ("Told you of the Black Knives", after(3908, 3909)),
+        ("Received Rogier's Letter", (400356,)),
+        ("Rogier's Bell Bearing obtained", (400359,)),
+    ],
+    # Millicent and Sage Gowry
+    4180: [
+        ("Received the Unalloyed Gold Needle", (400310,)),
+        ("Cured with the needle", after(*range(4186, 4195))),
+        ("Godskin Apostle (Dominula) defeated", (1042550800,)),
+        ("Received the Prosthesis-Wearer Heirloom", (400320,)),
+        ("Met at the Haligtree", after(4193, 4194)),
+        ("Millicent's Prosthesis obtained", (400323,)),
+        ("Received Miquella's Needle", (400324,)),
+    ],
+    4160: [
+        ("Received the Unalloyed Gold Needle", (400310,)),
+        ("Millicent cured", after(4167, 4168, 4169, 4170, 4171)),
+        ("Flock's Canvas Talisman obtained", (400312,)),
+    ],
+    # Sorceress Sellen and Witch-Hunter Jerren
+    3460: [
+        ("Received Sellen's Primal Glintstone", (400100,)),
+        ("Found Lusat (Stars of Ruin)", (400430,)),
+        ("Found Azur (Comet Azur)", (400440,)),
+        ("Rennala, Queen of the Full Moon defeated", (14000800,)),
+        ("Received the Witch's Glintstone Crown", (400107,)),
+    ],
+    3360: [
+        ("Starscourge Radahn defeated", (RADAHN,)),
+        ("Received Eleonora's Poleblade", (400162,)),
+        ("At Witchbane Ruins", after(3369, 3370, 3371, 3372)),
+        ("Fought Sellen at Raya Lucaria", after(3371, 3372)),
+    ],
+    # Lightseeker Hyetta
+    3380: [
+        ("Met", after(*range(3386, 3394))),
+        ("Given a grape", after(*range(3388, 3394))),
+        ("Given a Shabriri Grape", after(3390, 3391, 3392, 3393)),
+        ("Before the Three Fingers", after(3393)),
+        ("Frenzied Flame Seal obtained", (400089,)),
+    ],
+    # Alexander, Warrior Jar
+    3660: [
+        ("Freed from the ground", after(*range(3666, 3672))),
+        ("Starscourge Radahn defeated", (RADAHN,)),
+        ("Freed again on Mt. Gelmir", after(3670, 3671)),
+        ("Fire Giant defeated", (1052520800,)),
+        ("Shard of Alexander obtained", (400174,)),
+    ],
+    # Boc the Seamster
+    3940: [
+        ("Met in Limgrave", after(3946, 3947, 3948, 3949)),
+        ("Following you", after(3947, 3948, 3949)),
+    ],
+    # Potentate Diallos
+    3440: [
+        ("Met again at Volcano Manor", after(3449, 3450, 3451)),
+        ("Moved to Jarburg", after(3450, 3451)),
+        ("Hoslow's Petal Whip obtained", (400451,)),
+    ],
+    # Nepheli Loux and Kenneth Haight
+    4220: [
+        ("Moved to Roundtable Hold", after(*range(4226, 4231))),
+        ("Omenkiller defeated", (1035420800,)),
+        ("Godrick the Grafted defeated", (10000800,)),
+        ("Received the Arsenal Charm", (400420,)),
+        ("Lord of Stormveil Castle", after(4229)),
+    ],
+    3580: [
+        ("Asked you to take Fort Haight", after(3586, 3587)),
+        ("Nepheli made lord of Stormveil", after(3587)),
+    ],
+    # Patches: the stages after Murkwater Cave need you to have spared him ("Ahhh...").
+    3680: [
+        ("Spared in Murkwater Cave", after(*range(3686, 3694), 3696)),
+        ("At Volcano Manor", after(3689, 3690, 3692)),
+        ("Received the Dancer's Castanets", (400181,)),
+        ("Received the Magma Whip Candlestick", (400182,)),
+        ("Patches' Bell Bearing obtained", (400189,)),
+    ],
+    # Tanith and Volcano Manor's letters
+    3100: [
+        ("Received the Volcano Manor Invitation", (400090,)),
+        ("Joined Volcano Manor (Drawing-Room Key)", (400072,)),
+        ("Received the first Letter from Volcano Manor", (400073,)),
+        ("Received the second Letter from Volcano Manor", (400074,)),
+        ("Received the Red Letter", (400075,)),
+        ("Reward: Magma Shot", (400076,)),
+        ("Reward: Serpentbone Blade", (400077,)),
+        ("Reward: Taker's Cameo", (400078,)),
+        ("Rykard, Lord of Blasphemy defeated", (16000800,)),
+        ("Received the Devourer's Scepter", (400293,)),
+    ],
+    3880: [
+        ("Received the Letter to Bernahl", (400290,)),
+        ("Received Gelmir's Fury", (400291,)),
+        ("Beast Champion armor obtained", (400294,)),
+    ],
+    # White Mask Varré
+    3180: [
+        ("Received the Festering Bloody Finger", (400030,)),
+        ("Received the Lord of Blood's Favor", (400031, 400033)),
+        ("Received the Pureblood Knight's Medal", (400032,)),
+        ("Varré's Bouquet obtained", (400037,)),
+    ],
+    # Scribe Corhyn and Goldmask
+    4200: [
+        ("Talked at Roundtable Hold", after(*range(4206, 4212))),
+        ("Looking for Goldmask", after(4207, 4208, 4209, 4210, 4211)),
+        ("With Goldmask", after(4209, 4210, 4211)),
+        ("Goldmask's path done", after(4210, 4211)),
+        ("Received the Mending Rune of Perfect Order", (9500,)),
+        ("Goldmask's Rags obtained", (400500,)),
+        ("Corhyn's Bell Bearing obtained", (400370,)),
+    ],
+    # Dung Eater
+    4240: [
+        ("Talked at Roundtable Hold", after(4246, 4247, 4248, 4249, 4251)),
+        ("Received the Sewer-Gaol Key", (400380,)),
+        ("Received a Seedbed Curse", (400308,)),
+        ("Received the Mending Rune of the Fell Curse", (9504,)),
+        ("Omen armor obtained", (400382,)),
+    ],
+    # Sir Gideon Ofnir
+    3960: [
+        ("Talked at Roundtable Hold", after(3966, 3967, 3968)),
+        ("Talked again after the Erdtree burned", after(3967)),
+        ("Sir Gideon Ofnir defeated", (11050850,)),
+    ],
+}
+
+# Endings: (name, flags set when reached, flag that unlocks it or 0, flag that locks it again
+# or 0). The ending is chosen with Marika's talk script in m19_00_00 (t607001900):
+# "Mend the Elden Ring" 9400, "Use Mending Rune of Perfect Order" 9401 (needs 9500, its item
+# lot flag), "... of the Death-Prince" 9402 (9502), "... of the Fell Curse" 9403 (9504).
+# Age of the Stars and the Frenzied Flame are events 19000110 / 19000120 (two cutscenes
+# each): the stars need 1034509406 (Ranni's questline done; it moves her to her last
+# stage), the flame 108 (set at the Three Fingers, m35_00_00) without 116 (the frenzy
+# cured, common event 920).
+ENDINGS = [
+    ("Age of Fracture", (9400,), 0, 0),
+    ("Age of Order", (9401,), 9500, 0),
+    ("Age of the Duskborn", (9402,), 9502, 0),
+    ("Blessing of Despair", (9403,), 9504, 0),
+    ("Age of the Stars", (9404, 9405), 1034509406, 0),
+    ("Lord of Frenzied Flame", (9406, 9407), 108, 116),
+]
+
+
 def map_names():
     """Candidate map ids: legacy dungeons mAA_BB_CC_00 and the overworld tiles of m60/m61."""
     names = [f"m{aa}_{bb:02d}_{cc:02d}_00" for aa in range(10, 46) for bb in range(100) for cc in (0, 1)]
@@ -534,17 +753,42 @@ def stage_flags(instances):
     return out
 
 
+def script_flags(instances):
+    """Every flag the events set (Set Event Flag) or test (IF Event Flag 3:00, SKIP / END IF
+    Event Flag 1003:00-02); talk scripts set some flags the events only test."""
+    out = set()
+    for instrs in instances:
+        for bank, index, args in instrs:
+            if ((bank == 2003 and index in (66, 69)) or (bank == 3 and index == 0)
+                    or (bank == 1003 and index in (0, 1, 2))) and len(args) >= 8:
+                out.add(struct.unpack_from("<I", args, 4)[0])
+    return out
+
+
+def item_lot_flags(archives):
+    """getItemFlagId of every item lot (ItemLotParam +0x80): set once the lot is received."""
+    flags = set()
+    params = archives.regulation()
+    for name in ("ItemLotParam_map.param", "ItemLotParam_enemy.param"):
+        for row in erdata.parse_param(params[name]).values():
+            flags.add(struct.unpack_from("<i", row, 0x80)[0])
+    return flags
+
+
 def npcs(archives):
-    """([(status base, name)] of the named NPCs by flag, questline stage flags the events set)."""
+    """([(status base, name)] of the named NPCs by flag, questline stage flags the events set,
+    every flag the game data uses: events, item lots and talk script literals)."""
     maps = [m for m in map_names() if archives.has(f"/event/{m}.emevd.dcx")]
     common = parse_emevd(archives.read("/event/common_func.emevd.dcx"))
     blocks = collections.defaultdict(collections.Counter)
     stages = set()
+    known = item_lot_flags(archives)
     for script in ["common"] + maps:
         instances = list(event_instances(parse_emevd(archives.read(f"/event/{script}.emevd.dcx")), common))
         for base, chars in status_blocks(instances).items():
             blocks[base].update(chars)
         stages |= stage_flags(instances)
+        known |= script_flags(instances)
 
     npc_rows = erdata.parse_param(archives.regulation()["NpcParam.param"])
     names = {}
@@ -578,6 +822,7 @@ def npcs(archives):
                 continue
             for literal in re.finditer(rb"\x82(....)", esd, re.S):    # ESD int32 literal
                 value = struct.unpack("<i", literal.group(1))[0]
+                known.add(value)
                 if NPC_FLAG_MIN <= value < NPC_FLAG_MAX:
                     talk_reads[value - value % NPC_BLOCK][int(match.group(1))] += 1
 
@@ -598,7 +843,7 @@ def npcs(archives):
         count[name] += 1
         numbered.append((base, f"{name} ({count[name]})" if seen[name] > 1 else name))
     bases = {base for base, _ in numbered}
-    return numbered, {f for f in stages if f - f % NPC_BLOCK in bases}
+    return numbered, {f for f in stages if f - f % NPC_BLOCK in bases}, known
 
 
 def cpp_string(s):
@@ -616,12 +861,41 @@ def main():
         sys.exit(1)
     game_dir, repo = sys.argv[1:]
     archives = erdata.Archives(game_dir)
-    table, stages = npcs(archives)
+    table, stages, known = npcs(archives)
     if stages != set(NPC_STAGES):
         raise RuntimeError(f"NPC stages changed: not reviewed {sorted(stages - set(NPC_STAGES))}, "
                            f"no script sets {sorted(set(NPC_STAGES) - stages)}")
     stage_table = sorted((f, t) for f, t in NPC_STAGES.items() if t)
     out_dir = os.path.join(repo, "src", "parse", "EldenRing")
+
+    # Steps and endings: every flag must be readable (a block of gen_flags.py's table) and
+    # used by the game data; stage flags must be stages of the NPC's block.
+    with open(os.path.join(out_dir, "WorldProgress.cpp"), encoding="utf-8") as f:
+        world = f.read()
+    flag_table = world.split("FLAG_BLOCKS = {{", 1)[1].split("}};", 1)[0]
+    readable = {int(block) for block, _rank in re.findall(r"\{(\d+), (\d+)\}", flag_table)}
+    # The bosses' flags (ER-Save-Editor's list) are set by boss events the scan above
+    # doesn't follow.
+    known |= {int(flag) for flag in re.findall(r"Boss\{(\d+),", world)}
+    bases = {base for base, _ in table}
+    checks = [(f"{base} {text}", flag, base) for base, steps in NPC_STEPS.items() for text, flags in steps
+              for flag in flags]
+    checks += [(name, flag, None) for name, reached, unlock, lock in ENDINGS
+               for flag in reached + (unlock, lock) if flag]
+    for what, flag, base in checks:
+        if base is not None and base not in bases:
+            raise RuntimeError(f"{what}: no NPC with status flag {base}")
+        if flag // 1000 not in readable:
+            raise RuntimeError(f"{what}: flag {flag} is in no known flag block")
+        if flag not in known:
+            raise RuntimeError(f"{what}: nothing in the game data uses flag {flag}")
+        if NPC_FLAG_MIN <= flag < NPC_FLAG_MAX and flag - flag % NPC_BLOCK == base and flag not in NPC_STAGES:
+            raise RuntimeError(f"{what}: {flag} is not a stage of the NPC")
+    step_table, step_flags = [], []
+    for base in sorted(NPC_STEPS):
+        for text, flags in NPC_STEPS[base]:
+            step_table.append((base, text, len(step_flags), len(flags)))
+            step_flags += flags
     write_crlf(os.path.join(out_dir, "NpcProgress.h"), f"""#pragma once
 #include <array>
 #include <cstdint>
@@ -643,10 +917,32 @@ namespace fssm::parse::er {{
         std::string_view text;
     }};
 
+    // A progress step under an NPC: done when any of NPC_STEP_FLAGS[firstFlag ..
+    // firstFlag + flagCount) is set (quest items received, bosses, questline stages).
+    struct NpcStep {{
+        uint32_t statusFlag;            // the NPC's
+        std::string_view text;
+        uint16_t firstFlag;
+        uint16_t flagCount;
+    }};
+
+    // An ending: reached when a reached flag is set; it can be chosen once unlockFlag is
+    // set (0: always) and lockFlag is not (0: never).
+    struct Ending {{
+        std::string_view name;
+        std::array<uint32_t, 2> reachedFlags;   // 0 = unused
+        uint32_t unlockFlag;
+        uint32_t lockFlag;
+    }};
+
     // NPCs with a status flag block, by flag.
     extern const std::array<Npc, {len(table)}> NPCS;
     // Questline stage texts, by flag (not every stage flag has one).
     extern const std::array<NpcStage, {len(stage_table)}> NPC_STAGES;
+    // Progress steps, by statusFlag, in questline order within an NPC.
+    extern const std::array<NpcStep, {len(step_table)}> NPC_STEPS;
+    extern const std::array<uint32_t, {len(step_flags)}> NPC_STEP_FLAGS;
+    extern const std::array<Ending, {len(ENDINGS)}> ENDINGS;
 }}
 """)
     lines = ['#include "NpcProgress.h"', "", "// Generated by tools/er_flags/gen_npcs.py, do not edit.",
@@ -654,9 +950,20 @@ namespace fssm::parse::er {{
     lines += [f"        Npc{{{base}, {cpp_string(name)}}}," for base, name in table]
     lines += ["    };", "", f"    const std::array<NpcStage, {len(stage_table)}> NPC_STAGES = {{"]
     lines += [f"        NpcStage{{{flag}, {cpp_string(text)}}}," for flag, text in stage_table]
+    lines += ["    };", "", f"    const std::array<NpcStep, {len(step_table)}> NPC_STEPS = {{"]
+    lines += [f"        NpcStep{{{base}, {cpp_string(text)}, {first}, {count}}},"
+              for base, text, first, count in step_table]
+    lines += ["    };", "", f"    const std::array<uint32_t, {len(step_flags)}> NPC_STEP_FLAGS = {{"]
+    for i in range(0, len(step_flags), 8):
+        lines.append("        " + ", ".join(str(f) for f in step_flags[i:i + 8]) + ",")
+    lines += ["    };", "", f"    const std::array<Ending, {len(ENDINGS)}> ENDINGS = {{"]
+    for name, reached, unlock, lock in ENDINGS:
+        flags = ", ".join(str(f) for f in (reached + (0,))[:2])
+        lines.append(f"        Ending{{{cpp_string(name)}, {{{flags}}}, {unlock}, {lock}}},")
     lines += ["    };", "}", ""]
     write_crlf(os.path.join(out_dir, "NpcProgress.cpp"), "\n".join(lines))
-    print(f"{len(table)} NPCs, {len(stage_table)} stage texts ({len(stages)} stage flags)")
+    print(f"{len(table)} NPCs, {len(stage_table)} stage texts ({len(stages)} stage flags), "
+          f"{len(step_table)} progress steps, {len(ENDINGS)} endings")
 
 
 if __name__ == "__main__":

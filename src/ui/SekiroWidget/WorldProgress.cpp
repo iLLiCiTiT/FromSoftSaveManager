@@ -15,9 +15,13 @@ namespace {
     constexpr double FIXED_SCALE = 0.89;
 
     enum class RowKind {
-        Area,       // travel menu area with its count
+        Area,       // travel menu area or panel section with its count
         Idol,
         Boss,
+        Tool,       // prosthetic tool
+        Npc,        // name, state on the right
+        Stage,      // the NPC's questline stage
+        Step,       // a progress step of the NPC
     };
 
     struct Row {
@@ -57,6 +61,42 @@ namespace {
             rows.push_back({RowKind::Area, label(AREAS[area]), count(areaDone, int(group.size()))});
             rows.insert(rows.end(), group.begin(), group.end());
             doneCount += areaDone;
+        }
+        return rows;
+    }
+
+    // Prosthetic tools found, then every NPC with its state, current stage and steps.
+    std::vector<Row> panelRows(const std::vector<bool>& toolsFound, const std::vector<fssm::parse::sekiro::NpcState>& states,
+                               const std::vector<std::string_view>& stages, const std::vector<bool>& dragonrot,
+                               const std::vector<bool>& stepsDone) {
+        using fssm::parse::sekiro::NPC_STEPS;
+        using fssm::parse::sekiro::NPCS;
+        using fssm::parse::sekiro::NpcState;
+        using fssm::parse::sekiro::PROSTHETIC_TOOLS;
+        std::vector<Row> rows;
+        int found = 0;
+        for (size_t i = 0; i < PROSTHETIC_TOOLS.size(); ++i) found += isSet(toolsFound, i);
+        rows.push_back({RowKind::Area, "Prosthetic Tools", count(found, int(PROSTHETIC_TOOLS.size()))});
+        for (size_t i = 0; i < PROSTHETIC_TOOLS.size(); ++i) {
+            rows.push_back({RowKind::Tool, label(PROSTHETIC_TOOLS[i].name), "", isSet(toolsFound, i)});
+        }
+
+        int met = 0;
+        for (size_t i = 0; i < NPCS.size(); ++i) met += i < states.size() && states[i] != NpcState::Unknown;
+        rows.push_back({RowKind::Area, "NPCs", count(met, int(NPCS.size()))});
+        for (size_t i = 0; i < NPCS.size(); ++i) {
+            const NpcState state = i < states.size() ? states[i] : NpcState::Unknown;
+            const QString value = state == NpcState::Dead      ? "Dead or gone"
+                                : state == NpcState::Hostile   ? "Hostile"
+                                : isSet(dragonrot, i)          ? "Dragonrot"
+                                : state == NpcState::Unknown   ? "Not met"
+                                                               : "";
+            rows.push_back({RowKind::Npc, label(NPCS[i].name), value, state != NpcState::Unknown});
+            if (i < stages.size() && !stages[i].empty()) rows.push_back({RowKind::Stage, label(stages[i])});
+            for (size_t s = 0; s < NPC_STEPS.size(); ++s) {
+                if (NPC_STEPS[s].npcFlag != NPCS[i].firstFlag) continue;
+                rows.push_back({RowKind::Step, label(NPC_STEPS[s].text), "", isSet(stepsDone, s)});
+            }
         }
         return rows;
     }
@@ -114,10 +154,19 @@ WorldProgressWidget::WorldProgressWidget(QWidget* parent): QWidget(parent) {
     for (auto& scroll : m_scrolls) scroll.setContentDrag(true);
 }
 
-void WorldProgressWidget::setProgress(const std::vector<bool>& idolsFound, const std::vector<bool>& bossesDefeated) {
-    if (idolsFound != m_idolsFound || bossesDefeated != m_bossesDefeated) for (auto& scroll : m_scrolls) scroll.reset();
-    m_idolsFound = idolsFound;
-    m_bossesDefeated = bossesDefeated;
+void WorldProgressWidget::setProgress(const fssm::parse::sekiro::SekiroCharacterInfo& character) {
+    if (character.idolsFound != m_idolsFound || character.bossesDefeated != m_bossesDefeated
+        || character.npcStepsDone != m_npcStepsDone || character.npcStages != m_npcStages
+        || character.npcDragonrot != m_npcDragonrot) {
+        for (auto& scroll : m_scrolls) scroll.reset();
+    }
+    m_idolsFound = character.idolsFound;
+    m_bossesDefeated = character.bossesDefeated;
+    m_toolsFound = character.prostheticToolsFound;
+    m_npcStates = character.npcStates;
+    m_npcStages = character.npcStages;
+    m_npcDragonrot = character.npcDragonrot;
+    m_npcStepsDone = character.npcStepsDone;
     update();
 }
 
@@ -143,15 +192,21 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     int idolCount = 0;
     int bossCount = 0;
     const std::vector<Row> idols = groupedRows(IDOLS, m_idolsFound, RowKind::Idol, idolCount);
-    const std::vector<Row> bosses = groupedRows(BOSSES, m_bossesDefeated, RowKind::Boss, bossCount);
+    std::vector<Row> bosses = groupedRows(BOSSES, m_bossesDefeated, RowKind::Boss, bossCount);
+    const std::vector<Row> toolAndNpcRows = panelRows(m_toolsFound, m_npcStates, m_npcStages, m_npcDragonrot,
+                                                      m_npcStepsDone);
+    bosses.insert(bosses.end(), toolAndNpcRows.begin(), toolAndNpcRows.end());
 
     const int leftW = int(r.width() * 0.52);
     const int headerH = px(22);
     const int areaH = px(30);
     const int lineH = px(26);
     const int iconSize = px(20);
+    const int stageH = px(19);
+    const int stepH = px(21);
 
-    // Left: idols on the board like the item list. Right: bosses in the detail panel.
+    // Left: idols on the board like the item list. Right: bosses, prosthetic tools and NPCs
+    // in the detail panel.
     const QRect idolHeader(r.left() + px(14), r.top(), leftW - px(28), headerH);
     const QRect panel(r.left() + leftW + px(4), r.top() - px(4), r.width() - leftW - px(4), r.height() + px(4));
     painter.drawPixmap(panel.topLeft(), m_cache.get(":/sekiro_images/detail_panel", panel.size()));
@@ -177,7 +232,12 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
                    QString("Bosses  (%1)").arg(count(bossCount, int(BOSSES.size()))));
 
     const auto rowHeight = [&](const Row& row, bool first) {
-        return row.kind == RowKind::Area ? (first ? 0 : px(6)) + areaH : lineH;
+        switch (row.kind) {
+            case RowKind::Area: return (first ? 0 : px(6)) + areaH;
+            case RowKind::Stage: return stageH;
+            case RowKind::Step: return stepH;
+            default: return lineH;
+        }
     };
     const auto drawRows = [&](const std::vector<Row>& rows, int column) {
         const QRect list = lists[column];
@@ -212,8 +272,42 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
                 drawShadowText(painter, stroke.adjusted(0, 0, -px(26), 0), Qt::AlignRight | Qt::AlignVCenter, row.value);
                 continue;
             }
+            if (row.kind == RowKind::Npc) {
+                // Name with the state on the right, like a boss row without its seal.
+                painter.setFont(serifFont(px(13)));
+                const QFontMetrics fm(painter.font());
+                const int valueW = row.value.isEmpty() ? 0 : fm.horizontalAdvance(row.value) + px(10);
+                const QRect value(full.left(), full.top(), full.width() - px(12), full.height());
+                // Hostile in red, Dragonrot in ochre.
+                const QColor valueColor = row.value == "Hostile"     ? QColor(222, 120, 96)
+                                        : row.value == "Dragonrot"   ? QColor(214, 176, 92)
+                                                                     : QColor(150, 144, 130);
+                drawShadowText(painter, value, Qt::AlignRight | Qt::AlignVCenter, row.value, valueColor);
+                painter.setFont(serifFont(px(15)));
+                const QRect text(full.left() + px(22), full.top(), full.width() - px(34) - valueW, full.height());
+                drawShadowText(painter, text, Qt::AlignLeft | Qt::AlignVCenter,
+                               QFontMetrics(painter.font()).elidedText(row.text, Qt::ElideRight, text.width()),
+                               row.done ? TEXT_COLOR : QColor(150, 144, 130));
+                continue;
+            }
+            if (row.kind == RowKind::Stage || row.kind == RowKind::Step) {
+                // Under the NPC's name: its current stage, then a small seal per step.
+                painter.setFont(serifFont(px(13)));
+                int textLeft = full.left() + px(34);
+                QColor color = DIM_TEXT_COLOR;
+                if (row.kind == RowKind::Step) {
+                    const double markSize = iconSize * 0.7;
+                    drawBossMark(painter, QRectF(textLeft, full.center().y() - markSize / 2.0, markSize, markSize), row.done);
+                    textLeft += int(markSize) + px(7);
+                    color = row.done ? TEXT_COLOR : QColor(150, 144, 130);
+                }
+                const QRect text(textLeft, full.top(), full.right() - px(10) - textLeft, full.height());
+                drawShadowText(painter, text, Qt::AlignLeft | Qt::AlignVCenter,
+                               QFontMetrics(painter.font()).elidedText(row.text, Qt::ElideRight, text.width()), color);
+                continue;
+            }
             const QRectF icon(full.left() + px(22), full.center().y() - iconSize / 2.0, iconSize, iconSize);
-            if (row.kind == RowKind::Idol) {
+            if (row.kind == RowKind::Idol || row.kind == RowKind::Tool) {
                 drawIdolMark(painter, icon, row.done);
             } else {
                 drawBossMark(painter, icon, row.done);
