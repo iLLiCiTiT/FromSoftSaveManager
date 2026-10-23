@@ -265,6 +265,22 @@ ERCharacterInfo parseERCharacter(const BND4Entry& entry, const UserData10& userD
             }
             output.npcStages.push_back(stage);
         }
+        const auto isSet = [&](uint32_t flag) {
+            return flag != 0 && get_event_flag(eventFlags, flag).value_or(false);
+        };
+        for (const auto& step : NPC_STEPS) {
+            bool done = false;
+            for (size_t i = step.firstFlag; i < size_t(step.firstFlag) + step.flagCount && !done; ++i) {
+                done = isSet(NPC_STEP_FLAGS[i]);
+            }
+            output.npcStepsDone.push_back(done);
+        }
+        for (const auto& ending : ENDINGS) {
+            const bool reached = isSet(ending.reachedFlags[0]) || isSet(ending.reachedFlags[1]);
+            const bool available = (ending.unlockFlag == 0 || isSet(ending.unlockFlag)) && !isSet(ending.lockFlag);
+            output.endings.push_back(reached ? EndingState::Reached
+                                     : available ? EndingState::Available : EndingState::Locked);
+        }
     }
 
     output.inventoryItems = resolveItems(output.inventory, output);

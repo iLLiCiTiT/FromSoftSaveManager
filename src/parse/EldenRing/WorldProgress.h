@@ -25,7 +25,7 @@ namespace fssm::parse::er {
 
     constexpr size_t FLAG_BLOCK_SIZE = 125;
     // Known flag blocks, sorted by blockId.
-    extern const std::array<FlagBlock, 230> FLAG_BLOCKS;
+    extern const std::array<FlagBlock, 950> FLAG_BLOCKS;
 
     extern const std::array<std::string_view, 36> GRACE_AREAS;
     // Sites of Grace of the base game, by area.
