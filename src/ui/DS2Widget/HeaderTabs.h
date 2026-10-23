@@ -18,7 +18,7 @@ public:
     enum class Medallion { Equipment = 0, Inventory, Status, Scroll, Covenant };
 
     // Height taken by the tab bar above the pages.
-    static constexpr int HEADER_HEIGHT = 36;
+    static constexpr int HEADER_HEIGHT = 30;
 
     explicit HeaderTabs(QWidget* parent);
     void addTab(const QString& title, Medallion icon, QWidget* page);

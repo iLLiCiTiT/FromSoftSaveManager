@@ -63,7 +63,7 @@ QRect HeaderTabs::tabRect(int index) const {
     int x = 2;
     for (int i = 0; i < int(m_tabs.size()); ++i) {
         const int w = ICON_SIZE + TEXT_GAP + fm.horizontalAdvance(m_tabs[i].title) + TEXT_PADDING * 2;
-        if (i == index) return {x, 0, w, HEADER_HEIGHT - 4};
+        if (i == index) return {x, 0, w, HEADER_HEIGHT};
         x += w + TAB_SPACING;
     }
     return {};
