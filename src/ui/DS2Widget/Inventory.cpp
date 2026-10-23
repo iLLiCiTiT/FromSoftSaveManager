@@ -28,10 +28,10 @@ namespace {
         ItemCategory::HandsArmor,
         ItemCategory::LegsArmor,
         ItemCategory::Rings,
-        ItemCategory::Ammunition,
         ItemCategory::Spells,
-        ItemCategory::KeyItems,
+        ItemCategory::Ammunition,
         ItemCategory::Materials,
+        ItemCategory::KeyItems,
         ItemCategory::Gestures,
     };
 
@@ -44,6 +44,17 @@ namespace {
     constexpr int FRAME_BOTTOM = 44;
     // Item icons are 128x256 with the art roughly in this band.
     const QRect ICON_SOURCE(0, 40, 128, 176);
+
+    constexpr uint32_t ESTUS_FLASK_ID = 60155000;
+
+    // Items you can hold only one of draw no number. The Estus Flask is one
+    // item whose amount is its charges, shown like a stack while it has any.
+    // Spells hold their casts as the amount, which the game doesn't show here.
+    bool showsCount(const InventoryItem& item) {
+        if (item.itemId == ESTUS_FLASK_ID) return item.amount > 0;
+        if (item.baseItem.category == ItemCategory::Spells) return false;
+        return item.baseItem.maxHeld > 1 || item.amount > 1;
+    }
 
     QString categoryLabel(ItemCategory category) {
         switch (category) {
@@ -83,6 +94,10 @@ void InventoryWidget::setCharacter(const fssm::parse::ds2::DS2CharacterInfo* cha
     m_hasCharacter = charInfo != nullptr;
     m_allItems = charInfo != nullptr ? charInfo->inventoryItems : std::vector<InventoryItem>{};
     std::stable_sort(m_allItems.begin(), m_allItems.end(), [](const InventoryItem& a, const InventoryItem& b) {
+        // Each tab shows one category. Gestures are listed in the order they were
+        // learned (their slot order), everything else by the game's sort id.
+        if (a.baseItem.category != b.baseItem.category) return a.baseItem.category < b.baseItem.category;
+        if (a.baseItem.category == ItemCategory::Gestures) return a.slot < b.slot;
         if (a.baseItem.order != b.baseItem.order) return a.baseItem.order < b.baseItem.order;
         return a.itemId < b.itemId;
     });
@@ -322,7 +337,7 @@ void InventoryWidget::drawGrid(QPainter& painter) {
             QString label;
             if (item.durability.has_value()) {
                 if (item.upgradeLevel > 0) label = QString("+%1").arg(item.upgradeLevel);
-            } else {
+            } else if (showsCount(item)) {
                 label = QString::number(item.amount);
             }
             if (!label.isEmpty()) {
@@ -374,7 +389,7 @@ void InventoryWidget::drawNameBar(QPainter& painter) {
     QString detail;
     if (item.durability.has_value()) {
         detail = QString("Durability %1").arg(int(std::round(*item.durability)));
-    } else {
+    } else if (showsCount(item)) {
         detail = QString("x %1").arg(item.amount);
     }
     drawOutlinedText(painter, text, Qt::AlignRight | Qt::AlignVCenter, detail, DIM_TEXT_COLOR);

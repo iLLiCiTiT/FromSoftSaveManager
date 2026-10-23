@@ -48,6 +48,12 @@ SPRITES = {
     "category_key_items": ("MENU_TB_valuable", 1.0),
     "category_materials": ("MENU_TB_Material", 1.0),
     "category_prosthetics": ("MENU_TB_Arm", 1.0),
+    # Acquire Skills tree tabs.
+    "tree_shinobi": ("MENU_TB_Sinobi", 1.0),
+    "tree_prosthetic": ("MENU_TB_ArmSinobi", 1.0),
+    "tree_ashina": ("MENU_TB_Ashina", 1.0),
+    "tree_temple": ("MENU_TB_Temlpe", 1.0),
+    "tree_mushin": ("MENU_TB_Coposite", 1.0),
     "icon_vitality": ("MENU_ST_Vitality", 1.0),
     "icon_attack": ("MENU_ST_Offensive", 1.0),
     "icon_sen": ("MENU_Money", 1.0),

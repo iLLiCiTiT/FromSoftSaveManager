@@ -55,8 +55,10 @@ namespace fssm::parse::ds2 {
 
     std::vector<InventoryItem> decode_inventory(const InventoryData& inventory) {
         std::vector<InventoryItem> out;
-        for (uint32_t slot = 0; slot < inventory.entries.size(); ++slot) {
-            const InventoryEntry& entry = inventory.entries[slot];
+        const uint32_t itemSlots = static_cast<uint32_t>(inventory.entries.size());
+        for (uint32_t slot = 0; slot < itemSlots + inventory.keyEntries.size(); ++slot) {
+            const InventoryEntry& entry = slot < itemSlots ? inventory.entries[slot]
+                                                           : inventory.keyEntries[slot - itemSlots];
             if (entry.empty()) continue;
 
             InventoryItem item;

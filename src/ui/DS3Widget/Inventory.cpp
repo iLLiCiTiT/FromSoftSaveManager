@@ -134,6 +134,17 @@ namespace {
         return title;
     }
 
+    bool isFlask(const InventoryItem& item) {
+        return item.itemId == ESTUS_FLASK_ID || item.itemId == ASHEN_ESTUS_FLASK_ID;
+    }
+
+    // Items you can hold only one of draw no number; key items always show theirs.
+    bool showsCount(const InventoryItem& item, uint32_t maxHeld) {
+        const ItemCategory category = item.baseItem.category;
+        if (category == ItemCategory::KeyItems) return true;
+        return maxHeld > 1 || item.amount > 1 || category == ItemCategory::ArrowsBolts;
+    }
+
     // Estus icons show how full the flask is, relative to its capacity.
     QString flaskImage(const QString& base, uint32_t maxAmount, uint32_t amount) {
         if (amount == 0) return base + "_empty";
@@ -459,7 +470,10 @@ void InventoryWidget::drawGrid(QPainter& painter) {
             }
 
             QString label;
-            if (entry.maxHeld > 0 || entry.item.baseItem.category == ItemCategory::ArrowsBolts) {
+            if (isFlask(entry.item)) {
+                // A flask shows its charges; one without any allocated shows no number.
+                if (entry.maxHeld > 0) label = QString::number(entry.item.amount);
+            } else if (showsCount(entry.item, entry.maxHeld)) {
                 label = QString::number(entry.item.amount);
             } else if (entry.item.upgradeLevel > 0) {
                 label = QString("+%1").arg(entry.item.upgradeLevel);

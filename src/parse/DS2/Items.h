@@ -68,7 +68,7 @@ namespace fssm::parse::ds2 {
     struct BaseItem {
         uint32_t id = 0;
         uint16_t maxHeld = 1;       // ItemParam stack limit (99 for goods, 999 for ammo)
-        uint16_t order = 0;         // ItemParam sort order
+        uint16_t order = 0;         // ItemParam sort id (+0x2c), the in-game order within a tab
         ItemCategory category = ItemCategory::Unknown;
         std::string_view label = "Unknown";
         std::string_view image;     // alias in :/ds2_inv_images (128x256 icon), empty if none
@@ -81,7 +81,7 @@ namespace fssm::parse::ds2 {
 
     // An inventory slot resolved against the item database.
     struct InventoryItem {
-        uint32_t slot = 0;              // index in InventoryData::entries
+        uint32_t slot = 0;              // index in InventoryData::entries, then keyEntries
         uint32_t itemId = 0;
         uint32_t amount = 1;            // stack size (1 for equipment)
         std::optional<float> durability;

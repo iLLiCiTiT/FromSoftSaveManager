@@ -44,7 +44,16 @@ KIND_SPELL = 9
 KIND_GESTURE = 10
 
 
-def category(item_id, kind):
+# Goods: byte 2 of ItemParam field 20 (+0x50) holds use flags. The items the game lists
+# under Key Items (keys, Ladder Miniature, Crushed Eye Orb ...) have 0x2 and not 0x4
+# (0x4: usable from the menu, e.g. Champion's Tablet, which is a consumable).
+GOODS_KEY_ITEM_FLAGS = 0x6
+GOODS_KEY_ITEM = 0x2
+# Goods sorted in this group are the upgrade materials (titanite, infusion stones, Fire Seed).
+MATERIALS_GROUP = 1200
+
+
+def category(item_id, kind, goods_flags=0, group=0):
     if kind == KIND_WEAPON:
         if 3_800_000 <= item_id < 4_200_000 or 5_400_000 <= item_id < 5_500_000:
             return "Catalysts"      # staves, chimes, pyromancy flames
@@ -52,10 +61,10 @@ def category(item_id, kind):
             return "RangedWeapons"  # bows, greatbows, crossbows
         return "Weapons"
     if kind == KIND_GOODS:
-        if 50_000_000 <= item_id < 54_000_000:
+        if goods_flags & GOODS_KEY_ITEM_FLAGS == GOODS_KEY_ITEM:
             return "KeyItems"
-        if 60_970_000 <= item_id < 62_000_000:
-            return "Materials"      # titanite, infusion stones
+        if group == MATERIALS_GROUP:
+            return "Materials"
         return "Consumables"
     return {
         KIND_SHIELD: "Shields",
@@ -323,8 +332,10 @@ def main(game_dir, repo_root, with_icons=True):
         icon_id = fields[0]                 # ItemParam +0x00
         kind = (fields[19] >> 24) & 0xFF
         max_held = (fields[18] >> 16) & 0xFFFF
-        order = fields[16] & 0xFFFF
-        items.append((item_id, max_held, order, category(item_id, kind), name, icon_id))
+        order = fields[11]                  # +0x2c, in-game sort id within a tab
+        group = fields[16] & 0xFFFF         # +0x40, coarse sort group
+        goods_flags = (fields[20] >> 16) & 0xFF
+        items.append((item_id, max_held, order, category(item_id, kind, goods_flags, group), name, icon_id))
 
     if with_icons:
         icons = write_icons(repo_root, ds2data.icon_textures(archive), {i[5] for i in items})

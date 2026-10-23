@@ -41,11 +41,11 @@ namespace {
             {"Prosthetic Tools", ":/sekiro_images/category_prosthetics", {ItemCategory::ProstheticTools}},
         }},
         {"Skills", {
-            {"Shinobi Arts", ":/sekiro_inv_images/910", {}, true},
-            {"Prosthetic Arts", ":/sekiro_inv_images/930", {}, true},
-            {"Ashina Arts", ":/sekiro_inv_images/900", {}, true},
-            {"Temple Arts", ":/sekiro_inv_images/920", {}, true},
-            {"Mushin Arts", ":/sekiro_inv_images/940", {}, true},
+            {"Shinobi Arts", ":/sekiro_images/tree_shinobi", {}, true},
+            {"Prosthetic Arts", ":/sekiro_images/tree_prosthetic", {}, true},
+            {"Ashina Arts", ":/sekiro_images/tree_ashina", {}, true},
+            {"Temple Arts", ":/sekiro_images/tree_temple", {}, true},
+            {"Mushin Arts", ":/sekiro_images/tree_mushin", {}, true},
         }},
         {"World", {}},
     }};
@@ -73,10 +73,11 @@ namespace {
         return int(PAGES[page].categories.size());
     }
 
+    // The game's own flag (see tools/sekiro_items/gen_items.py).
+    constexpr uint32_t SPIRIT_EMBLEM_ID = 0x400003e8;
+
     bool showsCount(const InventoryItem& item) {
-        const ItemCategory c = item.baseItem.category;
-        if (c == ItemCategory::ProstheticTools || c == ItemCategory::CombatArts) return false;
-        return item.quantity > 1 || item.baseItem.maxNum > 1;
+        return item.baseItem.showsCount;
     }
 
     QString label(std::string_view text) {
@@ -127,7 +128,11 @@ void InventoryWidget::setCharacter(const fssm::parse::sekiro::SekiroCharacterInf
     m_allItems = std::move(m_stats.inventoryItems);
     m_stats.inventoryItems.clear();
     m_heldItems.clear();
-    for (const auto& item : m_allItems) m_heldItems.insert(item.itemId);
+    m_spiritEmblems.reset();
+    for (const auto& item : m_allItems) {
+        m_heldItems.insert(item.itemId);
+        if (item.itemId == SPIRIT_EMBLEM_ID) m_spiritEmblems = item;
+    }
     std::stable_sort(m_allItems.begin(), m_allItems.end(), [](const InventoryItem& a, const InventoryItem& b) {
         if (a.baseItem.order != b.baseItem.order) return a.baseItem.order < b.baseItem.order;
         return a.itemId < b.itemId;
@@ -582,14 +587,27 @@ void InventoryWidget::drawStatus(QPainter& painter) {
     statLine(0, "icon_vitality", "Vitality", m_stats.vitality);
     statLine(1, "icon_attack", "Attack Power", m_stats.attackPower);
 
-    // Sen.
-    const int senIcon = std::min(senPlate.height() - int(14 * s), int(34 * s));
-    const QRect senRow = senPlate.adjusted(int(14 * s), 0, -int(16 * s), 0);
-    painter.drawPixmap(senRow.left(), senRow.center().y() - senIcon / 2,
-                       m_cache.fit(":/sekiro_images/icon_sen", QSize(senIcon, senIcon)));
-    painter.setFont(serifFont(int(20 * s)));
-    drawShadowText(painter, senRow.adjusted(senIcon + int(8 * s), 0, 0, 0), Qt::AlignRight | Qt::AlignVCenter,
-                   QString::number(m_stats.sen));
+    // Spirit Emblems held (not listed in the game's inventory) and sen.
+    const int plateRowH = (senPlate.height() - int(10 * s)) / 2;
+    const int rowIcon = plateRowH - int(2 * s);
+    auto plateRow = [&](int line) {
+        return QRect(senPlate.left() + int(14 * s), senPlate.top() + int(5 * s) + line * plateRowH,
+                     senPlate.width() - int(30 * s), plateRowH);
+    };
+    const QRect emblemRow = plateRow(0);
+    if (m_spiritEmblems) {
+        painter.drawPixmap(emblemRow.left(), emblemRow.top() + (plateRowH - rowIcon) / 2,
+                           itemIcon(*m_spiritEmblems, rowIcon));
+    }
+    // Held, then stored in brackets.
+    const QString emblems = m_spiritEmblems
+        ? QString("%1 (%2)").arg(m_spiritEmblems->quantity).arg(m_spiritEmblems->storageQuantity)
+        : QString("0 (0)");
+    drawShadowText(painter, emblemRow, Qt::AlignRight | Qt::AlignVCenter, emblems);
+    const QRect senRow = plateRow(1);
+    painter.drawPixmap(senRow.left(), senRow.top() + (plateRowH - rowIcon) / 2,
+                       m_cache.fit(":/sekiro_images/icon_sen", QSize(rowIcon, rowIcon)));
+    drawShadowText(painter, senRow, Qt::AlignRight | Qt::AlignVCenter, QString::number(m_stats.sen));
 }
 
 int InventoryWidget::itemIndexAt(const QPoint& pos) const {

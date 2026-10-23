@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QWidget>
+#include <optional>
 #include <unordered_set>
 #include <vector>
 
@@ -70,6 +71,8 @@ private:
     std::vector<const fssm::parse::sekiro::SkillNode*> m_treeNodes;     // Skills tab, current tree
     std::unordered_set<uint32_t> m_heldItems;     // item ids in the inventory (learned skills)
     fssm::parse::sekiro::SekiroCharacterInfo m_stats;   // without items
+    // Spirit Emblems held; the game shows them on the HUD, not in the inventory.
+    std::optional<fssm::parse::sekiro::InventoryItem> m_spiritEmblems;
     bool m_hasCharacter = false;
     int m_page = 0;                 // index into PAGES
     int m_category = 0;             // index into the page's categories
