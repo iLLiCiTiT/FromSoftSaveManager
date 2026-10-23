@@ -93,8 +93,8 @@ DS2Widget::DS2Widget(Controller* controller, const QString& saveId, QWidget* par
     viewWrapLayout->setContentsMargins(0, 0, 0, 0);
     // Lines the Data List frame up with the pages below the header tabs.
     viewWrapLayout->addSpacing(fssm::ui::ds2::HeaderTabs::HEADER_HEIGHT);
-    viewWrapLayout->addWidget(dataListFrame, 4);
-    viewWrapLayout->addWidget(manageBackupsBtnsWidget, 1);
+    viewWrapLayout->addWidget(dataListFrame, 1);
+    viewWrapLayout->addWidget(manageBackupsBtnsWidget, 0);
 
     using fssm::ui::ds2::HeaderTabs;
     m_charTabs = new HeaderTabs(this);

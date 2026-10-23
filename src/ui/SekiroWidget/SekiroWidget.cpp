@@ -127,8 +127,8 @@ SekiroWidget::SekiroWidget(Controller* controller, const QString& saveId, QWidge
     viewWrapLayout->setContentsMargins(0, 0, 0, 0);
     viewWrapLayout->setSpacing(6);
     viewWrapLayout->addWidget(new fssm::ui::sekiro::ListTitle(viewWrap), 0);
-    viewWrapLayout->addWidget(m_view, 4);
-    viewWrapLayout->addWidget(manageBackupsBtnsWidget, 1);
+    viewWrapLayout->addWidget(m_view, 1);
+    viewWrapLayout->addWidget(manageBackupsBtnsWidget, 0);
 
     m_inventoryWidget = new fssm::ui::sekiro::InventoryWidget(this);
 

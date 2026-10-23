@@ -111,8 +111,8 @@ DS3Widget::DS3Widget(Controller* controller, const QString& saveId, QWidget* par
     viewWrapLayout->setContentsMargins(0, 0, 0, 0);
     // Lines the Load Game frame up with the panels below the header tabs.
     viewWrapLayout->addSpacing(4);
-    viewWrapLayout->addWidget(loadGameFrame, 4);
-    viewWrapLayout->addWidget(manageBackupsBtnsWidget, 1);
+    viewWrapLayout->addWidget(loadGameFrame, 1);
+    viewWrapLayout->addWidget(manageBackupsBtnsWidget, 0);
 
     m_charTabs = new fssm::ui::ds3::HeaderTabs(this);
     m_charInfoWidget = new fssm::ui::ds3::CharacterInfoWidget(m_charTabs);
