@@ -24,6 +24,41 @@ What the questline flags of an NPC's block mean (blocks: `docs/event-flags.md`, 
   The table is `NPC_STAGES` in `tools/er_flags/gen_npcs.py`; the generator fails when the
   scripts set a flag the table doesn't list or the table lists one no script sets.
 
+## Progress steps and endings
+
+The World Progress tab lists checklist steps under the main questline NPCs and the endings
+(`NPC_STEPS` and `ENDINGS` in `tools/er_flags/gen_npcs.py`, with the flag of each step).
+Stages replace each other; steps use flags that stay set:
+
+- Item lot flags (ItemLotParam_map / _enemy `getItemFlagId`, +0x80): set once the lot is
+  received. The items NPCs give or leave behind are in block 400 (400xxx), e.g. 400391
+  Carian Inverted Statue, 400393 Dark Moon Greatsword, 400073 / 400074 Letter from Volcano
+  Manor, 400310 Unalloyed Gold Needle; the Mending Runes are 9500 (Perfect Order), 9502
+  (Death-Prince), 9504 (Fell Curse); picked-up items are map flags (12027080 Fingerslayer
+  Blade in Nokron). Block 400's position was found on the test saves (`docs/event-flags.md`).
+- Boss flags of `BOSSES` (ER-Save-Editor), and 9130, set when Starscourge Radahn dies.
+- Stages (`+k` above) where a step has no lasting flag: the step is done at that stage or
+  any the scripts only reach from it. Default stages (`+1 AND 3000`, set when the NPC's
+  map first loads, e.g. Millicent's "Church of the Plague") don't count as met.
+- World flags several NPCs' stage events agree on: 1042369411 Ranni met at the Church of
+  Elleh (her and Kalé's stages), 1034509410 Ranni met at her Rise (Seluvis, Blaidd and Iji
+  move to their Ranni's Rise stages), 1034509416 her service accepted (Ranni "You serve
+  her", Blaidd "serving Ranni").
+
+Endings (m19_00_00): Marika's talk script t607001900 offers "Mend the Elden Ring" and,
+once their Mending Rune flag is set, "Use Mending Rune of Perfect Order / of the
+Death-Prince / of the Fell Curse"; the choices set 9400 (Age of Fracture), 9401 (Age of
+Order), 9402 (Age of the Duskborn), 9403 (Blessing of Despair). Event 19000110 (Age of the
+Stars) needs 1034509406, Ranni's questline done (it also moves her to her last stage), and
+sets 9404 or 9405 (two cutscenes); event 19000120 (Lord of Frenzied Flame) needs 108 (set
+at the Three Fingers, m35_00_00) without 116 (the frenzy cured, common event 920) and sets
+9406 or 9407. All endings set 120.
+
+Checked on the 5 test characters: the four late-game characters have the Ranni, Volcano
+Manor, Varré, Rogier and Millicent steps that their stages imply; one reached Age of the
+Stars, one Lord of Frenzied Flame, one Age of Fracture; the early character has only the
+first meetings.
+
 ## Stages
 
 Triggers are the setting event's conditions (`+k` = that NPC's flag base + k), with its

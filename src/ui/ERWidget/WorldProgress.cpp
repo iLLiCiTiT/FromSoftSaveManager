@@ -28,8 +28,11 @@ namespace {
         Grace,
         Boss,
         Npc,
+        Step,       // progress step under an NPC
+        Ending,
     };
 
+    using fssm::parse::er::EndingState;
     using fssm::parse::er::NpcState;
 
     struct Row {
@@ -126,8 +129,11 @@ namespace {
     }
 
     // NPCs by their status flags under an "NPCs" heading; the state is shown right aligned
-    // (nothing while the NPC's map hasn't loaded yet) and the questline stage below the name.
-    std::vector<Row> npcRows(const std::vector<NpcState>& states, const std::vector<std::string_view>& stages) {
+    // (nothing while the NPC's map hasn't loaded yet), the questline stage below the name
+    // and the NPC's progress steps (NPC_STEPS) as a checklist under it.
+    std::vector<Row> npcRows(const std::vector<NpcState>& states, const std::vector<std::string_view>& stages,
+                             const std::vector<bool>& stepsDone) {
+        using fssm::parse::er::NPC_STEPS;
         using fssm::parse::er::NPCS;
         std::vector<Row> rows = {{RowKind::Area, "NPCs", ""}};
         for (size_t i = 0; i < NPCS.size(); ++i) {
@@ -142,8 +148,49 @@ namespace {
             rows.push_back({RowKind::Npc, fromView(NPCS[i].name), value,
                             state == NpcState::Friendly || state == NpcState::Hostile, state,
                             i < stages.size() ? fromView(stages[i]) : QString()});
+            for (size_t k = 0; k < NPC_STEPS.size(); ++k) {
+                if (NPC_STEPS[k].statusFlag != NPCS[i].statusFlag) continue;
+                rows.push_back({RowKind::Step, fromView(NPC_STEPS[k].text), "", isSet(stepsDone, k)});
+            }
         }
         return rows;
+    }
+
+    // Endings under their own heading: reached, or available to choose.
+    std::vector<Row> endingRows(const std::vector<EndingState>& endings) {
+        using fssm::parse::er::ENDINGS;
+        std::vector<Row> rows = {{RowKind::Area, "Endings", ""}};
+        int reached = 0;
+        for (size_t i = 0; i < ENDINGS.size(); ++i) {
+            const EndingState state = i < endings.size() ? endings[i] : EndingState::Locked;
+            rows.push_back({RowKind::Ending, fromView(ENDINGS[i].name),
+                            state == EndingState::Reached ? "Reached"
+                            : state == EndingState::Available ? "Available" : "",
+                            state == EndingState::Reached});
+            reached += state == EndingState::Reached;
+        }
+        rows[0].value = count(reached, int(ENDINGS.size()));
+        return rows;
+    }
+
+    // Small box of a checklist step, ticked when done.
+    void drawStepMark(QPainter& painter, const QRectF& rect, bool done) {
+        painter.save();
+        const QRectF box = rect.adjusted(rect.width() * 0.2, rect.height() * 0.2,
+                                         -rect.width() * 0.2, -rect.height() * 0.2);
+        const double w = std::max(1.0, box.width() / 7);
+        painter.setPen(QPen(done ? GOLD_COLOR : QColor(110, 104, 92), w));
+        painter.setBrush(Qt::NoBrush);
+        painter.drawRect(box);
+        if (done) {
+            QPainterPath tick;
+            tick.moveTo(box.left() + box.width() * 0.15, box.top() + box.height() * 0.5);
+            tick.lineTo(box.left() + box.width() * 0.42, box.top() + box.height() * 0.8);
+            tick.lineTo(box.left() + box.width() * 0.95, box.top() - box.height() * 0.1);
+            painter.setPen(QPen(QColor(232, 204, 130), w * 1.6, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+            painter.drawPath(tick);
+        }
+        painter.restore();
     }
 
     // Small circle marking an NPC: filled while alive (red when hostile), crossed out when dead.
@@ -224,6 +271,8 @@ void WorldProgressWidget::setCharacter(const fssm::parse::er::ERCharacterInfo* c
     m_bossesDefeated = charInfo != nullptr ? charInfo->bossesDefeated : std::vector<bool>{};
     m_npcStates = charInfo != nullptr ? charInfo->npcStates : std::vector<NpcState>{};
     m_npcStages = charInfo != nullptr ? charInfo->npcStages : std::vector<std::string_view>{};
+    m_npcStepsDone = charInfo != nullptr ? charInfo->npcStepsDone : std::vector<bool>{};
+    m_endings = charInfo != nullptr ? charInfo->endings : std::vector<EndingState>{};
     update();
 }
 
@@ -255,8 +304,10 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     int bossCount = 0;
     const std::vector<Row> graces = groupedRows(GRACES, GRACE_AREAS, m_gracesDiscovered, RowKind::Grace, graceCount);
     std::vector<Row> bosses = groupedRows(BOSSES, BOSS_AREAS, m_bossesDefeated, RowKind::Boss, bossCount);
-    const std::vector<Row> npcs = npcRows(m_npcStates, m_npcStages);
+    const std::vector<Row> npcs = npcRows(m_npcStates, m_npcStages, m_npcStepsDone);
     bosses.insert(bosses.end(), npcs.begin(), npcs.end());
+    const std::vector<Row> endings = endingRows(m_endings);
+    bosses.insert(bosses.end(), endings.begin(), endings.end());
 
     const int gap = px(16);
     const int columnW = (r.width() - gap) / 2;
@@ -264,10 +315,12 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     const int areaH = px(28);
     const int lineH = px(24);
     const int detailH = px(16);
+    const int stepH = px(19);
     const int iconSize = px(18);
 
     const auto rowHeight = [&](const Row& row, bool first) {
         return row.kind == RowKind::Area ? (first ? 0 : px(8)) + areaH
+             : row.kind == RowKind::Step ? stepH
              : row.detail.isEmpty() ? lineH : lineH + detailH;
     };
     const auto drawColumn = [&](const std::vector<Row>& rows, int column, const QString& title, const QString& value) {
@@ -309,11 +362,22 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
                 drawRule(painter, line.left(), line.right(), line.bottom() - 1, 110);
                 continue;
             }
+            if (row.kind == RowKind::Step) {
+                // A smaller line per step, indented to the NPC's name.
+                const int left = full.left() + px(10) + iconSize + px(10);
+                const QRectF box(left, full.center().y() - px(14) / 2.0, px(14), px(14));
+                drawStepMark(painter, box, row.done);
+                painter.setFont(serifFont(px(13)));
+                const int textLeft = int(box.right()) + px(6);
+                drawText(painter, QRect(textLeft, full.top(), full.right() - textLeft - px(4), full.height()),
+                         Qt::AlignLeft | Qt::AlignVCenter, row.text, row.done ? TEXT_COLOR : DIM_TEXT_COLOR);
+                continue;
+            }
             const QRect line(full.left(), full.top(), full.width(), lineH);
             const QRectF icon(line.left() + px(10), line.center().y() - iconSize / 2.0, iconSize, iconSize);
             if (row.kind == RowKind::Grace) {
                 drawGraceMark(painter, icon, row.done);
-            } else if (row.kind == RowKind::Boss) {
+            } else if (row.kind == RowKind::Boss || row.kind == RowKind::Ending) {
                 drawBossMark(painter, icon, row.done);
             } else {
                 drawNpcMark(painter, icon, row.npc);
@@ -324,7 +388,8 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
             if (!row.value.isEmpty()) {
                 drawText(painter, QRect(textLeft, line.top(), line.right() - textLeft - px(4), line.height()),
                          Qt::AlignRight | Qt::AlignVCenter, row.value,
-                         row.npc == NpcState::Hostile ? HOSTILE_COLOR : DIM_TEXT_COLOR);
+                         row.npc == NpcState::Hostile ? HOSTILE_COLOR
+                         : row.kind == RowKind::Ending && !row.done ? GOLD_COLOR : DIM_TEXT_COLOR);
                 textRight -= QFontMetrics(painter.font()).horizontalAdvance(row.value) + px(14);
             }
             drawText(painter, QRect(textLeft, line.top(), textRight - textLeft, line.height()),
