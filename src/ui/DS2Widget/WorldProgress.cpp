@@ -163,7 +163,7 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     const QRect titleBar(r.left() + int(46 * s), r.top() + int(24 * s), r.width() - int(92 * s), int(36 * s));
     painter.setFont(serifFont(std::max(15, int(titleBar.height() * 0.68))));
     drawOutlinedText(painter, titleBar.adjusted(int(14 * s), 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter,
-                     "World Progress", TEXT_COLOR);
+                     m_page == WorldPage::Bonfires ? "Bonfires" : "World Progress", TEXT_COLOR);
 
     const QRect content = r.adjusted(int(FRAME_LEFT * s) + 4, int(FRAME_TOP * s) + 6,
                                      -(int(FRAME_RIGHT * s) + 4), -(int(FRAME_BOTTOM * s) + 2));
