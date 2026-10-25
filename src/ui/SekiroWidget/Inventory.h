@@ -16,7 +16,7 @@ namespace fssm::ui::sekiro {
 // icons, a list of ink strokes with item icons and counts, the item detail
 // panel and the status bar (Vitality, Attack Power, sen). The Skills tab shows
 // the five Acquire Skills trees with the skills the character has learned, the
-// World tab the bosses defeated and NPC progress, the Idols tab the Sculptor's
+// Progress tab the bosses defeated and NPC progress, the Idols tab the Sculptor's
 // Idols found (WorldProgressWidget).
 class InventoryWidget: public QWidget {
     Q_OBJECT

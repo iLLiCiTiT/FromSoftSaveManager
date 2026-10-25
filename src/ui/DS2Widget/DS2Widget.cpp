@@ -102,9 +102,9 @@ DS2Widget::DS2Widget(Controller* controller, const QString& saveId, QWidget* par
     m_inventoryWidget = new fssm::ui::ds2::InventoryWidget(m_charTabs);
     m_worldWidget = new fssm::ui::ds2::WorldProgressWidget(fssm::ui::ds2::WorldPage::Progress, m_charTabs);
     m_bonfiresWidget = new fssm::ui::ds2::WorldProgressWidget(fssm::ui::ds2::WorldPage::Bonfires, m_charTabs);
-    m_charTabs->addTab("Player Status", HeaderTabs::Medallion::Status, m_statusWidget);
+    m_charTabs->addTab("Character", HeaderTabs::Medallion::Status, m_statusWidget);
     m_charTabs->addTab("Inventory", HeaderTabs::Medallion::Inventory, m_inventoryWidget);
-    m_charTabs->addTab("World Progress", HeaderTabs::Medallion::Scroll, m_worldWidget);
+    m_charTabs->addTab("Progress", HeaderTabs::Medallion::Scroll, m_worldWidget);
     // The game's bonfire is a coiled sword in the ashes.
     m_charTabs->addTab("Bonfires", HeaderTabs::Medallion::Equipment, m_bonfiresWidget);
 

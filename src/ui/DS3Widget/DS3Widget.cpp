@@ -132,9 +132,9 @@ DS3Widget::DS3Widget(Controller* controller, const QString& saveId, QWidget* par
     m_inventoryWidget = new fssm::ui::ds3::InventoryWidget(m_charTabs);
     m_worldWidget = new fssm::ui::ds3::WorldProgressWidget(fssm::ui::ds3::WorldPage::Progress, m_charTabs);
     m_bonfiresWidget = new fssm::ui::ds3::WorldProgressWidget(fssm::ui::ds3::WorldPage::Bonfires, m_charTabs);
-    m_charTabs->addTab("Character Info", "menu_status", m_charInfoWidget);
+    m_charTabs->addTab("Character", "menu_status", m_charInfoWidget);
     m_charTabs->addTab("Inventory", "menu_invetory", m_inventoryWidget);
-    m_charTabs->addTab("World Progress", worldProgressIcon(), m_worldWidget);
+    m_charTabs->addTab("Progress", worldProgressIcon(), m_worldWidget);
     m_charTabs->addTab("Bonfires", bonfireIcon(), m_bonfiresWidget);
 
     QHBoxLayout* layout = new QHBoxLayout(this);

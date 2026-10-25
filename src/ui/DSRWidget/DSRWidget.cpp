@@ -110,7 +110,7 @@ DSRWidget::DSRWidget(Controller* controller, const QString& saveId, QWidget* par
     // m_charEquipWidget = new QWidget(m_charTabs);
 
     m_charTabs->addTab(
-        "Character Info",
+        "Character",
         m_charInfoWidget
     );
     m_charTabs->addTab(
@@ -122,7 +122,7 @@ DSRWidget::DSRWidget(Controller* controller, const QString& saveId, QWidget* par
         m_covenantsWidget
     );
     m_charTabs->addTab(
-        "World Progress",
+        "Progress",
         m_worldWidget
     );
     m_charTabs->addTab(

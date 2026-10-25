@@ -121,9 +121,9 @@ ERWidget::ERWidget(Controller* controller, const QString& saveId, QWidget* paren
     m_inventoryWidget = new fssm::ui::er::InventoryWidget(m_charTabs);
     m_worldWidget = new fssm::ui::er::WorldProgressWidget(fssm::ui::er::WorldPage::Progress, m_charTabs);
     m_gracesWidget = new fssm::ui::er::WorldProgressWidget(fssm::ui::er::WorldPage::Graces, m_charTabs);
-    m_charTabs->addTab("Character Info", "attrs_icon", m_charInfoWidget);
+    m_charTabs->addTab("Character", "attrs_icon", m_charInfoWidget);
     m_charTabs->addTab("Inventory", "inventory_icon", m_inventoryWidget);
-    m_charTabs->addTab("World Progress", worldProgressIcon(), m_worldWidget);
+    m_charTabs->addTab("Progress", worldProgressIcon(), m_worldWidget);
     m_charTabs->addTab("Sites of Grace", graceIcon(), m_gracesWidget);
 
     QHBoxLayout* mainLayout = new QHBoxLayout(this);

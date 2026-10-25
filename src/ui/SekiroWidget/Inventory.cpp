@@ -47,7 +47,7 @@ namespace {
             {"Temple Arts", ":/sekiro_images/tree_temple", {}, true},
             {"Mushin Arts", ":/sekiro_images/tree_mushin", {}, true},
         }},
-        {"World", {}},
+        {"Progress", {}},
         {"Idols", {}},
     }};
     constexpr int SKILLS_PAGE = 1;
