@@ -348,7 +348,8 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     const bool twoColumns = body.width() >= px(520);
 
     if (m_page == WorldPage::Bonfires) {
-        // The heading across the page, the areas below it in two balanced columns when it fits.
+        // The heading across the page stays put; the areas scroll below it, in two balanced
+        // columns when it fits.
         m_npcScroll.clear();
         std::vector<Row> rows = bonfireRows(c);
         const std::vector<Row> heading(rows.begin(), rows.begin() + 1);
@@ -371,21 +372,18 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
         }
         const std::vector<Row> left(rows.begin(), rows.begin() + split);
         const std::vector<Row> right(rows.begin() + split, rows.end());
-        const int headH = rowHeight(heading.front(), true);
-        const int contentH = headH + std::max(columnHeight(left), columnHeight(right));
-        m_scroll.setGeometry(body, barTrack(body), contentH);
+        const QRect list = body.adjusted(0, rowHeight(heading.front(), true), 0, 0);
+        m_scroll.setGeometry(list, barTrack(list), std::max(columnHeight(left), columnHeight(right)));
         m_scroll.setStep(3 * lineH);
-        const int top = body.top() - m_scroll.value();
-        drawColumn(heading, QRect(body.left(), 0, contentW, 0), top, body);
-        drawColumn(left, QRect(body.left(), 0, columnWidth, 0), top + headH, body);
-        if (!right.empty()) drawColumn(right, QRect(body.left() + columnWidth + gap, 0, columnWidth, 0), top + headH, body);
+        const int top = list.top() - m_scroll.value();
+        drawColumn(heading, QRect(body.left(), 0, contentW, 0), body.top(), body);
+        drawColumn(left, QRect(body.left(), 0, columnWidth, 0), top, list);
+        if (!right.empty()) drawColumn(right, QRect(body.left() + columnWidth + gap, 0, columnWidth, 0), top, list);
         m_scroll.paint(painter, trackColor, thumbColor);
         return;
     }
 
     // Bosses and NPCs side by side, or stacked when narrow; each column has its own scroll bar.
-    const std::vector<Row> bosses = bossRows(c);
-    const std::vector<Row> npcs = npcRows(c);
     QRect bossArea;
     QRect npcArea;
     if (twoColumns) {
@@ -397,14 +395,19 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
         bossArea = QRect(body.left(), body.top(), body.width(), h);
         npcArea = QRect(body.left(), body.bottom() - h + 1, body.width(), h);
     }
-    m_scroll.setGeometry(bossArea, barTrack(bossArea), columnHeight(bosses));
-    m_npcScroll.setGeometry(npcArea, barTrack(npcArea), columnHeight(npcs));
-    m_scroll.setStep(3 * lineH);
-    m_npcScroll.setStep(3 * lineH);
-    drawColumn(bosses, bossArea.adjusted(0, 0, -scrollBarW, 0), bossArea.top() - m_scroll.value(), bossArea);
-    drawColumn(npcs, npcArea.adjusted(0, 0, -scrollBarW, 0), npcArea.top() - m_npcScroll.value(), npcArea);
-    m_scroll.paint(painter, trackColor, thumbColor);
-    m_npcScroll.paint(painter, trackColor, thumbColor);
+    // Each column's heading stays put; its rows scroll below it.
+    const auto drawProgressColumn = [&](const std::vector<Row>& rows, const QRect& area, PaintedScroll& scroll) {
+        const std::vector<Row> heading(rows.begin(), rows.begin() + 1);
+        const std::vector<Row> entries(rows.begin() + 1, rows.end());
+        const QRect list = area.adjusted(0, rowHeight(heading.front(), true) + px(4), 0, 0);
+        scroll.setGeometry(list, barTrack(list), columnHeight(entries));
+        scroll.setStep(3 * lineH);
+        drawColumn(heading, area.adjusted(0, 0, -scrollBarW, 0), area.top(), area);
+        drawColumn(entries, list.adjusted(0, 0, -scrollBarW, 0), list.top() - scroll.value(), list);
+        scroll.paint(painter, trackColor, thumbColor);
+    };
+    drawProgressColumn(bossRows(c), bossArea, m_scroll);
+    drawProgressColumn(npcRows(c), npcArea, m_npcScroll);
 }
 
 void WorldProgressWidget::wheelEvent(QWheelEvent* event) {
