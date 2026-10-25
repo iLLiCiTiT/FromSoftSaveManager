@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QPixmap>
-#include <QTimer>
 #include <QWidget>
 #include <vector>
 
@@ -34,10 +33,8 @@ private:
     // Width of a tab with its title, or of its icon alone.
     int tabWidth(int index, bool iconOnly) const;
     // The titles don't fit: the tabs other than the current one show only their icon,
-    // like the game's own menu headers, and slide open to show the title while hovered.
+    // like the game's own menu headers; a hovered icon shows its title floating beside it.
     bool compact() const;
-    // Moves each tab's m_expand a step towards open (current or hovered) or closed.
-    void stepAnimation();
     QRect tabRect(int index) const;
     int tabAt(const QPoint& pos) const;
 
@@ -45,8 +42,5 @@ private:
     std::vector<Tab> m_tabs;
     int m_current = -1;
     int m_hover = -1;
-    // Per tab, how far it is open in compact mode: 0 the icon alone, 1 the full title.
-    std::vector<double> m_expand;
-    QTimer m_animation;
 };
 }
