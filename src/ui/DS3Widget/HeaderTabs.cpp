@@ -97,7 +97,8 @@ void HeaderTabs::paintEvent(QPaintEvent* event) {
         if (current) drawGoldRule(painter, r.left(), r.right() + 8, r.bottom() + 2, 220);
     }
 
-    // The hovered icon's title floats beside it, over the tabs after it, so nothing moves.
+    // The hovered icon's title floats beside it, over the tabs after it (still visible
+    // through its translucent backdrop), so nothing moves.
     if (m_hover >= 0 && m_hover != m_current && compact()) {
         const QRect r = tabRect(m_hover);
         const QFontMetrics fm(painter.font());
@@ -105,7 +106,7 @@ void HeaderTabs::paintEvent(QPaintEvent* event) {
         QRect label(r.right() + 5, r.top() + (BAR_HEIGHT - h) / 2, fm.horizontalAdvance(m_tabs[m_hover].title) + 20, h);
         if (label.right() > width() - 1) label.moveRight(width() - 1);
         painter.setPen(QPen(QColor(GOLD_COLOR.red(), GOLD_COLOR.green(), GOLD_COLOR.blue(), 150), 1));
-        painter.setBrush(QColor(20, 18, 16, 235));
+        painter.setBrush(QColor(20, 18, 16, 140));
         painter.drawRect(label.adjusted(0, 0, -1, -1));
         drawShadowText(painter, label, Qt::AlignCenter, m_tabs[m_hover].title, TEXT_COLOR);
     }
