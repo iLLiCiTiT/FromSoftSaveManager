@@ -209,7 +209,8 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     const auto px = [s](double v) { return int(std::round(v * s)); };
 
     const QRect panel = rect();
-    drawStonePanel(painter, panel);
+    // Same translucent panel as the Character Info tab.
+    drawMenuPanel(painter, panel, ":/ds3_images/panel_status");
     const QRect inner = panel.adjusted(px(18), px(8), -px(18), -px(12));
     if (!m_character.has_value()) {
         m_scroll.clear();
@@ -219,16 +220,7 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
         return;
     }
     const auto& c = *m_character;
-
-    // Title row like the Player Status panel.
-    const QRect title(inner.left(), inner.top(), inner.width(), px(32));
-    painter.setFont(serifFont(px(21)));
-    drawShadowText(painter, title.adjusted(px(4), 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter, "World Progress");
-    drawShadowText(painter, title.adjusted(0, 0, -px(4), 0), Qt::AlignRight | Qt::AlignVCenter,
-                   QString::fromStdU16String(c.name));
-    drawGoldRule(painter, title.left(), title.right(), title.bottom() + 2, 220);
-
-    const QRect body(inner.left(), title.bottom() + px(10), inner.width(), inner.bottom() - title.bottom() - px(10));
+    const QRect body = inner.adjusted(0, px(6), 0, 0);
     const int headingH = px(32);
     const int areaH = px(28);
     const int areaGap = px(8);

@@ -11,8 +11,8 @@
 namespace fssm::ui::sekiro {
 // What a WorldProgressWidget shows.
 enum class WorldPage {
-    // Bosses defeated (grouped by the travel menu's areas) and prosthetic tools found on
-    // the board, NPC progress (state, questline stage and steps) in the detail panel.
+    // Bosses defeated (grouped by the travel menu's areas) with the prosthetic tools found,
+    // and NPC progress (state, questline stage and steps), in two detail panels.
     Progress,
     Idols,      // Sculptor's Idols found, grouped by the travel menu's areas
 };
@@ -41,7 +41,7 @@ private:
     std::vector<std::string_view> m_npcStages;
     std::vector<bool> m_npcDragonrot;
     std::vector<bool> m_npcStepsDone;
-    // The board and the detail panel scroll separately (the idols page uses the first);
+    // The two panels scroll separately (the idols page uses the first);
     // geometry from the last paint. The lists are not clickable, so dragging them scrolls.
     std::array<fssm::ui::PaintedScroll, 2> m_scrolls {fssm::ui::PaintedScroll(this), fssm::ui::PaintedScroll(this)};
     PixmapCache m_cache;

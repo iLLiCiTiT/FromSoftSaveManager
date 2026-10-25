@@ -359,8 +359,8 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
         return;
     }
 
-    // Left: bosses and prosthetic tools on the board like the item list. Right: NPCs in
-    // the detail panel.
+    // Bosses (with the prosthetic tools) and NPCs, each in a detail panel like the
+    // inventory's item details.
     int bossCount = 0;
     std::vector<Row> bosses = groupedRows(BOSSES, m_bossesDefeated, RowKind::Boss, bossCount);
     const std::vector<Row> tools = toolRows(m_toolsFound);
@@ -368,21 +368,25 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     int npcsMet = 0;
     const std::vector<Row> npcs = npcRows(m_npcStates, m_npcStages, m_npcDragonrot, m_npcStepsDone, npcsMet);
 
-    const QRect bossHeader(r.left() + px(14), r.top(), leftW - px(28), headerH);
-    drawBoardHeader(bossHeader, QString("Bosses  (%1)").arg(count(bossCount, int(BOSSES.size()))));
-    const QRect panel(r.left() + leftW + px(4), r.top() - px(4), r.width() - leftW - px(4), r.height() + px(4));
-    painter.drawPixmap(panel.topLeft(), m_cache.get(":/sekiro_images/detail_panel", panel.size()));
-    const QRect panelInner = panel.adjusted(px(14), px(12), -px(14), -px(14));
-    const QRect npcTitle(panelInner.left(), panelInner.top(), panelInner.width(), px(32));
-    painter.drawPixmap(npcTitle.topLeft(), m_cache.get(":/sekiro_images/title_bar", npcTitle.size()));
-    painter.setFont(serifFont(px(18)));
-    drawShadowText(painter, npcTitle.adjusted(px(24), 0, -px(24), 0), Qt::AlignCenter,
-                   QString("NPCs  (%1)").arg(count(npcsMet, int(NPCS.size()))));
-
-    drawRows({bosses}, 0, QRect(r.left(), bossHeader.bottom() + 1 + px(8), leftW - px(16),
-                                std::max(0, r.bottom() - bossHeader.bottom() - px(10))), true);
-    drawRows({npcs}, 1, QRect(panelInner.left(), npcTitle.bottom() + 1 + px(6), panelInner.width(),
-                              std::max(0, panelInner.bottom() - npcTitle.bottom() - px(6))), false);
+    // Draws the panel with its title bar and returns the area for its list.
+    const auto drawPanel = [&](const QRect& panel, const QString& title) {
+        painter.drawPixmap(panel.topLeft(), m_cache.get(":/sekiro_images/detail_panel", panel.size()));
+        const QRect inner = panel.adjusted(px(14), px(12), -px(14), -px(14));
+        const QRect titleRect(inner.left(), inner.top(), inner.width(), px(32));
+        painter.drawPixmap(titleRect.topLeft(), m_cache.get(":/sekiro_images/title_bar", titleRect.size()));
+        painter.setFont(serifFont(px(18)));
+        drawShadowText(painter, titleRect.adjusted(px(24), 0, -px(24), 0), Qt::AlignCenter, title);
+        return QRect(inner.left(), titleRect.bottom() + 1 + px(6), inner.width(),
+                     std::max(0, inner.bottom() - titleRect.bottom() - px(6)));
+    };
+    const int panelGap = px(8);
+    const int panelW = (r.width() - px(4) - panelGap) / 2;
+    const QRect bossPanel(r.left() + px(4), r.top() - px(4), panelW, r.height() + px(4));
+    const QRect npcPanel(r.right() - panelW + 1, r.top() - px(4), panelW, r.height() + px(4));
+    const QRect bossList = drawPanel(bossPanel, QString("Bosses  (%1)").arg(count(bossCount, int(BOSSES.size()))));
+    const QRect npcList = drawPanel(npcPanel, QString("NPCs  (%1)").arg(count(npcsMet, int(NPCS.size()))));
+    drawRows({bosses}, 0, bossList, false);
+    drawRows({npcs}, 1, npcList, false);
 }
 
 void WorldProgressWidget::wheelEvent(QWheelEvent* event) {

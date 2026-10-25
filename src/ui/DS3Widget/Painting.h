@@ -5,12 +5,10 @@
 #include <QFont>
 #include <QHash>
 #include <QFontMetrics>
-#include <QImage>
 #include <QLinearGradient>
 #include <QPainter>
 #include <QPainterPath>
 #include <QPixmap>
-#include <QRandomGenerator>
 #include <algorithm>
 #include <cmath>
 
@@ -18,7 +16,6 @@ namespace fssm::ui::ds3 {
     inline const QColor TEXT_COLOR(226, 222, 212);
     inline const QColor DIM_TEXT_COLOR(150, 144, 132);
     inline const QColor GOLD_COLOR(176, 146, 82);
-    inline const QColor PANEL_COLOR(34, 32, 32);
 
     // The game's menus use a serif face; Georgia is the closest common one on Windows.
     inline QFont serifFont(int pixelSize) {
@@ -59,47 +56,6 @@ namespace fssm::ui::ds3 {
         painter.drawLine(x1, y, x2, y);
         painter.setPen(QPen(QColor(0, 0, 0, alpha / 2), 1));
         painter.drawLine(x1, y + 1, x2, y + 1);
-        painter.restore();
-    }
-
-    // Tileable grain used to give flat fills the look of the game's stone/parchment textures.
-    inline const QPixmap& grainTexture() {
-        static const QPixmap texture = [] {
-            QImage image(128, 128, QImage::Format_ARGB32_Premultiplied);
-            QRandomGenerator rng(0x0d53);
-            for (int y = 0; y < image.height(); ++y) {
-                auto* line = reinterpret_cast<QRgb*>(image.scanLine(y));
-                for (int x = 0; x < image.width(); ++x) {
-                    const int alpha = int(rng.bounded(26));
-                    const int v = rng.bounded(2) ? 255 : 0;
-                    line[x] = qPremultiply(qRgba(v, v, v, alpha));
-                }
-            }
-            return QPixmap::fromImage(image);
-        }();
-        return texture;
-    }
-
-    // Dark stone panel with grain, a darker vignette and a thin worn edge.
-    inline void drawStonePanel(QPainter& painter, const QRect& rect, const QColor& base = PANEL_COLOR) {
-        painter.save();
-        painter.setPen(Qt::NoPen);
-        painter.setBrush(base);
-        painter.drawRect(rect);
-        painter.setOpacity(0.8);
-        painter.drawTiledPixmap(rect, grainTexture());
-        painter.setOpacity(1.0);
-        QLinearGradient vignette(rect.topLeft(), rect.bottomLeft());
-        vignette.setColorAt(0.0, QColor(255, 255, 255, 10));
-        vignette.setColorAt(0.5, QColor(0, 0, 0, 0));
-        vignette.setColorAt(1.0, QColor(0, 0, 0, 60));
-        painter.setBrush(vignette);
-        painter.drawRect(rect);
-        painter.setBrush(Qt::NoBrush);
-        painter.setPen(QPen(QColor(0, 0, 0, 170), 2));
-        painter.drawRect(rect.adjusted(1, 1, -1, -1));
-        painter.setPen(QPen(QColor(120, 110, 96, 70), 1));
-        painter.drawRect(rect.adjusted(3, 3, -4, -4));
         painter.restore();
     }
 

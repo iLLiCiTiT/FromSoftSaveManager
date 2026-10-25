@@ -5,6 +5,8 @@
 #include <QPainter>
 #include <QStackedWidget>
 #include <QVBoxLayout>
+#include <algorithm>
+#include <cmath>
 #include <array>
 
 #include "Painting.h"
@@ -30,6 +32,8 @@ namespace {
 HeaderTabs::HeaderTabs(QWidget* parent): QWidget(parent) {
     setAttribute(Qt::WA_TranslucentBackground, true);
     setMouseTracking(true);
+    m_animation.setInterval(16);
+    connect(&m_animation, &QTimer::timeout, this, &HeaderTabs::stepAnimation);
     m_medallions = QPixmap(":/ds2_images/ui_menu_tabs");
     m_selectedBand = QPixmap(":/ds2_images/ui_row_selected");
     m_stack = new QStackedWidget(this);
@@ -46,6 +50,7 @@ void HeaderTabs::addTab(const QString& title, Medallion icon, QWidget* page) {
             .scaled(ICON_SIZE, ICON_SIZE, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     }
     m_tabs.push_back({title, pix});
+    m_expand.push_back(m_tabs.size() == 1 ? 1.0 : 0.0);
     m_stack->addWidget(page);
     if (m_current < 0) setCurrentIndex(0);
     update();
@@ -55,6 +60,20 @@ void HeaderTabs::setCurrentIndex(int index) {
     if (index < 0 || index >= int(m_tabs.size()) || index == m_current) return;
     m_current = index;
     m_stack->setCurrentIndex(index);
+    m_animation.start();
+    update();
+}
+
+void HeaderTabs::stepAnimation() {
+    // About 160 ms from the icon alone to the full title.
+    constexpr double STEP = 16.0 / 160.0;
+    bool done = true;
+    for (int i = 0; i < int(m_expand.size()); ++i) {
+        const double target = i == m_current || i == m_hover ? 1.0 : 0.0;
+        m_expand[i] = target > m_expand[i] ? std::min(target, m_expand[i] + STEP) : std::max(target, m_expand[i] - STEP);
+        done = done && m_expand[i] == target;
+    }
+    if (done) m_animation.stop();
     update();
 }
 
@@ -74,7 +93,11 @@ QRect HeaderTabs::tabRect(int index) const {
     const bool iconsOnly = compact();
     int x = 2;
     for (int i = 0; i < int(m_tabs.size()); ++i) {
-        const int w = tabWidth(i, iconsOnly && i != m_current);
+        int w = tabWidth(i, false);
+        if (iconsOnly) {
+            const int icon = tabWidth(i, true);
+            w = icon + int(std::round(m_expand[i] * (w - icon)));
+        }
         if (i == index) return {x, 0, w, HEADER_HEIGHT};
         x += w + TAB_SPACING;
     }
@@ -99,8 +122,7 @@ void HeaderTabs::paintEvent(QPaintEvent* event) {
         const bool current = i == m_current;
         const bool hovered = i == m_hover;
         const QRect iconRect(r.left(), r.top() + (r.height() - ICON_SIZE) / 2, ICON_SIZE, ICON_SIZE);
-        const QRect textRect = r.adjusted(ICON_SIZE + TEXT_GAP, 0, 0, 0);
-
+    
         // The amber band runs from under the medallion to the end of the title,
         // like the selected row in the game's lists.
         if ((current || hovered) && !m_selectedBand.isNull()) {
@@ -114,9 +136,14 @@ void HeaderTabs::paintEvent(QPaintEvent* event) {
         painter.drawPixmap(iconRect, m_tabs[i].icon);
         painter.setOpacity(1.0);
         if (r.width() > ICON_SIZE) {
-            drawOutlinedText(painter, textRect.adjusted(TEXT_PADDING, 0, -TEXT_PADDING, 0),
-                             Qt::AlignLeft | Qt::AlignVCenter, m_tabs[i].title,
+            // Laid out at full width and clipped, so a tab sliding open reveals its title.
+            painter.save();
+            painter.setClipRect(r, Qt::IntersectClip);
+            const QRect fullText = QRect(r.left(), r.top(), tabWidth(i, false), r.height())
+                .adjusted(ICON_SIZE + TEXT_GAP + TEXT_PADDING, 0, -TEXT_PADDING, 0);
+            drawOutlinedText(painter, fullText, Qt::AlignLeft | Qt::AlignVCenter, m_tabs[i].title,
                              current ? TEXT_COLOR : DIM_TEXT_COLOR);
+            painter.restore();
         }
     }
 }
@@ -126,7 +153,7 @@ void HeaderTabs::mouseMoveEvent(QMouseEvent* event) {
     if (hover != m_hover) {
         m_hover = hover;
         setCursor(hover >= 0 && hover != m_current ? Qt::PointingHandCursor : Qt::ArrowCursor);
-        setToolTip(hover >= 0 && hover != m_current && compact() ? m_tabs[hover].title : QString());
+        m_animation.start();
         update();
     }
     QWidget::mouseMoveEvent(event);
@@ -143,6 +170,7 @@ void HeaderTabs::mousePressEvent(QMouseEvent* event) {
 
 void HeaderTabs::leaveEvent(QEvent* event) {
     m_hover = -1;
+    m_animation.start();
     update();
     QWidget::leaveEvent(event);
 }
