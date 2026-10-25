@@ -34,6 +34,7 @@ HeaderTabs::HeaderTabs(QWidget* parent): QWidget(parent) {
     m_selectedBand = QPixmap(":/ds2_images/ui_row_selected");
     m_stack = new QStackedWidget(this);
     m_stack->setAttribute(Qt::WA_TranslucentBackground, true);
+    m_stack->installEventFilter(this);
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, HEADER_HEIGHT, 0, 0);
     layout->addWidget(m_stack);
@@ -157,5 +158,14 @@ void HeaderTabs::leaveEvent(QEvent* event) {
     m_hover = -1;
     update();
     QWidget::leaveEvent(event);
+}
+
+bool HeaderTabs::eventFilter(QObject* watched, QEvent* event) {
+    if (watched == m_stack && event->type() == QEvent::Enter && m_hover >= 0) {
+        m_hover = -1;
+        unsetCursor();
+        update();
+    }
+    return QWidget::eventFilter(watched, event);
 }
 }

@@ -29,6 +29,9 @@ protected:
     void mouseMoveEvent(QMouseEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
     void leaveEvent(QEvent* event) override;
+    // Clears the hover when the mouse moves on into the pages: going from this widget
+    // into a child sends it no leave event.
+    bool eventFilter(QObject* watched, QEvent* event) override;
 
 private:
     struct Tab {
