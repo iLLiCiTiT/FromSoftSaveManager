@@ -12,7 +12,7 @@ namespace fssm::ui::ds3 {
 namespace {
     constexpr int BAR_HEIGHT = 32;
     constexpr int ICON_SIZE = 22;
-    constexpr int TAB_SPACING = 20;
+    constexpr int TAB_SPACING = 14;
     constexpr int FONT_SIZE = 16;
 }
 
