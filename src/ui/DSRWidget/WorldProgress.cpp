@@ -6,6 +6,8 @@
 #include <QPainterPath>
 #include <QWheelEvent>
 #include <algorithm>
+#include <climits>
+#include <cstdlib>
 #include <vector>
 
 #include "../../parse/DSR/WorldProgress.h"
@@ -189,14 +191,18 @@ namespace {
     }
 }
 
-WorldProgressWidget::WorldProgressWidget(QWidget* parent): QWidget(parent) {
+WorldProgressWidget::WorldProgressWidget(WorldPage page, QWidget* parent): QWidget(parent), m_page(page) {
     setAttribute(Qt::WA_TranslucentBackground, true);
     m_scroll.setContentDrag(true);
+    m_npcScroll.setContentDrag(true);
 }
 
 void WorldProgressWidget::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo) {
     const bool sameCharacter = charInfo != nullptr && m_character.has_value() && m_character->index == charInfo->index;
-    if (!sameCharacter) m_scroll.reset();
+    if (!sameCharacter) {
+        m_scroll.reset();
+        m_npcScroll.reset();
+    }
     if (charInfo != nullptr) {
         m_character = *charInfo;
     } else {
@@ -213,6 +219,7 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     const QRect body = rect().adjusted(4, 4, -4, -4);
     if (!m_character.has_value()) {
         m_scroll.clear();
+        m_npcScroll.clear();
         painter.setPen(DIM_TEXT_COLOR);
         painter.drawText(body, Qt::AlignCenter, "No character selected");
         return;
@@ -250,36 +257,23 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
         return h;
     };
 
-    const std::vector<Row> bonfires = bonfireRows(c);
-    std::vector<Row> bosses = bossRows(c);
-    const std::vector<Row> npcs = npcRows(c);
-    bosses.insert(bosses.end(), npcs.begin(), npcs.end());
-    const int gap = 24;
-    const bool twoColumns = body.width() >= 480;
-    const int columnWidth = twoColumns ? (body.width() - scrollBarW - gap) / 2 : body.width() - scrollBarW;
-    std::vector<Row> single;
-    if (!twoColumns) {
-        single = bonfires;
-        single.insert(single.end(), bosses.begin(), bosses.end());
-    }
-    const int contentH = twoColumns ? std::max(columnHeight(bonfires), columnHeight(bosses)) : columnHeight(single);
-    m_scroll.setGeometry(body, QRect(body.right() - 3, body.top(), 3, body.height()), contentH);
-    m_scroll.setStep(3 * lineH);
-
-    painter.save();
-    painter.setClipRect(body.adjusted(0, 0, 0, 1), Qt::IntersectClip);
     const auto drawRule = [&](int left, int right, int y) {
         painter.setPen(QPen(RULE_COLOR, 1));
         painter.drawLine(left, y, right, y);
     };
-    const auto drawColumn = [&](const std::vector<Row>& rows, int x) {
-        int y = body.top() - m_scroll.value();
+    // Draws rows into area, the first row at top (already scrolled), clipped to clip.
+    const auto drawColumn = [&](const std::vector<Row>& rows, const QRect& area, int top, const QRect& clip) {
+        painter.save();
+        painter.setClipRect(clip.adjusted(0, 0, 0, 1), Qt::IntersectClip);
+        const int x = area.left();
+        const int columnWidth = area.width();
+        int y = top;
         for (size_t i = 0; i < rows.size(); ++i) {
             const Row& row = rows[i];
             const int h = rowHeight(row, i == 0);
             const QRect full(x, y, columnWidth, h);
             y += h;
-            if (full.bottom() < body.top() || full.top() > body.bottom()) continue;
+            if (full.bottom() < clip.top() || full.top() > clip.bottom()) continue;
             switch (row.kind) {
                 case RowKind::Heading: {
                     const QRect line(x, full.bottom() - headingH + 1, columnWidth, headingH);
@@ -350,38 +344,100 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
                 }
             }
         }
+        painter.restore();
     };
-    if (twoColumns) {
-        drawColumn(bonfires, body.left());
-        drawColumn(bosses, body.left() + columnWidth + gap);
-    } else {
-        drawColumn(single, body.left());
-    }
-    painter.restore();
+    const auto barTrack = [](const QRect& column) {
+        return QRect(column.right() - 2, column.top(), 3, column.height());
+    };
+    const QColor trackColor(0, 0, 0, 120);
+    const int gap = 24;
+    const bool twoColumns = body.width() >= 480;
 
-    // Thin scroll bar along the right edge.
-    m_scroll.paint(painter, QColor(0, 0, 0, 120), AREA_COLOR);
+    if (m_page == WorldPage::Bonfires) {
+        // The heading across the page, the areas below it in two balanced columns when it fits.
+        m_npcScroll.clear();
+        std::vector<Row> rows = bonfireRows(c);
+        const std::vector<Row> heading(rows.begin(), rows.begin() + 1);
+        rows.erase(rows.begin());
+        const int contentW = body.width() - scrollBarW;
+        const int columnWidth = twoColumns ? (contentW - gap) / 2 : contentW;
+        size_t split = rows.size();
+        if (twoColumns) {
+            // The area start closest to the middle of the list.
+            const int half = columnHeight(rows) / 2;
+            int y = 0;
+            int best = INT_MAX;
+            for (size_t i = 0; i < rows.size(); ++i) {
+                if (rows[i].kind == RowKind::Area && i > 0 && std::abs(y - half) < best) {
+                    best = std::abs(y - half);
+                    split = i;
+                }
+                y += rowHeight(rows[i], false);
+            }
+        }
+        const std::vector<Row> left(rows.begin(), rows.begin() + split);
+        const std::vector<Row> right(rows.begin() + split, rows.end());
+        const int headH = rowHeight(heading.front(), true);
+        const int contentH = headH + std::max(columnHeight(left), columnHeight(right));
+        m_scroll.setGeometry(body, barTrack(body), contentH);
+        m_scroll.setStep(3 * lineH);
+        const int top = body.top() - m_scroll.value();
+        drawColumn(heading, QRect(body.left(), 0, contentW, 0), top, body);
+        drawColumn(left, QRect(body.left(), 0, columnWidth, 0), top + headH, body);
+        if (!right.empty()) drawColumn(right, QRect(body.left() + columnWidth + gap, 0, columnWidth, 0), top + headH, body);
+        m_scroll.paint(painter, trackColor, AREA_COLOR);
+        return;
+    }
+
+    // Bosses and NPCs side by side, or stacked when narrow; each column has its own scroll bar.
+    const std::vector<Row> bosses = bossRows(c);
+    const std::vector<Row> npcs = npcRows(c);
+    QRect bossArea;
+    QRect npcArea;
+    if (twoColumns) {
+        const int w = (body.width() - gap) / 2;
+        bossArea = QRect(body.left(), body.top(), w, body.height());
+        npcArea = QRect(body.right() - w + 1, body.top(), w, body.height());
+    } else {
+        const int h = (body.height() - gap) / 2;
+        bossArea = QRect(body.left(), body.top(), body.width(), h);
+        npcArea = QRect(body.left(), body.bottom() - h + 1, body.width(), h);
+    }
+    m_scroll.setGeometry(bossArea, barTrack(bossArea), columnHeight(bosses));
+    m_npcScroll.setGeometry(npcArea, barTrack(npcArea), columnHeight(npcs));
+    m_scroll.setStep(3 * lineH);
+    m_npcScroll.setStep(3 * lineH);
+    drawColumn(bosses, bossArea.adjusted(0, 0, -scrollBarW, 0), bossArea.top() - m_scroll.value(), bossArea);
+    drawColumn(npcs, npcArea.adjusted(0, 0, -scrollBarW, 0), npcArea.top() - m_npcScroll.value(), npcArea);
+    m_scroll.paint(painter, trackColor, AREA_COLOR);
+    m_npcScroll.paint(painter, trackColor, AREA_COLOR);
 }
 
 void WorldProgressWidget::wheelEvent(QWheelEvent* event) {
     if (!m_character.has_value()) return;
-    m_scroll.wheel(event, true);
+    // The bonfires page scrolls from anywhere, the progress columns under the pointer.
+    if (m_page == WorldPage::Bonfires) {
+        m_scroll.wheel(event, true);
+    } else if (!m_scroll.wheel(event)) {
+        m_npcScroll.wheel(event);
+    }
 }
 
 void WorldProgressWidget::mousePressEvent(QMouseEvent* event) {
-    if (!m_scroll.mousePress(event)) QWidget::mousePressEvent(event);
+    if (!m_scroll.mousePress(event) && !m_npcScroll.mousePress(event)) QWidget::mousePressEvent(event);
 }
 
 void WorldProgressWidget::mouseMoveEvent(QMouseEvent* event) {
-    if (!m_scroll.mouseMove(event)) QWidget::mouseMoveEvent(event);
+    if (!m_scroll.mouseMove(event) && !m_npcScroll.mouseMove(event)) QWidget::mouseMoveEvent(event);
 }
 
 void WorldProgressWidget::mouseReleaseEvent(QMouseEvent* event) {
-    if (!m_scroll.mouseRelease(event)) QWidget::mouseReleaseEvent(event);
+    if (!m_scroll.mouseRelease(event) && !m_npcScroll.mouseRelease(event)) QWidget::mouseReleaseEvent(event);
 }
 
 void WorldProgressWidget::leaveEvent(QEvent* event) {
     m_scroll.leave();
+    m_npcScroll.leave();
     QWidget::leaveEvent(event);
 }
 }

@@ -43,4 +43,5 @@ private:
     fssm::ui::er::CharacterInfoWidget* m_charInfoWidget = nullptr;
     fssm::ui::er::InventoryWidget* m_inventoryWidget = nullptr;
     fssm::ui::er::WorldProgressWidget* m_worldWidget = nullptr;
+    fssm::ui::er::WorldProgressWidget* m_gracesWidget = nullptr;
 };

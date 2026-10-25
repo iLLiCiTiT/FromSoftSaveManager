@@ -46,4 +46,5 @@ private:
     fssm::ui::dsr::CharacterInfoWidget* m_charInfoWidget;
     fssm::ui::dsr::InventoryWidget* m_inventoryWidget;
     fssm::ui::dsr::WorldProgressWidget* m_worldWidget;
+    fssm::ui::dsr::WorldProgressWidget* m_bonfiresWidget;
 };

@@ -48,11 +48,22 @@ void HeaderTabs::setCurrentIndex(int index) {
     update();
 }
 
+int HeaderTabs::tabWidth(int index, bool iconOnly) const {
+    if (iconOnly) return ICON_SIZE;
+    return ICON_SIZE + 7 + QFontMetrics(serifFont(FONT_SIZE)).horizontalAdvance(m_tabs[index].title) + 6;
+}
+
+bool HeaderTabs::compact() const {
+    int x = 4;
+    for (int i = 0; i < int(m_tabs.size()); ++i) x += tabWidth(i, false) + TAB_SPACING;
+    return x - TAB_SPACING > width();
+}
+
 QRect HeaderTabs::tabRect(int index) const {
-    const QFontMetrics fm(serifFont(FONT_SIZE));
+    const bool iconsOnly = compact();
     int x = 4;
     for (int i = 0; i < int(m_tabs.size()); ++i) {
-        const int w = ICON_SIZE + 7 + fm.horizontalAdvance(m_tabs[i].title) + 6;
+        const int w = tabWidth(i, iconsOnly && i != m_current);
         if (i == index) return {x, 0, w, BAR_HEIGHT};
         x += w + TAB_SPACING;
     }
@@ -77,8 +88,10 @@ void HeaderTabs::paintEvent(QPaintEvent* event) {
         const bool current = i == m_current;
         painter.setOpacity(current ? 1.0 : (i == m_hover ? 0.8 : 0.5));
         painter.drawPixmap(r.left(), r.top() + (BAR_HEIGHT - m_tabs[i].icon.height()) / 2, m_tabs[i].icon);
-        drawShadowText(painter, r.adjusted(ICON_SIZE + 7, 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter,
-                       m_tabs[i].title, current ? TEXT_COLOR : DIM_TEXT_COLOR);
+        if (r.width() > ICON_SIZE) {
+            drawShadowText(painter, r.adjusted(ICON_SIZE + 7, 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter,
+                           m_tabs[i].title, current ? TEXT_COLOR : DIM_TEXT_COLOR);
+        }
         painter.setOpacity(1.0);
         if (current) drawGoldRule(painter, r.left(), r.right() + 8, r.bottom() + 2, 220);
     }
@@ -89,6 +102,7 @@ void HeaderTabs::mouseMoveEvent(QMouseEvent* event) {
     if (hover != m_hover) {
         m_hover = hover;
         setCursor(hover >= 0 && hover != m_current ? Qt::PointingHandCursor : Qt::ArrowCursor);
+        setToolTip(hover >= 0 && hover != m_current && compact() ? m_tabs[hover].title : QString());
         update();
     }
     QWidget::mouseMoveEvent(event);

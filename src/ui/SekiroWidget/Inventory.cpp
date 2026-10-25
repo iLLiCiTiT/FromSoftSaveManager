@@ -31,8 +31,8 @@ namespace {
 
     // The game's inventory tabs, then its Acquire Skills screen: one category per
     // skill tree, in SkillNode::tree order, shown with the tree's Esoteric Text.
-    // World Progress has no categories (WorldProgressWidget fills the page).
-    const std::array<Page, 3> PAGES = {{
+    // World Progress and the idols have no categories (a WorldProgressWidget fills the page).
+    const std::array<Page, 4> PAGES = {{
         {"Inventory", {
             {"Quick Items", ":/sekiro_images/category_quick_items", {ItemCategory::QuickItems}},
             {"Key Items", ":/sekiro_images/category_key_items",
@@ -48,9 +48,11 @@ namespace {
             {"Mushin Arts", ":/sekiro_images/tree_mushin", {}, true},
         }},
         {"World", {}},
+        {"Idols", {}},
     }};
     constexpr int SKILLS_PAGE = 1;
     constexpr int WORLD_PAGE = 2;
+    constexpr int IDOLS_PAGE = 3;
     constexpr int SKILL_ROWS = 8;
     constexpr int SKILL_COLUMNS = 4;
 
@@ -113,8 +115,10 @@ namespace {
 InventoryWidget::InventoryWidget(QWidget* parent): QWidget(parent) {
     setAttribute(Qt::WA_TranslucentBackground, true);
     setMouseTracking(true);
-    m_worldWidget = new WorldProgressWidget(this);
+    m_worldWidget = new WorldProgressWidget(WorldPage::Progress, this);
     m_worldWidget->hide();
+    m_idolsWidget = new WorldProgressWidget(WorldPage::Idols, this);
+    m_idolsWidget->hide();
 }
 
 QSize InventoryWidget::sizeHint() const {
@@ -125,6 +129,7 @@ void InventoryWidget::setCharacter(const fssm::parse::sekiro::SekiroCharacterInf
     m_hasCharacter = charInfo != nullptr;
     m_stats = charInfo != nullptr ? *charInfo : fssm::parse::sekiro::SekiroCharacterInfo{};
     m_worldWidget->setProgress(m_stats);
+    m_idolsWidget->setProgress(m_stats);
     m_allItems = std::move(m_stats.inventoryItems);
     m_stats.inventoryItems.clear();
     m_heldItems.clear();
@@ -148,7 +153,8 @@ void InventoryWidget::selectPage(int page, int category) {
     m_layout = computeLayout();
     rebuildVisibleItems();
     m_selectedItem = m_visibleItems.empty() && m_treeNodes.empty() ? -1 : 0;
-    m_worldWidget->setVisible(worldPage() && m_hasCharacter);
+    m_worldWidget->setVisible(m_page == WORLD_PAGE && m_hasCharacter);
+    m_idolsWidget->setVisible(m_page == IDOLS_PAGE && m_hasCharacter);
     update();
 }
 
@@ -229,7 +235,9 @@ void InventoryWidget::resizeEvent(QResizeEvent* event) {
     m_cache.clear();
     // Below the tabs, where the category label starts on the other pages.
     const double s = m_layout.scale;
-    m_worldWidget->setGeometry(rect().adjusted(0, int(std::round(44 * s)), 0, -int(std::round(2 * s))));
+    const QRect worldRect = rect().adjusted(0, int(std::round(44 * s)), 0, -int(std::round(2 * s)));
+    m_worldWidget->setGeometry(worldRect);
+    m_idolsWidget->setGeometry(worldRect);
     updateScrollRange();
 }
 
@@ -238,7 +246,7 @@ bool InventoryWidget::skillPage() const {
 }
 
 bool InventoryWidget::worldPage() const {
-    return m_page == WORLD_PAGE;
+    return m_page == WORLD_PAGE || m_page == IDOLS_PAGE;
 }
 
 bool InventoryWidget::learned(const SkillNode& node) const {

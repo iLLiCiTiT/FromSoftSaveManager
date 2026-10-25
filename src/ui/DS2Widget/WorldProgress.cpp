@@ -5,6 +5,8 @@
 #include <QPainter>
 #include <QWheelEvent>
 #include <algorithm>
+#include <climits>
+#include <cstdlib>
 #include <vector>
 
 #include "Painting.h"
@@ -127,7 +129,7 @@ namespace {
     }
 }
 
-WorldProgressWidget::WorldProgressWidget(QWidget* parent): QWidget(parent) {
+WorldProgressWidget::WorldProgressWidget(WorldPage page, QWidget* parent): QWidget(parent), m_page(page) {
     setAttribute(Qt::WA_TranslucentBackground, true);
     for (auto& scroll : m_scrolls) scroll.setContentDrag(true);
     m_window = QPixmap(":/ds2_images/ui_window");
@@ -182,71 +184,119 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     using fssm::parse::ds2::BONFIRES;
     using fssm::parse::ds2::BOSSES;
     const auto countTrue = [](const std::vector<bool>& v) { return int(std::count(v.begin(), v.end(), true)); };
-    const std::array<std::vector<Row>, 2> columns = {
-        groupedRows(BONFIRES, m_char.bonfiresLit, RowKind::Bonfire),
-        groupedRows(BOSSES, m_char.bossesDefeated, RowKind::Boss),
-    };
-    const std::array<QString, 2> titles = {"Bonfires Lit", "Bosses Defeated"};
-    const std::array<QString, 2> totals = {count(countTrue(m_char.bonfiresLit), int(BONFIRES.size())),
-                                           count(countTrue(m_char.bossesDefeated), int(BOSSES.size()))};
 
     const int headerH = int(34 * s);
     const int gap = std::max(4, headerH / 4);
     const int lineH = std::max(14, int(headerH * 0.82));
     const int areaH = lineH + gap;
-    const int colW = (content.width() - gap) / 2;
+    const auto listHeight = [&](const std::vector<Row>& rows) {
+        int h = 0;
+        for (const Row& row : rows) h += row.kind == RowKind::Area ? areaH : lineH;
+        return h;
+    };
 
-    for (int c = 0; c < 2; ++c) {
-        const QRect col(content.left() + c * (colW + gap), content.top(), colW, content.height());
+    // A framed panel with its header; its lists (one, or a long one split side by side)
+    // scroll together. Without lists it shows message instead.
+    struct Panel {
+        QRect rect;
+        QString title;
+        QString total;
+        std::vector<std::vector<Row>> lists;
+        QString message;
+    };
+    std::vector<Panel> panels;
+    if (m_page == WorldPage::Bonfires) {
+        const std::vector<Row> rows = groupedRows(BONFIRES, m_char.bonfiresLit, RowKind::Bonfire);
+        Panel panel {content, "Bonfires Lit", count(countTrue(m_char.bonfiresLit), int(BONFIRES.size())), {rows}};
+        if (content.width() >= int(720 * s)) {
+            // Split at the area start closest to the middle.
+            const int half = listHeight(rows) / 2;
+            size_t split = 0;
+            int best = INT_MAX;
+            int y = 0;
+            for (size_t i = 0; i < rows.size(); ++i) {
+                if (rows[i].kind == RowKind::Area && i > 0 && std::abs(y - half) < best) {
+                    best = std::abs(y - half);
+                    split = i;
+                }
+                y += rows[i].kind == RowKind::Area ? areaH : lineH;
+            }
+            if (split > 0) {
+                panel.lists = {std::vector<Row>(rows.begin(), rows.begin() + split),
+                               std::vector<Row>(rows.begin() + split, rows.end())};
+            }
+        }
+        panels.push_back(panel);
+    } else {
+        const int colW = (content.width() - gap) / 2;
+        panels.push_back({QRect(content.left(), content.top(), colW, content.height()), "Bosses Defeated",
+                          count(countTrue(m_char.bossesDefeated), int(BOSSES.size())),
+                          {groupedRows(BOSSES, m_char.bossesDefeated, RowKind::Boss)}});
+        panels.push_back({QRect(content.right() - colW + 1, content.top(), colW, content.height()), "NPCs", "", {},
+                          "No NPC data is available for Dark Souls II"});
+    }
+
+    for (int c = 0; c < int(panels.size()); ++c) {
+        const Panel& panelInfo = panels[c];
+        const QRect col = panelInfo.rect;
         painter.setPen(QPen(LINE_COLOR, 1));
         painter.setBrush(PANEL_COLOR);
         painter.drawRect(col.adjusted(0, 0, -1, -1));
         painter.setFont(serifFont(std::max(11, int(headerH * 0.62))));
-        drawSectionHeader(painter, QRect(col.left(), col.top(), col.width(), headerH), titles[c], totals[c]);
+        drawSectionHeader(painter, QRect(col.left(), col.top(), col.width(), headerH), panelInfo.title, panelInfo.total);
 
         const QRect list = col.adjusted(gap, headerH + gap / 2, -gap, -gap / 2);
+        if (panelInfo.lists.empty()) {
+            painter.setFont(serifFont(std::max(10, int(lineH * 0.62))));
+            drawOutlinedText(painter, list, Qt::AlignCenter | Qt::TextWordWrap, panelInfo.message, DIM_TEXT_COLOR);
+            continue;
+        }
         PaintedScroll& scroll = m_scrolls[c];
-        const std::vector<Row>& rows = columns[c];
         int contentH = 0;
-        for (const Row& row : rows) contentH += row.kind == RowKind::Area ? areaH : lineH;
+        for (const auto& rows : panelInfo.lists) contentH = std::max(contentH, listHeight(rows));
         const int barW = std::max(3, gap / 2);
         scroll.setGeometry(list, QRect(list.right() - barW + 1, list.top(), barW, list.height()), contentH);
         scroll.setStep(3 * lineH);
 
         painter.save();
         painter.setClipRect(list, Qt::IntersectClip);
-        int y = list.top() - scroll.value();
         const int iconSize = int(lineH * 0.72);
         const int scrollBarW = scroll.scrollable() ? barW + gap / 2 : 0;
-        for (const Row& row : rows) {
-            const int h = row.kind == RowKind::Area ? areaH : lineH;
-            const QRect full(list.left(), y, list.width() - scrollBarW, h);
-            y += h;
-            if (full.bottom() < list.top() || full.top() > list.bottom()) continue;
-            if (row.kind == RowKind::Area) {
-                const QRect line(full.left(), full.bottom() - lineH + 1, full.width(), lineH);
-                painter.setFont(serifFont(std::max(10, int(lineH * 0.66))));
-                const QFontMetrics fm(painter.font());
-                const int valueW = fm.horizontalAdvance(row.value) + gap;
-                drawOutlinedText(painter, line.adjusted(2, 0, -valueW, 0), Qt::AlignLeft | Qt::AlignVCenter,
-                                 row.text, AREA_COLOR);
-                drawOutlinedText(painter, line.adjusted(0, 0, -2, 0), Qt::AlignRight | Qt::AlignVCenter, row.value,
-                                 AREA_COLOR);
-                painter.setPen(QPen(LINE_COLOR, 1));
-                painter.drawLine(line.left(), line.bottom(), line.right(), line.bottom());
-                continue;
+        const int lists = int(panelInfo.lists.size());
+        const int listGap = 3 * gap;
+        const int listW = (list.width() - scrollBarW - listGap * (lists - 1)) / lists;
+        for (int l = 0; l < lists; ++l) {
+            int y = list.top() - scroll.value();
+            for (const Row& row : panelInfo.lists[l]) {
+                const int h = row.kind == RowKind::Area ? areaH : lineH;
+                const QRect full(list.left() + l * (listW + listGap), y, listW, h);
+                y += h;
+                if (full.bottom() < list.top() || full.top() > list.bottom()) continue;
+                if (row.kind == RowKind::Area) {
+                    const QRect line(full.left(), full.bottom() - lineH + 1, full.width(), lineH);
+                    painter.setFont(serifFont(std::max(10, int(lineH * 0.66))));
+                    const QFontMetrics fm(painter.font());
+                    const int valueW = fm.horizontalAdvance(row.value) + gap;
+                    drawOutlinedText(painter, line.adjusted(2, 0, -valueW, 0), Qt::AlignLeft | Qt::AlignVCenter,
+                                     row.text, AREA_COLOR);
+                    drawOutlinedText(painter, line.adjusted(0, 0, -2, 0), Qt::AlignRight | Qt::AlignVCenter, row.value,
+                                     AREA_COLOR);
+                    painter.setPen(QPen(LINE_COLOR, 1));
+                    painter.drawLine(line.left(), line.bottom(), line.right(), line.bottom());
+                    continue;
+                }
+                const QRectF icon(full.left() + gap, full.center().y() - iconSize / 2.0, iconSize, iconSize);
+                if (row.kind == RowKind::Bonfire) {
+                    drawBonfireMark(painter, icon, row.done);
+                } else {
+                    drawBossMark(painter, icon.adjusted(iconSize * 0.2, iconSize * 0.2, -iconSize * 0.2, -iconSize * 0.2),
+                                 row.done);
+                }
+                painter.setFont(serifFont(std::max(10, int(lineH * 0.62))));
+                const int textLeft = int(icon.right()) + gap;
+                drawOutlinedText(painter, QRect(textLeft, full.top(), full.right() - textLeft, full.height()),
+                                 Qt::AlignLeft | Qt::AlignVCenter, row.text, row.done ? TEXT_COLOR : DIM_TEXT_COLOR);
             }
-            const QRectF icon(full.left() + gap, full.center().y() - iconSize / 2.0, iconSize, iconSize);
-            if (row.kind == RowKind::Bonfire) {
-                drawBonfireMark(painter, icon, row.done);
-            } else {
-                drawBossMark(painter, icon.adjusted(iconSize * 0.2, iconSize * 0.2, -iconSize * 0.2, -iconSize * 0.2),
-                             row.done);
-            }
-            painter.setFont(serifFont(std::max(10, int(lineH * 0.62))));
-            const int textLeft = int(icon.right()) + gap;
-            drawOutlinedText(painter, QRect(textLeft, full.top(), full.right() - textLeft, full.height()),
-                             Qt::AlignLeft | Qt::AlignVCenter, row.text, row.done ? TEXT_COLOR : DIM_TEXT_COLOR);
         }
         painter.restore();
 
@@ -255,7 +305,7 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
 }
 
 void WorldProgressWidget::wheelEvent(QWheelEvent* event) {
-    const int column = event->position().toPoint().x() < m_scrolls[1].viewport().left() ? 0 : 1;
+    const int column = m_page == WorldPage::Bonfires || event->position().toPoint().x() < m_scrolls[1].viewport().left() ? 0 : 1;
     m_scrolls[column].wheel(event, true);
 }
 

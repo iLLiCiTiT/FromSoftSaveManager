@@ -74,11 +74,22 @@ void HeaderTabs::setCurrentIndex(int index) {
     update();
 }
 
+int HeaderTabs::tabWidth(int index, bool iconOnly) const {
+    if (iconOnly) return ICON_SIZE;
+    return ICON_SIZE + ICON_GAP + QFontMetrics(serifFont(FONT_SIZE)).horizontalAdvance(m_tabs[index].title) + 4;
+}
+
+bool HeaderTabs::compact() const {
+    int x = 12;
+    for (int i = 0; i < int(m_tabs.size()); ++i) x += tabWidth(i, false) + TAB_SPACING;
+    return x - TAB_SPACING > width();
+}
+
 QRect HeaderTabs::tabRect(int index) const {
-    const QFontMetrics fm(serifFont(FONT_SIZE));
+    const bool iconsOnly = compact();
     int x = 12;
     for (int i = 0; i < int(m_tabs.size()); ++i) {
-        const int w = ICON_SIZE + ICON_GAP + fm.horizontalAdvance(m_tabs[i].title) + 4;
+        const int w = tabWidth(i, iconsOnly && i != m_current);
         if (i == index) return {x, 0, w, BAR_HEIGHT};
         x += w + TAB_SPACING;
     }
@@ -162,8 +173,10 @@ void HeaderTabs::paintEvent(QPaintEvent* event) {
         const QPixmap& icon = m_tabs[i].icon;
         painter.drawPixmap(content.left() + (ICON_SIZE - icon.width()) / 2,
                            content.top() + (content.height() - icon.height()) / 2, icon);
-        drawText(painter, content.adjusted(ICON_SIZE + ICON_GAP, 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter,
-                 m_tabs[i].title, current ? TEXT_COLOR : DIM_TEXT_COLOR);
+        if (content.width() > ICON_SIZE) {
+            drawText(painter, content.adjusted(ICON_SIZE + ICON_GAP, 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter,
+                     m_tabs[i].title, current ? TEXT_COLOR : DIM_TEXT_COLOR);
+        }
         painter.setOpacity(1.0);
     }
 }
@@ -173,6 +186,7 @@ void HeaderTabs::mouseMoveEvent(QMouseEvent* event) {
     if (hover != m_hover) {
         m_hover = hover;
         setCursor(hover >= 0 && hover != m_current ? Qt::PointingHandCursor : Qt::ArrowCursor);
+        setToolTip(hover >= 0 && hover != m_current && compact() ? m_tabs[hover].title : QString());
         update();
     }
     QWidget::mouseMoveEvent(event);

@@ -49,4 +49,5 @@ private:
     fssm::ui::ds3::InventoryWidget* m_inventoryWidget;
     fssm::ui::ds3::CharacterInfoWidget* m_charInfoWidget;
     fssm::ui::ds3::WorldProgressWidget* m_worldWidget;
+    fssm::ui::ds3::WorldProgressWidget* m_bonfiresWidget;
 };

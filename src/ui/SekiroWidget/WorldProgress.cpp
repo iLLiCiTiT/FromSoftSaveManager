@@ -5,6 +5,8 @@
 #include <QPainter>
 #include <QRadialGradient>
 #include <QWheelEvent>
+#include <climits>
+#include <cstdlib>
 
 #include "../../parse/Sekiro/WorldProgress.h"
 
@@ -65,13 +67,8 @@ namespace {
         return rows;
     }
 
-    // Prosthetic tools found, then every NPC with its state, current stage and steps.
-    std::vector<Row> panelRows(const std::vector<bool>& toolsFound, const std::vector<fssm::parse::sekiro::NpcState>& states,
-                               const std::vector<std::string_view>& stages, const std::vector<bool>& dragonrot,
-                               const std::vector<bool>& stepsDone) {
-        using fssm::parse::sekiro::NPC_STEPS;
-        using fssm::parse::sekiro::NPCS;
-        using fssm::parse::sekiro::NpcState;
+    // Prosthetic tools found, under their own heading.
+    std::vector<Row> toolRows(const std::vector<bool>& toolsFound) {
         using fssm::parse::sekiro::PROSTHETIC_TOOLS;
         std::vector<Row> rows;
         int found = 0;
@@ -80,10 +77,19 @@ namespace {
         for (size_t i = 0; i < PROSTHETIC_TOOLS.size(); ++i) {
             rows.push_back({RowKind::Tool, label(PROSTHETIC_TOOLS[i].name), "", isSet(toolsFound, i)});
         }
+        return rows;
+    }
 
-        int met = 0;
+    // Every NPC with its state, current stage and steps; met counts the NPCs whose state is known.
+    std::vector<Row> npcRows(const std::vector<fssm::parse::sekiro::NpcState>& states,
+                             const std::vector<std::string_view>& stages, const std::vector<bool>& dragonrot,
+                             const std::vector<bool>& stepsDone, int& met) {
+        using fssm::parse::sekiro::NPC_STEPS;
+        using fssm::parse::sekiro::NPCS;
+        using fssm::parse::sekiro::NpcState;
+        std::vector<Row> rows;
+        met = 0;
         for (size_t i = 0; i < NPCS.size(); ++i) met += i < states.size() && states[i] != NpcState::Unknown;
-        rows.push_back({RowKind::Area, "NPCs", count(met, int(NPCS.size()))});
         for (size_t i = 0; i < NPCS.size(); ++i) {
             const NpcState state = i < states.size() ? states[i] : NpcState::Unknown;
             const QString value = state == NpcState::Dead      ? "Dead or gone"
@@ -149,7 +155,7 @@ namespace {
     }
 }
 
-WorldProgressWidget::WorldProgressWidget(QWidget* parent): QWidget(parent) {
+WorldProgressWidget::WorldProgressWidget(WorldPage page, QWidget* parent): QWidget(parent), m_page(page) {
     setAttribute(Qt::WA_TranslucentBackground, true);
     for (auto& scroll : m_scrolls) scroll.setContentDrag(true);
 }
@@ -178,6 +184,7 @@ void WorldProgressWidget::resizeEvent(QResizeEvent* event) {
 void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     using fssm::parse::sekiro::BOSSES;
     using fssm::parse::sekiro::IDOLS;
+    using fssm::parse::sekiro::NPCS;
 
     QPainter painter(this);
     painter.setClipRect(event->rect());
@@ -189,14 +196,6 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     const double s = FIXED_SCALE;
     const auto px = [s](double v) { return int(std::round(v * s)); };
 
-    int idolCount = 0;
-    int bossCount = 0;
-    const std::vector<Row> idols = groupedRows(IDOLS, m_idolsFound, RowKind::Idol, idolCount);
-    std::vector<Row> bosses = groupedRows(BOSSES, m_bossesDefeated, RowKind::Boss, bossCount);
-    const std::vector<Row> toolAndNpcRows = panelRows(m_toolsFound, m_npcStates, m_npcStages, m_npcDragonrot,
-                                                      m_npcStepsDone);
-    bosses.insert(bosses.end(), toolAndNpcRows.begin(), toolAndNpcRows.end());
-
     const int leftW = int(r.width() * 0.52);
     const int headerH = px(22);
     const int areaH = px(30);
@@ -205,31 +204,15 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     const int stageH = px(19);
     const int stepH = px(21);
 
-    // Left: idols on the board like the item list. Right: bosses, prosthetic tools and NPCs
-    // in the detail panel.
-    const QRect idolHeader(r.left() + px(14), r.top(), leftW - px(28), headerH);
-    const QRect panel(r.left() + leftW + px(4), r.top() - px(4), r.width() - leftW - px(4), r.height() + px(4));
-    painter.drawPixmap(panel.topLeft(), m_cache.get(":/sekiro_images/detail_panel", panel.size()));
-    const QRect panelInner = panel.adjusted(px(14), px(12), -px(14), -px(14));
-    const QRect bossTitle(panelInner.left(), panelInner.top(), panelInner.width(), px(32));
-    std::array<QRect, 2> lists;
-    lists[0] = QRect(r.left(), idolHeader.bottom() + 1 + px(8), leftW - px(16),
-                       std::max(0, r.bottom() - idolHeader.bottom() - px(10)));
-    lists[1] = QRect(panelInner.left(), bossTitle.bottom() + 1 + px(6), panelInner.width(),
-                       std::max(0, panelInner.bottom() - bossTitle.bottom() - px(6)));
-
-    painter.setOpacity(0.55);
-    const QRect headerBar = idolHeader.adjusted(0, 0, -idolHeader.width() / 3, 0);
-    painter.drawPixmap(headerBar.topLeft(), m_cache.get(":/sekiro_images/header_bar", headerBar.size()));
-    painter.setOpacity(1.0);
-    painter.setFont(serifFont(px(16)));
-    drawShadowText(painter, idolHeader.adjusted(px(14), 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter,
-                   QString("Sculptor's Idols  (%1)").arg(count(idolCount, int(IDOLS.size()))));
-
-    painter.drawPixmap(bossTitle.topLeft(), m_cache.get(":/sekiro_images/title_bar", bossTitle.size()));
-    painter.setFont(serifFont(px(18)));
-    drawShadowText(painter, bossTitle.adjusted(px(24), 0, -px(24), 0), Qt::AlignCenter,
-                   QString("Bosses  (%1)").arg(count(bossCount, int(BOSSES.size()))));
+    // Label over the board, like the inventory's category label.
+    const auto drawBoardHeader = [&](const QRect& header, const QString& text) {
+        painter.setOpacity(0.55);
+        const QRect headerBar = header.adjusted(0, 0, -header.width() / 3, 0);
+        painter.drawPixmap(headerBar.topLeft(), m_cache.get(":/sekiro_images/header_bar", headerBar.size()));
+        painter.setOpacity(1.0);
+        painter.setFont(serifFont(px(16)));
+        drawShadowText(painter, header.adjusted(px(14), 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter, text);
+    };
 
     const auto rowHeight = [&](const Row& row, bool first) {
         switch (row.kind) {
@@ -239,11 +222,18 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
             default: return lineH;
         }
     };
-    const auto drawRows = [&](const std::vector<Row>& rows, int column) {
-        const QRect list = lists[column];
-        PaintedScroll& scroll = m_scrolls[column];
+    const auto columnHeight = [&](const std::vector<Row>& rows) {
+        int h = 0;
+        for (size_t i = 0; i < rows.size(); ++i) h += rowHeight(rows[i], i == 0);
+        return h;
+    };
+    // Rows on the board (dark ink) or in the detail panel (light text); a long list on the
+    // board may be split into columns side by side, scrolling together.
+    const auto drawRows = [&](const std::vector<std::vector<Row>>& columns, int scrollIndex, const QRect& list,
+                              bool board) {
+        PaintedScroll& scroll = m_scrolls[scrollIndex];
         int contentH = 0;
-        for (size_t i = 0; i < rows.size(); ++i) contentH += rowHeight(rows[i], i == 0);
+        for (const auto& rows : columns) contentH = std::max(contentH, columnHeight(rows));
         const int barW = std::max(2, px(3));
         scroll.setGeometry(list, QRect(list.right() - barW, list.top() + px(4), barW, std::max(0, list.height() - px(8))),
                            contentH);
@@ -252,90 +242,151 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
 
         painter.save();
         painter.setClipRect(list, Qt::IntersectClip);
-        int y = list.top() - scroll.value();
-        for (size_t i = 0; i < rows.size(); ++i) {
-            const Row& row = rows[i];
-            const int h = rowHeight(row, i == 0);
-            const QRect full(list.left(), y, list.width(), h);
-            y += h;
-            if (full.bottom() < list.top() || full.top() > list.bottom()) continue;
-            if (row.kind == RowKind::Area) {
-                // Ink stroke like the inventory's item rows, area name and count on it.
-                const QRect stroke(full.left() + px(10), full.bottom() - areaH + 1 + px(2), full.width() - px(10),
-                                   areaH - px(4));
-                painter.drawPixmap(stroke.topLeft(), m_cache.get(":/sekiro_images/item_row", stroke.size()));
-                painter.setFont(serifFont(px(16)));
-                const QFontMetrics fm(painter.font());
-                const int valueW = fm.horizontalAdvance(row.value) + px(10);
-                drawShadowText(painter, stroke.adjusted(px(16), 0, -valueW - px(22), 0), Qt::AlignLeft | Qt::AlignVCenter,
-                               row.text);
-                drawShadowText(painter, stroke.adjusted(0, 0, -px(26), 0), Qt::AlignRight | Qt::AlignVCenter, row.value);
-                continue;
-            }
-            if (row.kind == RowKind::Npc) {
-                // Name with the state on the right, like a boss row without its seal.
-                painter.setFont(serifFont(px(13)));
-                const QFontMetrics fm(painter.font());
-                const int valueW = row.value.isEmpty() ? 0 : fm.horizontalAdvance(row.value) + px(10);
-                const QRect value(full.left(), full.top(), full.width() - px(12), full.height());
-                // Hostile in red, Dragonrot in ochre.
-                const QColor valueColor = row.value == "Hostile"     ? QColor(222, 120, 96)
-                                        : row.value == "Dragonrot"   ? QColor(214, 176, 92)
-                                                                     : QColor(150, 144, 130);
-                drawShadowText(painter, value, Qt::AlignRight | Qt::AlignVCenter, row.value, valueColor);
-                painter.setFont(serifFont(px(15)));
-                const QRect text(full.left() + px(22), full.top(), full.width() - px(34) - valueW, full.height());
-                drawShadowText(painter, text, Qt::AlignLeft | Qt::AlignVCenter,
-                               QFontMetrics(painter.font()).elidedText(row.text, Qt::ElideRight, text.width()),
-                               row.done ? TEXT_COLOR : QColor(150, 144, 130));
-                continue;
-            }
-            if (row.kind == RowKind::Stage || row.kind == RowKind::Step) {
-                // Under the NPC's name: its current stage, then a small seal per step.
-                painter.setFont(serifFont(px(13)));
-                int textLeft = full.left() + px(34);
-                QColor color = DIM_TEXT_COLOR;
-                if (row.kind == RowKind::Step) {
-                    const double markSize = iconSize * 0.7;
-                    drawBossMark(painter, QRectF(textLeft, full.center().y() - markSize / 2.0, markSize, markSize), row.done);
-                    textLeft += int(markSize) + px(7);
-                    color = row.done ? TEXT_COLOR : QColor(150, 144, 130);
+        const int gap = px(16);
+        const int n = int(columns.size());
+        const int columnW = n == 1 ? list.width() : (list.width() - px(10) - gap * (n - 1)) / n;
+        for (int c = 0; c < n; ++c) {
+            const std::vector<Row>& rows = columns[c];
+            int y = list.top() - scroll.value();
+            for (size_t i = 0; i < rows.size(); ++i) {
+                const Row& row = rows[i];
+                const int h = rowHeight(row, i == 0);
+                const QRect full(list.left() + c * (columnW + gap), y, columnW, h);
+                y += h;
+                if (full.bottom() < list.top() || full.top() > list.bottom()) continue;
+                if (row.kind == RowKind::Area) {
+                    // Ink stroke like the inventory's item rows, area name and count on it.
+                    const QRect stroke(full.left() + px(10), full.bottom() - areaH + 1 + px(2), full.width() - px(10),
+                                       areaH - px(4));
+                    painter.drawPixmap(stroke.topLeft(), m_cache.get(":/sekiro_images/item_row", stroke.size()));
+                    painter.setFont(serifFont(px(16)));
+                    const QFontMetrics fm(painter.font());
+                    const int valueW = fm.horizontalAdvance(row.value) + px(10);
+                    drawShadowText(painter, stroke.adjusted(px(16), 0, -valueW - px(22), 0), Qt::AlignLeft | Qt::AlignVCenter,
+                                   row.text);
+                    drawShadowText(painter, stroke.adjusted(0, 0, -px(26), 0), Qt::AlignRight | Qt::AlignVCenter, row.value);
+                    continue;
                 }
-                const QRect text(textLeft, full.top(), full.right() - px(10) - textLeft, full.height());
-                drawShadowText(painter, text, Qt::AlignLeft | Qt::AlignVCenter,
-                               QFontMetrics(painter.font()).elidedText(row.text, Qt::ElideRight, text.width()), color);
-                continue;
-            }
-            const QRectF icon(full.left() + px(22), full.center().y() - iconSize / 2.0, iconSize, iconSize);
-            if (row.kind == RowKind::Idol || row.kind == RowKind::Tool) {
-                drawIdolMark(painter, icon, row.done);
-            } else {
-                drawBossMark(painter, icon, row.done);
-            }
-            painter.setFont(serifFont(px(15)));
-            const int textLeft = int(icon.right()) + px(10);
-            // Dark ink on the board, light text in the panel, like the game.
-            const QColor color = column == 0 ? (row.done ? QColor(26, 24, 20) : QColor(26, 24, 20, 120))
-                                             : (row.done ? TEXT_COLOR : QColor(150, 144, 130));
-            painter.setPen(color);
-            const QRect text(textLeft, full.top(), full.right() - textLeft, full.height());
-            if (column == 0) {
-                painter.drawText(text, Qt::AlignLeft | Qt::AlignVCenter,
-                                 QFontMetrics(painter.font()).elidedText(row.text, Qt::ElideRight, text.width()));
-            } else {
-                drawShadowText(painter, text, Qt::AlignLeft | Qt::AlignVCenter, row.text, color);
+                if (row.kind == RowKind::Npc) {
+                    // Name with the state on the right, like a boss row without its seal.
+                    painter.setFont(serifFont(px(13)));
+                    const QFontMetrics fm(painter.font());
+                    const int valueW = row.value.isEmpty() ? 0 : fm.horizontalAdvance(row.value) + px(10);
+                    const QRect value(full.left(), full.top(), full.width() - px(12), full.height());
+                    // Hostile in red, Dragonrot in ochre.
+                    const QColor valueColor = row.value == "Hostile"     ? QColor(222, 120, 96)
+                                            : row.value == "Dragonrot"   ? QColor(214, 176, 92)
+                                                                         : QColor(150, 144, 130);
+                    drawShadowText(painter, value, Qt::AlignRight | Qt::AlignVCenter, row.value, valueColor);
+                    painter.setFont(serifFont(px(15)));
+                    const QRect text(full.left() + px(22), full.top(), full.width() - px(34) - valueW, full.height());
+                    drawShadowText(painter, text, Qt::AlignLeft | Qt::AlignVCenter,
+                                   QFontMetrics(painter.font()).elidedText(row.text, Qt::ElideRight, text.width()),
+                                   row.done ? TEXT_COLOR : QColor(150, 144, 130));
+                    continue;
+                }
+                if (row.kind == RowKind::Stage || row.kind == RowKind::Step) {
+                    // Under the NPC's name: its current stage, then a small seal per step.
+                    painter.setFont(serifFont(px(13)));
+                    int textLeft = full.left() + px(34);
+                    QColor color = DIM_TEXT_COLOR;
+                    if (row.kind == RowKind::Step) {
+                        const double markSize = iconSize * 0.7;
+                        drawBossMark(painter, QRectF(textLeft, full.center().y() - markSize / 2.0, markSize, markSize), row.done);
+                        textLeft += int(markSize) + px(7);
+                        color = row.done ? TEXT_COLOR : QColor(150, 144, 130);
+                    }
+                    const QRect text(textLeft, full.top(), full.right() - px(10) - textLeft, full.height());
+                    drawShadowText(painter, text, Qt::AlignLeft | Qt::AlignVCenter,
+                                   QFontMetrics(painter.font()).elidedText(row.text, Qt::ElideRight, text.width()), color);
+                    continue;
+                }
+                const QRectF icon(full.left() + px(22), full.center().y() - iconSize / 2.0, iconSize, iconSize);
+                if (row.kind == RowKind::Idol || row.kind == RowKind::Tool) {
+                    drawIdolMark(painter, icon, row.done);
+                } else {
+                    drawBossMark(painter, icon, row.done);
+                }
+                painter.setFont(serifFont(px(15)));
+                const int textLeft = int(icon.right()) + px(10);
+                // Dark ink on the board, light text in the panel, like the game.
+                const QColor color = board ? (row.done ? QColor(26, 24, 20) : QColor(26, 24, 20, 120))
+                                                 : (row.done ? TEXT_COLOR : QColor(150, 144, 130));
+                painter.setPen(color);
+                const QRect text(textLeft, full.top(), full.right() - textLeft, full.height());
+                if (board) {
+                    painter.drawText(text, Qt::AlignLeft | Qt::AlignVCenter,
+                                     QFontMetrics(painter.font()).elidedText(row.text, Qt::ElideRight, text.width()));
+                } else {
+                    drawShadowText(painter, text, Qt::AlignLeft | Qt::AlignVCenter, row.text, color);
+                }
             }
         }
         painter.restore();
 
         scroll.paint(painter, QColor(30, 28, 24, 120), QColor(236, 230, 214), 1);
     };
-    drawRows(idols, 0);
-    drawRows(bosses, 1);
+
+    if (m_page == WorldPage::Idols) {
+        // The whole board, the areas in two balanced columns when it is wide enough.
+        m_scrolls[1].clear();
+        int idolCount = 0;
+        const std::vector<Row> idols = groupedRows(IDOLS, m_idolsFound, RowKind::Idol, idolCount);
+        const QRect header(r.left() + px(14), r.top(), leftW - px(28), headerH);
+        drawBoardHeader(header, QString("Sculptor's Idols  (%1)").arg(count(idolCount, int(IDOLS.size()))));
+        const QRect list(r.left(), header.bottom() + 1 + px(8), r.width() - px(16),
+                         std::max(0, r.bottom() - header.bottom() - px(10)));
+        std::vector<std::vector<Row>> columns = {idols};
+        if (r.width() >= px(560)) {
+            // Split at the area start closest to the middle.
+            const int half = columnHeight(idols) / 2;
+            size_t split = 0;
+            int best = INT_MAX;
+            int y = 0;
+            for (size_t i = 0; i < idols.size(); ++i) {
+                if (idols[i].kind == RowKind::Area && i > 0 && std::abs(y - half) < best) {
+                    best = std::abs(y - half);
+                    split = i;
+                }
+                y += rowHeight(idols[i], i == 0);
+            }
+            if (split > 0) {
+                columns = {std::vector<Row>(idols.begin(), idols.begin() + split),
+                           std::vector<Row>(idols.begin() + split, idols.end())};
+            }
+        }
+        drawRows(columns, 0, list, true);
+        return;
+    }
+
+    // Left: bosses and prosthetic tools on the board like the item list. Right: NPCs in
+    // the detail panel.
+    int bossCount = 0;
+    std::vector<Row> bosses = groupedRows(BOSSES, m_bossesDefeated, RowKind::Boss, bossCount);
+    const std::vector<Row> tools = toolRows(m_toolsFound);
+    bosses.insert(bosses.end(), tools.begin(), tools.end());
+    int npcsMet = 0;
+    const std::vector<Row> npcs = npcRows(m_npcStates, m_npcStages, m_npcDragonrot, m_npcStepsDone, npcsMet);
+
+    const QRect bossHeader(r.left() + px(14), r.top(), leftW - px(28), headerH);
+    drawBoardHeader(bossHeader, QString("Bosses  (%1)").arg(count(bossCount, int(BOSSES.size()))));
+    const QRect panel(r.left() + leftW + px(4), r.top() - px(4), r.width() - leftW - px(4), r.height() + px(4));
+    painter.drawPixmap(panel.topLeft(), m_cache.get(":/sekiro_images/detail_panel", panel.size()));
+    const QRect panelInner = panel.adjusted(px(14), px(12), -px(14), -px(14));
+    const QRect npcTitle(panelInner.left(), panelInner.top(), panelInner.width(), px(32));
+    painter.drawPixmap(npcTitle.topLeft(), m_cache.get(":/sekiro_images/title_bar", npcTitle.size()));
+    painter.setFont(serifFont(px(18)));
+    drawShadowText(painter, npcTitle.adjusted(px(24), 0, -px(24), 0), Qt::AlignCenter,
+                   QString("NPCs  (%1)").arg(count(npcsMet, int(NPCS.size()))));
+
+    drawRows({bosses}, 0, QRect(r.left(), bossHeader.bottom() + 1 + px(8), leftW - px(16),
+                                std::max(0, r.bottom() - bossHeader.bottom() - px(10))), true);
+    drawRows({npcs}, 1, QRect(panelInner.left(), npcTitle.bottom() + 1 + px(6), panelInner.width(),
+                              std::max(0, panelInner.bottom() - npcTitle.bottom() - px(6))), false);
 }
 
 void WorldProgressWidget::wheelEvent(QWheelEvent* event) {
-    const int column = event->position().toPoint().x() < m_scrolls[1].viewport().left() ? 0 : 1;
+    const int column = m_page == WorldPage::Idols || event->position().toPoint().x() < m_scrolls[1].viewport().left() ? 0 : 1;
     m_scrolls[column].wheel(event, true);
 }
 

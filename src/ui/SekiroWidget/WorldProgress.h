@@ -9,14 +9,20 @@
 #include "../../parse/Sekiro/SaveFile.h"
 
 namespace fssm::ui::sekiro {
-// Sculptor's Idols found (grouped by the travel menu's areas), and in the
-// detail panel the bosses defeated, prosthetic tools found and NPC progress
-// (state, questline stage and steps), from the character's event flags and
-// inventory. Shown as a page of the inventory screen.
+// What a WorldProgressWidget shows.
+enum class WorldPage {
+    // Bosses defeated (grouped by the travel menu's areas) and prosthetic tools found on
+    // the board, NPC progress (state, questline stage and steps) in the detail panel.
+    Progress,
+    Idols,      // Sculptor's Idols found, grouped by the travel menu's areas
+};
+
+// One page of a character's world progress, from its event flags and inventory.
+// Shown as a page of the inventory screen.
 class WorldProgressWidget: public QWidget {
     Q_OBJECT
 public:
-    explicit WorldProgressWidget(QWidget* parent = nullptr);
+    explicit WorldProgressWidget(WorldPage page, QWidget* parent = nullptr);
     void setProgress(const fssm::parse::sekiro::SekiroCharacterInfo& character);
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -27,6 +33,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent* event) override;
     void leaveEvent(QEvent* event) override;
 private:
+    WorldPage m_page;
     std::vector<bool> m_idolsFound;
     std::vector<bool> m_bossesDefeated;
     std::vector<bool> m_toolsFound;
@@ -34,8 +41,8 @@ private:
     std::vector<std::string_view> m_npcStages;
     std::vector<bool> m_npcDragonrot;
     std::vector<bool> m_npcStepsDone;
-    // Idols and the detail panel scroll separately; geometry from the last paint. The
-    // lists are not clickable, so dragging them scrolls.
+    // The board and the detail panel scroll separately (the idols page uses the first);
+    // geometry from the last paint. The lists are not clickable, so dragging them scrolls.
     std::array<fssm::ui::PaintedScroll, 2> m_scrolls {fssm::ui::PaintedScroll(this), fssm::ui::PaintedScroll(this)};
     PixmapCache m_cache;
 };

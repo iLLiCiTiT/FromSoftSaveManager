@@ -74,6 +74,19 @@ namespace {
         fssm::ui::er::drawGraceMark(painter, QRectF(0, 0, 30, 30), true);
         return pix;
     }
+
+    // Gold diamond, the boss mark of the World Progress lists.
+    QPixmap worldProgressIcon() {
+        QPixmap pix(30, 30);
+        pix.fill(Qt::transparent);
+        QPainter painter(&pix);
+        painter.setRenderHint(QPainter::Antialiasing, true);
+        const QPolygonF diamond({{15, 6}, {24, 15}, {15, 24}, {6, 15}});
+        painter.setPen(QPen(QColor(190, 168, 112), 1.5));
+        painter.setBrush(QColor(214, 184, 112));
+        painter.drawPolygon(diamond);
+        return pix;
+    }
 }
 
 ERWidget::ERWidget(Controller* controller, const QString& saveId, QWidget* parent)
@@ -106,10 +119,12 @@ ERWidget::ERWidget(Controller* controller, const QString& saveId, QWidget* paren
     m_charTabs = new fssm::ui::er::HeaderTabs(this);
     m_charInfoWidget = new fssm::ui::er::CharacterInfoWidget(m_charTabs);
     m_inventoryWidget = new fssm::ui::er::InventoryWidget(m_charTabs);
-    m_worldWidget = new fssm::ui::er::WorldProgressWidget(m_charTabs);
+    m_worldWidget = new fssm::ui::er::WorldProgressWidget(fssm::ui::er::WorldPage::Progress, m_charTabs);
+    m_gracesWidget = new fssm::ui::er::WorldProgressWidget(fssm::ui::er::WorldPage::Graces, m_charTabs);
     m_charTabs->addTab("Character Info", "attrs_icon", m_charInfoWidget);
     m_charTabs->addTab("Inventory", "inventory_icon", m_inventoryWidget);
-    m_charTabs->addTab("World Progress", graceIcon(), m_worldWidget);
+    m_charTabs->addTab("World Progress", worldProgressIcon(), m_worldWidget);
+    m_charTabs->addTab("Sites of Grace", graceIcon(), m_gracesWidget);
 
     QHBoxLayout* mainLayout = new QHBoxLayout(this);
     mainLayout->setContentsMargins(20, 20, 20, 20);
@@ -142,6 +157,7 @@ void ERWidget::onRefresh() {
         m_charInfoWidget->setCharacter(charInfo);
         m_inventoryWidget->setCharacter(charInfo);
         m_worldWidget->setCharacter(charInfo);
+        m_gracesWidget->setCharacter(charInfo);
         return;
     }
     for (int row = 0; row < m_model->rowCount(); ++row) {
@@ -163,11 +179,13 @@ void ERWidget::onSelectionChange(const QItemSelection& selected, const QItemSele
         m_charInfoWidget->setCharacter(charInfo);
         m_inventoryWidget->setCharacter(charInfo);
         m_worldWidget->setCharacter(charInfo);
+        m_gracesWidget->setCharacter(charInfo);
         return;
     }
     m_charInfoWidget->setCharacter(nullptr);
     m_inventoryWidget->setCharacter(nullptr);
     m_worldWidget->setCharacter(nullptr);
+    m_gracesWidget->setCharacter(nullptr);
 
 }
 

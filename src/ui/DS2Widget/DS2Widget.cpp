@@ -100,10 +100,13 @@ DS2Widget::DS2Widget(Controller* controller, const QString& saveId, QWidget* par
     m_charTabs = new HeaderTabs(this);
     m_statusWidget = new fssm::ui::ds2::PlayerStatusWidget(m_charTabs);
     m_inventoryWidget = new fssm::ui::ds2::InventoryWidget(m_charTabs);
-    m_worldWidget = new fssm::ui::ds2::WorldProgressWidget(m_charTabs);
+    m_worldWidget = new fssm::ui::ds2::WorldProgressWidget(fssm::ui::ds2::WorldPage::Progress, m_charTabs);
+    m_bonfiresWidget = new fssm::ui::ds2::WorldProgressWidget(fssm::ui::ds2::WorldPage::Bonfires, m_charTabs);
     m_charTabs->addTab("Player Status", HeaderTabs::Medallion::Status, m_statusWidget);
     m_charTabs->addTab("Inventory", HeaderTabs::Medallion::Inventory, m_inventoryWidget);
     m_charTabs->addTab("World Progress", HeaderTabs::Medallion::Scroll, m_worldWidget);
+    // The game's bonfire is a coiled sword in the ashes.
+    m_charTabs->addTab("Bonfires", HeaderTabs::Medallion::Equipment, m_bonfiresWidget);
 
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->setContentsMargins(20, 8, 20, 20);
@@ -127,6 +130,7 @@ void DS2Widget::showCharacter(const QModelIndex& index) {
     m_statusWidget->setCharacter(charInfo);
     m_inventoryWidget->setCharacter(charInfo);
     m_worldWidget->setCharacter(charInfo);
+    m_bonfiresWidget->setCharacter(charInfo);
 }
 
 void DS2Widget::onRefresh() {
@@ -154,6 +158,7 @@ void DS2Widget::onRefresh() {
     m_statusWidget->setCharacter(nullptr);
     m_inventoryWidget->setCharacter(nullptr);
     m_worldWidget->setCharacter(nullptr);
+    m_bonfiresWidget->setCharacter(nullptr);
 }
 
 void DS2Widget::onSelectionChange(const QItemSelection& selected, const QItemSelection&) {
@@ -162,6 +167,8 @@ void DS2Widget::onSelectionChange(const QItemSelection& selected, const QItemSel
         m_statusWidget->setCharacter(nullptr);
         m_inventoryWidget->setCharacter(nullptr);
         m_worldWidget->setCharacter(nullptr);
+        m_bonfiresWidget->setCharacter(nullptr);
+    m_bonfiresWidget->setCharacter(nullptr);
         return;
     }
     showCharacter(indexes.first());

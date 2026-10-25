@@ -75,6 +75,19 @@ namespace {
         fssm::ui::ds3::drawBonfire(painter, QRectF(1, 0, 24, 26), true);
         return pix;
     }
+
+    // Gold diamond, the boss mark of the World Progress lists.
+    QPixmap worldProgressIcon() {
+        QPixmap pix(26, 26);
+        pix.fill(Qt::transparent);
+        QPainter painter(&pix);
+        painter.setRenderHint(QPainter::Antialiasing, true);
+        const QPolygonF diamond({{13, 4}, {22, 13}, {13, 22}, {4, 13}});
+        painter.setPen(QPen(fssm::ui::ds3::GOLD_COLOR, 1.5));
+        painter.setBrush(QColor(200, 166, 92));
+        painter.drawPolygon(diamond);
+        return pix;
+    }
 }
 
 DS3Widget::DS3Widget(Controller* controller, const QString& saveId, QWidget* parent)
@@ -117,10 +130,12 @@ DS3Widget::DS3Widget(Controller* controller, const QString& saveId, QWidget* par
     m_charTabs = new fssm::ui::ds3::HeaderTabs(this);
     m_charInfoWidget = new fssm::ui::ds3::CharacterInfoWidget(m_charTabs);
     m_inventoryWidget = new fssm::ui::ds3::InventoryWidget(m_charTabs);
-    m_worldWidget = new fssm::ui::ds3::WorldProgressWidget(m_charTabs);
+    m_worldWidget = new fssm::ui::ds3::WorldProgressWidget(fssm::ui::ds3::WorldPage::Progress, m_charTabs);
+    m_bonfiresWidget = new fssm::ui::ds3::WorldProgressWidget(fssm::ui::ds3::WorldPage::Bonfires, m_charTabs);
     m_charTabs->addTab("Character Info", "menu_status", m_charInfoWidget);
     m_charTabs->addTab("Inventory", "menu_invetory", m_inventoryWidget);
-    m_charTabs->addTab("World Progress", bonfireIcon(), m_worldWidget);
+    m_charTabs->addTab("World Progress", worldProgressIcon(), m_worldWidget);
+    m_charTabs->addTab("Bonfires", bonfireIcon(), m_bonfiresWidget);
 
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->setContentsMargins(20, 20, 20, 20);
@@ -144,6 +159,7 @@ void DS3Widget::showCharacter(const QModelIndex& index) {
     m_inventoryWidget->setCharacter(charInfo);
     m_charInfoWidget->setCharacter(charInfo);
     m_worldWidget->setCharacter(charInfo);
+    m_bonfiresWidget->setCharacter(charInfo);
 }
 
 void DS3Widget::onRefresh() {
@@ -171,6 +187,7 @@ void DS3Widget::onRefresh() {
     m_inventoryWidget->setCharacter(nullptr);
     m_charInfoWidget->setCharacter(nullptr);
     m_worldWidget->setCharacter(nullptr);
+    m_bonfiresWidget->setCharacter(nullptr);
 }
 
 void DS3Widget::onSelectionChange(const QItemSelection& selected, const QItemSelection&) {
@@ -179,6 +196,8 @@ void DS3Widget::onSelectionChange(const QItemSelection& selected, const QItemSel
         m_inventoryWidget->setCharacter(nullptr);
         m_charInfoWidget->setCharacter(nullptr);
         m_worldWidget->setCharacter(nullptr);
+        m_bonfiresWidget->setCharacter(nullptr);
+    m_bonfiresWidget->setCharacter(nullptr);
         return;
     }
     showCharacter(indexes.first());

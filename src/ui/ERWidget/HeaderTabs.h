@@ -31,6 +31,11 @@ private:
         QPixmap icon;
     };
 
+    // Width of a tab with its title, or of its icon alone.
+    int tabWidth(int index, bool iconOnly) const;
+    // The titles don't fit: the tabs other than the current one show only their icon
+    // (and the title as a tooltip), like the game's own menu headers.
+    bool compact() const;
     QRect tabRect(int index) const;
     int tabAt(const QPoint& pos) const;
 
