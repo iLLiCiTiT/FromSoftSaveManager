@@ -33,6 +33,9 @@
         <file alias="inventory_stand">images/dsr/menu_icons/inventory_stand.png</file>
         <file alias="inventory_weapons_shields">images/dsr/menu_icons/inventory_weapons_shields.png</file>
         <file alias="inventory_weapons_shields_hover">images/dsr/menu_icons/inventory_weapons_shields_hover.png</file>
+        <file alias="menu_data_list">images/dsr/menu_icons/menu_data_list.png</file>
+        <file alias="menu_inventory">images/dsr/menu_icons/menu_inventory.png</file>
+        <file alias="menu_status">images/dsr/menu_icons/menu_status.png</file>
         <file alias="res_bleed">images/dsr/status_icons/res_bleed.png</file>
         <file alias="res_curse">images/dsr/status_icons/res_curse.png</file>
         <file alias="res_poison">images/dsr/status_icons/res_poison.png</file>

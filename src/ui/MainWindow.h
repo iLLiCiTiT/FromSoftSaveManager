@@ -2,6 +2,7 @@
 
 #include <QStackedWidget>
 #include <QGraphicsBlurEffect>
+#include <QVariantAnimation>
 
 #include "Controller.h"
 #include "ManageBackupsWidget.h"

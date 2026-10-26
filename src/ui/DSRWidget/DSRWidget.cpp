@@ -5,6 +5,7 @@
 #include <QPainter>
 #include <QScrollBar>
 
+#include "Painting.h"
 #include "../ManageBackupsWidget.h"
 
 namespace fssm::ui::dsr {
@@ -66,10 +67,70 @@ fssm::parse::dsr::DSRCharacterInfo* CharsListModel::getCharByIdx(const int& inde
 }
 }
 
+namespace {
+    // The game's leather menu texture is much darker than the menus look in game (mean
+    // grey 6 against 28); lift it to match.
+    QPixmap menuBackground() {
+        QImage image = QImage(":/dsr_images/bg").convertToFormat(QImage::Format_ARGB32);
+        for (int y = 0; y < image.height(); ++y) {
+            auto* line = reinterpret_cast<QRgb*>(image.scanLine(y));
+            for (int x = 0; x < image.width(); ++x) {
+                const QRgb c = line[x];
+                const auto lift = [](int v) { return std::min(255, 14 + v * 2); };
+                line[x] = qRgba(lift(qRed(c)), lift(qGreen(c)), lift(qBlue(c)), qAlpha(c));
+            }
+        }
+        return QPixmap::fromImage(image);
+    }
+
+    // Header icon in the style of the game's framed menu icons: a dark square with a
+    // bronze border around `draw`'s picture.
+    template <typename Draw>
+    QPixmap framedIcon(Draw draw) {
+        constexpr int SIZE = 84;
+        QPixmap pix(SIZE, SIZE);
+        pix.fill(Qt::transparent);
+        QPainter painter(&pix);
+        painter.setRenderHint(QPainter::Antialiasing, true);
+        fssm::ui::dsr::fillLeather(painter, QRect(4, 4, SIZE - 8, SIZE - 8), QColor(30, 27, 24));
+        painter.setPen(QPen(fssm::ui::dsr::GOLD_COLOR, 4));
+        painter.setBrush(Qt::NoBrush);
+        painter.drawRect(QRectF(3, 3, SIZE - 6, SIZE - 6));
+        painter.setPen(QPen(fssm::ui::dsr::GOLD_DARK_COLOR, 1.5));
+        painter.drawRect(QRectF(7, 7, SIZE - 14, SIZE - 14));
+        draw(painter, QRectF(14, 12, SIZE - 28, SIZE - 26));
+        return pix;
+    }
+
+    QPixmap bonfireIcon() {
+        return framedIcon([](QPainter& painter, const QRectF& r) {
+            fssm::ui::dsr::drawBonfire(painter, r, true);
+        });
+    }
+
+    // Gold diamond, the boss mark of the World Progress lists.
+    QPixmap worldProgressIcon() {
+        return framedIcon([](QPainter& painter, const QRectF& r) {
+            const QPointF c = r.center();
+            const double h = r.height() * 0.42;
+            painter.setPen(QPen(fssm::ui::dsr::GOLD_LIGHT_COLOR, 2.5));
+            painter.setBrush(QColor(206, 160, 70));
+            painter.drawPolygon(QPolygonF({{c.x(), c.y() - h}, {c.x() + h, c.y()}, {c.x(), c.y() + h}, {c.x() - h, c.y()}}));
+        });
+    }
+
+    // The game shows the covenant on the Status screen; the faith icon stands in for it.
+    QPixmap covenantsIcon() {
+        return framedIcon([](QPainter& painter, const QRectF& r) {
+            painter.drawPixmap(r.adjusted(-4, -2, 4, 6).toRect(), QPixmap(":/dsr_images/attr_faith"));
+        });
+    }
+}
+
 DSRWidget::DSRWidget(Controller* controller, const QString& saveId, QWidget* parent)
     : BaseGameWidget(controller, saveId, parent)
 {
-    m_bgPix = QPixmap(":/dsr_images/bg");
+    m_bgPix = menuBackground();
 
     QWidget* viewWrap = new QWidget(this);
     viewWrap->setAttribute(Qt::WA_TranslucentBackground, true);
@@ -100,39 +161,17 @@ DSRWidget::DSRWidget(Controller* controller, const QString& saveId, QWidget* par
     viewWrapLayout->addWidget(dataListFrame, 1);
     viewWrapLayout->addWidget(manageBackupsBtnsWidget, 0);
 
-    m_charTabs = new TabWidget(this);
-
+    m_charTabs = new fssm::ui::dsr::HeaderTabs(this);
     m_covenantsWidget = new fssm::ui::dsr::CovenantsWidget(m_charTabs);
     m_charInfoWidget = new fssm::ui::dsr::CharacterInfoWidget(m_charTabs);
     m_inventoryWidget = new fssm::ui::dsr::InventoryWidget(m_charTabs);
     m_worldWidget = new fssm::ui::dsr::WorldProgressWidget(fssm::ui::dsr::WorldPage::Progress, m_charTabs);
     m_bonfiresWidget = new fssm::ui::dsr::WorldProgressWidget(fssm::ui::dsr::WorldPage::Bonfires, m_charTabs);
-    // m_charEquipWidget = new QWidget(m_charTabs);
-
-    m_charTabs->addTab(
-        "Character",
-        m_charInfoWidget
-    );
-    m_charTabs->addTab(
-        "Inventory",
-        m_inventoryWidget
-    );
-    m_charTabs->addTab(
-        "Covenants",
-        m_covenantsWidget
-    );
-    m_charTabs->addTab(
-        "Progress",
-        m_worldWidget
-    );
-    m_charTabs->addTab(
-        "Bonfires",
-        m_bonfiresWidget
-    );
-    // m_charTabs->addTab(
-    //     "Equipment",
-    //     m_charEquipWidget
-    // );
+    m_charTabs->addTab("Character", "Check status", QPixmap(":/dsr_images/menu_status"), m_charInfoWidget);
+    m_charTabs->addTab("Inventory", "Select an item to examine", QPixmap(":/dsr_images/menu_inventory"), m_inventoryWidget);
+    m_charTabs->addTab("Covenants", "Covenant ranks", covenantsIcon(), m_covenantsWidget);
+    m_charTabs->addTab("Progress", "Bosses and NPCs", worldProgressIcon(), m_worldWidget);
+    m_charTabs->addTab("Bonfires", "Bonfires lit", bonfireIcon(), m_bonfiresWidget);
 
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->setContentsMargins(20, 20, 20, 20);
@@ -159,22 +198,6 @@ void DSRWidget::paintEvent(QPaintEvent* event) {
     // center vertically
     const int y = (height() - scaled.height()) / 2;
     painter.drawPixmap(0, y, scaled);
-    // --- Manual approach ---
-    // const double sAspect = double(pix.width()) / pix.height();
-    // const double tAspect = double(targetRect.width()) / targetRect.height();
-    // int posY = 0;
-    // int srcWidth = pix.width();
-    // int srcHeight = pix.height();
-    // if (tAspect > sAspect) {
-    //     // Crop vertically in source and offset y position
-    //     srcHeight = int(pix.width() / tAspect);
-    //     posY = (pix.height() - srcHeight) / 2;
-    // } else {
-    //     // Crop horizontally in source
-    //     srcWidth = int(pix.height() * tAspect);
-    // }
-    // QRect src = QRect(0, posY, srcWidth, srcHeight);
-    // painter.drawPixmap(targetRect, pix, src);
 };
 
 void DSRWidget::onRefresh() {

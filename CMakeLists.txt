@@ -97,6 +97,7 @@ add_executable(FromSoftSaveManager
         src/ui/DSRWidget/Covenants.cpp
         src/ui/DSRWidget/CharInfo.cpp
         src/ui/DSRWidget/WorldProgress.cpp
+        src/ui/DSRWidget/HeaderTabs.cpp
         src/ui/DS2Widget/DS2Widget.cpp
         src/ui/DS2Widget/Inventory.cpp
         src/ui/DS2Widget/PlayerStatus.cpp

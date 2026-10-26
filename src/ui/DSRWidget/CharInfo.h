@@ -1,48 +1,37 @@
 #pragma once
 
-#include <QLabel>
-#include "../../parse/Parse.h"
+#include <QHash>
+#include <QPixmap>
+#include <QWidget>
+#include <optional>
+
+#include "../ScrollHelper.h"
+#include "../../parse/DSR/SaveFile.h"
 
 namespace fssm::ui::dsr {
-class CharacterStatusWidget: public QWidget {
-    Q_OBJECT
-public:
-    explicit CharacterStatusWidget(QWidget* parent);
-    void setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo) const;
-private:
-    void setEmpty() const;
-    QLabel* m_nameValueWidget = nullptr;
-    QLabel* m_covenantValueWidget = nullptr;
-    QLabel* m_levelValueWidget = nullptr;
-    QLabel* m_soulsValueWidget = nullptr;
-    QLabel* m_vitalityValueWidget = nullptr;
-    QLabel* m_attunementValueWidget = nullptr;
-    QLabel* m_enduranceValueWidget = nullptr;
-    QLabel* m_strengthValueWidget = nullptr;
-    QLabel* m_dexterityValueWidget = nullptr;
-    QLabel* m_resistanceValueWidget = nullptr;
-    QLabel* m_intelligenceValueWidget = nullptr;
-    QLabel* m_faithValueWidget = nullptr;
-    QLabel* m_humanityValueWidget = nullptr;
+// Covenant name with its rank ("Warrior of Sunlight+2"), as on the Status screen.
+QString covenantTitle(const fssm::parse::dsr::DSRCharacterInfo& charInfo);
 
-    QLabel* m_hollowValueWidget = nullptr;
-    QLabel* m_genderValueWidget = nullptr;
-    QLabel* m_classValueWidget = nullptr;
-    QLabel* m_physiqueValueWidget = nullptr;
-    QLabel* m_giftValueWidget = nullptr;
-    QLabel* m_hpValueWidget = nullptr;
-    QLabel* m_staminaValueWidget = nullptr;
-    QLabel* m_bleedResValueWidget = nullptr;
-    QLabel* m_poisonResValueWidget = nullptr;
-    QLabel* m_curseResValueWidget = nullptr;
-};
-
+// The game's Status screen: framed panels with the name, covenant, level and attributes;
+// HP, stamina, resistances and attunement slots; and the character's creation details.
+// Panels sit side by side when they fit; the page scrolls when it is too short.
 class CharacterInfoWidget: public QWidget {
     Q_OBJECT
 public:
     explicit CharacterInfoWidget(QWidget* parent);
-    void setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo) const;
+    void setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo);
+protected:
+    void paintEvent(QPaintEvent* event) override;
+    void wheelEvent(QWheelEvent* event) override;
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
+    void leaveEvent(QEvent* event) override;
 private:
-    CharacterStatusWidget* m_statusWidget = nullptr;
+    QPixmap icon(const QString& resource, int size);
+
+    std::optional<fssm::parse::dsr::DSRCharacterInfo> m_character;
+    QHash<QString, QPixmap> m_iconCache;
+    fssm::ui::PaintedScroll m_scroll {this};
 };
 }

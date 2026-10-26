@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QPixmap>
 #include <QStyledItemDelegate>
 #include <QWidget>
 
@@ -11,7 +12,7 @@ const int CharPlayTimeRole = Qt::UserRole + 4;
 const int CharAreaRole = Qt::UserRole + 5;
 
 // Character row drawn like a slot on the game's "Data List" screen: a carved gold frame
-// over the background, name and play time on top, level and area below.
+// around a leather plate, name over the level on the left, area over the play time on the right.
 class CharacterDelegate: public QStyledItemDelegate {
     Q_OBJECT
 public:
@@ -20,7 +21,7 @@ public:
     QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 };
 
-// Title above `content`; the slots sit straight on the widget background, as in the game.
+// The game's menu heading ("Characters") above `content`, which sits in a framed panel.
 class DataListFrame: public QWidget {
     Q_OBJECT
 public:
@@ -32,5 +33,6 @@ protected:
 private:
     QRect panelRect() const;
     QWidget* m_content;
+    QPixmap m_icon;
 };
 }
