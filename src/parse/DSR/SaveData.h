@@ -45,8 +45,8 @@ namespace fssm::parse::dsr {
         uint32_t faith;
         std::array<uint32_t, 4> unk_064;
         uint32_t humanity;
-        uint32_t unk_078;
-        uint32_t resistance;
+        uint32_t resistance;                    // +0x078
+        uint32_t unk_07c;
         uint32_t level;
         uint32_t souls;
         uint32_t unk_088;
