@@ -15,7 +15,10 @@ class HeaderTabs: public QWidget {
     Q_OBJECT
 public:
     explicit HeaderTabs(QWidget* parent);
-    void addTab(const QString& title, const QString& subtitle, const QPixmap& icon, QWidget* page);
+    // smallIcon and greyIcon are for the row of screen icons; without them the row uses
+    // icon, greyed in code when the page isn't shown.
+    void addTab(const QString& title, const QString& subtitle, const QPixmap& icon, QWidget* page,
+                const QPixmap& smallIcon = QPixmap(), const QPixmap& greyIcon = QPixmap());
     void setCurrentIndex(int index);
 
 protected:
@@ -31,8 +34,9 @@ private:
     struct Tab {
         QString title;
         QString subtitle;
-        QPixmap icon;
-        QPixmap greyIcon;
+        QPixmap icon;       // in the heading
+        QPixmap smallIcon;  // in the row
+        QPixmap greyIcon;   // in the row, page not shown
     };
 
     QRect iconRect(int index) const;

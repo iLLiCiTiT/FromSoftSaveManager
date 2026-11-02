@@ -28,8 +28,15 @@ HeaderTabs::HeaderTabs(QWidget* parent): QWidget(parent) {
     layout->addWidget(m_stack);
 }
 
-void HeaderTabs::addTab(const QString& title, const QString& subtitle, const QPixmap& icon, QWidget* page) {
-    m_tabs.push_back({title, subtitle, icon, greyscale(icon)});
+void HeaderTabs::addTab(const QString& title, const QString& subtitle, const QPixmap& icon, QWidget* page,
+                        const QPixmap& smallIcon, const QPixmap& greyIcon) {
+    // Scaled once here: the sources are much larger than they are drawn.
+    const auto toSize = [](const QPixmap& pix, int size) {
+        return pix.scaled(size, size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    };
+    const QPixmap rowIcon = toSize(smallIcon.isNull() ? icon : smallIcon, ICON_SIZE);
+    m_tabs.push_back({title, subtitle, toSize(icon, BAR_HEIGHT), rowIcon,
+                      greyIcon.isNull() ? greyscale(rowIcon) : toSize(greyIcon, ICON_SIZE)});
     m_stack->addWidget(page);
     if (m_current < 0) setCurrentIndex(0);
     update();
@@ -71,9 +78,7 @@ void HeaderTabs::paintEvent(QPaintEvent* event) {
     for (int i = 0; i < int(m_tabs.size()); ++i) {
         const QRect r = iconRect(i);
         const bool isCurrent = i == m_current;
-        painter.setOpacity(isCurrent ? 1.0 : (i == m_hover ? 1.0 : 0.7));
-        painter.drawPixmap(r, (isCurrent || i == m_hover) ? m_tabs[i].icon : m_tabs[i].greyIcon);
-        painter.setOpacity(1.0);
+        painter.drawPixmap(r, (isCurrent || i == m_hover) ? m_tabs[i].smallIcon : m_tabs[i].greyIcon);
         if (isCurrent) {
             painter.setPen(QPen(GOLD_LIGHT_COLOR, 1));
             painter.setBrush(Qt::NoBrush);

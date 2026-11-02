@@ -167,8 +167,10 @@ DSRWidget::DSRWidget(Controller* controller, const QString& saveId, QWidget* par
     m_inventoryWidget = new fssm::ui::dsr::InventoryWidget(m_charTabs);
     m_worldWidget = new fssm::ui::dsr::WorldProgressWidget(fssm::ui::dsr::WorldPage::Progress, m_charTabs);
     m_bonfiresWidget = new fssm::ui::dsr::WorldProgressWidget(fssm::ui::dsr::WorldPage::Bonfires, m_charTabs);
-    m_charTabs->addTab("Character", "Check status", QPixmap(":/dsr_images/menu_status"), m_charInfoWidget);
-    m_charTabs->addTab("Inventory", "Select an item to examine", QPixmap(":/dsr_images/menu_inventory"), m_inventoryWidget);
+    m_charTabs->addTab("Character", "Check status", QPixmap(":/dsr_images/menu_status"), m_charInfoWidget,
+                       QPixmap(":/dsr_images/menu_status_small"), QPixmap(":/dsr_images/menu_status_grey"));
+    m_charTabs->addTab("Inventory", "Select an item to examine", QPixmap(":/dsr_images/menu_inventory"), m_inventoryWidget,
+                       QPixmap(":/dsr_images/menu_inventory_small"), QPixmap(":/dsr_images/menu_inventory_grey"));
     m_charTabs->addTab("Covenants", "Covenant ranks", covenantsIcon(), m_covenantsWidget);
     m_charTabs->addTab("Progress", "Bosses and NPCs", worldProgressIcon(), m_worldWidget);
     m_charTabs->addTab("Bonfires", "Bonfires lit", bonfireIcon(), m_bonfiresWidget);

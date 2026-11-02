@@ -163,7 +163,8 @@ void CharacterDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
 
 DataListFrame::DataListFrame(QWidget* content, QWidget* parent): QWidget(parent), m_content(content) {
     setAttribute(Qt::WA_TranslucentBackground, true);
-    m_icon = QPixmap(":/dsr_images/menu_data_list");
+    m_icon = QPixmap(":/dsr_images/menu_data_list").scaled(HEADING_HEIGHT, HEADING_HEIGHT, Qt::KeepAspectRatio,
+                                                           Qt::SmoothTransformation);
     m_content->setParent(this);
     setMinimumWidth(sizeHint().width());
 }

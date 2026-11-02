@@ -35,7 +35,11 @@
         <file alias="inventory_weapons_shields_hover">images/dsr/menu_icons/inventory_weapons_shields_hover.png</file>
         <file alias="menu_data_list">images/dsr/menu_icons/menu_data_list.png</file>
         <file alias="menu_inventory">images/dsr/menu_icons/menu_inventory.png</file>
+        <file alias="menu_inventory_grey">images/dsr/menu_icons/menu_inventory_grey.png</file>
+        <file alias="menu_inventory_small">images/dsr/menu_icons/menu_inventory_small.png</file>
         <file alias="menu_status">images/dsr/menu_icons/menu_status.png</file>
+        <file alias="menu_status_grey">images/dsr/menu_icons/menu_status_grey.png</file>
+        <file alias="menu_status_small">images/dsr/menu_icons/menu_status_small.png</file>
         <file alias="res_bleed">images/dsr/status_icons/res_bleed.png</file>
         <file alias="res_curse">images/dsr/status_icons/res_curse.png</file>
         <file alias="res_poison">images/dsr/status_icons/res_poison.png</file>
