@@ -39,6 +39,7 @@
         <file alias="res_bleed">images/dsr/status_icons/res_bleed.png</file>
         <file alias="res_curse">images/dsr/status_icons/res_curse.png</file>
         <file alias="res_poison">images/dsr/status_icons/res_poison.png</file>
+        <file alias="seal_equipped">images/dsr/menu_icons/seal_equipped.png</file>
         <file alias="selected_plate">images/dsr/menu_icons/selected_plate.png</file>
         <file alias="stamina">images/dsr/status_icons/stamina.png</file>
         <file alias="unknown">images/dsr/unknown.png</file>

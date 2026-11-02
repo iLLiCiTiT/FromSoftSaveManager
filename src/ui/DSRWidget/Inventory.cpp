@@ -387,7 +387,7 @@ void InventoryWidget::drawList(QPainter& painter) {
 
         const int iconSize = iconColW - px(26);
         drawItemIcon(painter, entry, QRect(iconCol.center().x() - iconSize / 2, iconCol.top() + px(8), iconSize, iconSize));
-        if (entry.equipped) drawEquippedSeal(painter, QPointF(iconCol.left() + px(16), iconCol.top() + px(14)), px(13));
+        if (entry.equipped) drawEquippedSeal(painter, QPointF(iconCol.left() + px(20), iconCol.top() + px(18)), px(22));
         // Count at the bottom right of the icon, on a short rule, for goods that stack.
         const bool showCount = isStackCategory(entry.category)
             || (entry.category == ItemCategory::KeyItems && entry.amount > 1);

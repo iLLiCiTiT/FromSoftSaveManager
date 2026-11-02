@@ -211,20 +211,12 @@ namespace fssm::ui::dsr {
         painter.restore();
     }
 
-    // Red wax seal the game puts on equipped items.
+    // Red wax seal the game puts on equipped items (Menu11 in the game's menu_1.tpf.dcx).
     inline void drawEquippedSeal(QPainter& painter, const QPointF& center, double radius) {
+        static const QPixmap seal(":/dsr_images/seal_equipped");
         painter.save();
-        painter.setRenderHint(QPainter::Antialiasing, true);
-        QRadialGradient gradient(center - QPointF(radius * 0.3, radius * 0.3), radius * 1.3);
-        gradient.setColorAt(0.0, QColor(236, 96, 92));
-        gradient.setColorAt(0.6, QColor(178, 32, 36));
-        gradient.setColorAt(1.0, QColor(110, 14, 18));
-        painter.setPen(QPen(QColor(90, 10, 12), 1));
-        painter.setBrush(gradient);
-        painter.drawEllipse(center, radius, radius);
-        painter.setPen(QPen(QColor(255, 170, 160, 150), std::max(1.0, radius / 6)));
-        painter.setBrush(Qt::NoBrush);
-        painter.drawEllipse(center, radius * 0.55, radius * 0.55);
+        painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+        painter.drawPixmap(QRectF(center.x() - radius, center.y() - radius, 2 * radius, 2 * radius), seal, seal.rect());
         painter.restore();
     }
 
