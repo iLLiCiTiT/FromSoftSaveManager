@@ -23,6 +23,9 @@ protected:
     void mouseMoveEvent(QMouseEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
     void leaveEvent(QEvent* event) override;
+    // Clears the hover when the mouse moves on into the pages: going from this widget
+    // into a child sends it no leave event.
+    bool eventFilter(QObject* watched, QEvent* event) override;
 
 private:
     struct Tab {
@@ -30,6 +33,11 @@ private:
         QPixmap icon;
     };
 
+    // Width of a tab with its title, or of its icon alone.
+    int tabWidth(int index, bool iconOnly) const;
+    // The titles don't fit: the tabs other than the current one show only their icon,
+    // like the game's own menu headers; a hovered icon shows its title floating beside it.
+    bool compact() const;
     QRect tabRect(int index) const;
     int tabAt(const QPoint& pos) const;
 

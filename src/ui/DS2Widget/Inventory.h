@@ -9,6 +9,8 @@
 #include "../../parse/DS2/SaveFile.h"
 
 namespace fssm::ui::ds2 {
+// Inventory screen drawn with the game's own menu art (window frame, category
+// tiles, item tiles and pedestals extracted by tools/ds2_items/gen_items.py).
 class InventoryWidget: public QWidget {
     Q_OBJECT
 public:

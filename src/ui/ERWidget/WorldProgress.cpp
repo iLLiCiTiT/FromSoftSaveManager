@@ -7,7 +7,9 @@
 #include <QPainterPath>
 #include <QRadialGradient>
 #include <QWheelEvent>
+#include <climits>
 #include <cmath>
+#include <cstdlib>
 
 #include "../../parse/EldenRing/NpcProgress.h"
 #include "../../parse/EldenRing/WorldProgress.h"
@@ -257,7 +259,7 @@ namespace {
     }
 }
 
-WorldProgressWidget::WorldProgressWidget(QWidget* parent): QWidget(parent) {
+WorldProgressWidget::WorldProgressWidget(WorldPage page, QWidget* parent): QWidget(parent), m_page(page) {
     setAttribute(Qt::WA_TranslucentBackground, true);
     for (auto& scroll : m_scrolls) scroll.setContentDrag(true);
 }
@@ -300,15 +302,6 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
         return;
     }
 
-    int graceCount = 0;
-    int bossCount = 0;
-    const std::vector<Row> graces = groupedRows(GRACES, GRACE_AREAS, m_gracesDiscovered, RowKind::Grace, graceCount);
-    std::vector<Row> bosses = groupedRows(BOSSES, BOSS_AREAS, m_bossesDefeated, RowKind::Boss, bossCount);
-    const std::vector<Row> npcs = npcRows(m_npcStates, m_npcStages, m_npcStepsDone);
-    bosses.insert(bosses.end(), npcs.begin(), npcs.end());
-    const std::vector<Row> endings = endingRows(m_endings);
-    bosses.insert(bosses.end(), endings.begin(), endings.end());
-
     const int gap = px(16);
     const int columnW = (r.width() - gap) / 2;
     const int titleH = px(34);
@@ -323,8 +316,14 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
              : row.kind == RowKind::Step ? stepH
              : row.detail.isEmpty() ? lineH : lineH + detailH;
     };
-    const auto drawColumn = [&](const std::vector<Row>& rows, int column, const QString& title, const QString& value) {
-        const QRect pane(r.left() + column * (columnW + gap), r.top(), columnW, r.height());
+    const auto columnHeight = [&](const std::vector<Row>& rows) {
+        int h = 0;
+        for (size_t i = 0; i < rows.size(); ++i) h += rowHeight(rows[i], i == 0);
+        return h;
+    };
+    // A titled pane whose lists (one, or a long one split in two side by side) scroll together.
+    const auto drawPaneLists = [&](const QRect& pane, const std::vector<std::vector<Row>>& lists, int column,
+                                   const QString& title, const QString& value) {
         drawPane(painter, pane);
         const QRect titleRect(pane.left() + px(12), pane.top() + px(6), pane.width() - px(24), titleH);
         painter.setFont(serifFont(px(19)));
@@ -336,7 +335,7 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
                          std::max(0, pane.bottom() - titleRect.bottom() - px(14)));
         PaintedScroll& scroll = m_scrolls[column];
         int contentH = 0;
-        for (size_t i = 0; i < rows.size(); ++i) contentH += rowHeight(rows[i], i == 0);
+        for (const auto& rows : lists) contentH = std::max(contentH, columnHeight(rows));
         const int barW = std::max(2, px(3));
         scroll.setGeometry(list, QRect(list.right() - barW, list.top(), barW, list.height()), contentH);
         scroll.setStep(3 * lineH);
@@ -344,60 +343,65 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
         painter.save();
         painter.setClipRect(list.adjusted(0, 0, 0, 1), Qt::IntersectClip);
         const int scrollBarW = scroll.scrollable() ? px(10) : 0;
-        int y = list.top() - scroll.value();
-        for (size_t i = 0; i < rows.size(); ++i) {
-            const Row& row = rows[i];
-            const int h = rowHeight(row, i == 0);
-            const QRect full(list.left(), y, list.width() - scrollBarW, h);
-            y += h;
-            if (full.bottom() < list.top() || full.top() > list.bottom()) continue;
-            if (row.kind == RowKind::Area) {
-                const QRect line(full.left(), full.bottom() - areaH + 1, full.width(), areaH);
-                painter.setFont(serifFont(px(16)));
-                const int valueW = QFontMetrics(painter.font()).horizontalAdvance(row.value) + px(10);
-                drawText(painter, line.adjusted(px(4), 0, -valueW, 0), Qt::AlignLeft | Qt::AlignVCenter, row.text,
-                         GOLD_COLOR);
-                drawText(painter, line.adjusted(0, 0, -px(4), 0), Qt::AlignRight | Qt::AlignVCenter, row.value,
-                         GOLD_COLOR);
-                drawRule(painter, line.left(), line.right(), line.bottom() - 1, 110);
-                continue;
-            }
-            if (row.kind == RowKind::Step) {
-                // A smaller line per step, indented to the NPC's name.
-                const int left = full.left() + px(10) + iconSize + px(10);
-                const QRectF box(left, full.center().y() - px(14) / 2.0, px(14), px(14));
-                drawStepMark(painter, box, row.done);
-                painter.setFont(serifFont(px(13)));
-                const int textLeft = int(box.right()) + px(6);
-                drawText(painter, QRect(textLeft, full.top(), full.right() - textLeft - px(4), full.height()),
+        const int listW = (list.width() - scrollBarW - gap * int(lists.size() - 1)) / int(lists.size());
+        for (size_t l = 0; l < lists.size(); ++l) {
+            const std::vector<Row>& rows = lists[l];
+            const int listLeft = list.left() + int(l) * (listW + gap);
+            int y = list.top() - scroll.value();
+            for (size_t i = 0; i < rows.size(); ++i) {
+                const Row& row = rows[i];
+                const int h = rowHeight(row, i == 0);
+                const QRect full(listLeft, y, listW, h);
+                y += h;
+                if (full.bottom() < list.top() || full.top() > list.bottom()) continue;
+                if (row.kind == RowKind::Area) {
+                    const QRect line(full.left(), full.bottom() - areaH + 1, full.width(), areaH);
+                    painter.setFont(serifFont(px(16)));
+                    const int valueW = QFontMetrics(painter.font()).horizontalAdvance(row.value) + px(10);
+                    drawText(painter, line.adjusted(px(4), 0, -valueW, 0), Qt::AlignLeft | Qt::AlignVCenter, row.text,
+                             GOLD_COLOR);
+                    drawText(painter, line.adjusted(0, 0, -px(4), 0), Qt::AlignRight | Qt::AlignVCenter, row.value,
+                             GOLD_COLOR);
+                    drawRule(painter, line.left(), line.right(), line.bottom() - 1, 110);
+                    continue;
+                }
+                if (row.kind == RowKind::Step) {
+                    // A smaller line per step, indented to the NPC's name.
+                    const int left = full.left() + px(10) + iconSize + px(10);
+                    const QRectF box(left, full.center().y() - px(14) / 2.0, px(14), px(14));
+                    drawStepMark(painter, box, row.done);
+                    painter.setFont(serifFont(px(13)));
+                    const int textLeft = int(box.right()) + px(6);
+                    drawText(painter, QRect(textLeft, full.top(), full.right() - textLeft - px(4), full.height()),
+                             Qt::AlignLeft | Qt::AlignVCenter, row.text, row.done ? TEXT_COLOR : DIM_TEXT_COLOR);
+                    continue;
+                }
+                const QRect line(full.left(), full.top(), full.width(), lineH);
+                const QRectF icon(line.left() + px(10), line.center().y() - iconSize / 2.0, iconSize, iconSize);
+                if (row.kind == RowKind::Grace) {
+                    drawGraceMark(painter, icon, row.done);
+                } else if (row.kind == RowKind::Boss || row.kind == RowKind::Ending) {
+                    drawBossMark(painter, icon, row.done);
+                } else {
+                    drawNpcMark(painter, icon, row.npc);
+                }
+                painter.setFont(serifFont(px(15)));
+                const int textLeft = int(icon.right()) + px(10);
+                int textRight = line.right();
+                if (!row.value.isEmpty()) {
+                    drawText(painter, QRect(textLeft, line.top(), line.right() - textLeft - px(4), line.height()),
+                             Qt::AlignRight | Qt::AlignVCenter, row.value,
+                             row.npc == NpcState::Hostile ? HOSTILE_COLOR
+                             : row.kind == RowKind::Ending && !row.done ? GOLD_COLOR : DIM_TEXT_COLOR);
+                    textRight -= QFontMetrics(painter.font()).horizontalAdvance(row.value) + px(14);
+                }
+                drawText(painter, QRect(textLeft, line.top(), textRight - textLeft, line.height()),
                          Qt::AlignLeft | Qt::AlignVCenter, row.text, row.done ? TEXT_COLOR : DIM_TEXT_COLOR);
-                continue;
-            }
-            const QRect line(full.left(), full.top(), full.width(), lineH);
-            const QRectF icon(line.left() + px(10), line.center().y() - iconSize / 2.0, iconSize, iconSize);
-            if (row.kind == RowKind::Grace) {
-                drawGraceMark(painter, icon, row.done);
-            } else if (row.kind == RowKind::Boss || row.kind == RowKind::Ending) {
-                drawBossMark(painter, icon, row.done);
-            } else {
-                drawNpcMark(painter, icon, row.npc);
-            }
-            painter.setFont(serifFont(px(15)));
-            const int textLeft = int(icon.right()) + px(10);
-            int textRight = line.right();
-            if (!row.value.isEmpty()) {
-                drawText(painter, QRect(textLeft, line.top(), line.right() - textLeft - px(4), line.height()),
-                         Qt::AlignRight | Qt::AlignVCenter, row.value,
-                         row.npc == NpcState::Hostile ? HOSTILE_COLOR
-                         : row.kind == RowKind::Ending && !row.done ? GOLD_COLOR : DIM_TEXT_COLOR);
-                textRight -= QFontMetrics(painter.font()).horizontalAdvance(row.value) + px(14);
-            }
-            drawText(painter, QRect(textLeft, line.top(), textRight - textLeft, line.height()),
-                     Qt::AlignLeft | Qt::AlignVCenter, row.text, row.done ? TEXT_COLOR : DIM_TEXT_COLOR);
-            if (!row.detail.isEmpty()) {
-                painter.setFont(serifFont(px(12)));
-                drawText(painter, QRect(textLeft, line.bottom() - px(3), full.right() - textLeft - px(4), detailH),
-                         Qt::AlignLeft | Qt::AlignTop, row.detail, row.done ? GOLD_COLOR : DIM_TEXT_COLOR);
+                if (!row.detail.isEmpty()) {
+                    painter.setFont(serifFont(px(12)));
+                    drawText(painter, QRect(textLeft, line.bottom() - px(3), full.right() - textLeft - px(4), detailH),
+                             Qt::AlignLeft | Qt::AlignTop, row.detail, row.done ? GOLD_COLOR : DIM_TEXT_COLOR);
+                }
             }
         }
         painter.restore();
@@ -405,12 +409,49 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
         // Thin scroll bar along the right edge, like the inventory grid's.
         scroll.paint(painter, QColor(0, 0, 0, 120), GOLD_COLOR);
     };
-    drawColumn(graces, 0, "Sites of Grace", count(graceCount, int(GRACES.size())));
-    drawColumn(bosses, 1, "Bosses", count(bossCount, int(BOSSES.size())));
+
+    if (m_page == WorldPage::Graces) {
+        // One pane across the page, the regions in two balanced lists when it is wide enough.
+        m_scrolls[1].clear();
+        int graceCount = 0;
+        const std::vector<Row> graces = groupedRows(GRACES, GRACE_AREAS, m_gracesDiscovered, RowKind::Grace, graceCount);
+        std::vector<std::vector<Row>> lists = {graces};
+        if (r.width() >= px(560)) {
+            // Split at the region start closest to the middle.
+            const int half = columnHeight(graces) / 2;
+            size_t split = 0;
+            int best = INT_MAX;
+            int y = 0;
+            for (size_t i = 0; i < graces.size(); ++i) {
+                if (graces[i].kind == RowKind::Area && i > 0 && std::abs(y - half) < best) {
+                    best = std::abs(y - half);
+                    split = i;
+                }
+                y += rowHeight(graces[i], i == 0);
+            }
+            if (split > 0) {
+                lists = {std::vector<Row>(graces.begin(), graces.begin() + split),
+                         std::vector<Row>(graces.begin() + split, graces.end())};
+            }
+        }
+        drawPaneLists(r, lists, 0, "Sites of Grace", count(graceCount, int(GRACES.size())));
+        return;
+    }
+
+    int bossCount = 0;
+    const std::vector<Row> bosses = groupedRows(BOSSES, BOSS_AREAS, m_bossesDefeated, RowKind::Boss, bossCount);
+    // The pane's title names the NPCs, so their list starts without its heading.
+    std::vector<Row> npcs = npcRows(m_npcStates, m_npcStages, m_npcStepsDone);
+    npcs.erase(npcs.begin());
+    const std::vector<Row> endings = endingRows(m_endings);
+    npcs.insert(npcs.end(), endings.begin(), endings.end());
+    drawPaneLists(QRect(r.left(), r.top(), columnW, r.height()), {bosses}, 0,
+                  "Bosses", count(bossCount, int(BOSSES.size())));
+    drawPaneLists(QRect(r.left() + columnW + gap, r.top(), columnW, r.height()), {npcs}, 1, "NPCs", "");
 }
 
 void WorldProgressWidget::wheelEvent(QWheelEvent* event) {
-    const int column = event->position().toPoint().x() < m_scrolls[1].viewport().left() ? 0 : 1;
+    const int column = m_page == WorldPage::Graces || event->position().toPoint().x() < m_scrolls[1].viewport().left() ? 0 : 1;
     m_scrolls[column].wheel(event, true);
 }
 

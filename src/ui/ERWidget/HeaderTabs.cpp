@@ -10,14 +10,14 @@
 
 namespace fssm::ui::er {
 namespace {
-    // Fixed pixel sizes: the header keeps one size when the window is resized. Height,
-    // font and rule position match the "Characters" title next to it (CharacterList.cpp).
+    // Fixed pixel sizes: the header keeps one size when the window is resized. Height
+    // and rule position match the "Characters" title next to it (CharacterList.cpp).
     constexpr int BAR_HEIGHT = 30;
     constexpr int RULE_Y = BAR_HEIGHT - 5;
-    constexpr int ICON_SIZE = 18;
+    constexpr int ICON_SIZE = 16;
     constexpr int ICON_GAP = 6;
     constexpr int TAB_SPACING = 24;
-    constexpr int FONT_SIZE = 17;
+    constexpr int FONT_SIZE = 15;
     constexpr int TITLE_LINE_HEIGHT = 10;
 
     const QColor TEXT_COLOR(228, 224, 210);
@@ -47,6 +47,7 @@ HeaderTabs::HeaderTabs(QWidget* parent): QWidget(parent) {
     m_titleLine = QPixmap(":/er_images/title_line");
     m_stack = new QStackedWidget(this);
     m_stack->setAttribute(Qt::WA_TranslucentBackground, true);
+    m_stack->installEventFilter(this);
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, BAR_HEIGHT, 0, 0);
     layout->addWidget(m_stack);
@@ -74,11 +75,22 @@ void HeaderTabs::setCurrentIndex(int index) {
     update();
 }
 
+int HeaderTabs::tabWidth(int index, bool iconOnly) const {
+    if (iconOnly) return ICON_SIZE;
+    return ICON_SIZE + ICON_GAP + QFontMetrics(serifFont(FONT_SIZE)).horizontalAdvance(m_tabs[index].title) + 4;
+}
+
+bool HeaderTabs::compact() const {
+    int x = 12;
+    for (int i = 0; i < int(m_tabs.size()); ++i) x += tabWidth(i, false) + TAB_SPACING;
+    return x - TAB_SPACING > width();
+}
+
 QRect HeaderTabs::tabRect(int index) const {
-    const QFontMetrics fm(serifFont(FONT_SIZE));
+    const bool iconsOnly = compact();
     int x = 12;
     for (int i = 0; i < int(m_tabs.size()); ++i) {
-        const int w = ICON_SIZE + ICON_GAP + fm.horizontalAdvance(m_tabs[i].title) + 4;
+        const int w = tabWidth(i, iconsOnly && i != m_current);
         if (i == index) return {x, 0, w, BAR_HEIGHT};
         x += w + TAB_SPACING;
     }
@@ -162,8 +174,27 @@ void HeaderTabs::paintEvent(QPaintEvent* event) {
         const QPixmap& icon = m_tabs[i].icon;
         painter.drawPixmap(content.left() + (ICON_SIZE - icon.width()) / 2,
                            content.top() + (content.height() - icon.height()) / 2, icon);
-        drawText(painter, content.adjusted(ICON_SIZE + ICON_GAP, 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter,
-                 m_tabs[i].title, current ? TEXT_COLOR : DIM_TEXT_COLOR);
+        if (content.width() > ICON_SIZE) {
+            drawText(painter, content.adjusted(ICON_SIZE + ICON_GAP, 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter,
+                     m_tabs[i].title, current ? TEXT_COLOR : DIM_TEXT_COLOR);
+        }
+        painter.setOpacity(1.0);
+    }
+
+    // The hovered icon's title floats beside it, over the tabs after it (still visible
+    // through the translucent label), so nothing moves.
+    if (m_hover >= 0 && m_hover != m_current && compact()) {
+        const QRect r = tabRect(m_hover);
+        const QFontMetrics fm(painter.font());
+        const int h = fm.height() + 6;
+        QRect label(r.right() + 6, bar.top() + (RULE_Y - bar.top() - h) / 2, fm.horizontalAdvance(m_tabs[m_hover].title) + 20, h);
+        if (label.right() > width() - 1) label.moveRight(width() - 1);
+        // Text and border included, so the icons under the label stay visible.
+        painter.setOpacity(0.7);
+        painter.setPen(QPen(QColor(GOLD_COLOR.red(), GOLD_COLOR.green(), GOLD_COLOR.blue(), 150), 1));
+        painter.setBrush(QColor(14, 13, 10, 140));
+        painter.drawRect(label.adjusted(0, 0, -1, -1));
+        drawText(painter, label, Qt::AlignCenter, m_tabs[m_hover].title, TEXT_COLOR);
         painter.setOpacity(1.0);
     }
 }
@@ -172,7 +203,6 @@ void HeaderTabs::mouseMoveEvent(QMouseEvent* event) {
     const int hover = tabAt(event->pos());
     if (hover != m_hover) {
         m_hover = hover;
-        setCursor(hover >= 0 && hover != m_current ? Qt::PointingHandCursor : Qt::ArrowCursor);
         update();
     }
     QWidget::mouseMoveEvent(event);
@@ -191,5 +221,14 @@ void HeaderTabs::leaveEvent(QEvent* event) {
     m_hover = -1;
     update();
     QWidget::leaveEvent(event);
+}
+
+bool HeaderTabs::eventFilter(QObject* watched, QEvent* event) {
+    if (watched == m_stack && event->type() == QEvent::Enter && m_hover >= 0) {
+        m_hover = -1;
+        unsetCursor();
+        update();
+    }
+    return QWidget::eventFilter(watched, event);
 }
 }

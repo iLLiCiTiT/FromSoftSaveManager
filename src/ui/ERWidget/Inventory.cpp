@@ -124,7 +124,7 @@ namespace {
         return (item.itemId >> 28) == 0 && item.baseItem.category != ItemCategory::Ammunition;
     }
 
-    // The game's own flag: consumables,
+    // The game's own flag (see tools/er_items/gen_items.py): consumables,
     // materials and arrows show their count, gear, spells and unique tools don't,
     // even when holding several. A flask with no charges allocated is stored as
     // its "empty" variant, which shows no number.

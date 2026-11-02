@@ -6,18 +6,20 @@
 #include <QPainterPath>
 #include <QWheelEvent>
 #include <algorithm>
+#include <climits>
+#include <cmath>
+#include <cstdlib>
 #include <vector>
 
+#include "Painting.h"
 #include "../../parse/DSR/WorldProgress.h"
 
 namespace fssm::ui::dsr {
 namespace {
-    const QColor TEXT_COLOR(255, 255, 255);
-    const QColor DIM_TEXT_COLOR(255, 255, 255, 90);
-    const QColor AREA_COLOR(169, 155, 130);
-    const QColor RULE_COLOR(169, 155, 130, 110);
+    // Same scale as the Status screen: rows and fonts keep one size; resizing only
+    // changes how much fits.
+    constexpr double FIXED_SCALE = 0.5;
     const QColor UNDONE_MARK_COLOR(120, 116, 110);
-    const QColor HOSTILE_COLOR(206, 92, 72);
 
     enum class RowKind {
         Heading,    // "Bonfires 30/ 44"
@@ -40,7 +42,7 @@ namespace {
     };
 
     QString count(int done, int total) {
-        return QString("%1/ %2").arg(done).arg(total);
+        return QString("%1/%2").arg(done).arg(total);
     }
 
     QString fromView(std::string_view s) {
@@ -110,33 +112,6 @@ namespace {
         return rows;
     }
 
-    // Flame when lit, a grey outline when not.
-    void drawBonfireMark(QPainter& painter, const QRectF& rect, bool lit) {
-        painter.save();
-        const double w = rect.width();
-        const double h = rect.height();
-        const double cx = rect.center().x();
-        const double top = rect.top() + h * 0.08;
-        const double base = rect.bottom() - h * 0.08;
-        QPainterPath flame;
-        flame.moveTo(cx, top);
-        flame.cubicTo(cx + w * 0.2, top + h * 0.3, cx + w * 0.42, base - h * 0.25, cx, base);
-        flame.cubicTo(cx - w * 0.42, base - h * 0.25, cx - w * 0.2, top + h * 0.3, cx, top);
-        if (lit) {
-            QRadialGradient gradient(QPointF(cx, base - h * 0.2), h * 0.8);
-            gradient.setColorAt(0.0, QColor(255, 236, 160));
-            gradient.setColorAt(0.5, QColor(242, 140, 48));
-            gradient.setColorAt(1.0, QColor(170, 50, 20));
-            painter.setPen(Qt::NoPen);
-            painter.setBrush(gradient);
-        } else {
-            painter.setPen(QPen(UNDONE_MARK_COLOR, std::max(1.0, w / 12)));
-            painter.setBrush(Qt::NoBrush);
-        }
-        painter.drawPath(flame);
-        painter.restore();
-    }
-
     // Small diamond marking a boss: filled when defeated.
     void drawBossMark(QPainter& painter, const QRectF& rect, bool defeated) {
         painter.save();
@@ -189,14 +164,18 @@ namespace {
     }
 }
 
-WorldProgressWidget::WorldProgressWidget(QWidget* parent): QWidget(parent) {
+WorldProgressWidget::WorldProgressWidget(WorldPage page, QWidget* parent): QWidget(parent), m_page(page) {
     setAttribute(Qt::WA_TranslucentBackground, true);
     m_scroll.setContentDrag(true);
+    m_npcScroll.setContentDrag(true);
 }
 
 void WorldProgressWidget::setCharacter(const fssm::parse::dsr::DSRCharacterInfo* charInfo) {
     const bool sameCharacter = charInfo != nullptr && m_character.has_value() && m_character->index == charInfo->index;
-    if (!sameCharacter) m_scroll.reset();
+    if (!sameCharacter) {
+        m_scroll.reset();
+        m_npcScroll.reset();
+    }
     if (charInfo != nullptr) {
         m_character = *charInfo;
     } else {
@@ -210,35 +189,33 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
     painter.setClipRect(event->rect());
     painter.setRenderHint(QPainter::Antialiasing, true);
 
-    const QRect body = rect().adjusted(4, 4, -4, -4);
+    const double s = FIXED_SCALE;
+    const auto px = [s](double v) { return int(std::round(v * s)); };
     if (!m_character.has_value()) {
         m_scroll.clear();
-        painter.setPen(DIM_TEXT_COLOR);
-        painter.drawText(body, Qt::AlignCenter, "No character selected");
+        m_npcScroll.clear();
+        painter.setFont(serifFont(px(36)));
+        drawShadowText(painter, rect(), Qt::AlignCenter, "No character selected", DIM_TEXT_COLOR);
         return;
     }
     const auto& c = *m_character;
 
-    const QFont textFont = font();
-    QFont headingFont = font();
-    headingFont.setPointSizeF(textFont.pointSizeF() * 1.25);
-    headingFont.setBold(true);
-    const QFontMetrics fm(textFont);
-    QFont detailFont = font();
-    detailFont.setPointSizeF(textFont.pointSizeF() * 0.85);
-    const QFontMetrics detailFm(detailFont);
-    const int lineH = fm.height() + 6;
-    const int detailH = detailFm.height() + 2;
-    const int stepH = detailFm.height() + 3;
-    const int areaH = lineH + 2;
-    const int areaGap = 8;
-    const int headingH = QFontMetrics(headingFont).height() + 10;
-    const int iconSize = fm.height() - 2;
-    const int scrollBarW = 10;
+    const QFont headingFont = serifFont(px(34));
+    const QFont textFont = serifFont(px(28));
+    const QFont detailFont = serifFont(px(23));
+    const int lineH = px(46);
+    const int detailH = px(32);
+    const int stepH = px(36);
+    const int areaH = px(50);
+    const int areaGap = px(16);
+    const int headingH = px(58);
+    const int iconSize = px(34);
+    const int scrollBarW = px(20);
+    const int pad = px(30);
 
     const auto rowHeight = [&](const Row& row, bool first) {
         switch (row.kind) {
-            case RowKind::Heading: return (first ? 0 : 16) + headingH;
+            case RowKind::Heading: return (first ? 0 : px(32)) + headingH;
             case RowKind::Area: return areaGap + areaH;
             case RowKind::NpcStep: return stepH;
             default: return row.detail.isEmpty() ? lineH : lineH + detailH;
@@ -250,138 +227,194 @@ void WorldProgressWidget::paintEvent(QPaintEvent* event) {
         return h;
     };
 
-    const std::vector<Row> bonfires = bonfireRows(c);
-    std::vector<Row> bosses = bossRows(c);
-    const std::vector<Row> npcs = npcRows(c);
-    bosses.insert(bosses.end(), npcs.begin(), npcs.end());
-    const int gap = 24;
-    const bool twoColumns = body.width() >= 480;
-    const int columnWidth = twoColumns ? (body.width() - scrollBarW - gap) / 2 : body.width() - scrollBarW;
-    std::vector<Row> single;
-    if (!twoColumns) {
-        single = bonfires;
-        single.insert(single.end(), bosses.begin(), bosses.end());
-    }
-    const int contentH = twoColumns ? std::max(columnHeight(bonfires), columnHeight(bosses)) : columnHeight(single);
-    m_scroll.setGeometry(body, QRect(body.right() - 3, body.top(), 3, body.height()), contentH);
-    m_scroll.setStep(3 * lineH);
-
-    painter.save();
-    painter.setClipRect(body.adjusted(0, 0, 0, 1), Qt::IntersectClip);
-    const auto drawRule = [&](int left, int right, int y) {
-        painter.setPen(QPen(RULE_COLOR, 1));
-        painter.drawLine(left, y, right, y);
-    };
-    const auto drawColumn = [&](const std::vector<Row>& rows, int x) {
-        int y = body.top() - m_scroll.value();
+    // Draws rows into area, the first row at top (already scrolled), clipped to clip.
+    const auto drawColumn = [&](const std::vector<Row>& rows, const QRect& area, int top, const QRect& clip) {
+        painter.save();
+        painter.setClipRect(clip.adjusted(0, 0, 0, 1), Qt::IntersectClip);
+        const int x = area.left();
+        const int columnWidth = area.width();
+        int y = top;
         for (size_t i = 0; i < rows.size(); ++i) {
             const Row& row = rows[i];
             const int h = rowHeight(row, i == 0);
             const QRect full(x, y, columnWidth, h);
             y += h;
-            if (full.bottom() < body.top() || full.top() > body.bottom()) continue;
+            if (full.bottom() < clip.top() || full.top() > clip.bottom()) continue;
             switch (row.kind) {
                 case RowKind::Heading: {
                     const QRect line(x, full.bottom() - headingH + 1, columnWidth, headingH);
                     painter.setFont(headingFont);
-                    painter.setPen(TEXT_COLOR);
-                    painter.drawText(line.adjusted(4, 0, 0, 0), Qt::AlignLeft | Qt::AlignVCenter, row.text);
-                    painter.drawText(line.adjusted(0, 0, -4, 0), Qt::AlignRight | Qt::AlignVCenter, row.value);
-                    drawRule(line.left(), line.right(), line.bottom());
+                    drawShadowText(painter, line.adjusted(px(4), 0, 0, -px(4)), Qt::AlignLeft | Qt::AlignVCenter, row.text);
+                    drawShadowText(painter, line.adjusted(0, 0, -px(4), -px(4)), Qt::AlignRight | Qt::AlignVCenter, row.value);
+                    drawRule(painter, line.left(), line.right(), line.bottom() - 1);
                     break;
                 }
                 case RowKind::Area: {
                     const QRect line(x, full.bottom() - areaH + 1, columnWidth, areaH);
                     painter.setFont(textFont);
-                    painter.setPen(AREA_COLOR);
-                    const int valueW = fm.horizontalAdvance(row.value) + 10;
-                    painter.drawText(line.adjusted(4, 0, -valueW, 0), Qt::AlignLeft | Qt::AlignVCenter,
-                                     fm.elidedText(row.text, Qt::ElideRight, line.width() - valueW - 4));
-                    painter.drawText(line.adjusted(0, 0, -4, 0), Qt::AlignRight | Qt::AlignVCenter, row.value);
-                    drawRule(line.left(), line.right(), line.bottom() - 1);
+                    const QFontMetrics fm(painter.font());
+                    const int valueW = fm.horizontalAdvance(row.value) + px(20);
+                    drawShadowText(painter, line.adjusted(px(4), 0, -valueW, -px(2)), Qt::AlignLeft | Qt::AlignVCenter,
+                                   row.text, AREA_COLOR);
+                    drawShadowText(painter, line.adjusted(0, 0, -px(4), -px(2)), Qt::AlignRight | Qt::AlignVCenter,
+                                   row.value, AREA_COLOR);
+                    drawRule(painter, line.left(), line.right(), line.bottom() - 1, 140);
                     break;
                 }
                 case RowKind::NpcStep: {
                     // Under the NPC's name, a little below the stage line.
-                    const int markSize = std::max(6, detailFm.height() - 6);
-                    const int left = x + 10 + iconSize + 8;
+                    const int markSize = px(20);
+                    const int left = x + px(20) + iconSize + px(16);
                     const QRectF mark(left, full.center().y() - markSize / 2.0, markSize, markSize);
                     drawStepMark(painter, mark, row.done);
-                    const QRect textRect(int(mark.right()) + 6, full.top(), full.right() - int(mark.right()) - 10, full.height());
+                    const QRect textRect(int(mark.right()) + px(12), full.top(), full.right() - int(mark.right()) - px(20), full.height());
                     painter.setFont(detailFont);
-                    painter.setPen(row.done ? TEXT_COLOR : DIM_TEXT_COLOR);
-                    painter.drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter,
-                                     detailFm.elidedText(row.text, Qt::ElideRight, textRect.width()));
+                    drawShadowText(painter, textRect, Qt::AlignLeft | Qt::AlignVCenter, row.text,
+                                   row.done ? TEXT_COLOR : DIM_TEXT_COLOR);
                     break;
                 }
                 case RowKind::Bonfire:
                 case RowKind::Boss:
                 case RowKind::Npc: {
                     const QRect line(full.left(), full.top(), full.width(), lineH);
-                    const QRectF icon(x + 10, line.center().y() - iconSize / 2.0, iconSize, iconSize);
+                    const QRectF icon(x + px(20), line.center().y() - iconSize / 2.0, iconSize, iconSize);
                     const QRectF smallIcon = icon.adjusted(iconSize * 0.2, iconSize * 0.2, -iconSize * 0.2, -iconSize * 0.2);
                     if (row.kind == RowKind::Bonfire) {
-                        drawBonfireMark(painter, icon, row.done);
+                        drawBonfire(painter, icon, row.done);
                     } else if (row.kind == RowKind::Boss) {
                         drawBossMark(painter, smallIcon, row.done);
                     } else {
                         drawNpcMark(painter, smallIcon, row.npc);
                     }
                     painter.setFont(textFont);
-                    const int textLeft = int(icon.right()) + 8;
+                    const QFontMetrics fm(painter.font());
+                    const int textLeft = int(icon.right()) + px(16);
                     int valueW = 0;
                     if (!row.value.isEmpty()) {
-                        valueW = fm.horizontalAdvance(row.value) + 10;
-                        painter.setPen(row.npc == NpcState::Hostile ? HOSTILE_COLOR : row.done ? AREA_COLOR : DIM_TEXT_COLOR);
-                        painter.drawText(line.adjusted(0, 0, -4, 0), Qt::AlignRight | Qt::AlignVCenter, row.value);
+                        valueW = fm.horizontalAdvance(row.value) + px(20);
+                        const QColor valueColor = row.npc == NpcState::Hostile ? HOSTILE_COLOR
+                            : row.done ? AREA_COLOR : DIM_TEXT_COLOR;
+                        drawShadowText(painter, line.adjusted(0, 0, -px(4), 0), Qt::AlignRight | Qt::AlignVCenter,
+                                       row.value, valueColor);
                     }
-                    painter.setPen(row.done ? TEXT_COLOR : DIM_TEXT_COLOR);
-                    const QRect textRect(textLeft, line.top(), line.right() - textLeft - valueW, line.height());
-                    painter.drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter,
-                                     fm.elidedText(row.text, Qt::ElideRight, textRect.width()));
+                    drawShadowText(painter, QRect(textLeft, line.top(), line.right() - textLeft - valueW, line.height()),
+                                   Qt::AlignLeft | Qt::AlignVCenter, row.text, row.done ? TEXT_COLOR : DIM_TEXT_COLOR);
                     if (!row.detail.isEmpty()) {
-                        const QRect detailRect(textLeft, line.bottom() - 3, full.right() - textLeft - 4, detailH);
+                        const QRect detailRect(textLeft, line.bottom() - px(6), full.right() - textLeft - px(4), detailH);
                         painter.setFont(detailFont);
-                        painter.setPen(row.done ? AREA_COLOR : DIM_TEXT_COLOR);
-                        painter.drawText(detailRect, Qt::AlignLeft | Qt::AlignTop,
-                                         detailFm.elidedText(row.detail, Qt::ElideRight, detailRect.width()));
+                        drawShadowText(painter, detailRect, Qt::AlignLeft | Qt::AlignTop, row.detail,
+                                       row.done ? AREA_COLOR : DIM_TEXT_COLOR);
                     }
                     break;
                 }
             }
         }
+        painter.restore();
     };
-    if (twoColumns) {
-        drawColumn(bonfires, body.left());
-        drawColumn(bosses, body.left() + columnWidth + gap);
-    } else {
-        drawColumn(single, body.left());
-    }
-    painter.restore();
+    // Thin scroll bar along a panel's inner right edge.
+    const int barW = std::max(2, px(6));
+    const auto barTrack = [&](const QRect& column) {
+        return QRect(column.right() - barW + 1, column.top(), barW, column.height());
+    };
+    const QColor trackColor(0, 0, 0, 120);
+    const int gap = px(16);
+    const QRect page = rect();
+    const bool twoColumns = page.width() >= px(960);
 
-    // Thin scroll bar along the right edge.
-    m_scroll.paint(painter, QColor(0, 0, 0, 120), AREA_COLOR);
+    if (m_page == WorldPage::Bonfires) {
+        // One framed panel; the heading across it stays put and the areas scroll below
+        // it, in two balanced columns when it fits.
+        m_npcScroll.clear();
+        drawPanelFrame(painter, page, s * 1.4);
+        const QRect body = page.adjusted(pad, pad, -pad + px(10), -pad);
+        std::vector<Row> rows = bonfireRows(c);
+        const std::vector<Row> heading(rows.begin(), rows.begin() + 1);
+        rows.erase(rows.begin());
+        const int contentW = body.width() - scrollBarW;
+        const int columnGap = px(48);
+        const int columnWidth = twoColumns ? (contentW - columnGap) / 2 : contentW;
+        size_t split = rows.size();
+        if (twoColumns) {
+            // The area start closest to the middle of the list.
+            const int half = columnHeight(rows) / 2;
+            int y = 0;
+            int best = INT_MAX;
+            for (size_t i = 0; i < rows.size(); ++i) {
+                if (rows[i].kind == RowKind::Area && i > 0 && std::abs(y - half) < best) {
+                    best = std::abs(y - half);
+                    split = i;
+                }
+                y += rowHeight(rows[i], false);
+            }
+        }
+        const std::vector<Row> left(rows.begin(), rows.begin() + split);
+        const std::vector<Row> right(rows.begin() + split, rows.end());
+        const QRect list = body.adjusted(0, rowHeight(heading.front(), true), 0, 0);
+        m_scroll.setGeometry(list, barTrack(list), std::max(columnHeight(left), columnHeight(right)));
+        m_scroll.setStep(3 * lineH);
+        const int top = list.top() - m_scroll.value();
+        drawColumn(heading, QRect(body.left(), 0, contentW, 0), body.top(), body);
+        drawColumn(left, QRect(body.left(), 0, columnWidth, 0), top, list);
+        if (!right.empty()) drawColumn(right, QRect(body.left() + columnWidth + columnGap, 0, columnWidth, 0), top, list);
+        m_scroll.paint(painter, trackColor, GOLD_COLOR);
+        return;
+    }
+
+    // Bosses and NPCs in framed panels side by side, or stacked when narrow; each
+    // panel scrolls on its own.
+    QRect bossPanel;
+    QRect npcPanel;
+    if (twoColumns) {
+        const int w = (page.width() - gap) / 2;
+        bossPanel = QRect(page.left(), page.top(), w, page.height());
+        npcPanel = QRect(page.right() - w + 1, page.top(), w, page.height());
+    } else {
+        const int h = (page.height() - gap) / 2;
+        bossPanel = QRect(page.left(), page.top(), page.width(), h);
+        npcPanel = QRect(page.left(), page.bottom() - h + 1, page.width(), h);
+    }
+    // Each panel's heading stays put; its rows scroll below it.
+    const auto drawProgressPanel = [&](const std::vector<Row>& rows, const QRect& panel, PaintedScroll& scroll) {
+        drawPanelFrame(painter, panel, s * 1.4);
+        const QRect area = panel.adjusted(pad, pad, -pad + px(10), -pad);
+        const std::vector<Row> heading(rows.begin(), rows.begin() + 1);
+        const std::vector<Row> entries(rows.begin() + 1, rows.end());
+        const QRect list = area.adjusted(0, rowHeight(heading.front(), true) + px(8), 0, 0);
+        scroll.setGeometry(list, barTrack(list), columnHeight(entries));
+        scroll.setStep(3 * lineH);
+        drawColumn(heading, area.adjusted(0, 0, -scrollBarW, 0), area.top(), area);
+        drawColumn(entries, list.adjusted(0, 0, -scrollBarW, 0), list.top() - scroll.value(), list);
+        scroll.paint(painter, trackColor, GOLD_COLOR);
+    };
+    drawProgressPanel(bossRows(c), bossPanel, m_scroll);
+    drawProgressPanel(npcRows(c), npcPanel, m_npcScroll);
 }
 
 void WorldProgressWidget::wheelEvent(QWheelEvent* event) {
     if (!m_character.has_value()) return;
-    m_scroll.wheel(event, true);
+    // The bonfires page scrolls from anywhere, the progress columns under the pointer.
+    if (m_page == WorldPage::Bonfires) {
+        m_scroll.wheel(event, true);
+    } else if (!m_scroll.wheel(event)) {
+        m_npcScroll.wheel(event);
+    }
 }
 
 void WorldProgressWidget::mousePressEvent(QMouseEvent* event) {
-    if (!m_scroll.mousePress(event)) QWidget::mousePressEvent(event);
+    if (!m_scroll.mousePress(event) && !m_npcScroll.mousePress(event)) QWidget::mousePressEvent(event);
 }
 
 void WorldProgressWidget::mouseMoveEvent(QMouseEvent* event) {
-    if (!m_scroll.mouseMove(event)) QWidget::mouseMoveEvent(event);
+    if (!m_scroll.mouseMove(event) && !m_npcScroll.mouseMove(event)) QWidget::mouseMoveEvent(event);
 }
 
 void WorldProgressWidget::mouseReleaseEvent(QMouseEvent* event) {
-    if (!m_scroll.mouseRelease(event)) QWidget::mouseReleaseEvent(event);
+    if (!m_scroll.mouseRelease(event) && !m_npcScroll.mouseRelease(event)) QWidget::mouseReleaseEvent(event);
 }
 
 void WorldProgressWidget::leaveEvent(QEvent* event) {
     m_scroll.leave();
+    m_npcScroll.leave();
     QWidget::leaveEvent(event);
 }
 }

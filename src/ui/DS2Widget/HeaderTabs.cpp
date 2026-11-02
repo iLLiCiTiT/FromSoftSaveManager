@@ -34,6 +34,7 @@ HeaderTabs::HeaderTabs(QWidget* parent): QWidget(parent) {
     m_selectedBand = QPixmap(":/ds2_images/ui_row_selected");
     m_stack = new QStackedWidget(this);
     m_stack->setAttribute(Qt::WA_TranslucentBackground, true);
+    m_stack->installEventFilter(this);
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, HEADER_HEIGHT, 0, 0);
     layout->addWidget(m_stack);
@@ -58,11 +59,23 @@ void HeaderTabs::setCurrentIndex(int index) {
     update();
 }
 
+int HeaderTabs::tabWidth(int index, bool iconOnly) const {
+    if (iconOnly) return ICON_SIZE;
+    return ICON_SIZE + TEXT_GAP + QFontMetrics(serifFont(FONT_SIZE)).horizontalAdvance(m_tabs[index].title)
+        + TEXT_PADDING * 2;
+}
+
+bool HeaderTabs::compact() const {
+    int x = 2;
+    for (int i = 0; i < int(m_tabs.size()); ++i) x += tabWidth(i, false) + TAB_SPACING;
+    return x - TAB_SPACING > width();
+}
+
 QRect HeaderTabs::tabRect(int index) const {
-    const QFontMetrics fm(serifFont(FONT_SIZE));
+    const bool iconsOnly = compact();
     int x = 2;
     for (int i = 0; i < int(m_tabs.size()); ++i) {
-        const int w = ICON_SIZE + TEXT_GAP + fm.horizontalAdvance(m_tabs[i].title) + TEXT_PADDING * 2;
+        const int w = tabWidth(i, iconsOnly && i != m_current);
         if (i == index) return {x, 0, w, HEADER_HEIGHT};
         x += w + TAB_SPACING;
     }
@@ -101,9 +114,28 @@ void HeaderTabs::paintEvent(QPaintEvent* event) {
         painter.setOpacity(current ? 1.0 : (hovered ? 0.85 : 0.6));
         painter.drawPixmap(iconRect, m_tabs[i].icon);
         painter.setOpacity(1.0);
-        drawOutlinedText(painter, textRect.adjusted(TEXT_PADDING, 0, -TEXT_PADDING, 0),
-                         Qt::AlignLeft | Qt::AlignVCenter, m_tabs[i].title,
-                         current ? TEXT_COLOR : DIM_TEXT_COLOR);
+        if (r.width() > ICON_SIZE) {
+            drawOutlinedText(painter, textRect.adjusted(TEXT_PADDING, 0, -TEXT_PADDING, 0),
+                             Qt::AlignLeft | Qt::AlignVCenter, m_tabs[i].title,
+                             current ? TEXT_COLOR : DIM_TEXT_COLOR);
+        }
+    }
+
+    // The hovered icon's title floats beside it, over the tabs after it (still visible
+    // through the translucent label), so nothing moves.
+    if (m_hover >= 0 && m_hover != m_current && compact()) {
+        const QRect r = tabRect(m_hover);
+        const QFontMetrics fm(painter.font());
+        const int h = BAND_HEIGHT;
+        QRect label(r.right() + 4, r.center().y() - h / 2 + 1, fm.horizontalAdvance(m_tabs[m_hover].title) + 2 * TEXT_PADDING, h);
+        if (label.right() > width() - 1) label.moveRight(width() - 1);
+        // Text and border included, so the icons under the label stay visible.
+        painter.setOpacity(0.7);
+        painter.setPen(QPen(QColor(96, 86, 68), 1));
+        painter.setBrush(QColor(24, 30, 36, 140));
+        painter.drawRect(label.adjusted(0, 0, -1, -1));
+        drawOutlinedText(painter, label, Qt::AlignCenter, m_tabs[m_hover].title, TEXT_COLOR);
+        painter.setOpacity(1.0);
     }
 }
 
@@ -130,5 +162,14 @@ void HeaderTabs::leaveEvent(QEvent* event) {
     m_hover = -1;
     update();
     QWidget::leaveEvent(event);
+}
+
+bool HeaderTabs::eventFilter(QObject* watched, QEvent* event) {
+    if (watched == m_stack && event->type() == QEvent::Enter && m_hover >= 0) {
+        m_hover = -1;
+        unsetCursor();
+        update();
+    }
+    return QWidget::eventFilter(watched, event);
 }
 }
