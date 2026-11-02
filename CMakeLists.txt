@@ -35,9 +35,37 @@ add_executable(FromSoftSaveManager
         src/parse/SL2File.cpp
         src/parse/DSR/Items.cpp
         src/parse/DSR/SaveFile.cpp
+        src/parse/DSR/SaveData.cpp
+        src/parse/DSR/EventFlags.cpp
+        src/parse/DSR/BonfireDb.cpp
+        src/parse/DSR/WorldProgress.cpp
+        src/parse/DS2/SaveData.cpp
+        src/parse/DS2/Items.cpp
+        src/parse/DS2/ItemLookup.cpp
+        src/parse/DS2/SaveFile.cpp
+        src/parse/DS2/Areas.cpp
+        src/parse/DS2/StatTables.cpp
+        src/parse/DS2/WorldProgress.cpp
+        src/parse/Sekiro/SaveData.cpp
+        src/parse/Sekiro/Items.cpp
+        src/parse/Sekiro/ItemLookup.cpp
+        src/parse/Sekiro/SaveFile.cpp
+        src/parse/Sekiro/SkillTree.cpp
+        src/parse/Sekiro/EventFlags.cpp
+        src/parse/Sekiro/WorldProgress.cpp
         src/parse/DS3/Items.cpp
         src/parse/DS3/SaveFile.cpp
+        src/parse/DS3/SaveData.cpp
+        src/parse/DS3/Areas.cpp
+        src/parse/DS3/EventFlags.cpp
+        src/parse/DS3/WorldProgress.cpp
         src/parse/EldenRing/SaveFile.cpp
+        src/parse/EldenRing/Items.cpp
+        src/parse/EldenRing/ItemLookup.cpp
+        src/parse/EldenRing/EventFlags.cpp
+        src/parse/EldenRing/WorldProgress.cpp
+        src/parse/EldenRing/NpcProgress.cpp
+        src/parse/EldenRing/PlaceNames.cpp
 
         src/resources/resources.qrc
         src/resources/dsr_images.qrc
@@ -49,6 +77,7 @@ add_executable(FromSoftSaveManager
         src/ui/SquareButton.h
         src/ui/NiceCheckbox.cpp
         src/ui/Utils.cpp
+        src/ui/ScrollHelper.cpp
         src/ui/AudioNotifier.cpp
         src/ui/ConfigModel.cpp
         src/ui/BackupsDb.cpp
@@ -63,21 +92,42 @@ add_executable(FromSoftSaveManager
         src/ui/BaseGameWidget.h
         src/ui/ManageBackupsWidget.cpp
         src/ui/DSRWidget/DSRWidget.cpp
+        src/ui/DSRWidget/CharacterList.cpp
         src/ui/DSRWidget/Inventory.cpp
         src/ui/DSRWidget/Covenants.cpp
         src/ui/DSRWidget/CharInfo.cpp
+        src/ui/DSRWidget/WorldProgress.cpp
         src/ui/DS2Widget/DS2Widget.cpp
+        src/ui/DS2Widget/Inventory.cpp
+        src/ui/DS2Widget/PlayerStatus.cpp
+        src/ui/DS2Widget/CharacterList.cpp
+        src/ui/DS2Widget/WorldProgress.cpp
+        src/ui/DS2Widget/HeaderTabs.cpp
         src/ui/DS3Widget/DS3Widget.cpp
         src/ui/DS3Widget/Inventory.cpp
         src/ui/DS3Widget/CharInfo.cpp
+        src/ui/DS3Widget/CharacterList.cpp
+        src/ui/DS3Widget/HeaderTabs.cpp
+        src/ui/DS3Widget/WorldProgress.cpp
         src/ui/SekiroWidget/SekiroWidget.cpp
+        src/ui/SekiroWidget/CharacterList.cpp
+        src/ui/SekiroWidget/Inventory.cpp
+        src/ui/SekiroWidget/WorldProgress.cpp
         src/ui/ERWidget/ERWidget.cpp
+        src/ui/ERWidget/CharacterList.cpp
         src/ui/ERWidget/CharInfo.cpp
+        src/ui/ERWidget/Inventory.cpp
+        src/ui/ERWidget/WorldProgress.cpp
+        src/ui/ERWidget/HeaderTabs.cpp
 )
 
 if (FSSM_USE_INV_IMAGES)
     target_sources(FromSoftSaveManager PRIVATE
             src/resources/dsr_inv_images.qrc
+            src/resources/ds2_inv_images.qrc
+            src/resources/sekiro_inv_images.qrc
+            src/resources/sekiro_skill_images.qrc
+            src/resources/er_inv_images.qrc
             src/resources/ds3_inv_images.qrc)
     target_compile_definitions(FromSoftSaveManager PRIVATE
             FSSM_USE_INV_IMAGES=${FSSM_USE_INV_IMAGES}

@@ -262,7 +262,7 @@ void InventoryDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
     }
 
     QFont font = painter->font();
-    font.setPointSize(12);
+    font.setPointSize(11);
     painter->setFont(font);
 
     QFontMetrics fm(font);

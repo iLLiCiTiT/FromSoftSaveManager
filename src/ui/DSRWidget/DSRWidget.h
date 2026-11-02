@@ -1,17 +1,16 @@
 #pragma once
 
+#include "CharacterList.h"
 #include "CharInfo.h"
 #include "Covenants.h"
 #include "Inventory.h"
+#include "WorldProgress.h"
 #include "../BaseGameWidget.h"
 #include "../Controller.h"
 #include "../Utils.h"
 #include "../../parse/Parse.h"
 
 namespace fssm::ui::dsr{
-const int CharIdRole = Qt::UserRole + 1;
-const int CharNameRole = Qt::UserRole + 2;
-
 class CharsListModel: public QStandardItemModel {
     Q_OBJECT
 signals:
@@ -46,4 +45,5 @@ private:
     fssm::ui::dsr::CovenantsWidget* m_covenantsWidget;
     fssm::ui::dsr::CharacterInfoWidget* m_charInfoWidget;
     fssm::ui::dsr::InventoryWidget* m_inventoryWidget;
+    fssm::ui::dsr::WorldProgressWidget* m_worldWidget;
 };
