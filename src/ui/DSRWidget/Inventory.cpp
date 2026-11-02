@@ -334,17 +334,23 @@ void InventoryWidget::drawCategories(QPainter& painter) {
 void InventoryWidget::drawItemIcon(QPainter& painter, const Entry& entry, const QRect& rect) {
     const double s = FIXED_SCALE;
     const auto px = [s](double v) { return int(std::round(v * s)); };
-    // The item stands on a dish, as everywhere in the game's menus.
-    const QPixmap stand = scaled(":/dsr_images/inventory_stand", QSize(rect.width(), rect.width() / 2));
-    painter.drawPixmap(rect.left() + (rect.width() - stand.width()) / 2, rect.bottom() - stand.height() + 1, stand);
+    // The item stands on a dish at the bottom of the cell, its base on the dish's middle
+    // and its top near the top of the cell (proportions from a capture of the game).
+    const int dishW = rect.height() * 74 / 100;
+    const QPixmap stand = scaled(":/dsr_images/inventory_stand", QSize(dishW, dishW));
+    const int centerX = rect.center().x();
+    painter.drawPixmap(centerX - stand.width() / 2, rect.bottom() - stand.height() + 1, stand);
+    const int itemH = rect.height() * 86 / 100;
+    const QSize itemSize(itemH * 164 / 184, itemH);
     QPixmap pix;
     if (!entry.known) {
-        pix = scaled(":/dsr_images/unknown", rect.size());
+        pix = scaled(":/dsr_images/unknown", itemSize);
     } else if (inventoryResourcesAvailable() && !entry.image.isEmpty()) {
-        pix = scaled(":/dsr_inv_images/" + entry.image, rect.size() - QSize(px(4), px(8)));
+        pix = scaled(":/dsr_inv_images/" + entry.image, itemSize);
     }
     if (!pix.isNull()) {
-        painter.drawPixmap(rect.left() + (rect.width() - pix.width()) / 2, rect.top() + px(2), pix);
+        const int itemBottom = rect.bottom() - stand.height() * 35 / 100;
+        painter.drawPixmap(centerX - pix.width() / 2, itemBottom - pix.height() + 1, pix);
     }
     if (!entry.infusionImage.isEmpty() && inventoryResourcesAvailable()) {
         const int size = rect.width() * 36 / 100;
@@ -385,18 +391,15 @@ void InventoryWidget::drawList(QPainter& painter) {
         painter.setPen(QPen(QColor(FRAME_COLOR.red(), FRAME_COLOR.green(), FRAME_COLOR.blue(), 150), 1));
         painter.drawLine(iconCol.right(), iconCol.top(), iconCol.right(), iconCol.bottom());
 
-        const int iconSize = iconColW - px(26);
-        drawItemIcon(painter, entry, QRect(iconCol.center().x() - iconSize / 2, iconCol.top() + px(8), iconSize, iconSize));
+        drawItemIcon(painter, entry, iconCol.adjusted(0, px(2), -px(12), -px(4)));
         if (entry.equipped) drawEquippedSeal(painter, QPointF(iconCol.left() + px(20), iconCol.top() + px(18)), px(22));
-        // Count at the bottom right of the icon, on a short rule, for goods that stack.
+        // Count at the bottom right of the icon, for goods that stack.
         const bool showCount = isStackCategory(entry.category)
             || (entry.category == ItemCategory::KeyItems && entry.amount > 1);
         if (showCount && entry.held) {
             painter.setFont(serifFont(px(30)));
             const QRect countRect(iconCol.left(), iconCol.bottom() - px(40), iconCol.width() - px(8), px(36));
             drawShadowText(painter, countRect, Qt::AlignRight | Qt::AlignBottom, QString::number(entry.amount));
-            painter.setPen(QPen(QColor(220, 214, 200, 200), 1));
-            painter.drawLine(iconCol.right() - px(60), iconCol.bottom() - px(3), iconCol.right() - px(8), iconCol.bottom() - px(3));
         }
 
         // Name, and below it where the item is kept, with the Bottomless Box count.
