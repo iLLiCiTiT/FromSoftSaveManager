@@ -2,12 +2,29 @@
 
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "../SL2File.h"
+#include "Items.h"
 
 
 namespace fssm::parse::er {
+// From an NPC's status flags (Npc in NpcProgress.h).
+enum class NpcState : uint8_t {
+    Unknown,        // none set: the NPC's map hasn't loaded yet
+    Friendly,
+    Hostile,
+    Dead,
+};
+
+// An ending (Ending in NpcProgress.h).
+enum class EndingState : uint8_t {
+    Locked,
+    Available,
+    Reached,
+};
+
 struct GaItem {
     uint32_t handle;
     uint32_t itemId;
@@ -16,6 +33,38 @@ struct GaItem {
     uint32_t gamhandle;
     uint8_t unknown3;
 };
+// One slot of an EquipInventoryData list.
+struct InventoryEntry {
+    uint32_t handle;            // 0xB goods / 0xA talisman (item id in the low bits),
+                                // 0x8 weapon / 0x9 armor / 0xC ash of war (gaitem handles)
+    uint32_t quantity;
+    uint32_t acquisitionIndex;  // grows with every pickup; "Recent Items" sorts by it
+};
+
+// Held inventory (0xa80 normal + 0x180 key item slots) and the storage chest
+// (0x780 + 0x80) share this layout. Read from the save (validated on all
+// characters of a live save: the counts match the used slots).
+struct EquipInventoryData {
+    uint32_t commonCount = 0;
+    std::vector<InventoryEntry> commonItems;
+    uint32_t keyCount = 0;
+    std::vector<InventoryEntry> keyItems;
+    uint32_t nextEquipIndex = 0;
+    uint32_t nextAcquisitionSortId = 0;
+};
+
+// Inventory entry resolved to its item.
+struct InventoryItem {
+    uint32_t handle = 0;
+    uint32_t itemId = 0;        // type nibble << 28 | param row (+ upgrade level for weapons)
+    uint32_t quantity = 0;
+    uint32_t acquisitionIndex = 0;
+    bool keyItem = false;
+    bool equipped = false;      // armament, armor or talisman slot
+    bool inPouch = false;       // quick items, pouch or the equipped great rune
+    BaseItem baseItem;          // id 0 when the item is not in the database
+};
+
 struct ERCharacterInfo {
     int index;
     uint32_t version;
@@ -26,6 +75,8 @@ struct ERCharacterInfo {
     std::vector<GaItem> gaItems;
 
     std::u16string name;
+    uint32_t playTime = 0;      // seconds, from the slot's profile summary
+    std::string_view placeName; // location on the Load Game screen, from the profile summary
     uint32_t runes;
     uint32_t earnedRunes;
 
@@ -48,6 +99,27 @@ struct ERCharacterInfo {
     uint32_t intelligence;
     uint32_t faith;
     uint32_t arcane;
+
+    std::array<uint32_t, 22> equippedHandles {};
+    std::array<uint32_t, 10> quickItemHandles {};
+    std::array<uint32_t, 6> pouchHandles {};
+    uint32_t greatRuneHandle = 0;
+    EquipInventoryData inventory;
+    EquipInventoryData storageBox;
+    std::vector<InventoryItem> inventoryItems;   // held, normal then key items
+    std::vector<InventoryItem> storageItems;
+
+    // From the event flags, one per GRACES / BOSSES entry (WorldProgress.h); empty
+    // when the event flag region could not be located.
+    std::vector<bool> gracesDiscovered;
+    std::vector<bool> bossesDefeated;
+    // One per NPCS entry (NpcProgress.h); empty like the lists above.
+    std::vector<NpcState> npcStates;
+    // Questline stage text per NPCS entry (NPC_STAGES), empty when no flag with a text is set.
+    std::vector<std::string_view> npcStages;
+    // One per NPC_STEPS / ENDINGS entry; empty like the lists above.
+    std::vector<bool> npcStepsDone;
+    std::vector<EndingState> endings;
 };
 
 struct MenuSystemSaveLoad {
@@ -97,13 +169,14 @@ struct SummaryEquipmentItem {
     std::array<uint32_t, 6> unknown4;
 };
 
+// Profile summary the "Load Game" screen shows, 0x24c bytes per slot.
 struct SlotSummary {
     std::u16string name;
     uint32_t level;
-    uint32_t unknown1;
+    uint32_t playTime;          // seconds
     uint32_t unknown2;
-    uint32_t unknown3;
-    uint32_t unknown4;
+    uint32_t mapId;             // last map, same as ERCharacterInfo::mapId
+    uint32_t placeNameId;       // PlaceName id of the location shown (findPlaceName)
     uint32_t unknown5;
     std::array<uint8_t, 288> unknown6;
     SummaryEquipmentGaItem equipmentGaItem;
@@ -119,7 +192,8 @@ struct SlotSummary {
 
 struct SlotsSummary {
     std::array<uint8_t, 10> occupied;
-    // std::array<SlotSummary, 10> slots;
+    // Only name, level, playTime, mapId and placeNameId are read.
+    std::array<SlotSummary, 10> profiles {};
 };
 
 struct UserData10 {

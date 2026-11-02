@@ -1,0 +1,55 @@
+#pragma once
+#include <array>
+#include <cstdint>
+#include <optional>
+#include <string_view>
+
+namespace fssm::parse::er {
+    // Goods use the game's goodsType, weapons its wepType, armor its id digits
+    enum class ItemCategory {
+        Tools,
+        KeyItems,
+        CraftingMaterials,
+        UpgradeMaterials,
+        Remembrances,
+        GreatRunes,
+        Sorceries,
+        Incantations,
+        SpiritAshes,
+        CrystalTears,
+        Info,
+        MeleeWeapons,
+        RangedWeapons,
+        Catalysts,
+        Shields,
+        Ammunition,
+        HeadArmor,
+        ChestArmor,
+        ArmsArmor,
+        LegsArmor,
+        Talismans,
+        AshesOfWar,
+        Unknown,
+    };
+
+    struct BaseItem {
+        uint32_t id = 0;            // type nibble << 28 | param row id, as stored in the save
+        ItemCategory category = ItemCategory::Unknown;
+        std::string_view label = "Unknown";
+        std::string_view image;     // alias in :/er_inv_images (128x128), empty if none
+        // Inventory order: each category is sorted by sortId, with a separator
+        // wherever sortGroup changes. -1 / 0 when unknown.
+        int32_t sortId = -1;
+        uint8_t sortGroup = 0;
+        uint16_t maxHeld = 0;       // stack size (goods, arrows/bolts); 0 for gear
+        uint16_t maxStored = 0;     // stack size in the storage chest (goods)
+        bool showsCount = false;    // the inventory grid draws the number held
+        std::string_view effect;    // short "Item Effect" text, may be empty
+    };
+
+    extern const std::array<BaseItem, 6523> ALL_ITEMS;
+
+    // Exact id first; weapons carry their upgrade level in the last two digits,
+    // so the id rounded down to a hundred is tried as well.
+    std::optional<BaseItem> findBaseItem(uint32_t id);
+}

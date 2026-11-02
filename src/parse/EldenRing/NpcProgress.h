@@ -1,0 +1,47 @@
+#pragma once
+#include <array>
+#include <cstdint>
+#include <string_view>
+
+namespace fssm::parse::er {
+    // Status flags of an NPC, exactly one set once its map has loaded:
+    // statusFlag friendly, + 1 or + 2 hostile, + 3 dead.
+    struct Npc {
+        uint32_t statusFlag;
+        std::string_view name;
+    };
+
+    // A questline stage: a set flag of statusFlag + 5 .. statusFlag + 18
+    // (docs/er-npc-stages.md).
+    struct NpcStage {
+        uint32_t flag;
+        std::string_view text;
+    };
+
+    // A progress step under an NPC: done when any of NPC_STEP_FLAGS[firstFlag ..
+    // firstFlag + flagCount) is set (quest items received, bosses, questline stages).
+    struct NpcStep {
+        uint32_t statusFlag;            // the NPC's
+        std::string_view text;
+        uint16_t firstFlag;
+        uint16_t flagCount;
+    };
+
+    // An ending: reached when a reached flag is set; it can be chosen once unlockFlag is
+    // set (0: always) and lockFlag is not (0: never).
+    struct Ending {
+        std::string_view name;
+        std::array<uint32_t, 2> reachedFlags;   // 0 = unused
+        uint32_t unlockFlag;
+        uint32_t lockFlag;
+    };
+
+    // NPCs with a status flag block, by flag.
+    extern const std::array<Npc, 55> NPCS;
+    // Questline stage texts, by flag (not every stage flag has one).
+    extern const std::array<NpcStage, 188> NPC_STAGES;
+    // Progress steps, by statusFlag, in questline order within an NPC.
+    extern const std::array<NpcStep, 112> NPC_STEPS;
+    extern const std::array<uint32_t, 238> NPC_STEP_FLAGS;
+    extern const std::array<Ending, 6> ENDINGS;
+}
