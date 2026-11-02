@@ -49,8 +49,8 @@ private:
     struct Layout {
         QRect tabs;
         int tabWidth = 0;
-        QRect list;                 // rows, right of the scroll track
-        QRect scrollTrack;          // left of the rows, as in the game
+        QRect list;                 // rows, left of the scroll track
+        QRect scrollTrack;          // right of the rows
         QRect detail;
     };
 

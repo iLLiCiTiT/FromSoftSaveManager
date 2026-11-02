@@ -249,8 +249,8 @@ InventoryWidget::Layout InventoryWidget::computeLayout() const {
 
     const int listTop = l.tabs.bottom() + 1 + px(18);
     const int trackW = px(10);
-    l.scrollTrack = QRect(listArea.left() + px(4), listTop, trackW, listArea.bottom() - listTop + 1);
-    l.list = QRect(l.scrollTrack.right() + px(12), listTop, listArea.right() - l.scrollTrack.right() - px(12),
+    l.scrollTrack = QRect(listArea.right() - trackW + 1, listTop, trackW, listArea.bottom() - listTop + 1);
+    l.list = QRect(listArea.left(), listTop, l.scrollTrack.left() - px(12) - listArea.left(),
                    listArea.bottom() - listTop + 1);
     return l;
 }
@@ -432,7 +432,7 @@ void InventoryWidget::drawList(QPainter& painter) {
     }
     painter.restore();
 
-    // Thin scroll bar left of the rows, as in the game.
+    // Thin scroll bar right of the rows.
     m_scroll.paint(painter, QColor(0, 0, 0, 120), SELECTED_COLOR.lighter(120));
 }
 
@@ -569,7 +569,7 @@ void InventoryWidget::wheelEvent(QWheelEvent* event) {
     const QPoint pos = event->position().toPoint();
     if (m_layout.tabs.contains(pos)) {
         selectCategory(m_category - event->angleDelta().y() / 120);
-    } else if (m_layout.list.adjusted(-m_layout.list.left() + m_layout.scrollTrack.left(), 0, 0, 0).contains(pos)) {
+    } else if (m_layout.list.united(m_layout.scrollTrack).contains(pos)) {
         m_scroll.wheel(event, true);
         m_hoverItem = itemIndexAt(pos);
         update();
