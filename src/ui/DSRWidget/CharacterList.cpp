@@ -14,19 +14,16 @@ namespace {
     // Same height as the page heading of the header tabs beside the list.
     constexpr int HEADING_HEIGHT = 48;
     constexpr int HEADING_GAP = 8;
-    constexpr int PANEL_PADDING = 9;
-    // Width of the carved gold frame around a slot, and of its curled end pieces.
+    constexpr int PANEL_PADDING = 8;
+    // Width of the carved gold frame around a slot.
     constexpr int FRAME = 5;
-    constexpr int END_PIECE = 8;
     // Text inset from the frame and the space between the slot's two columns.
-    constexpr int TEXT_INSET = 6;
+    constexpr int TEXT_INSET = 8;
     constexpr int GAP = 10;
     // Width of the list's scrollbar (app.qss, #ds_list_scrollbar).
     constexpr int SCROLLBAR_WIDTH = 12;
     constexpr int NAME_FONT_SIZE = 15;
     constexpr int VALUE_FONT_SIZE = 14;
-    // The slot plate's leather, sampled from the game's Data List.
-    const QColor PLATE_COLOR(36, 35, 34, 235);
 
     QString formatPlayTime(uint32_t seconds) {
         return QString("%1:%2:%3").arg(seconds / 3600)
@@ -34,32 +31,12 @@ namespace {
                                   .arg(seconds % 60, 2, 10, QChar('0'));
     }
 
-    // Small S-shaped scroll carved into a slot's end piece.
-    void drawEndScroll(QPainter& painter, const QRectF& r) {
-        painter.save();
-        painter.setRenderHint(QPainter::Antialiasing, true);
-        painter.setBrush(Qt::NoBrush);
-        const double cx = r.center().x();
-        const double w = r.width() * 0.32;
-        QPainterPath path;
-        const double top = r.top() + r.height() * 0.18;
-        const double bottom = r.bottom() - r.height() * 0.18;
-        const double mid = (top + bottom) / 2;
-        path.moveTo(cx, top);
-        path.cubicTo(cx + w, top, cx + w, mid - (mid - top) * 0.35, cx, mid);
-        path.cubicTo(cx - w, mid + (bottom - mid) * 0.35, cx - w, bottom, cx, bottom);
-        painter.setPen(QPen(GOLD_DARK_COLOR, 1.6));
-        painter.drawPath(path);
-        painter.setPen(QPen(GOLD_LIGHT_COLOR, 0.8));
-        painter.drawPath(path.translated(-0.6, -0.6));
-        painter.restore();
-    }
-
-    // Slot: carved gold frame (light top edge, darker bottom edge, a groove in the middle,
-    // curled end pieces) around a dark leather plate; the selected plate is burnt orange.
+    // Slot: carved gold frame (light top edge, darker bottom edge, a groove in the
+    // middle) around a see-through plate; the selected plate is burnt orange.
     void drawSlot(QPainter& painter, const QRect& r, bool selected, bool hovered) {
         painter.save();
-        const QRect plate = r.adjusted(FRAME + END_PIECE, FRAME, -FRAME - END_PIECE, -FRAME);
+        painter.setRenderHint(QPainter::Antialiasing, false);
+        const QRect plate = r.adjusted(FRAME, FRAME, -FRAME, -FRAME);
         QPainterPath ring;
         ring.setFillRule(Qt::OddEvenFill);
         ring.addRect(r);
@@ -82,19 +59,16 @@ namespace {
         // Groove along the middle of the frame.
         painter.setPen(QPen(QColor(GOLD_DARK_COLOR.red(), GOLD_DARK_COLOR.green(), GOLD_DARK_COLOR.blue(), 170), 1));
         painter.drawRect(r.adjusted(FRAME / 2, FRAME / 2, -FRAME / 2 - 1, -FRAME / 2 - 1));
-        // End pieces: a ridge on the plate side and a carved scroll.
-        for (const bool left : {true, false}) {
-            const int ridge = left ? plate.left() - 2 : plate.right() + 2;
+        // Carved end pieces: short vertical ridges at both ends of the frame.
+        for (const int x : {r.left() + FRAME + 3, r.right() - FRAME - 3}) {
             painter.setPen(QPen(GOLD_DARK_COLOR, 1));
-            painter.drawLine(ridge, r.top() + FRAME, ridge, r.bottom() - FRAME);
-            const QRectF piece(left ? r.left() + FRAME / 2.0 : plate.right() + 2, r.top() + FRAME,
-                               END_PIECE + FRAME / 2.0 - 1, r.height() - 2 * FRAME);
-            drawEndScroll(painter, piece);
+            painter.drawLine(x, r.top() + FRAME, x, r.bottom() - FRAME);
         }
 
         painter.setPen(Qt::NoPen);
-        fillLeather(painter, plate, selected ? SELECTED_COLOR : PLATE_COLOR);
-        if (hovered && !selected) {
+        if (selected) {
+            fillLeather(painter, plate, SELECTED_COLOR);
+        } else if (hovered) {
             painter.fillRect(plate, QColor(SELECTED_COLOR.red(), SELECTED_COLOR.green(), SELECTED_COLOR.blue(), 60));
         }
         // Inner shadow where the plate sits under the frame.
@@ -152,7 +126,7 @@ void CharacterDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
 
     // As on the game's Data List: name above "Level N" on the left, the area above
     // the play time on the right.
-    const int inset = FRAME + END_PIECE + TEXT_INSET;
+    const int inset = FRAME + TEXT_INSET;
     const QRect text = slot.adjusted(inset, FRAME + 2, -inset, -FRAME - 2);
     const int half = text.height() / 2;
     const int leftW = leftColumnWidth();
@@ -197,7 +171,7 @@ DataListFrame::DataListFrame(QWidget* content, QWidget* parent): QWidget(parent)
 QSize DataListFrame::sizeHint() const {
     // Wide enough for "Level 999" beside the longest area name, so no slot is cut off.
     const int textWidth = leftColumnWidth() + GAP + maxAreaWidth(QFontMetrics(serifFont(VALUE_FONT_SIZE)));
-    return {textWidth + 2 * (FRAME + END_PIECE + TEXT_INSET) + SCROLLBAR_WIDTH + 2 * PANEL_PADDING + 2, 400};
+    return {textWidth + 2 * (FRAME + TEXT_INSET) + SCROLLBAR_WIDTH + 2 * PANEL_PADDING + 2, 400};
 }
 
 QRect DataListFrame::panelRect() const {
@@ -217,7 +191,5 @@ void DataListFrame::paintEvent(QPaintEvent* event) {
     // Heading where the game has "Data List / Select data to load".
     drawMenuHeading(painter, QRect(0, 0, width(), HEADING_HEIGHT), m_icon, "Characters", "Select a character",
                     width() - 1);
-    // The slots sit in a framed panel.
-    drawPanelFrame(painter, panelRect(), 0.6);
 }
 }
