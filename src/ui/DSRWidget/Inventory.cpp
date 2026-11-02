@@ -298,14 +298,9 @@ void InventoryWidget::drawCategories(QPainter& painter) {
     const auto px = [s](double v) { return int(std::round(v * s)); };
     const QRect bar = m_layout.tabs;
 
-    // The game's grey stitched strip behind the icons.
+    // The game's stitched strip around the icons, with the leather showing through.
     painter.save();
     painter.setRenderHint(QPainter::Antialiasing, false);
-    QLinearGradient stone(bar.topLeft(), bar.bottomLeft());
-    stone.setColorAt(0.0, QColor(92, 90, 86));
-    stone.setColorAt(1.0, QColor(66, 65, 62));
-    painter.fillRect(bar, stone);
-    painter.drawTiledPixmap(bar, grainTexture());
     painter.setPen(QPen(QColor(20, 19, 18), 1));
     painter.setBrush(Qt::NoBrush);
     painter.drawRect(bar.adjusted(0, 0, -1, -1));
