@@ -78,6 +78,13 @@ namespace fssm::ui::dsr {
         painter.drawTiledPixmap(rect, grainTexture());
     }
 
+    // The burnt orange leather of the selected slot or row: the game's own plate, cropped
+    // from a capture and mirrored so it tiles.
+    inline void drawSelectedPlate(QPainter& painter, const QRect& rect) {
+        static const QPixmap plate(":/dsr_images/selected_plate");
+        painter.drawTiledPixmap(rect, plate);
+    }
+
     // Thin rule between stat groups: a bronze line over a dark one, fading out at both ends.
     inline void drawRule(QPainter& painter, int x1, int x2, int y, int alpha = 200) {
         if (x2 <= x1) return;

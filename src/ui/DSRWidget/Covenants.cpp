@@ -107,7 +107,7 @@ void CovenantsWidget::paintEvent(QPaintEvent* event) {
         const QRect row(x, y, w, rowH);
         y += rowH;
         const bool joined = covenant.id == c.covenantId;
-        if (joined) fillLeather(painter, row.adjusted(-px(10), px(3), px(10), -px(3)), SELECTED_COLOR);
+        if (joined) drawSelectedPlate(painter, row.adjusted(-px(10), px(3), px(10), -px(3)));
 
         int textLeft = row.left() + px(6);
         if (inventoryResourcesAvailable()) {

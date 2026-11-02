@@ -67,7 +67,7 @@ namespace {
 
         painter.setPen(Qt::NoPen);
         if (selected) {
-            fillLeather(painter, plate, SELECTED_COLOR);
+            drawSelectedPlate(painter, plate);
         } else if (hovered) {
             painter.fillRect(plate, QColor(SELECTED_COLOR.red(), SELECTED_COLOR.green(), SELECTED_COLOR.blue(), 60));
         }

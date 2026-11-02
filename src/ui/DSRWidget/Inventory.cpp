@@ -381,9 +381,9 @@ void InventoryWidget::drawList(QPainter& painter) {
         const bool selected = i == m_selectedItem;
 
         // Item on its dish in a darker cell; the name on a plate, burnt orange when selected.
-        fillLeather(painter, iconCol, selected ? QColor(92, 64, 44, 200) : QColor(0, 0, 0, 60));
+        painter.fillRect(iconCol, selected ? QColor(92, 64, 44, 200) : QColor(0, 0, 0, 60));
         if (selected) {
-            fillLeather(painter, plate, SELECTED_COLOR);
+            drawSelectedPlate(painter, plate);
         } else if (i == m_hoverItem) {
             painter.fillRect(plate, QColor(SELECTED_COLOR.red(), SELECTED_COLOR.green(), SELECTED_COLOR.blue(), 60));
         }
