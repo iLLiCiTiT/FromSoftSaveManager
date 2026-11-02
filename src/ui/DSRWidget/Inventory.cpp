@@ -407,9 +407,9 @@ void InventoryWidget::drawList(QPainter& painter) {
         painter.setFont(serifFont(px(32)));
         drawShadowText(painter, QRect(text.left(), text.top(), text.width(), text.height() / 2),
                        Qt::AlignLeft | Qt::AlignVCenter, entry.name);
-        painter.setFont(serifFont(px(24)));
+        painter.setFont(serifFont(px(28)));
         const QRect sub(text.left(), text.top() + text.height() / 2, text.width(), text.height() / 2);
-        const int keptIcon = px(30);
+        const int keptIcon = px(38);
         int x = sub.left();
         const auto kept = [&](const QString& icon, const QString& value) {
             painter.drawPixmap(x, sub.center().y() - keptIcon / 2, scaled(icon, QSize(keptIcon, keptIcon)));
