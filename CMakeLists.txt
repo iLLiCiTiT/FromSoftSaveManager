@@ -19,6 +19,7 @@ find_package(Qt6 COMPONENTS
         Gui
         Widgets
         Concurrent
+        Network
         Sql
         REQUIRED)
 
@@ -89,6 +90,8 @@ add_executable(FromSoftSaveManager
         src/ui/MainWindow.cpp
         src/ui/SideBarWidget.cpp
         src/ui/SettingsWidget.cpp
+        src/ui/UpdatesModel.cpp
+        src/ui/UpdateDialog.cpp
         src/ui/BaseGameWidget.h
         src/ui/ManageBackupsWidget.cpp
         src/ui/DSRWidget/DSRWidget.cpp
@@ -148,10 +151,17 @@ target_link_libraries(FromSoftSaveManager
         Qt::Gui
         Qt::Widgets
         Qt::Concurrent
+        Qt::Network
         Qt::Sql
         tiny-aes
 )
 target_link_options(FromSoftSaveManager PRIVATE -static-libgcc -static-libstdc++)
+
+# Replaces files in the application directory so it must not use any dll from there
+add_executable(FromSoftSaveManagerUpdater WIN32 src/updater/main.cpp)
+target_link_libraries(FromSoftSaveManagerUpdater shell32)
+target_link_options(FromSoftSaveManagerUpdater PRIVATE -static)
+add_dependencies(FromSoftSaveManager FromSoftSaveManagerUpdater)
 
 if (WIN32)
     configure_file(
@@ -192,6 +202,16 @@ if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
                 "${QT_INSTALL_PATH}/plugins/platforms/qwindows${DEBUG_SUFFIX}.dll"
                 "$<TARGET_FILE_DIR:${PROJECT_NAME}>/plugins/platforms/")
     endif ()
+    # TLS backend required for HTTPS requests of updates check
+    if (EXISTS "${QT_INSTALL_PATH}/plugins/tls/qschannelbackend${DEBUG_SUFFIX}.dll")
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E make_directory
+                "$<TARGET_FILE_DIR:${PROJECT_NAME}>/plugins/tls/")
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy
+                "${QT_INSTALL_PATH}/plugins/tls/qschannelbackend${DEBUG_SUFFIX}.dll"
+                "$<TARGET_FILE_DIR:${PROJECT_NAME}>/plugins/tls/")
+    endif ()
     if (EXISTS "${QT_INSTALL_PATH}/plugins/sqldrivers/qsqlite${DEBUG_SUFFIX}.dll")
         add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E make_directory
@@ -206,6 +226,7 @@ if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
         Qt6Core
         Qt6Gui
         Qt6Widgets
+        Qt6Network
         Qt6Sql
         libgcc_s_seh-1
         libstdc++-6

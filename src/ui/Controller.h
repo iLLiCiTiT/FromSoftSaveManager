@@ -9,6 +9,7 @@
 #include "BackupsDb.h"
 #include "BackupsModel.h"
 #include "AudioNotifier.h"
+#include "UpdatesModel.h"
 #include "../parse/Parse.h"
 
 // Handler of hotkeys presss
@@ -131,6 +132,7 @@ public:
     bool createBackupFolder(const QString& saveId, const QString& name);
     QString getDefaultBackupFolder(const QString& saveId);
     bool setDefaultBackupFolder(const QString& saveId, const QString& name);
+    UpdatesModel* getUpdatesModel() const;
 
 private slots:
     void onQuickSaveRequest();
@@ -149,6 +151,7 @@ private:
     BackupsDb* m_backupsDb;
     bool m_migrationActive = false;
     BackupsModel* m_backupsModel;
+    UpdatesModel* m_updatesModel;
     HotkeysThread* m_hotkeysThread;
     SaveChangesThread* m_saveChangesThread;
 };
