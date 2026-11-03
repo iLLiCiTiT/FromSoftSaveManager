@@ -631,6 +631,10 @@ ManageBackupsButtonsWidget::ManageBackupsButtonsWidget(Controller* controller, c
     m_defaultFolderInput->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     m_defaultFolderInput->setMaximumWidth(220);
 
+    // Both fill the height of the row, so they are always the same height
+    showBackupsBtn->setSizePolicy(showBackupsBtn->sizePolicy().horizontalPolicy(), QSizePolicy::Preferred);
+    m_defaultFolderInput->setSizePolicy(m_defaultFolderInput->sizePolicy().horizontalPolicy(), QSizePolicy::Preferred);
+
     QHBoxLayout* btnsLayout = new QHBoxLayout(btnsWidget);
     btnsLayout->setContentsMargins(0, 0, 0, 0);
     btnsLayout->addStretch(1);
