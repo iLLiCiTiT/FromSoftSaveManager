@@ -305,7 +305,7 @@ ManageBackupsOverlayWidget::ManageBackupsOverlayWidget(Controller* controller, Q
     QPixmap deleteIcon = QPixmap(":/images/common/delete.png");
     m_deleteBackupsBtn = new QPushButton(deleteIcon, "Delete", btnsWidget);
     m_deleteBackupsBtn->setObjectName("delete_btn");
-    m_deleteBackupsBtn->setToolTip("Delete selected backups.\nDeleted folders keep their backups as unsorted.");
+    m_deleteBackupsBtn->setToolTip("Delete selected backups.\nBackups in deleted folders are kept, with no folder.");
     m_deleteBackupsBtn->setEnabled(false);
     m_deleteBackupsBtn->setAutoDefault(false);
     m_deleteBackupsBtn->setDefault(false);
@@ -437,7 +437,7 @@ void ManageBackupsOverlayWidget::p_deleteItems(const QModelIndexList& indexes) {
     if (backupIds.empty() && folders.empty()) return;
     if (!backupIds.empty())
         m_controller->deleteBackupByIds(backupIds);
-    // Backups in removed folders become unsorted, they're never deleted with the folder
+    // Backups in removed folders end up with no folder, they're never deleted with the folder
     for (auto& folder: folders)
         m_controller->deleteBackupFolder(folder);
     refresh();
@@ -536,7 +536,7 @@ void ManageBackupsOverlayWidget::onCustomContextMenu(const QPoint& point) {
         QAction* removeAction = contextMenu.addAction("Remove folder (keep backups)");
         auto* triggered = contextMenu.exec(globPoint);
         if (triggered == defaultAction) {
-            // Unchecking makes "Unsorted" the default again
+            // Unchecking makes "No Folder" the default again
             m_controller->setDefaultBackupFolder(defaultAction->isChecked() ? folder : "");
             refresh();
         } else if (triggered == renameAction) {
@@ -580,8 +580,8 @@ void ManageBackupsOverlayWidget::onCustomContextMenu(const QPoint& point) {
     QMenu* moveMenu = contextMenu.addMenu("Move to");
     QString currentFolder = posIndex.parent().isValid() ? posIndex.parent().data(FolderNameRole).toString() : "";
     std::unordered_map<QAction*, QString> moveActions;
-    QAction* unsortedAction = moveMenu->addAction("< Unsorted >");
-    moveActions[unsortedAction] = "";
+    QAction* noFolderAction = moveMenu->addAction("< No Folder >");
+    moveActions[noFolderAction] = "";
     moveMenu->addSeparator();
     for (auto& folder: m_controller->getBackupFolders())
         moveActions[moveMenu->addAction(QIcon(":/icons/folder_256x256.png"), folder)] = folder;
@@ -671,7 +671,7 @@ ManageBackupsButtonsWidget::ManageBackupsButtonsWidget(Controller* controller, c
 void ManageBackupsButtonsWidget::refreshDefaultFolder() {
     QString defaultFolder = m_controller->getDefaultBackupFolder(m_saveId);
     m_defaultFolderInput->clear();
-    m_defaultFolderInput->addItem("< Unsorted >", "");
+    m_defaultFolderInput->addItem("< No Folder >", "");
     int currentIndex = 0;
     for (auto& folder: m_controller->getBackupFolders(m_saveId)) {
         if (folder == defaultFolder)

@@ -30,7 +30,7 @@ private:
 };
 
 // Backups grouped by user folders. Folders are top level items, backups without a folder
-//  ("Unsorted") are top level items too.
+//  ("No Folder") are top level items too.
 class BackupsOverlayModel: public QStandardItemModel {
     Q_OBJECT
 signals:

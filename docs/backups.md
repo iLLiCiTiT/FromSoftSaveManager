@@ -14,11 +14,11 @@ Folders are a UI categorization stored in that database. They are not directorie
 ## Folders (categories) **[done]**
 
 Folders are flat, per game, and user-named. A backup is in at most one folder; a backup without
-one is *Unsorted*.
+one is in *No Folder*.
 
 ### Database
 
-- New column `backups.folder TEXT NOT NULL DEFAULT ''`, where an empty value means Unsorted.
+- New column `backups.folder TEXT NOT NULL DEFAULT ''`, where an empty value means No Folder.
 - New table `backup_folders(game, name, is_default, PRIMARY KEY (game, name))`, so empty
   folders persist and one folder per game can be the default.
 - `getFolders` returns the union of both, so a folder referenced only by backups still shows.
@@ -27,7 +27,7 @@ one is *Unsorted*.
 
 `BackupsDb::createSchema` checks `PRAGMA table_info(backups)` and runs
 `ALTER TABLE backups ADD COLUMN folder ... DEFAULT ''` when the column is missing. Existing
-backups become Unsorted, so they list and restore exactly as before. Nothing else is rewritten.
+backups are in No Folder, so they list and restore exactly as before. Nothing else is rewritten.
 Older app versions can still open the database: they ignore the extra column and table, and
 their inserts get the default `''`.
 
@@ -37,7 +37,7 @@ their inserts get the default `''`.
 |---|---|
 | Create folder | Inserts into `backup_folders`. |
 | Rename folder | Updates `backup_folders` and `backups.folder` in one transaction and keeps the default flag. Renaming onto an existing name merges the two. |
-| Remove folder | Its backups become Unsorted, then the folder row is deleted. Backups are **never** deleted with a folder. If it was the default, Unsorted is the default again. |
+| Remove folder | Its backups move to No Folder, then the folder row is deleted. Backups are **never** deleted with a folder. If it was the default, No Folder is the default again. |
 | Move backups | `UPDATE backups SET folder = ? WHERE id IN (...)` |
 | Set default | `UPDATE backup_folders SET is_default = (name = ?) WHERE game = ?`, so at most one folder per game is the default. |
 
@@ -50,13 +50,13 @@ from the folder's context menu in the overlay. New backups of every type go ther
 - **Quicksaves** (hotkey) and **autosaves**: always into the default folder.
 - **Manual saves** (overlay *Save*): into the selected folder, or the folder of the selected
   backup. If nothing in a folder is selected, they go into the default folder.
-- With no default folder set, new backups are Unsorted, as before.
+- With no default folder set, new backups are in No Folder, as before.
 
 `BackupsModel::createBackup` takes an optional folder. Without one, it uses
 `BackupsDb::getDefaultFolder(game)`.
 
 **Autosave rotation** (`cleanupAutoBackups`) rotates only the autosaves in the folder where new
-autosaves go (the default folder, or Unsorted). Autosaves you moved elsewhere are kept. After
+autosaves go (the default folder, or No Folder). Autosaves you moved elsewhere are kept. After
 changing the default, autosaves in the previous folder are no longer rotated.
 
 **Quickload** ignores folders and loads the newest quicksave.
@@ -75,14 +75,14 @@ window):
 - Folders are top-level rows with a folder icon and a backup count in the *Date* column. They
   always sort above backups and alphabetically among themselves.
 - The default folder is bold and marked *(default)*.
-- Unsorted backups are top-level rows, as before. Backups in a folder are its children.
+- Backups in No Folder are top-level rows, as before. Backups in a folder are its children.
 - **Folder** button: creates `New folder` (`New folder 2`, ...) and starts renaming it.
 - **Save** button: see *Default folder* above.
 - **Delete** button: deletes the selected backups. Selected folders are removed, and their
-  backups become Unsorted.
+  backups move to No Folder.
 - Drag one or more backups onto a folder (or onto a backup inside it) to move them. Drop them
-  on empty space to make them Unsorted.
-- Backup context menu: *Load*, *Rename*, *Move to ▸* (Unsorted, every folder, *New folder..*),
+  on empty space to move them to No Folder.
+- Backup context menu: *Load*, *Rename*, *Move to ▸* (No Folder, every folder, *New folder..*),
   *Delete*.
 - Folder context menu: *Default for new backups* (checkbox), *Rename*, *New folder*,
   *Remove folder (keep backups)*. F2 renames a folder too.
