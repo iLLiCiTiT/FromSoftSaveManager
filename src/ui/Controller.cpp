@@ -109,6 +109,7 @@ Controller::Controller(QObject* parent): QObject(parent) {
     QString dbPath = m_configModel->getAppDataDirPath() + "\\backups.db";
     m_backupsDb = new BackupsDb(dbPath);
     m_backupsModel = new BackupsModel(saveFileItems, m_configModel->getAutosaveConfig(), m_backupsDb, this);
+    m_updatesModel = new UpdatesModel(this);
     m_hotkeysThread = new HotkeysThread(m_configModel->getHotkeysConfig(), this);
     m_saveChangesThread = new SaveChangesThread(saveFileItems, this);
 
@@ -148,6 +149,10 @@ void Controller::initialize(QWidget* parent) {
     m_migrationActive = true;
     migrateIfAgreed(m_configModel->getBackupDirPath(), m_backupsDb, parent);
     m_migrationActive = false;
+}
+
+UpdatesModel* Controller::getUpdatesModel() const {
+    return m_updatesModel;
 }
 
 QString Controller::getLastSelectedSaveId() const {

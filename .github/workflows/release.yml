@@ -1,0 +1,96 @@
+name: Release
+
+# Pushing a version tag creates a draft release with both zip files. Starting the workflow
+#   manually only builds the zip files and keeps them as artifacts of the run.
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-2022
+    strategy:
+      matrix:
+        include:
+          - name: FromSoftSaveManager
+            inv_images: 'ON'
+          - name: FromSoftSaveManager-minified
+            inv_images: 'OFF'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Check version
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        run: ./scripts/check_release_version.ps1 -Tag '${{ github.ref_name }}'
+
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.10.0'
+          host: windows
+          target: desktop
+          arch: win64_mingw
+          tools: tools_mingw1310,qt.tools.win64_mingw1310 tools_ninja,qt.tools.ninja
+          cache: true
+
+      - name: Use Qt tools
+        shell: pwsh
+        run: |
+          "$env:IQTA_TOOLS\mingw1310_64\bin" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+          "$env:IQTA_TOOLS\Ninja" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+
+      - name: Configure
+        shell: pwsh
+        run: >
+          cmake -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_C_COMPILER=gcc
+          -DCMAKE_CXX_COMPILER=g++
+          "-DCMAKE_PREFIX_PATH=$env:QT_ROOT_DIR"
+          -DFSSM_USE_INV_IMAGES=${{ matrix.inv_images }}
+
+      - name: Build
+        shell: pwsh
+        run: cmake --build build --target FromSoftSaveManager
+
+      - name: Package
+        shell: pwsh
+        run: ./scripts/package_release.ps1 -BuildDir build -Name '${{ matrix.name }}' -OutDir dist
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.name }}
+          path: dist/${{ matrix.name }}.zip
+          if-no-files-found: error
+
+  release:
+    if: github.ref_type == 'tag'
+    needs: build
+    runs-on: windows-2022
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create draft release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create '${{ github.ref_name }}'
+          dist/FromSoftSaveManager.zip
+          dist/FromSoftSaveManager-minified.zip
+          --repo '${{ github.repository }}'
+          --verify-tag
+          --draft
+          --generate-notes

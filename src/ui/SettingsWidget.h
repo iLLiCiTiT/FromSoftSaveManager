@@ -86,6 +86,9 @@ private:
 
 class SettingsWidget: public QWidget {
     Q_OBJECT
+signals:
+    void updateDialogRequested();
+
 public:
     explicit SettingsWidget(Controller* controller, QWidget* parent);
 
@@ -98,7 +101,10 @@ private:
     SavePathInputsWidget* m_pathsWidget;
     HotkeysWidget* m_hotkeysWidget;
     AutoBackupWidget* m_autobackupWidget;
+    QLabel* m_updateLabel;
+    QPushButton* m_updateBtn;
 
 private slots:
     void virtual onSave();
+    void onUpdateAvailable();
 };
