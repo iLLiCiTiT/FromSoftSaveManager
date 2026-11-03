@@ -133,6 +133,7 @@ private:
     QString m_currentSaveId = "";
     ConfigModel* m_configModel;
     BackupsDb* m_backupsDb;
+    bool m_migrationActive = false;
     BackupsModel* m_backupsModel;
     HotkeysThread* m_hotkeysThread;
     SaveChangesThread* m_saveChangesThread;

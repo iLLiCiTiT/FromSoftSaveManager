@@ -143,8 +143,11 @@ Controller::~Controller() {
 }
 
 void Controller::initialize(QWidget* parent) {
-    if (hasLegacyBackups(m_configModel->getBackupDirPath()))
-        migrateIfAgreed(m_configModel->getBackupDirPath(), m_backupsDb, parent);
+    if (!hasLegacyBackups(m_configModel->getBackupDirPath())) return;
+    // The dialog keeps the event loop running, backups must not be written into its transaction
+    m_migrationActive = true;
+    migrateIfAgreed(m_configModel->getBackupDirPath(), m_backupsDb, parent);
+    m_migrationActive = false;
 }
 
 QString Controller::getLastSelectedSaveId() const {
@@ -313,7 +316,7 @@ ERCharInfoResult Controller::getERCharacters(const QString& saveId) const {
 }
 
 void Controller::onQuickSaveRequest() {
-    if (m_currentSaveId.isEmpty()) return;
+    if (m_migrationActive || m_currentSaveId.isEmpty()) return;
     auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
     if (!itemOpt.has_value()) return;
     QString savePath = itemOpt.value().savePath;
@@ -322,7 +325,7 @@ void Controller::onQuickSaveRequest() {
 };
 
 void Controller::onQuickLoadRequest() {
-    if (m_currentSaveId.isEmpty()) return;
+    if (m_migrationActive || m_currentSaveId.isEmpty()) return;
     auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
     if (!itemOpt.has_value()) return;
     m_backupsModel->quickLoad(itemOpt.value().savePath, itemOpt.value().game);
@@ -381,7 +384,8 @@ void Controller::onAutobackupChange() {
 
 // Save file changed
 void Controller::onSaveFileChange(const QString& saveId) {
-    m_backupsModel->saveGameChanged(saveId);
+    if (!m_migrationActive)
+        m_backupsModel->saveGameChanged(saveId);
     emit saveIdChanged(saveId);
 }
 
