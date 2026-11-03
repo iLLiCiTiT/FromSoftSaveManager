@@ -1,0 +1,94 @@
+#pragma once
+#include <array>
+#include <cstdint>
+#include <optional>
+#include <string_view>
+#include <vector>
+
+#include "SaveData.h"
+
+namespace fssm::parse::ds2 {
+    enum class ItemCategory {
+        Weapons,
+        Catalysts,
+        RangedWeapons,
+        Shields,
+        HeadArmor,
+        ChestArmor,
+        HandsArmor,
+        LegsArmor,
+        Ammunition,
+        Rings,
+        Consumables,
+        KeyItems,
+        Materials,
+        Spells,
+        Gestures,
+        Unknown,
+    };
+
+    // Alias of the category icon in :/ds2_images (64x64, taken from the game's IC_CA_* textures).
+    inline std::string_view getCategoryIcon(ItemCategory category) {
+        switch (category) {
+            case ItemCategory::Weapons: return "inv_weapons";
+            case ItemCategory::Catalysts: return "inv_catalysts";
+            case ItemCategory::RangedWeapons: return "inv_ranged_weapons";
+            case ItemCategory::Shields: return "inv_shields";
+            case ItemCategory::HeadArmor: return "inv_head";
+            case ItemCategory::ChestArmor: return "inv_chest";
+            case ItemCategory::HandsArmor: return "inv_hands";
+            case ItemCategory::LegsArmor: return "inv_legs";
+            case ItemCategory::Ammunition: return "inv_ammunition";
+            case ItemCategory::Rings: return "inv_rings";
+            case ItemCategory::Consumables: return "inv_consumables";
+            case ItemCategory::KeyItems: return "inv_key_items";
+            case ItemCategory::Materials: return "inv_materials";
+            case ItemCategory::Spells: return "inv_spells";
+            case ItemCategory::Gestures: return "inv_gestures";
+            case ItemCategory::Unknown: break;
+        }
+        return "";
+    }
+
+    // Order matches the game's menu text (ids 59202..59210); 0 = not infused.
+    enum class Infusion : uint8_t {
+        None,
+        Fire,
+        Magic,
+        Lightning,
+        Dark,
+        Poison,
+        Bleed,
+        Raw,
+        Enchanted,
+        Mundane,
+    };
+    std::string_view infusionLabel(Infusion infusion);
+
+    struct BaseItem {
+        uint32_t id = 0;
+        uint16_t maxHeld = 1;       // ItemParam stack limit (99 for goods, 999 for ammo)
+        uint16_t order = 0;         // ItemParam sort id (+0x2c), the in-game order within a tab
+        ItemCategory category = ItemCategory::Unknown;
+        std::string_view label = "Unknown";
+        std::string_view image;     // alias in :/ds2_inv_images (128x256 icon), empty if none
+    };
+
+    extern const std::array<BaseItem, 1233> ALL_ITEMS;
+
+    std::optional<BaseItem> findBaseItem(uint32_t id);
+
+    // An inventory slot resolved against the item database.
+    struct InventoryItem {
+        uint32_t slot = 0;              // index in InventoryData::entries, then keyEntries
+        uint32_t itemId = 0;
+        uint32_t amount = 1;            // stack size (1 for equipment)
+        std::optional<float> durability;
+        uint8_t upgradeLevel = 0;
+        Infusion infusion = Infusion::None;
+        bool knownItem = false;
+        BaseItem baseItem;
+    };
+
+    std::vector<InventoryItem> decode_inventory(const InventoryData& inventory);
+}

@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 
 #include <QCoreApplication>
+#include <QTimer>
 
 #include <iostream>
 
@@ -69,6 +70,16 @@ void MainWindow::showUpdateDialog() {
 }
 
 void MainWindow::showEvent(QShowEvent *event) {
+    if (!m_initialized) {
+        m_initialized = true;
+        // Wait for the window to be painted so dialogs are not shown over a blank window
+        QTimer::singleShot(0, this, [this]() {
+            m_controller->initialize(this);
+            refresh();
+            // Update must not be offered while backups migration is running
+            m_controller->getUpdatesModel()->checkForUpdates();
+        });
+    }
     refresh();
     updateOverlayGeo();
 }

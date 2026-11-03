@@ -304,6 +304,9 @@ ERAttributesLabel QLabel {
 }
 
 /* Dark Souls: Remastered specific styles */
+DSRWidget, DSRWidget QWidget {
+    font-size: 9pt;
+}
 DSRWidget QScrollBar::handle:vertical, DSRWidget QScrollBar::handle:horizontal {
     background: #6B2E0E;
     border-radius: 0px;
@@ -316,21 +319,67 @@ DSRWidget QScrollBar:vertical {
     border: 1px solid #5D432D;
     border-radius: 0px;
 }
+/* Character list scrollbar like the Data List in the game: dark track in a thin gold frame */
+QScrollBar#ds_list_scrollbar:vertical {
+    width: 12px;
+    background: #141312;
+    border: 1px solid #6E5A36;
+    border-radius: 0px;
+}
+QScrollBar#ds_list_scrollbar::handle:vertical {
+    background: #8A3E18;
+    border-radius: 0px;
+    margin: 2px;
+    min-height: 20px;
+}
+QScrollBar#ds_list_scrollbar::handle:vertical:hover {
+    background: #A04A1E;
+}
 DSRInventoryCategoryButton:hover {
+}
+
+/* DS3 character list scrollbar from the game's sprites (tools/ds3_flags/gen_menu.py) */
+QScrollBar#ds3_list_scrollbar:vertical {
+    width: 9px;
+    margin: 10px 0px 10px 0px;
+    border: none;
+    background: transparent;
+    border-image: url(:/ds3_images/scroll_track) 0 0 0 0 stretch stretch;
+}
+QScrollBar#ds3_list_scrollbar::handle:vertical {
+    min-height: 20px;
+    margin: 0px 2px;
+    border-radius: 0px;
+    background: transparent;
+    border-image: url(:/ds3_images/scroll_thumb) 0 0 0 0 stretch stretch;
+}
+QScrollBar#ds3_list_scrollbar::sub-line:vertical {
+    height: 10px;
+    width: 9px;
+    subcontrol-position: top;
+    subcontrol-origin: margin;
+    border-image: url(:/ds3_images/scroll_up) 0 0 0 0 stretch stretch;
+}
+QScrollBar#ds3_list_scrollbar::add-line:vertical {
+    height: 10px;
+    width: 9px;
+    subcontrol-position: bottom;
+    subcontrol-origin: margin;
+    border-image: url(:/ds3_images/scroll_down) 0 0 0 0 stretch stretch;
 }
 
 #dsr_category_icon {
     font-size: 26pt;
 }
 
-#ds_list_view, #er_list_view, #ds3_list_view {
+#ds_list_view, #er_list_view, #ds3_list_view, #ds2_list_view, #sekiro_list_view {
     border: none;
     border-radius: 0px;
     background: transparent;
     selection-background-color: transparent;
 }
 
-#ds_list_view::item, #er_list_view::item, #ds3_list_view::item {
+#ds_list_view::item, #er_list_view::item, #ds3_list_view::item, #ds2_list_view::item, #sekiro_list_view::item {
     border: none;
     background: transparent;
 }
@@ -358,6 +407,16 @@ DSRInventoryCategoryButton:hover {
         stop:0.3 rgba(253, 128, 0, 0.5)
         stop:0.8 rgba(253, 128, 0, 0.5)
         stop:1.0 transparent);
+}
+
+#ds2_list_view::item {
+    padding: 6px 4px;
+}
+#ds2_list_view::item:hover {
+    background: rgba(232, 172, 40, 0.25);
+}
+#ds2_list_view::item:selected, #ds2_list_view::item:selected:!active, #ds2_list_view::item:selected:hover {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 rgba(232, 150, 30, 0.65), stop:1 rgba(232, 150, 30, 0.05));
 }
 
 #er_list_view::item:hover {

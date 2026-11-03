@@ -1,17 +1,21 @@
 #pragma once
 
+#include <QItemSelection>
+#include <QListView>
+#include <QStandardItemModel>
+
+#include "CharacterList.h"
 #include "CharInfo.h"
 #include "Covenants.h"
+#include "HeaderTabs.h"
 #include "Inventory.h"
+#include "WorldProgress.h"
 #include "../BaseGameWidget.h"
 #include "../Controller.h"
 #include "../Utils.h"
 #include "../../parse/Parse.h"
 
 namespace fssm::ui::dsr{
-const int CharIdRole = Qt::UserRole + 1;
-const int CharNameRole = Qt::UserRole + 2;
-
 class CharsListModel: public QStandardItemModel {
     Q_OBJECT
 signals:
@@ -42,8 +46,10 @@ private:
     QPixmap m_bgPix;
     fssm::ui::dsr::CharsListModel* m_model;
     QListView* m_view;
-    TabWidget* m_charTabs;
+    fssm::ui::dsr::HeaderTabs* m_charTabs;
     fssm::ui::dsr::CovenantsWidget* m_covenantsWidget;
     fssm::ui::dsr::CharacterInfoWidget* m_charInfoWidget;
     fssm::ui::dsr::InventoryWidget* m_inventoryWidget;
+    fssm::ui::dsr::WorldProgressWidget* m_worldWidget;
+    fssm::ui::dsr::WorldProgressWidget* m_bonfiresWidget;
 };

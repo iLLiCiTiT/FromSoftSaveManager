@@ -1,12 +1,11 @@
 #include "Controller.h"
 
-#include <QDesktopServices>
 #include <QDir>
-#include <QStandardPaths>
-#include <QUrl>
 #include <filesystem>
 #include <iostream>
 #include <utility>
+
+#include "MigrationHelper.h"
 
 
 HotkeysThread::HotkeysThread(const ConfigHotkeys& config, QObject* parent): QThread(parent) {
@@ -107,7 +106,9 @@ void SaveChangesThread::run() {
 Controller::Controller(QObject* parent): QObject(parent) {
     m_configModel = new ConfigModel(this);
     auto saveFileItems = m_configModel->getSaveFileItems();
-    m_backupsModel = new BackupsModel(saveFileItems, m_configModel->getAutosaveConfig(), m_configModel->getBackupDirPath(), this);
+    QString dbPath = m_configModel->getAppDataDirPath() + "\\backups.db";
+    m_backupsDb = new BackupsDb(dbPath);
+    m_backupsModel = new BackupsModel(saveFileItems, m_configModel->getAutosaveConfig(), m_backupsDb, this);
     m_updatesModel = new UpdatesModel(this);
     m_hotkeysThread = new HotkeysThread(m_configModel->getHotkeysConfig(), this);
     m_saveChangesThread = new SaveChangesThread(saveFileItems, this);
@@ -139,6 +140,15 @@ Controller::~Controller() {
 
     m_configModel->saveConfig();
     delete m_configModel;
+    delete m_backupsDb;
+}
+
+void Controller::initialize(QWidget* parent) {
+    if (!hasLegacyBackups(m_configModel->getBackupDirPath())) return;
+    // The dialog keeps the event loop running, backups must not be written into its transaction
+    m_migrationActive = true;
+    migrateIfAgreed(m_configModel->getBackupDirPath(), m_backupsDb, parent);
+    m_migrationActive = false;
 }
 
 UpdatesModel* Controller::getUpdatesModel() const {
@@ -193,6 +203,62 @@ DSRCharInfoResult Controller::getDsrCharacters(const QString& saveId) const {
     catch (const std::exception& e) {
         return {
             "Failed to read or parse DSR save",
+            {},
+        };
+    }
+}
+
+DS2CharInfoResult Controller::getDs2Characters(const QString& saveId) const {
+    QString r_savePath = m_configModel->getSavePathItem(saveId);
+    if (r_savePath.isEmpty()) return {
+        "Save file path is not set.",
+        {},
+    };
+    std::string savePath = r_savePath.toStdString();
+    if (!std::filesystem::exists(savePath)) return {
+        "Save file does not exist.",
+        {},
+    };
+    try {
+        fssm::parse::SL2File sl2_ds2 = fssm::parse::parse_sl2_file(savePath);
+        fssm::parse::ds2::DS2SaveFile ds2 = fssm::parse::ds2::parse_ds2_file(sl2_ds2);
+
+        return {
+            "",
+            ds2.characters
+        };
+    }
+    catch (const std::exception& e) {
+        return {
+            "Failed to read or parse DS2 save",
+            {},
+        };
+    }
+}
+
+SekiroCharInfoResult Controller::getSekiroCharacters(const QString& saveId) const {
+    QString r_savePath = m_configModel->getSavePathItem(saveId);
+    if (r_savePath.isEmpty()) return {
+        "Save file path is not set.",
+        {},
+    };
+    std::string savePath = r_savePath.toStdString();
+    if (!std::filesystem::exists(savePath)) return {
+        "Save file does not exist.",
+        {},
+    };
+    try {
+        fssm::parse::SL2File sl2 = fssm::parse::parse_sl2_file(savePath);
+        fssm::parse::sekiro::SekiroSaveFile sekiro = fssm::parse::sekiro::parse_sekiro_file(sl2);
+
+        return {
+            "",
+            sekiro.characters
+        };
+    }
+    catch (const std::exception& e) {
+        return {
+            "Failed to read or parse Sekiro save",
             {},
         };
     }
@@ -254,17 +320,8 @@ ERCharInfoResult Controller::getERCharacters(const QString& saveId) const {
     }
 }
 
-void Controller::openBackupDir() {
-    if (m_currentSaveId.isEmpty()) return;
-    auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
-    if (!itemOpt.has_value()) return;
-    std::string backupDir = m_backupsModel->getGameBackupDir(itemOpt.value().game);
-    if (!std::filesystem::exists(backupDir)) return;
-    QDesktopServices::openUrl(QUrl::fromLocalFile(QString::fromStdString(backupDir)));
-}
-
 void Controller::onQuickSaveRequest() {
-    if (m_currentSaveId.isEmpty()) return;
+    if (m_migrationActive || m_currentSaveId.isEmpty()) return;
     auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
     if (!itemOpt.has_value()) return;
     QString savePath = itemOpt.value().savePath;
@@ -273,7 +330,7 @@ void Controller::onQuickSaveRequest() {
 };
 
 void Controller::onQuickLoadRequest() {
-    if (m_currentSaveId.isEmpty()) return;
+    if (m_migrationActive || m_currentSaveId.isEmpty()) return;
     auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
     if (!itemOpt.has_value()) return;
     m_backupsModel->quickLoad(itemOpt.value().savePath, itemOpt.value().game);
@@ -332,7 +389,8 @@ void Controller::onAutobackupChange() {
 
 // Save file changed
 void Controller::onSaveFileChange(const QString& saveId) {
-    m_backupsModel->saveGameChanged(saveId);
+    if (!m_migrationActive)
+        m_backupsModel->saveGameChanged(saveId);
     emit saveIdChanged(saveId);
 }
 

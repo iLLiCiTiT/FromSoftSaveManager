@@ -78,10 +78,9 @@ static QString findSaveFile(const std::string& dirpath, const std::string& filen
 }
 
 ConfigModel::ConfigModel(QObject* parent): QObject(parent) {
-    m_appConfigPath = getAppConfigDir();
-    m_appConfigPath.push_back("\\config.json");
-    m_appBackupsDir = getAppConfigDir();
-    m_appBackupsDir.push_back("\\backups");
+    m_appDataDir = getAppConfigDir();
+    m_appConfigPath = m_appDataDir + "\\config.json";
+    m_appBackupsDir = m_appDataDir + "\\backups";
 
     p_loadConfig();
 }
@@ -193,6 +192,10 @@ void ConfigModel::saveConfig() {
     std::ofstream o(m_appConfigPath.toStdString());
     o << jsonData.dump(4) << std::endl;
     o.close();
+}
+
+QString ConfigModel::getAppDataDirPath() const {
+    return m_appDataDir;
 }
 
 QString ConfigModel::getBackupDirPath() {

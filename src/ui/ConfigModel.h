@@ -106,6 +106,7 @@ signals:
 public:
     explicit ConfigModel(QObject* parent);
 
+    QString getAppDataDirPath() const;
     QString getBackupDirPath();
 
     QString getLastSelectedSaveId() const;
@@ -126,6 +127,7 @@ public:
 private:
     ConfigData m_configData;
     QString m_appConfigPath = "";
+    QString m_appDataDir = "";
     QString m_appBackupsDir = "";
     DefaultSavePathInfo m_defaultSavePath {};
     std::unordered_map<QString, SaveFileItem> m_saveInfoById {};

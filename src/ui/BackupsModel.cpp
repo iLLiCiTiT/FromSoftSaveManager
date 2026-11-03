@@ -5,219 +5,46 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <thread>
 
 #include "Utils.h"
 
-using json = nlohmann::json;
 
-
-// Helper functions
-BackupMetadata createBackupMetadata(
-    const fssm::Game& game,
-    const BackupType& backupType,
-    const std::string& filename,
-    const std::string& label,
-    const std::string& backupDir
-) {
-    std::vector<std::string> filenames;
-    filenames.push_back(filename);
-    std::string datetime = QDateTime::currentDateTimeUtc().toString(Qt::ISODate).toStdString();
-    return BackupMetadata {
-        .id =generateUUID(),
-        .game = game,
-        .backupType = backupType,
-        .label = label,
-        .filenames = filenames,
-        .datetime = datetime,
-        .epoch = std::time(nullptr),
-        .backupDir = backupDir
-    };
-}
-
-std::string filenameByGame(fssm::Game& game) {
+static std::string filenameByGame(const fssm::Game& game) {
     switch (game) {
-        case fssm::Game::DSR:
-            return "DRAKS0005.sl2";
-        case fssm::Game::DS2_SOTFS:
-            return "DS2SOFS0000.sl2";
-        case fssm::Game::DS3:
-            return "DS30000.sl2";
-        case fssm::Game::Sekiro:
-            return "S0000.sl2";
-        case fssm::Game::ER:
-            return "ER0000.sl2";
-        default:
-            return "";
+        case fssm::Game::DSR:       return "DRAKS0005.sl2";
+        case fssm::Game::DS2_SOTFS: return "DS2SOFS0000.sl2";
+        case fssm::Game::DS3:       return "DS30000.sl2";
+        case fssm::Game::Sekiro:    return "S0000.sl2";
+        case fssm::Game::ER:        return "ER0000.sl2";
+        default:                    return "";
     }
 }
 
-std::optional<BackupMetadata> backupMetadatafromJson(const std::filesystem::path& backupDir, const json& data)
-{
-    const auto idIt = data.find("id");
-    const auto gameIt = data.find("game");
-    if (
-        idIt == data.end()
-        || !idIt->is_string()
-        || gameIt == data.end()
-        || !gameIt->is_string()) return std::nullopt;
-
-    fssm::Game game = fssm::Game::fromString(gameIt.value().get<std::string>());
-    if (game == fssm::Game::Unknown) return std::nullopt;
-
-    std::string filename = filenameByGame(game);
-    if (filename.empty()) return std::nullopt;
-
-    const auto backupTypeIt = data.find("backup_type");
-    const auto dateTimeIt = data.find("datetime");
-    const auto epochIt = data.find("epoch");
-    const auto labelIt = data.find("label");
-
-    std::string backupTypeS;
-    if (backupTypeIt != data.end() && backupTypeIt->is_string())
-        backupTypeS = backupTypeIt.value();
-    BackupType backupType = backupTypeFromString(backupTypeS);
-
-    // TODO handle missing or invalid values
-    std::string datetime = "";
-    if (backupTypeIt != data.end() && backupTypeIt->is_string())
-        datetime = dateTimeIt.value();
-
-    time_t epoch = 0;
-    if (epochIt != data.end() && epochIt->is_number_integer())
-        epoch = epochIt.value();
-
-    if (datetime.empty() && epoch == 0) {
-        std::filesystem::path savePath = backupDir;
-        savePath /= filename;
-        if (std::filesystem::exists(savePath)) {
-            std::filesystem::file_time_type ftime = std::filesystem::last_write_time(savePath);
-            auto stp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
-                ftime - std::filesystem::file_time_type::clock::now() + std::chrono::system_clock::now()
-            );
-            epoch = std::chrono::system_clock::to_time_t(stp);
-        }
-    }
-
-    if (datetime.empty()) {
-        QDateTime qdate = QDateTime::fromSecsSinceEpoch(epoch);
-        datetime = qdate.toString(Qt::ISODate).toStdString();
-    } else if (epoch == 0 ) {
-        QDateTime qdate = QDateTime::fromString(QString::fromStdString(datetime), Qt::ISODate);
-        epoch = qdate.toSecsSinceEpoch();
-    }
-
-    std::string label = "";
-    if (labelIt != data.end() && labelIt->is_string())
-        label = labelIt.value();
-
-    if (label.empty() && backupType == BackupType::MANUAL) label = "NA";
-
+static BackupMetadata makeMetadata(const fssm::Game& game, const BackupType& backupType,
+                                   const std::string& filename, const std::string& label) {
     return BackupMetadata {
-        .id = idIt.value(),
-        .game = game,
+        .id         = generateUUID(),
+        .game       = game,
         .backupType = backupType,
-        .label = label,
-        .filenames = {filename},
-        .datetime = datetime,
-        .epoch = epoch,
-        .backupDir = backupDir.string()
+        .label      = label,
+        .filename   = filename,
+        .datetime   = QDateTime::currentDateTimeUtc().toString(Qt::ISODate).toStdString(),
+        .epoch      = std::time(nullptr),
     };
 }
 
-json backupMetadataToJson(const BackupMetadata& metadata)
+
+// --- AutoBackupHandler ---
+
+AutoBackupHandler::AutoBackupHandler(const std::vector<SaveFileItem>& saveItems,
+                                     const ConfigAutobackup& autobackupConfig,
+                                     QObject* parent)
+    : QObject(parent)
 {
-    json jsonFilenames = json::array();
-    for (const auto& filename: metadata.filenames) {
-        jsonFilenames.push_back(filename);
-    }
-    json output = {
-        {"id", metadata.id},
-        {"game", metadata.game.toString()},
-        {"backup_type", backupTypeToString(metadata.backupType)},
-        {"filenames", jsonFilenames},
-        {"datetime", metadata.datetime},
-        {"epoch", metadata.epoch},
-    };
-    if (metadata.label.empty())
-        output["label"] = nullptr;
-    else
-        output["label"] = metadata.label;
-    return output;
-}
-
-// TODO move these to global utils
-std::pair<std::string, std::string> splitPath(const std::string& path) {
-    // Find filename start
-    const auto is_sep = [](char c) { return c == '/' || c == '\\'; };
-    std::size_t sep = std::string::npos;
-    for (std::size_t i = path.size(); i > 0; --i) {
-        if (is_sep(path[i - 1])) {
-            sep = i - 1;
-            break;
-        }
-    }
-    if (sep == std::string::npos || sep == 0) return {path, ""};
-    sep += 1;
-    if (sep == path.size()) return {path, ""};
-
-    return {path.substr(0, sep - 1), path.substr(sep)};
-}
-
-std::string getFilename(const std::string& path) {
-    // Find filename start
-    auto [dir, filename] = splitPath(path);
-    return filename;
-}
-
-std::pair<std::string, std::string> splitExt(const std::string& path) {
-    std::size_t dot = path.rfind('.');
-    // No dot or dot is before the basename -> no extension
-    if (dot == std::string::npos) {
-        return {path, ""};
-    }
-
-    // Find filename start
-    const auto is_sep = [](char c) { return c == '/' || c == '\\'; };
-    std::size_t sep = std::string::npos;
-    for (std::size_t i = path.size(); i > 0; --i) {
-        if (is_sep(path[i - 1])) {
-            sep = i - 1;
-            break;
-        }
-    }
-    const std::size_t start = (sep == std::string::npos) ? 0 : sep + 1;
-
-    // No dot in filename or filename starts with a dot
-    if (dot <= start) return {path, ""};
-
-    return { path.substr(0, dot), path.substr(dot) };
-}
-
-std::string indexExistingPath(const std::string& path) {
-    if (!std::filesystem::exists(path)) return path;
-    std::string pathStart = path;
-    std::string ext = "";
-    if (!std::filesystem::is_directory(path)) {
-        auto r = splitExt(path);
-        pathStart = r.first;
-        ext = r.second;
-    }
-    int idx = 1;
-    while (true) {
-        std::string newPath = pathStart + "_" + std::to_string(idx) + ext;
-        if (!std::filesystem::exists(newPath)) return newPath;
-        idx += 1;
-    };
-}
-
-AutoBackupHandler::AutoBackupHandler(const std::vector<SaveFileItem>& saveItems, const ConfigAutobackup& autobackupConfig, QObject* parent): QObject(parent) {
     m_timer = new QTimer(this);
     m_timer->setSingleShot(false);
     m_timer->setInterval(1000);
-
     connect(m_timer, SIGNAL(timeout()), this, SLOT(onTimer()));
-
     updatePaths(saveItems);
     updateAutobackupConfig(autobackupConfig);
 }
@@ -228,18 +55,16 @@ void AutoBackupHandler::saveGameChanged(const QString& saveId) {
 
 void AutoBackupHandler::updatePaths(const std::vector<SaveFileItem>& saveItems) {
     m_saveItemsBySaveId.clear();
-    for (auto& item: saveItems) {
+    for (auto& item : saveItems)
         m_saveItemsBySaveId[item.saveId] = item;
-    }
 }
 
 void AutoBackupHandler::updateAutobackupConfig(const ConfigAutobackup& autobackupConfig) {
-    m_enabled = autobackupConfig.enabled;
+    m_enabled        = autobackupConfig.enabled;
     m_maxAutoBackups = autobackupConfig.maxBackups;
-    m_frequency = autobackupConfig.frequency;
-    if (m_enabled && !m_timer->isActive()) {
+    m_frequency      = autobackupConfig.frequency;
+    if (m_enabled && !m_timer->isActive())
         m_timer->start();
-    }
 }
 
 void AutoBackupHandler::onTimer() {
@@ -248,21 +73,20 @@ void AutoBackupHandler::onTimer() {
         return;
     }
     std::unordered_set<QString> changedSaves = m_changedSaves;
-    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+    auto now = std::chrono::system_clock::now();
 
-    for (auto& saveId: changedSaves) {
+    for (auto& saveId : changedSaves) {
         if (m_frequency > 0) {
-            auto itLast = m_lastAutobackups.find(saveId);
-            if (itLast != m_lastAutobackups.end()) {
-                auto diff = std::chrono::duration_cast<std::chrono::seconds>(now - itLast->second);
+            auto it = m_lastAutobackups.find(saveId);
+            if (it != m_lastAutobackups.end()) {
+                auto diff = std::chrono::duration_cast<std::chrono::seconds>(now - it->second);
                 if (diff.count() < m_frequency) continue;
             }
         }
         auto it = m_saveItemsBySaveId.find(saveId);
         if (it == m_saveItemsBySaveId.end()) continue;
         SaveFileItem& item = it->second;
-        std::filesystem::path path = item.savePath.toStdString();
-        if (!std::filesystem::exists(path)) continue;
+        if (!std::filesystem::exists(item.savePath.toStdString())) continue;
         m_changedSaves.erase(saveId);
         m_lastAutobackups[saveId] = now;
         emit autoBackupRequested(item.savePath, item.game);
@@ -270,15 +94,19 @@ void AutoBackupHandler::onTimer() {
 }
 
 
-// Backup model implementation
-BackupsModel::BackupsModel(const std::vector<SaveFileItem>& saveItems, const ConfigAutobackup& autobackupConfig, const QString& backupRoot, QObject *parent)
+// --- BackupsModel ---
+
+BackupsModel::BackupsModel(const std::vector<SaveFileItem>& saveItems,
+                           const ConfigAutobackup& autobackupConfig,
+                           BackupsDb* db,
+                           QObject* parent)
     : QObject(parent),
-    m_backupsRoot(backupRoot),
-    m_maxAutoBackups(autobackupConfig.maxBackups)
+      m_db(db),
+      m_maxAutoBackups(autobackupConfig.maxBackups)
 {
     m_autoBackupHandler = new AutoBackupHandler(saveItems, autobackupConfig, this);
-
-    connect(m_autoBackupHandler, SIGNAL(autoBackupRequested(QString, fssm::Game)), this, SLOT(createAutoBackup(QString, fssm::Game)));
+    connect(m_autoBackupHandler, SIGNAL(autoBackupRequested(QString, fssm::Game)),
+            this, SLOT(createAutoBackup(QString, fssm::Game)));
 }
 
 void BackupsModel::updateAutobackupConfig(const ConfigAutobackup& autobackupConfig) {
@@ -286,43 +114,34 @@ void BackupsModel::updateAutobackupConfig(const ConfigAutobackup& autobackupConf
     m_autoBackupHandler->updateAutobackupConfig(autobackupConfig);
 }
 
-std::optional<BackupMetadata> BackupsModel::createBackup(const QString& savePath, const fssm::Game& game, const BackupType& backupType, const QString& label) {
-    // Skip empty save path
-    if (savePath.isEmpty()) return std::nullopt;
-    std::string stdSavePath = savePath.toStdString();
-    // Check if path to backup exists
-    if (!std::filesystem::exists(stdSavePath)) return std::nullopt;
-    QDateTime curTime = QDateTime::currentDateTime();
-    std::string timestamp = curTime.toString("yyyyMMdd_hhmmss").toStdString();
-    std::string backupDir = getGameBackupDir(game) + "\\" + timestamp;
-    std::string filename = getFilename(stdSavePath);
-    backupDir = indexExistingPath(backupDir);
-    std::string dstPath = backupDir + "\\" + filename;
-    std::filesystem::create_directory(backupDir);
-    std::filesystem::copy_file(stdSavePath, dstPath);
-    std::string metadataPath = backupDir + "\\metadata.json";
+std::optional<BackupMetadata> BackupsModel::createBackup(const QString& savePath,
+                                                         const fssm::Game& game,
+                                                         const BackupType& backupType,
+                                                         const QString& label) {
+    if (savePath.isEmpty() || !std::filesystem::exists(savePath.toStdString()))
+        return std::nullopt;
 
+    std::ifstream ifs(savePath.toStdString(), std::ios::binary);
+    if (!ifs) return std::nullopt;
+    std::vector<char> buf(std::istreambuf_iterator<char>(ifs), {});
+    QByteArray saveData(buf.data(), static_cast<qsizetype>(buf.size()));
+
+    std::string filename = filenameByGame(game);
     std::string labelStd = label.toStdString();
-    if (labelStd.empty() && backupType == BackupType::MANUAL) {
-        labelStd = curTime.toString("yyyy-MM-dd hh:mm:ss").toStdString();
-    }
+    if (labelStd.empty() && backupType == BackupType::MANUAL)
+        labelStd = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss").toStdString();
 
-    BackupMetadata metadata = createBackupMetadata(
-        game,
-        backupType,
-        filename,
-        labelStd,
-        backupDir
-    );
-    json jsonMetadata = backupMetadataToJson(metadata);
-    std::ofstream o(metadataPath);
-    o << jsonMetadata.dump(4) << std::endl;
-    o.close();
+    BackupMetadata meta = makeMetadata(game, backupType, filename, labelStd);
+
+    if (!m_db->insertBackup(meta, saveData)) return std::nullopt;
+
     emit createBackupFinished(true, backupType);
-    return metadata;
+    return meta;
 }
 
-std::optional<BackupMetadata> BackupsModel::createBackup(const QString& savePath, const fssm::Game& game, const BackupType& backupType) {
+std::optional<BackupMetadata> BackupsModel::createBackup(const QString& savePath,
+                                                         const fssm::Game& game,
+                                                         const BackupType& backupType) {
     return createBackup(savePath, game, backupType, "");
 }
 
@@ -335,166 +154,108 @@ void BackupsModel::createQuickSaveBackup(const QString& savePath, const fssm::Ga
     createBackup(savePath, game, BackupType::QUICKSAVE, "");
 }
 
-std::optional<BackupMetadata> BackupsModel::createManualBackup(const QString& savePath, const fssm::Game& game, const QString& label) {
+std::optional<BackupMetadata> BackupsModel::createManualBackup(const QString& savePath,
+                                                                const fssm::Game& game,
+                                                                const QString& label) {
     return createBackup(savePath, game, BackupType::MANUAL, label);
 }
 
-void BackupsModel::saveBackupMetadata(const BackupMetadata& metadata) {
-    // Check if path to backup exists
-    std::string metadataPath = metadata.backupDir + "\\metadata.json";
-    if (!std::filesystem::exists(metadataPath)) return;
-    json jsonMetadata = backupMetadataToJson(metadata);
-    std::ofstream o(metadataPath);
-    o << jsonMetadata.dump(4) << std::endl;
-    o.close();
-}
-
 bool BackupsModel::changeBackupLabel(const fssm::Game& game, const QString& backupId, const QString& label) {
-    for (auto& item: getBackupItems(game)) {
-        if (item.id == backupId) {
-            item.label = label.toStdString();
-            // Automatically convert the backup type to manual
-            // - if label changed it is no longer quicksave nor auto backup
-            item.backupType = BackupType::MANUAL;
-            saveBackupMetadata(item);
-            return true;
-        }
-    }
-    return false;
+    return m_db->updateLabel(backupId, label, BackupType::MANUAL);
 }
 
-std::string BackupsModel::getGameBackupDir(const fssm::Game& game) {
-    return m_backupsRoot.toStdString() + "\\" + game.toString();
+std::vector<BackupMetadata> BackupsModel::getBackupItems(const fssm::Game& game) {
+    return m_db->getBackups(game);
 }
 
-std::vector<BackupMetadata> BackupsModel::getBackupItems(const fssm::Game &game) {
-    std::vector<BackupMetadata> output;
-    std::string gameBackupDir = getGameBackupDir(game);
-    if (!std::filesystem::exists(gameBackupDir)) return output;
-    json metadata;
-    for (auto const& dir_entry : std::filesystem::directory_iterator{gameBackupDir}) {
-        std::filesystem::path metadataPath = dir_entry.path();
-        metadataPath /= "metadata.json";
-        if (!std::filesystem::exists(metadataPath)) continue;
+bool BackupsModel::writeSaveData(const QString& dstSavePath, const QByteArray& data) {
+    auto [dstDir, _] = [&]() -> std::pair<std::string, std::string> {
+        std::string path = dstSavePath.toStdString();
+        auto pos = path.find_last_of("/\\");
+        if (pos == std::string::npos) return {path, ""};
+        return {path.substr(0, pos), path.substr(pos + 1)};
+    }();
 
-        std::ifstream ifs(metadataPath);
-        try {
-            metadata = json::parse(ifs);
-        } catch (json::parse_error& ex) {
-            std::cerr << "Failed to parse " << metadataPath << ". Parse error " << ex.what() << std::endl;
-            ifs.close();
-            continue;
-        }
-        ifs.close();
-        auto metadateItem = backupMetadatafromJson(dir_entry.path(), metadata);
-        if (metadateItem.has_value()) {
-            output.push_back(metadateItem.value());
-        }
-    }
-    return output;
-}
-
-bool BackupsModel::restoreBackupSave(const QString& dstSavePath, const BackupMetadata &metadata) {
-    auto [dstDir, dstFilename] = splitPath(dstSavePath.toStdString());
-    if (!std::filesystem::exists(dstDir)) {
-        std::filesystem::create_directory(dstDir);
-    }
-    if (std::find(metadata.filenames.begin(), metadata.filenames.end(), dstFilename) == metadata.filenames.end()) {
-        emit loadBackupFinished(false);
-        return false;
-    }
-    std::string srcFilePath = metadata.backupDir + "\\" + dstFilename;
-
-    std::ifstream ifs(srcFilePath, std::ios::binary);
-    ifs.seekg(0,std::ios::end);
-    std::streampos iLength = ifs.tellg();
-    ifs.seekg(0,std::ios::beg);
-    std::vector<char> buffer(iLength);
-    ifs.read(&buffer[0], iLength);
-    ifs.close();
+    if (!std::filesystem::exists(dstDir))
+        std::filesystem::create_directories(dstDir);
 
     int attempts = 0;
     while (attempts < 10) {
         attempts++;
-        std::ofstream dstFile(dstSavePath.toStdString(), std::ios::binary | std::ios::trunc);
-        if (dstFile.fail()) {
+        std::ofstream ofs(dstSavePath.toStdString(), std::ios::binary | std::ios::trunc);
+        if (ofs.fail()) {
             QThread::msleep(100);
             continue;
         }
-        dstFile.write(buffer.data(), buffer.size());
-        dstFile.close();
+        ofs.write(data.constData(), data.size());
+        ofs.close();
         emit loadBackupFinished(true);
         return true;
     }
-
     emit loadBackupFinished(false);
     return false;
 }
 
-bool BackupsModel::restoreBackupById(const QString& dstSavePath, const fssm::Game &game, const QString& backupId) {
-    for (auto item: getBackupItems(game)) {
-        if (item.id == backupId) {
-            return restoreBackupSave(dstSavePath, item);
-        };
-    };
-    return false;
-}
-
-bool BackupsModel::quickLoad(const QString &dstSavePath, const fssm::Game &game) {
-    std::string gameBackupsDir = getGameBackupDir(game);
-    std::optional<BackupMetadata> quicksaveItem = std::nullopt;
-    time_t lastEpoch = 0;
-    for (auto item: getBackupItems(game)) {
-        if (item.backupType != BackupType::QUICKSAVE) continue;
-
-        if (item.epoch > lastEpoch) {
-            lastEpoch = item.epoch;
-            quicksaveItem = item;
-        };
+bool BackupsModel::restoreBackupSave(const QString& dstSavePath, const BackupMetadata& metadata) {
+    auto dataOpt = m_db->getSaveData(QString::fromStdString(metadata.id));
+    if (!dataOpt.has_value()) {
+        emit loadBackupFinished(false);
+        return false;
     }
-
-    if (!quicksaveItem.has_value()) return false;
-    return restoreBackupSave(dstSavePath, quicksaveItem.value());
+    return writeSaveData(dstSavePath, dataOpt.value());
 }
 
-void BackupsModel::deleteBackups(const std::vector<BackupMetadata>& backupItems) {
-    for (auto& item: backupItems) {
-        if (std::filesystem::exists(item.backupDir)) {
-            std::filesystem::remove_all(item.backupDir);
+bool BackupsModel::restoreBackupById(const QString& dstSavePath, const fssm::Game& game, const QString& backupId) {
+    auto dataOpt = m_db->getSaveData(backupId);
+    if (!dataOpt.has_value()) {
+        emit loadBackupFinished(false);
+        return false;
+    }
+    return writeSaveData(dstSavePath, dataOpt.value());
+}
+
+bool BackupsModel::quickLoad(const QString& dstSavePath, const fssm::Game& game) {
+    std::optional<BackupMetadata> best;
+    time_t bestEpoch = 0;
+    for (auto& item : m_db->getBackups(game)) {
+        if (item.backupType != BackupType::QUICKSAVE) continue;
+        if (item.epoch > bestEpoch) {
+            bestEpoch = item.epoch;
+            best = item;
         }
     }
+    if (!best.has_value()) return false;
+    return restoreBackupSave(dstSavePath, best.value());
+}
+
+void BackupsModel::deleteBackupByIds(const fssm::Game& game, const std::vector<QString>& backupIds) {
+    QStringList ids;
+    for (auto& id : backupIds)
+        ids.append(id);
+    m_db->deleteBackups(ids);
 }
 
 void BackupsModel::cleanupAutoBackups(const fssm::Game& game) {
     if (m_maxAutoBackups < 1) return;
 
-    std::vector<BackupMetadata> autosaveItems;
-    for (auto item: getBackupItems(game)) {
-        if (item.backupType == BackupType::AUTOSAVE) autosaveItems.push_back(item);
+    std::vector<BackupMetadata> autosaves;
+    for (auto& item : m_db->getBackups(game)) {
+        if (item.backupType == BackupType::AUTOSAVE)
+            autosaves.push_back(item);
     }
 
-    const auto epochComp = [](const BackupMetadata& lhs, const BackupMetadata& rhs) {
-        return lhs.epoch < rhs.epoch;
-    };
-    std::sort(autosaveItems.begin(), autosaveItems.end(), epochComp);
-    for (int i = 0; i < m_maxAutoBackups; i++) {
-        if (autosaveItems.empty()) return;
-        autosaveItems.pop_back();
-    }
-    deleteBackups(autosaveItems);
-}
+    std::sort(autosaves.begin(), autosaves.end(),
+              [](const BackupMetadata& a, const BackupMetadata& b) { return a.epoch < b.epoch; });
 
-void BackupsModel::deleteBackupByIds(const fssm::Game& game, const std::vector<QString>& backupIds) {
-    std::unordered_set<std::string> backupIdsStd;
-    for (auto& backupId: backupIds) {
-        backupIdsStd.insert(backupId.toStdString());
+    for (int i = 0; i < m_maxAutoBackups; ++i) {
+        if (autosaves.empty()) return;
+        autosaves.pop_back();
     }
-    std::vector<BackupMetadata> backupItems;
-    for (auto item: getBackupItems(game)) {
-        if (backupIdsStd.find(item.id) != backupIdsStd.end())
-            backupItems.push_back(item);
-    }
-    deleteBackups(backupItems);
+
+    QStringList toDelete;
+    for (auto& item : autosaves)
+        toDelete.append(QString::fromStdString(item.id));
+    m_db->deleteBackups(toDelete);
 }
 
 void BackupsModel::saveGameChanged(const QString& saveId) {

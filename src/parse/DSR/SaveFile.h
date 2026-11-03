@@ -2,10 +2,12 @@
 
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "../SL2File.h"
 #include "Items.h"
+#include "SaveData.h"
 
 
 namespace fssm::parse::dsr {
@@ -23,14 +25,20 @@ namespace fssm::parse::dsr {
         BaseItem baseItem;
     };
 
-    struct AttunementSlot {
-        uint8_t itemId;
-        uint8_t remainingUses;
+    // From an NPC's event flag block (Npc in WorldProgress.h).
+    enum class NpcState : uint8_t {
+        Unknown,        // no flag of the block set: the NPC's map hasn't loaded yet
+        Alive,
+        Hostile,
+        Dead,
     };
 
     struct DSRCharacterInfo {
         int index;
         std::u16string name;
+        // From the slot's profile summary (Data List screen).
+        uint32_t playTime = 0;          // seconds
+        std::string_view areaName;      // empty when the PlaceName id is unknown
         uint32_t humanity;
         uint32_t souls;
         uint32_t earnedSouls;
@@ -69,29 +77,40 @@ namespace fssm::parse::dsr {
         uint8_t hairStyleId;
         uint8_t hairColorId;
 
-        uint8_t lHandSlot1;
-        uint8_t lHandSlot2;
-        uint8_t rHandSlot1;
-        uint8_t rHandSlot2;
-        uint8_t lArrowsSlot;
-        uint8_t lBoltsSlot;
-        uint8_t rArrowsSlot;
-        uint8_t rBoltsSlot;
-        uint8_t head_slot;
-        uint8_t body_slot;
-        uint8_t arms_slot;
-        uint8_t legs_slot;
-        uint8_t lRingSlot;
-        uint8_t rRingSlot;
-        uint8_t q1Slot;
-        uint8_t q2Slot;
-        uint8_t q3Slot;
-        uint8_t q4Slot;
-        uint8_t q5Slot;
+        // Item ids of equipped items (0xFFFFFFFF when empty)
+        uint32_t lHandSlot1;
+        uint32_t lHandSlot2;
+        uint32_t rHandSlot1;
+        uint32_t rHandSlot2;
+        uint32_t lArrowsSlot;
+        uint32_t lBoltsSlot;
+        uint32_t rArrowsSlot;
+        uint32_t rBoltsSlot;
+        uint32_t head_slot;
+        uint32_t body_slot;
+        uint32_t arms_slot;
+        uint32_t legs_slot;
+        uint32_t lRingSlot;
+        uint32_t rRingSlot;
+        uint32_t q1Slot;
+        uint32_t q2Slot;
+        uint32_t q3Slot;
+        uint32_t q4Slot;
+        uint32_t q5Slot;
         std::vector<InventoryItem> inventoryItems;
         std::vector<AttunementSlot> attunementSlots;
-        std::array<uint16_t, 18> usedGestures;
+        std::array<uint32_t, 8> equippedGestures;
         std::vector<InventoryItem> bottomlessBoxItems;
+
+        // One per BONFIRES / BOSSES / NPCS entry (WorldProgress.h): lit in the bonfire DB
+        // (BonfireDb.h), defeat flag set and NPC state from the event flags.
+        std::vector<bool> bonfiresLit;
+        std::vector<bool> bossesDefeated;
+        std::vector<NpcState> npcStates;
+        // Questline stage text per NPCS entry (NPC_STAGES), empty when none is set.
+        std::vector<std::string_view> npcStages;
+        // One per NPC_STEPS entry: any of the step's flags set.
+        std::vector<bool> npcStepsDone;
     };
 
     struct DSRSaveFile {

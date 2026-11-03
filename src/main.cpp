@@ -21,7 +21,6 @@ int main(int argc, char *argv[]) {
     Controller controller = Controller();
     MainWindow window = MainWindow(&controller, nullptr);
     window.show();
-    controller.getUpdatesModel()->checkForUpdates();
 
     return QApplication::exec();
 }

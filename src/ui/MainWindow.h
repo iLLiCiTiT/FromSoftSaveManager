@@ -2,6 +2,7 @@
 
 #include <QStackedWidget>
 #include <QGraphicsBlurEffect>
+#include <QVariantAnimation>
 
 #include "Controller.h"
 #include "ManageBackupsWidget.h"
@@ -30,6 +31,7 @@ private slots:
     void showUpdateDialog();
 private:
     QString m_saveId;
+    bool m_initialized = false;
     Controller* m_controller = nullptr;
     QStackedWidget* m_stack = nullptr;
     SideBarWidget* m_sideBar = nullptr;

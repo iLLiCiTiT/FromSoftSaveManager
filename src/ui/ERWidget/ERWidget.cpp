@@ -16,8 +16,9 @@ CharsListModel::CharsListModel(Controller* controller, const QString& saveId, QO
     setColumnCount(1);
     QStandardItem* root = invisibleRootItem();
     for (int i = 0; i < 10; ++i) {
-        QStandardItem* item = new QStandardItem("< Empty >");
+        QStandardItem* item = new QStandardItem("");
         item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+        item->setData(QVariant(), CharNameRole);
         item->setData(QVariant(i), CharIdRole);
         root->appendRow(item);
     }
@@ -28,11 +29,10 @@ void CharsListModel::refresh() {
     ERCharInfoResult charsInfo = m_controller->getERCharacters(m_saveId);
     if (!charsInfo.error.isEmpty()) {
         m_chars = std::vector<fssm::parse::er::ERCharacterInfo>();
-        QStandardItem* item = root->child(0);
-        item->setText(charsInfo.error);
-        for (int i = 1; i < root->rowCount(); ++i) {
+        for (int i = 0; i < root->rowCount(); ++i) {
             QStandardItem* item = root->child(i);
-            item->setText("");
+            item->setText(i == 0 ? charsInfo.error : "");
+            item->setData(QVariant(), CharNameRole);
         }
         emit refreshed();
         return;
@@ -40,16 +40,19 @@ void CharsListModel::refresh() {
     m_chars = charsInfo.characters;
     for (int i = 0; i < root->rowCount(); ++i) {
         QStandardItem* item = root->child(i);
-        bool found = false;
-        for (auto& character: m_chars) {
-            if (i == character.index) {
-                item->setText(QString::fromStdU16String(character.name));
-                found = true;
-                break;
-            }
+        const fssm::parse::er::ERCharacterInfo* character = getCharByIdx(i);
+        if (character == nullptr) {
+            item->setText("");
+            item->setData(QVariant(), CharNameRole);
+            continue;
         }
-        if (found) continue;
-        item->setText("< Empty >");
+        const QString name = QString::fromStdU16String(character->name);
+        item->setText(name);
+        item->setData(name, CharNameRole);
+        item->setData(character->level, CharLevelRole);
+        item->setData(character->playTime, CharPlayTimeRole);
+        item->setData(QString::fromUtf8(character->placeName.data(), qsizetype(character->placeName.size())),
+                      CharAreaRole);
     }
     emit refreshed();
 }
@@ -62,6 +65,30 @@ const fssm::parse::er::ERCharacterInfo* CharsListModel::getCharByIdx(const int& 
 }
 };
 
+namespace {
+    QPixmap graceIcon() {
+        QPixmap pix(30, 30);
+        pix.fill(Qt::transparent);
+        QPainter painter(&pix);
+        painter.setRenderHint(QPainter::Antialiasing, true);
+        fssm::ui::er::drawGraceMark(painter, QRectF(0, 0, 30, 30), true);
+        return pix;
+    }
+
+    // Gold diamond, the boss mark of the World Progress lists.
+    QPixmap worldProgressIcon() {
+        QPixmap pix(30, 30);
+        pix.fill(Qt::transparent);
+        QPainter painter(&pix);
+        painter.setRenderHint(QPainter::Antialiasing, true);
+        const QPolygonF diamond({{15, 6}, {24, 15}, {15, 24}, {6, 15}});
+        painter.setPen(QPen(QColor(190, 168, 112), 1.5));
+        painter.setBrush(QColor(214, 184, 112));
+        painter.drawPolygon(diamond);
+        return pix;
+    }
+}
+
 ERWidget::ERWidget(Controller* controller, const QString& saveId, QWidget* parent)
     : BaseGameWidget(controller, saveId, parent)
 {
@@ -72,28 +99,32 @@ ERWidget::ERWidget(Controller* controller, const QString& saveId, QWidget* paren
     m_view->setObjectName("er_list_view");
     m_view->setAttribute(Qt::WA_TranslucentBackground, true);
     m_view->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    m_view->setTextElideMode(Qt::ElideLeft);
     m_view->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    m_view->setMouseTracking(true);
+    m_view->setFrameShape(QFrame::NoFrame);
+    m_view->setItemDelegate(new fssm::ui::er::CharacterDelegate(m_view));
+    auto* loadGameFrame = new fssm::ui::er::LoadGameFrame(m_view, viewWrap);
 
     m_model = new fssm::ui::er::CharsListModel(controller, saveId, m_view);
     m_view->setModel(m_model);
 
     ManageBackupsButtonsWidget* manageBackupsBtnsWidget = new ManageBackupsButtonsWidget(controller, viewWrap);
+    manageBackupsBtnsWidget->setAttribute(Qt::WA_TranslucentBackground, true);
 
     QVBoxLayout* viewWrapLayout = new QVBoxLayout(viewWrap);
     viewWrapLayout->setContentsMargins(0, 0, 0, 0);
-    viewWrapLayout->addSpacing(28);
-    viewWrapLayout->addWidget(m_view, 4);
-    viewWrapLayout->addWidget(manageBackupsBtnsWidget, 1);
+    viewWrapLayout->addWidget(loadGameFrame, 1);
+    viewWrapLayout->addWidget(manageBackupsBtnsWidget, 0);
 
-    m_charTabs = new TabWidget(this);
-
+    m_charTabs = new fssm::ui::er::HeaderTabs(this);
     m_charInfoWidget = new fssm::ui::er::CharacterInfoWidget(m_charTabs);
-
-    m_charTabs->addTab(
-        "Character Info",
-        m_charInfoWidget
-    );
+    m_inventoryWidget = new fssm::ui::er::InventoryWidget(m_charTabs);
+    m_worldWidget = new fssm::ui::er::WorldProgressWidget(fssm::ui::er::WorldPage::Progress, m_charTabs);
+    m_gracesWidget = new fssm::ui::er::WorldProgressWidget(fssm::ui::er::WorldPage::Graces, m_charTabs);
+    m_charTabs->addTab("Character", "attrs_icon", m_charInfoWidget);
+    m_charTabs->addTab("Inventory", "inventory_icon", m_inventoryWidget);
+    m_charTabs->addTab("Progress", worldProgressIcon(), m_worldWidget);
+    m_charTabs->addTab("Sites of Grace", graceIcon(), m_gracesWidget);
 
     QHBoxLayout* mainLayout = new QHBoxLayout(this);
     mainLayout->setContentsMargins(20, 20, 20, 20);
@@ -110,17 +141,28 @@ void ERWidget::refresh() {
 }
 
 void ERWidget::onRefresh() {
+    // Like the game's list, only slots with a character are shown (or the error in row 0).
+    for (int row = 0; row < m_model->rowCount(); ++row) {
+        const QModelIndex index = m_model->index(row, 0);
+        const bool hasCharacter = index.data(fssm::ui::er::CharNameRole).isValid();
+        const bool isError = row == 0 && !hasCharacter && !index.data(Qt::DisplayRole).toString().isEmpty();
+        m_view->setRowHidden(row, !hasCharacter && !isError);
+    }
+
     QItemSelectionModel* selModel = m_view->selectionModel();
     for (auto& index: selModel->selectedIndexes()) {
         QVariant charId = index.data(fssm::ui::er::CharIdRole);
         if (!charId.isValid() || charId.isNull()) continue;
         const fssm::parse::er::ERCharacterInfo* charInfo = m_model->getCharByIdx(charId.toInt());
         m_charInfoWidget->setCharacter(charInfo);
+        m_inventoryWidget->setCharacter(charInfo);
+        m_worldWidget->setCharacter(charInfo);
+        m_gracesWidget->setCharacter(charInfo);
         return;
     }
     for (int row = 0; row < m_model->rowCount(); ++row) {
         QModelIndex index = m_model->index(row, 0);
-        if (index.flags() & Qt::ItemIsSelectable) {
+        if (index.data(fssm::ui::er::CharNameRole).isValid()) {
             selModel->setCurrentIndex(index, QItemSelectionModel::ClearAndSelect);
             return;
         }
@@ -135,9 +177,15 @@ void ERWidget::onSelectionChange(const QItemSelection& selected, const QItemSele
         const fssm::parse::er::ERCharacterInfo* charInfo = m_model->getCharByIdx(charId.toInt());
 
         m_charInfoWidget->setCharacter(charInfo);
+        m_inventoryWidget->setCharacter(charInfo);
+        m_worldWidget->setCharacter(charInfo);
+        m_gracesWidget->setCharacter(charInfo);
         return;
     }
     m_charInfoWidget->setCharacter(nullptr);
+    m_inventoryWidget->setCharacter(nullptr);
+    m_worldWidget->setCharacter(nullptr);
+    m_gracesWidget->setCharacter(nullptr);
 
 }
 

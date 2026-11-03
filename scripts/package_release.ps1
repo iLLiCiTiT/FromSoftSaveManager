@@ -22,11 +22,13 @@ try {
         'Qt6Core.dll',
         'Qt6Gui.dll',
         'Qt6Network.dll',
+        'Qt6Sql.dll',
         'Qt6Widgets.dll',
         'libgcc_s_seh-1.dll',
         'libstdc++-6.dll',
         'libwinpthread-1.dll',
         'plugins/platforms/qwindows.dll',
+        'plugins/sqldrivers/qsqlite.dll',
         'plugins/tls/qschannelbackend.dll'
     )
     foreach ($file in $required) {
