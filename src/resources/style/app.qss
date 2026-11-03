@@ -429,6 +429,16 @@ QScrollBar#ds3_list_scrollbar::add-line:vertical {
 }
 
 /* Manage backups specific styles */
+ManageBackupsButtonsWidget QComboBox {
+    padding: 3px 6px;
+    background: #3D3F42;
+    border: none;
+}
+
+ManageBackupsButtonsWidget QComboBox:hover {
+    background: #4B4C4F;
+}
+
 ManageBackupsButtonsWidget QPushButton {
     background: #3D3F42;
 }
