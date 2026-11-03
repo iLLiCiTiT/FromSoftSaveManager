@@ -44,7 +44,7 @@ their inserts get the default `''`.
 ## Default folder **[done]**
 
 Each game can have one default folder, chosen in the game tab under the character list (the
-*Default folder* selector below the *Backups* button, which can also create a new folder) or
+folder selector below the *Backups* button, which can also create a new folder) or
 from the folder's context menu in the overlay. New backups of every type go there:
 
 - **Quicksaves** (hotkey) and **autosaves**: always into the default folder.

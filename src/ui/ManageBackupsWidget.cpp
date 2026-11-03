@@ -633,17 +633,14 @@ ManageBackupsButtonsWidget::ManageBackupsButtonsWidget(Controller* controller, c
     btnsLayout->addStretch(1);
 
     QWidget* defaultFolderWidget = new QWidget(this);
-    QLabel* defaultFolderLabel = new QLabel("Default folder", defaultFolderWidget);
-    defaultFolderLabel->setAttribute(Qt::WA_TranslucentBackground, true);
     m_defaultFolderInput = new NoWheelComboBox(defaultFolderWidget);
-    m_defaultFolderInput->setToolTip("Folder where new backups of this game go");
+    m_defaultFolderInput->setToolTip("Default folder, new backups of this game go here");
     m_defaultFolderInput->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     m_defaultFolderInput->setMaximumWidth(220);
 
     QHBoxLayout* defaultFolderLayout = new QHBoxLayout(defaultFolderWidget);
     defaultFolderLayout->setContentsMargins(0, 0, 0, 0);
     defaultFolderLayout->addStretch(1);
-    defaultFolderLayout->addWidget(defaultFolderLabel, 0);
     defaultFolderLayout->addWidget(m_defaultFolderInput, 0);
     defaultFolderLayout->addStretch(1);
 
