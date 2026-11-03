@@ -46,9 +46,10 @@ public:
     void updateAutobackupConfig(const ConfigAutobackup& autobackupConfig);
 
     std::optional<BackupMetadata> createBackup(const QString& savePath, const fssm::Game& game, const BackupType& backupType);
-    std::optional<BackupMetadata> createBackup(const QString& savePath, const fssm::Game& game, const BackupType& backupType, const QString& label);
+    // Backup goes to 'folder' if set, otherwise to the default folder of the game
+    std::optional<BackupMetadata> createBackup(const QString& savePath, const fssm::Game& game, const BackupType& backupType, const QString& label, const std::optional<QString>& folder = std::nullopt);
     void createQuickSaveBackup(const QString& savePath, const fssm::Game& game);
-    std::optional<BackupMetadata> createManualBackup(const QString& savePath, const fssm::Game& game, const QString& label);
+    std::optional<BackupMetadata> createManualBackup(const QString& savePath, const fssm::Game& game, const QString& label, const std::optional<QString>& folder = std::nullopt);
     bool changeBackupLabel(const fssm::Game& game, const QString& backupId, const QString& label);
 
     std::vector<BackupMetadata> getBackupItems(const fssm::Game& game);
@@ -56,6 +57,14 @@ public:
     bool restoreBackupById(const QString& dstSavePath, const fssm::Game& game, const QString& backupId);
     bool quickLoad(const QString& dstSavePath, const fssm::Game& game);
     void deleteBackupByIds(const fssm::Game& game, const std::vector<QString>& backupIds);
+
+    std::vector<QString> getFolders(const fssm::Game& game);
+    bool createFolder(const fssm::Game& game, const QString& name);
+    bool renameFolder(const fssm::Game& game, const QString& oldName, const QString& newName);
+    bool deleteFolder(const fssm::Game& game, const QString& name);
+    bool moveBackupsToFolder(const std::vector<QString>& backupIds, const QString& folder);
+    QString getDefaultFolder(const fssm::Game& game);
+    bool setDefaultFolder(const fssm::Game& game, const QString& name);
     void saveGameChanged(const QString& saveId);
 
 private slots:

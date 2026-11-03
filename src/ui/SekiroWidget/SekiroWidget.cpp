@@ -117,7 +117,7 @@ SekiroWidget::SekiroWidget(Controller* controller, const QString& saveId, QWidge
     m_view->setMinimumWidth(250);
     viewWrap->setFixedWidth(280);
 
-    ManageBackupsButtonsWidget* manageBackupsBtnsWidget = new ManageBackupsButtonsWidget(controller, viewWrap);
+    ManageBackupsButtonsWidget* manageBackupsBtnsWidget = new ManageBackupsButtonsWidget(controller, saveId, viewWrap);
     manageBackupsBtnsWidget->setAttribute(Qt::WA_TranslucentBackground, true);
 
     m_model = new fssm::ui::sekiro::CharsListModel(controller, saveId, m_view);

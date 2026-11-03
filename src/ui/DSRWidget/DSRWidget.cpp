@@ -150,7 +150,7 @@ DSRWidget::DSRWidget(Controller* controller, const QString& saveId, QWidget* par
     m_view->setItemDelegate(new fssm::ui::dsr::CharacterDelegate(m_view));
     auto* dataListFrame = new fssm::ui::dsr::DataListFrame(m_view, viewWrap);
 
-    ManageBackupsButtonsWidget* manageBackupsBtnsWidget = new ManageBackupsButtonsWidget(controller, viewWrap);
+    ManageBackupsButtonsWidget* manageBackupsBtnsWidget = new ManageBackupsButtonsWidget(controller, saveId, viewWrap);
     manageBackupsBtnsWidget->setAttribute(Qt::WA_TranslucentBackground, true);
 
     m_model = new fssm::ui::dsr::CharsListModel(controller, saveId, m_view);

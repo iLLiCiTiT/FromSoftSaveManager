@@ -106,6 +106,8 @@ void SaveChangesThread::run() {
 Controller::Controller(QObject* parent): QObject(parent) {
     m_configModel = new ConfigModel(this);
     auto saveFileItems = m_configModel->getSaveFileItems();
+    // Config folder may not exist yet (e.g. FSSM_CONFIG_DIR pointing to a new folder)
+    QDir().mkpath(m_configModel->getAppDataDirPath());
     QString dbPath = m_configModel->getAppDataDirPath() + "\\backups.db";
     m_backupsDb = new BackupsDb(dbPath);
     m_backupsModel = new BackupsModel(saveFileItems, m_configModel->getAutosaveConfig(), m_backupsDb, this);
@@ -343,11 +345,11 @@ std::vector<BackupMetadata> Controller::getBackupItems() {
     return m_backupsModel->getBackupItems(itemOpt.value().game);
 }
 
-std::optional<BackupMetadata> Controller::createManualBackup() {
+std::optional<BackupMetadata> Controller::createManualBackup(const std::optional<QString>& folder) {
     if (m_currentSaveId.isEmpty()) return std::nullopt;
     auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
     if (!itemOpt.has_value()) return std::nullopt;
-    return m_backupsModel->createManualBackup(itemOpt.value().savePath, itemOpt.value().game, "");
+    return m_backupsModel->createManualBackup(itemOpt.value().savePath, itemOpt.value().game, "", folder);
 }
 
 void Controller::restoreBackupById(const QString& backupId) {
@@ -369,6 +371,76 @@ bool Controller::changeBackupLabel(const QString& backupId, const QString& label
     auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
     if (!itemOpt.has_value()) return false;
     return m_backupsModel->changeBackupLabel(itemOpt.value().game, backupId, label);
+}
+
+std::vector<QString> Controller::getBackupFolders() {
+    return getBackupFolders(m_currentSaveId);
+}
+
+std::vector<QString> Controller::getBackupFolders(const QString& saveId) {
+    if (saveId.isEmpty()) return {};
+    auto itemOpt = m_configModel->getSaveItem(saveId);
+    if (!itemOpt.has_value()) return {};
+    return m_backupsModel->getFolders(itemOpt.value().game);
+}
+
+bool Controller::createBackupFolder(const QString& name) {
+    return createBackupFolder(m_currentSaveId, name);
+}
+
+bool Controller::createBackupFolder(const QString& saveId, const QString& name) {
+    if (saveId.isEmpty()) return false;
+    auto itemOpt = m_configModel->getSaveItem(saveId);
+    if (!itemOpt.has_value()) return false;
+    if (!m_backupsModel->createFolder(itemOpt.value().game, name)) return false;
+    emit backupFoldersChanged();
+    return true;
+}
+
+bool Controller::renameBackupFolder(const QString& oldName, const QString& newName) {
+    if (m_currentSaveId.isEmpty()) return false;
+    auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
+    if (!itemOpt.has_value()) return false;
+    if (!m_backupsModel->renameFolder(itemOpt.value().game, oldName, newName)) return false;
+    emit backupFoldersChanged();
+    return true;
+}
+
+bool Controller::deleteBackupFolder(const QString& name) {
+    if (m_currentSaveId.isEmpty()) return false;
+    auto itemOpt = m_configModel->getSaveItem(m_currentSaveId);
+    if (!itemOpt.has_value()) return false;
+    if (!m_backupsModel->deleteFolder(itemOpt.value().game, name)) return false;
+    emit backupFoldersChanged();
+    return true;
+}
+
+bool Controller::moveBackupsToFolder(const std::vector<QString>& backupIds, const QString& folder) {
+    return m_backupsModel->moveBackupsToFolder(backupIds, folder);
+}
+
+QString Controller::getDefaultBackupFolder() {
+    return getDefaultBackupFolder(m_currentSaveId);
+}
+
+QString Controller::getDefaultBackupFolder(const QString& saveId) {
+    if (saveId.isEmpty()) return "";
+    auto itemOpt = m_configModel->getSaveItem(saveId);
+    if (!itemOpt.has_value()) return "";
+    return m_backupsModel->getDefaultFolder(itemOpt.value().game);
+}
+
+bool Controller::setDefaultBackupFolder(const QString& name) {
+    return setDefaultBackupFolder(m_currentSaveId, name);
+}
+
+bool Controller::setDefaultBackupFolder(const QString& saveId, const QString& name) {
+    if (saveId.isEmpty()) return false;
+    auto itemOpt = m_configModel->getSaveItem(saveId);
+    if (!itemOpt.has_value()) return false;
+    if (!m_backupsModel->setDefaultFolder(itemOpt.value().game, name)) return false;
+    emit backupFoldersChanged();
+    return true;
 }
 
 // Config changed slots

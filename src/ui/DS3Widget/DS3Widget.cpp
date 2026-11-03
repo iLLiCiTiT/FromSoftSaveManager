@@ -114,7 +114,7 @@ DS3Widget::DS3Widget(Controller* controller, const QString& saveId, QWidget* par
     m_view->setItemDelegate(new fssm::ui::ds3::CharacterDelegate(m_view));
     auto* loadGameFrame = new fssm::ui::ds3::LoadGameFrame(m_view, viewWrap);
 
-    ManageBackupsButtonsWidget* manageBackupsBtnsWidget = new ManageBackupsButtonsWidget(controller, viewWrap);
+    ManageBackupsButtonsWidget* manageBackupsBtnsWidget = new ManageBackupsButtonsWidget(controller, saveId, viewWrap);
     manageBackupsBtnsWidget->setAttribute(Qt::WA_TranslucentBackground, true);
 
     m_model = new fssm::ui::ds3::CharsListModel(controller, saveId, m_view);

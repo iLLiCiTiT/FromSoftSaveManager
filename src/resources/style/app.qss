@@ -462,6 +462,38 @@ QScrollBar#ds3_list_scrollbar::add-line:vertical {
 }
 
 /* Manage backups specific styles */
+ManageBackupsButtonsWidget QComboBox {
+    padding: 4px 6px;
+    background: #3D3F42;
+    color: #FFFFFF;
+    border: none;
+}
+
+ManageBackupsButtonsWidget QComboBox:hover, ManageBackupsButtonsWidget QComboBox:on {
+    background: #4B4C4F;
+}
+
+ManageBackupsButtonsWidget QComboBox::drop-down {
+    background: transparent;
+    border: none;
+    width: 18px;
+}
+
+ManageBackupsButtonsWidget QComboBox::down-arrow {
+    image: url(:/images/common/arrow_down.png);
+    width: 10px;
+    height: 10px;
+}
+
+ManageBackupsButtonsWidget QComboBox QAbstractItemView {
+    background: #1E1F22;
+    padding: 2px;
+}
+
+ManageBackupsButtonsWidget QComboBox QAbstractItemView::item, ManageBackupsButtonsWidget QComboBox QAbstractItemView::item:focus {
+    padding: 3px 6px;
+}
+
 ManageBackupsButtonsWidget QPushButton {
     background: #3D3F42;
 }
