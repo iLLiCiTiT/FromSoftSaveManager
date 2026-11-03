@@ -93,6 +93,7 @@ signals:
     void pathsConfigChanged();
     void hotkeysConfigChanged();
     void autobackupConfigChanged();
+    void backupFoldersChanged();
 
 public:
     explicit Controller(QObject* parent = nullptr);
@@ -114,11 +115,23 @@ public:
     ERCharInfoResult getERCharacters(const QString& saveId) const;
 
     std::vector<BackupMetadata> getBackupItems();
-    std::optional<BackupMetadata> createManualBackup();
+    std::optional<BackupMetadata> createManualBackup(const std::optional<QString>& folder = std::nullopt);
     void restoreBackupById(const QString& backupId);
     void deleteBackupByIds(const std::vector<QString>& backupIds);
     bool changeBackupLabel(const QString& backupId, const QString& label);
 
+    std::vector<QString> getBackupFolders();
+    bool createBackupFolder(const QString& name);
+    bool renameBackupFolder(const QString& oldName, const QString& newName);
+    bool deleteBackupFolder(const QString& name);
+    bool moveBackupsToFolder(const std::vector<QString>& backupIds, const QString& folder);
+    QString getDefaultBackupFolder();
+    bool setDefaultBackupFolder(const QString& name);
+    // Variants for a specific save, game widgets exist also when their tab isn't the current one
+    std::vector<QString> getBackupFolders(const QString& saveId);
+    bool createBackupFolder(const QString& saveId, const QString& name);
+    QString getDefaultBackupFolder(const QString& saveId);
+    bool setDefaultBackupFolder(const QString& saveId, const QString& name);
     UpdatesModel* getUpdatesModel() const;
 
 private slots:

@@ -58,6 +58,10 @@ static QString getAppDataPath(const QString& subfolder) {
 }
 
 static QString getAppConfigDir() {
+    // Development override, so the app can run against a scratch config and backups
+    const char* overrideDir = getenv("FSSM_CONFIG_DIR");
+    if (overrideDir && *overrideDir)
+        return QString::fromLocal8Bit(overrideDir);
     QString saveDir = QString::fromStdString(getenv("LOCALAPPDATA"));
     saveDir.append("\\FromSoftSaveManager\\FromSoftSaveManager");
     return saveDir;
@@ -186,7 +190,7 @@ void ConfigModel::saveConfigData(const ConfigConfirmData& confirmData) {
 void ConfigModel::saveConfig() {
     std::string dirPath = getAppConfigDir().toStdString();
     if (!std::filesystem::exists(dirPath)) {
-        std::filesystem::create_directory(dirPath);
+        std::filesystem::create_directories(dirPath);
     }
     json jsonData = p_configToJson();
     std::ofstream o(m_appConfigPath.toStdString());

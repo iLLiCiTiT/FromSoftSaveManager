@@ -108,7 +108,7 @@ ERWidget::ERWidget(Controller* controller, const QString& saveId, QWidget* paren
     m_model = new fssm::ui::er::CharsListModel(controller, saveId, m_view);
     m_view->setModel(m_model);
 
-    ManageBackupsButtonsWidget* manageBackupsBtnsWidget = new ManageBackupsButtonsWidget(controller, viewWrap);
+    ManageBackupsButtonsWidget* manageBackupsBtnsWidget = new ManageBackupsButtonsWidget(controller, saveId, viewWrap);
     manageBackupsBtnsWidget->setAttribute(Qt::WA_TranslucentBackground, true);
 
     QVBoxLayout* viewWrapLayout = new QVBoxLayout(viewWrap);
