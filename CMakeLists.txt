@@ -19,6 +19,7 @@ find_package(Qt6 COMPONENTS
         Gui
         Widgets
         Concurrent
+        Sql
         REQUIRED)
 
 
@@ -50,6 +51,8 @@ add_executable(FromSoftSaveManager
         src/ui/Utils.cpp
         src/ui/AudioNotifier.cpp
         src/ui/ConfigModel.cpp
+        src/ui/BackupsDb.cpp
+        src/ui/MigrationHelper.cpp
         src/ui/BackupsModel.cpp
         src/ui/Controller.cpp
         src/ui/KeysWindows.cpp
@@ -94,6 +97,7 @@ target_link_libraries(FromSoftSaveManager
         Qt::Gui
         Qt::Widgets
         Qt::Concurrent
+        Qt::Sql
         tiny-aes
 )
 target_link_options(FromSoftSaveManager PRIVATE -static-libgcc -static-libstdc++)
@@ -137,11 +141,21 @@ if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
                 "${QT_INSTALL_PATH}/plugins/platforms/qwindows${DEBUG_SUFFIX}.dll"
                 "$<TARGET_FILE_DIR:${PROJECT_NAME}>/plugins/platforms/")
     endif ()
+    if (EXISTS "${QT_INSTALL_PATH}/plugins/sqldrivers/qsqlite${DEBUG_SUFFIX}.dll")
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E make_directory
+                "$<TARGET_FILE_DIR:${PROJECT_NAME}>/plugins/sqldrivers/")
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy
+                "${QT_INSTALL_PATH}/plugins/sqldrivers/qsqlite${DEBUG_SUFFIX}.dll"
+                "$<TARGET_FILE_DIR:${PROJECT_NAME}>/plugins/sqldrivers/")
+    endif ()
     foreach (
         QT_LIB
         Qt6Core
         Qt6Gui
         Qt6Widgets
+        Qt6Sql
         libgcc_s_seh-1
         libstdc++-6
         libwinpthread-1

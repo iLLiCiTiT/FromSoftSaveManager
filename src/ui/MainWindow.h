@@ -28,6 +28,7 @@ private slots:
     void onOpacityAnimFinish();
 private:
     QString m_saveId;
+    bool m_initialized = false;
     Controller* m_controller = nullptr;
     QStackedWidget* m_stack = nullptr;
     SideBarWidget* m_sideBar = nullptr;
