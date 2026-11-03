@@ -108,6 +108,7 @@ Controller::Controller(QObject* parent): QObject(parent) {
     m_configModel = new ConfigModel(this);
     auto saveFileItems = m_configModel->getSaveFileItems();
     m_backupsModel = new BackupsModel(saveFileItems, m_configModel->getAutosaveConfig(), m_configModel->getBackupDirPath(), this);
+    m_updatesModel = new UpdatesModel(this);
     m_hotkeysThread = new HotkeysThread(m_configModel->getHotkeysConfig(), this);
     m_saveChangesThread = new SaveChangesThread(saveFileItems, this);
 
@@ -138,6 +139,10 @@ Controller::~Controller() {
 
     m_configModel->saveConfig();
     delete m_configModel;
+}
+
+UpdatesModel* Controller::getUpdatesModel() const {
+    return m_updatesModel;
 }
 
 QString Controller::getLastSelectedSaveId() const {

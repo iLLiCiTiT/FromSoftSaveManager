@@ -64,6 +64,16 @@ I'm using Clion, so these steps are not fully tested by me (sorry).
 4. Run make `cmake --build build --config Release --target FromSoftSaveManager -j 14`.
 5. Run the application `./FromSoftSaveManager.exe`.
 
+### Releasing updates
+The application checks the latest GitHub release on start and offers an update if the tag is newer than its version.
+
+1. Set the version in `CMakeLists.txt` to the new version and push it. The build fails if the version does not match the tag, because the update would be offered again after installing it.
+2. Push a tag with the version, e.g. `git tag 0.7.0` and `git push origin 0.7.0`.
+3. The [Release workflow](.github/workflows/release.yml) builds and tests both zip files and creates a draft release.
+4. Check the draft and publish it. Users are offered the update only after it is published.
+
+To build the zip files without a release, start the workflow manually in the Actions tab.
+
 ## Sources
 Some of the features were already implemented in other projects. Especially the parsing will be something what I will be looking at. Please let me know if there are other projects not mentioned here.
 - https://gabtoubl.github.io/ds1_save/ (javascript) DS1 save file parser.

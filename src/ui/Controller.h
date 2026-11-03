@@ -8,6 +8,7 @@
 #include "ConfigModel.h"
 #include "BackupsModel.h"
 #include "AudioNotifier.h"
+#include "UpdatesModel.h"
 #include "../parse/Parse.h"
 
 // Handler of hotkeys presss
@@ -105,6 +106,8 @@ public:
 
     void openBackupDir();
 
+    UpdatesModel* getUpdatesModel() const;
+
 private slots:
     void onQuickSaveRequest();
     void onQuickLoadRequest();
@@ -120,6 +123,7 @@ private:
     QString m_currentSaveId = "";
     ConfigModel* m_configModel;
     BackupsModel* m_backupsModel;
+    UpdatesModel* m_updatesModel;
     HotkeysThread* m_hotkeysThread;
     SaveChangesThread* m_saveChangesThread;
 };

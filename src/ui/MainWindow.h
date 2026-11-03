@@ -7,6 +7,7 @@
 #include "ManageBackupsWidget.h"
 #include "SideBarWidget.h"
 #include "SettingsWidget.h"
+#include "UpdateDialog.h"
 #include "BaseGameWidget.h"
 #include "GameWidgets.h"
 
@@ -26,12 +27,14 @@ private slots:
     void onHideBackupsRequest();
     void onOpacityAnimChange(const QVariant& value);
     void onOpacityAnimFinish();
+    void showUpdateDialog();
 private:
     QString m_saveId;
     Controller* m_controller = nullptr;
     QStackedWidget* m_stack = nullptr;
     SideBarWidget* m_sideBar = nullptr;
     SettingsWidget* m_settingsWidget = nullptr;
+    UpdateDialog* m_updateDialog = nullptr;
     std::unordered_map<QString, BaseGameWidget*> m_widgetsMapping;
     ManageBackupsOverlayWidget* m_manageBackupsOverlay = nullptr;
     QGraphicsBlurEffect* m_blurEffect = nullptr;
