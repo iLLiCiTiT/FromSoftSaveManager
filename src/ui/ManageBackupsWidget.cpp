@@ -626,36 +626,28 @@ ManageBackupsButtonsWidget::ManageBackupsButtonsWidget(Controller* controller, c
     QPushButton* showBackupsBtn = new QPushButton(showIcon, "Backups", btnsWidget);
     showBackupsBtn->setToolTip("Show available backups");
 
-    QHBoxLayout* btnsLayout = new QHBoxLayout(btnsWidget);
-    btnsLayout->setContentsMargins(0, 0, 0, 0);
-    btnsLayout->addStretch(1);
-    btnsLayout->addWidget(showBackupsBtn, 0);
-    btnsLayout->addStretch(1);
-
-    QWidget* defaultFolderWidget = new QWidget(this);
-    m_defaultFolderInput = new NoWheelComboBox(defaultFolderWidget);
+    m_defaultFolderInput = new NoWheelComboBox(btnsWidget);
     m_defaultFolderInput->setToolTip("Default folder, new backups of this game go here");
     m_defaultFolderInput->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     m_defaultFolderInput->setMaximumWidth(220);
 
-    QHBoxLayout* defaultFolderLayout = new QHBoxLayout(defaultFolderWidget);
-    defaultFolderLayout->setContentsMargins(0, 0, 0, 0);
-    defaultFolderLayout->addStretch(1);
-    defaultFolderLayout->addWidget(m_defaultFolderInput, 0);
-    defaultFolderLayout->addStretch(1);
+    QHBoxLayout* btnsLayout = new QHBoxLayout(btnsWidget);
+    btnsLayout->setContentsMargins(0, 0, 0, 0);
+    btnsLayout->addStretch(1);
+    btnsLayout->addWidget(showBackupsBtn, 0);
+    btnsLayout->addWidget(m_defaultFolderInput, 0);
+    btnsLayout->addStretch(1);
 
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(m_hotkeysLabel, 0);
     layout->addWidget(btnsWidget, 0);
-    layout->addWidget(defaultFolderWidget, 0);
 
-    // Only as tall as the hint, the button and the default folder, so the character list above gets the rest.
+    // Only as tall as the hint and the buttons, so the character list above gets the rest.
     this->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     this->setAttribute(Qt::WA_TranslucentBackground, true);
     m_hotkeysLabel->setAttribute(Qt::WA_TranslucentBackground, true);
     btnsWidget->setAttribute(Qt::WA_TranslucentBackground, true);
-    defaultFolderWidget->setAttribute(Qt::WA_TranslucentBackground, true);
     connect(showBackupsBtn, SIGNAL(clicked()), this, SLOT(onShowBackups()));
     connect(m_controller, SIGNAL(hotkeysConfigChanged()), this, SLOT(onHotkeysChange()));
     connect(m_controller, SIGNAL(backupFoldersChanged()), this, SLOT(refreshDefaultFolder()));
