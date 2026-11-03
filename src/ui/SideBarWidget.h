@@ -64,17 +64,20 @@ class SideBarWidget: public QWidget {
     Q_OBJECT
 signals:
     void tabChanged(QString saveId);
+    void updateRequested();
 public:
     explicit SideBarWidget(QWidget* parent);
 
     void addTab(const fssm::Game& game, const QString& saveId);
     void removeTab(const QString& saveId);
+    void showUpdateTab(const QString& title);
 public slots:
     void setCurrentTab(const QString& saveId);
 
 private:
     QVBoxLayout* m_layout {nullptr};
     TabIconButton* m_settingsTab {nullptr};
+    TabIconButton* m_updateTab {nullptr};
     std::map<QString, TabIconButton*> m_gameTabs;
     QString m_currentTab;
 };

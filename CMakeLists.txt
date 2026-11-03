@@ -91,6 +91,7 @@ add_executable(FromSoftSaveManager
         src/ui/SideBarWidget.cpp
         src/ui/SettingsWidget.cpp
         src/ui/UpdatesModel.cpp
+        src/ui/FlameWidget.cpp
         src/ui/UpdateDialog.cpp
         src/ui/BaseGameWidget.h
         src/ui/ManageBackupsWidget.cpp

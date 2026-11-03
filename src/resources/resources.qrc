@@ -15,6 +15,7 @@
         <file alias="icon.png">icons/icon.png</file>
         <file alias="Sekiro_256x256.png">icons/Sekiro_256x256.png</file>
         <file alias="settings_256x256.png">icons/settings_256x256.png</file>
+        <file alias="update_256x256.png">icons/update_256x256.png</file>
     </qresource>
     <qresource prefix="/images/common">
         <file alias="add.png">images/common/add.png</file>

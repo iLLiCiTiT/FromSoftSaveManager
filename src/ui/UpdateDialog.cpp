@@ -17,12 +17,32 @@ UpdateDialog::UpdateDialog(UpdatesModel* updatesModel, QWidget* parent): QDialog
     m_notesWidget = new QTextBrowser(this);
     m_notesWidget->setOpenExternalLinks(true);
 
-    m_statusLabel = new QLabel(this);
+    QWidget* progressWidget = new QWidget(this);
+
+    m_flameWidget = new FlameWidget(progressWidget);
+    m_flameWidget->setVisible(false);
+
+    m_statusLabel = new QLabel(progressWidget);
     m_statusLabel->setWordWrap(true);
     m_statusLabel->setVisible(false);
 
-    m_progressBar = new QProgressBar(this);
+    m_progressBar = new QProgressBar(progressWidget);
+    m_progressBar->setTextVisible(false);
     m_progressBar->setVisible(false);
+
+    QVBoxLayout* statusLayout = new QVBoxLayout();
+    statusLayout->setContentsMargins(0, 0, 0, 0);
+    statusLayout->setSpacing(5);
+    statusLayout->addStretch(1);
+    statusLayout->addWidget(m_statusLabel, 0);
+    statusLayout->addWidget(m_progressBar, 0);
+    statusLayout->addStretch(1);
+
+    QHBoxLayout* progressLayout = new QHBoxLayout(progressWidget);
+    progressLayout->setContentsMargins(0, 0, 0, 0);
+    progressLayout->setSpacing(10);
+    progressLayout->addWidget(m_flameWidget, 0);
+    progressLayout->addLayout(statusLayout, 1);
 
     QWidget* btnsWidget = new QWidget(this);
     m_updateBtn = new QPushButton("Update", btnsWidget);
@@ -42,8 +62,7 @@ UpdateDialog::UpdateDialog(UpdatesModel* updatesModel, QWidget* parent): QDialog
     layout->setSpacing(5);
     layout->addWidget(m_titleLabel, 0);
     layout->addWidget(m_notesWidget, 1);
-    layout->addWidget(m_statusLabel, 0);
-    layout->addWidget(m_progressBar, 0);
+    layout->addWidget(progressWidget, 0);
     layout->addWidget(btnsWidget, 0);
 
     connect(m_updateBtn, SIGNAL(clicked()), this, SLOT(onUpdateClick()));
@@ -71,6 +90,7 @@ void UpdateDialog::reject() {
     if (m_isUpdating) {
         m_updatesModel->cancelUpdate();
         m_isUpdating = false;
+        m_flameWidget->setVisible(false);
         m_statusLabel->setVisible(false);
         m_progressBar->setVisible(false);
         m_updateBtn->setEnabled(true);
@@ -88,6 +108,7 @@ void UpdateDialog::onUpdateClick() {
     m_statusLabel->setVisible(true);
     m_progressBar->setRange(0, 0);
     m_progressBar->setVisible(true);
+    m_flameWidget->setVisible(true);
     m_updatesModel->startUpdate();
 }
 
@@ -99,8 +120,9 @@ void UpdateDialog::onReleasePageClick() {
 void UpdateDialog::onDownloadProgress(qint64 received, qint64 total) {
     if (total <= 0) return;
     m_progressBar->setRange(0, 100);
-    m_progressBar->setValue(static_cast<int>(received * 100 / total));
-    if (received == total) m_statusLabel->setText("Installing...");
+    const int percent = static_cast<int>(received * 100 / total);
+    m_progressBar->setValue(percent);
+    m_statusLabel->setText(received == total ? "Installing..." : QString("Downloading... %1%").arg(percent));
 }
 
 void UpdateDialog::onInstallStart() {
@@ -110,6 +132,7 @@ void UpdateDialog::onInstallStart() {
 
 void UpdateDialog::onUpdateFail(const QString& message) {
     m_isUpdating = false;
+    m_flameWidget->setVisible(false);
     m_progressBar->setVisible(false);
     m_statusLabel->setText(message + " You can download the update from the release page.");
     m_statusLabel->setVisible(true);

@@ -352,14 +352,6 @@ SettingsWidget::SettingsWidget(Controller* controller, QWidget* parent): QWidget
     autoBackupLabel->setObjectName("settings_header");
     m_autobackupWidget = new AutoBackupWidget(m_configData, this);
 
-    // Visible only when a newer version is available
-    m_updateLabel = new QLabel("Update", this);
-    m_updateLabel->setObjectName("settings_header");
-    m_updateLabel->setVisible(false);
-    m_updateBtn = new QPushButton(this);
-    m_updateBtn->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
-    m_updateBtn->setVisible(false);
-
     QWidget* btnsWidget = new QWidget(this);
 
     QPushButton* saveBtn = new QPushButton("Save", btnsWidget);
@@ -384,25 +376,12 @@ SettingsWidget::SettingsWidget(Controller* controller, QWidget* parent): QWidget
     layout->addSpacing(10);
     layout->addWidget(autoBackupLabel, 0);
     layout->addWidget(m_autobackupWidget, 0);
-    layout->addSpacing(10);
-    layout->addWidget(m_updateLabel, 0);
-    layout->addWidget(m_updateBtn, 0);
     layout->addStretch(1);
     layout->addWidget(btnsWidget, 0);
 
     connect(saveBtn, SIGNAL(clicked()), this, SLOT(onSave()));
     connect(discardBtn, SIGNAL(clicked()), this, SLOT(discardChanges()));
-    connect(m_updateBtn, SIGNAL(clicked()), this, SIGNAL(updateDialogRequested()));
-    connect(m_controller->getUpdatesModel(), SIGNAL(updateAvailable()), this, SLOT(onUpdateAvailable()));
 };
-
-void SettingsWidget::onUpdateAvailable() {
-    const auto info = m_controller->getUpdatesModel()->getUpdateInfo();
-    if (!info) return;
-    m_updateBtn->setText("Update to " + info->version);
-    m_updateLabel->setVisible(true);
-    m_updateBtn->setVisible(true);
-}
 
 void SettingsWidget::onSave() {
     ConfigConfirmData confirmData;

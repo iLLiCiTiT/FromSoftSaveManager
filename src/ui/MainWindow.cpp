@@ -58,8 +58,15 @@ MainWindow::MainWindow(Controller* controller, QWidget* parent)
     connect(m_manageBackupsOverlay, SIGNAL(hideRequested()), this, SLOT(onHideBackupsRequest()));
     connect(m_manageOpacityAnim, SIGNAL(valueChanged(const QVariant&)), this, SLOT(onOpacityAnimChange(const QVariant&)));
     connect(m_manageOpacityAnim, SIGNAL(finished()), this, SLOT(onOpacityAnimFinish()));
-    connect(m_controller->getUpdatesModel(), SIGNAL(updateAvailable()), this, SLOT(showUpdateDialog()));
-    connect(m_settingsWidget, SIGNAL(updateDialogRequested()), this, SLOT(showUpdateDialog()));
+    connect(m_controller->getUpdatesModel(), SIGNAL(updateAvailable()), this, SLOT(onUpdateAvailable()));
+    connect(m_sideBar, SIGNAL(updateRequested()), this, SLOT(showUpdateDialog()));
+}
+
+void MainWindow::onUpdateAvailable() {
+    const auto info = m_controller->getUpdatesModel()->getUpdateInfo();
+    if (!info) return;
+    m_sideBar->showUpdateTab("Update to " + info->version);
+    showUpdateDialog();
 }
 
 void MainWindow::showUpdateDialog() {

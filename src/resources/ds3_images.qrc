@@ -57,5 +57,6 @@
         <file alias="menu_status">images/ds3/menu_icons/menu_status.png</file>
         <file alias="menu_storage_box">images/ds3/menu_icons/menu_storage_box.png</file>
         <file alias="test_data">images/ds3/test_data.png</file>
+        <file alias="autosave_flame">images/ds3/autosave_flame.png</file>
     </qresource>
 </RCC>

@@ -97,7 +97,17 @@ void SideBarWidget::addTab(const fssm::Game& game, const QString& saveId) {
     GameSaveTabButton* tab_btn = GameSaveTabButton::fromGame(game, saveId, this);
     m_gameTabs[saveId] = tab_btn;
     connect(tab_btn, SIGNAL(requested(QString)), this, SLOT(setCurrentTab(QString)));
-    m_layout->insertWidget(m_layout->count() - 2, tab_btn, 0);
+    // Game tabs are above the stretch which is right before settings tab
+    m_layout->insertWidget(m_layout->indexOf(m_settingsTab) - 1, tab_btn, 0);
+};
+
+void SideBarWidget::showUpdateTab(const QString& title) {
+    if (m_updateTab != nullptr) return;
+    // Opens a dialog and does not change the current tab
+    m_updateTab = new TabIconButton(QIcon(":/icons/update_256x256.png"), title, this);
+    m_updateTab->setObjectName("update_tab");
+    m_layout->addWidget(m_updateTab, 0);
+    connect(m_updateTab, SIGNAL(clicked()), this, SIGNAL(updateRequested()));
 };
 
 void SideBarWidget::removeTab(const QString& saveId) {

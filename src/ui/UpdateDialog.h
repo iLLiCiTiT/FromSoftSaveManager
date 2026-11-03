@@ -6,6 +6,7 @@
 #include <QPushButton>
 #include <QTextBrowser>
 
+#include "FlameWidget.h"
 #include "UpdatesModel.h"
 
 class UpdateDialog: public QDialog {
@@ -29,6 +30,7 @@ private:
     bool m_isUpdating = false;
     QLabel* m_titleLabel;
     QTextBrowser* m_notesWidget;
+    FlameWidget* m_flameWidget;
     QLabel* m_statusLabel;
     QProgressBar* m_progressBar;
     QPushButton* m_updateBtn;
