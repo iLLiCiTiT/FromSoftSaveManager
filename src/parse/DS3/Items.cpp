@@ -144,7 +144,7 @@ namespace fssm::parse::ds3 {
         BaseItem{1073742209, 99, 600, 128, ItemCategory::Tools, "dried_finger", "Dried Finger", ""},
         BaseItem{1073742264, 99, 600, 129, ItemCategory::Tools, "seed_of_a_giant_tree", "Seed of a Giant Tree", ""},
         BaseItem{1073741943, 99, 0, 130, ItemCategory::Tools, "way_of_white_circlet", "Way of White Circlet", ""},
-        BaseItem{1073741932, 99, 600, 131, ItemCategory::Tools, "roster_of_knights", "Roster of Knights", ""},
+        BaseItem{1073741932, 1, 0, 131, ItemCategory::Tools, "roster_of_knights", "Roster of Knights", ""},
 
         BaseItem{1073742834, 99, 600, 200, ItemCategory::Materials, "dragon_scale", "Dragon Scale", ""},
         BaseItem{1073742824, 99, 600, 201, ItemCategory::Materials, "titanite_shard", "Titanite Shard", ""},

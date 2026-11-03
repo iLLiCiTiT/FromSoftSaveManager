@@ -367,8 +367,9 @@ ManageBackupsButtonsWidget::ManageBackupsButtonsWidget(Controller* controller, Q
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(m_hotkeysLabel, 0);
     layout->addWidget(btnsWidget, 0);
-    layout->addStretch(1);
 
+    // Only as tall as the hint and the button, so the character list above gets the rest.
+    this->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     this->setAttribute(Qt::WA_TranslucentBackground, true);
     m_hotkeysLabel->setAttribute(Qt::WA_TranslucentBackground, true);
     btnsWidget->setAttribute(Qt::WA_TranslucentBackground, true);

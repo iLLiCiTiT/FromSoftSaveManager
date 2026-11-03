@@ -1,0 +1,64 @@
+#pragma once
+#include <array>
+#include <cstdint>
+#include <string_view>
+
+namespace fssm::parse::dsr {
+    struct Bonfire {
+        uint32_t entityId;              // key of the bonfire's FrpgNetBonfireDbItem
+        uint8_t area;                   // index into AREAS
+        std::string_view name;          // Lordvessel warp menu text, else community name
+    };
+
+    struct Boss {
+        uint32_t flagId;                // set when defeated
+        uint8_t area;                   // index into AREAS
+        std::string_view name;
+    };
+
+    // An NPC's event flag block. Some flag in it is set once the NPC's map has loaded; its
+    // death events clear the block and set one of deadFlags, its hostile events set one of
+    // hostileFlags (cleared again by absolution). Unused entries are 0.
+    struct Npc {
+        uint32_t firstFlag;
+        uint32_t lastFlag;
+        std::array<uint32_t, 3> deadFlags;
+        std::array<uint32_t, 3> hostileFlags;
+        std::string_view name;
+    };
+
+    // A questline stage: the NPC block's one set flag.
+    struct NpcStage {
+        uint32_t flag;
+        std::string_view text;
+    };
+
+    // Area name (PlaceName text) the Data List screen shows for a profile's areaId.
+    // A progress step of an NPC: done when any of flags is set.
+    // Unused entries are 0.
+    struct NpcStep {
+        uint32_t npcFlag;               // firstFlag of the NPCS entry
+        std::array<uint32_t, 11> flags;
+        std::string_view text;
+    };
+
+    struct PlaceName {
+        uint32_t id;
+        std::string_view name;
+    };
+
+    // Areas in the order they are usually reached.
+    extern const std::array<std::string_view, 21> AREAS;
+    // Bonfires by area.
+    extern const std::array<Bonfire, 44> BONFIRES;
+    // Bosses in the order they are usually met.
+    extern const std::array<Boss, 26> BOSSES;
+    // NPCs with an event flag block, by flag.
+    extern const std::array<Npc, 38> NPCS;
+    // Questline stage of the flags the scripts set in the NPC blocks, by flag.
+    extern const std::array<NpcStage, 145> NPC_STAGES;
+    // Questline steps and events of the NPCs, in NPCS order, then in the order they happen.
+    extern const std::array<NpcStep, 71> NPC_STEPS;
+    // Area PlaceNames (ids 1000-1999), by id.
+    extern const std::array<PlaceName, 32> PLACE_NAMES;
+}

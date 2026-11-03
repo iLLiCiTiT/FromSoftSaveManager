@@ -1,0 +1,54 @@
+#pragma once
+#include <array>
+#include <cstdint>
+#include <string_view>
+
+namespace fssm::parse::ds3 {
+    struct Bonfire {
+        // Event flags set when the bonfire is lit (any of them); 0 when unused.
+        std::array<uint32_t, 4> flagIds;
+        uint8_t area;                   // index into AREAS
+        std::string_view name;
+    };
+
+    struct Boss {
+        uint32_t flagId;                // set when defeated
+        uint8_t area;                   // index into AREAS
+        std::string_view name;
+    };
+
+    // Status flags of an NPC, exactly one set once its map has loaded:
+    // statusFlag friendly, + 1 or + 2 hostile, + 3 dead (or gone for good).
+    struct Npc {
+        uint32_t statusFlag;
+        std::string_view name;
+    };
+
+    // A questline stage: the one set flag of statusFlag - 15 .. statusFlag - 1
+    // (docs/ds3-npc-stages.md).
+    struct NpcStage {
+        uint32_t flag;
+        std::string_view text;
+    };
+
+    // A progress step of an NPC: a quest milestone, or an item given or received. Done
+    // when any of its flags is set; 0 when unused (docs/ds3-npc-stages.md).
+    struct NpcStep {
+        uint32_t statusFlag;            // the NPC's (Npc::statusFlag)
+        std::array<uint32_t, 12> flags;
+        std::string_view text;
+    };
+
+    // Areas of the bonfire travel menu, in menu order.
+    extern const std::array<std::string_view, 14> AREAS;
+    // Bonfires in travel menu order.
+    extern const std::array<Bonfire, 78> BONFIRES;
+    // Bosses in the order they are usually met.
+    extern const std::array<Boss, 25> BOSSES;
+    // NPCs with a status flag block, by flag.
+    extern const std::array<Npc, 30> NPCS;
+    // Questline stage of the flags the scripts set in the NPC blocks, by flag.
+    extern const std::array<NpcStage, 156> NPC_STAGES;
+    // Progress steps, by NPC in NPCS order, then in the order they usually happen.
+    extern const std::array<NpcStep, 113> NPC_STEPS;
+}

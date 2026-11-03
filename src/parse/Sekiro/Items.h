@@ -1,0 +1,53 @@
+#pragma once
+#include <array>
+#include <cstdint>
+#include <optional>
+#include <string_view>
+#include <vector>
+
+#include "SaveData.h"
+
+namespace fssm::parse::sekiro {
+    enum class ItemCategory {
+        QuickItems,
+        KeyItems,
+        Materials,
+        PrayerBeads,
+        Memories,
+        SpiritEmblems,
+        ProstheticTools,
+        CombatArts,
+        Hidden,         // goods the game doesn't list (skills, Night Eye, duplicate memos ...)
+        Unknown,
+    };
+
+    struct BaseItem {
+        uint32_t id = 0;            // type nibble << 28 | param row id, as stored in the save
+        ItemCategory category = ItemCategory::Unknown;
+        std::string_view label = "Unknown";
+        std::string_view image;     // alias in :/sekiro_inv_images, empty if none
+        int32_t order = 0;          // in-game sort order
+        uint16_t maxNum = 0;        // maximum number held, 0 when not limited
+        bool showsCount = false;    // the inventory list draws the number held
+        std::string_view description;
+    };
+
+    extern const std::array<BaseItem, 412> ALL_ITEMS;
+
+    std::optional<BaseItem> findBaseItem(uint32_t id);
+
+    // An inventory entry resolved against the item database.
+    struct InventoryItem {
+        uint32_t itemId = 0;
+        uint32_t quantity = 0;
+        uint32_t storageQuantity = 0;   // same item in storage, see decode_inventory(held, storage)
+        bool keyItem = false;       // from the key item list
+        bool knownItem = false;
+        BaseItem baseItem;
+    };
+
+    // Items the game shows: entries with a known, named item that has an icon and a description.
+    std::vector<InventoryItem> decode_inventory(const ItemList& list);
+    // Held items with storageQuantity filled from `storage`.
+    std::vector<InventoryItem> decode_inventory(const ItemList& held, const ItemList& storage);
+}
