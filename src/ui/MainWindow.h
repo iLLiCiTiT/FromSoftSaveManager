@@ -28,6 +28,7 @@ private slots:
     void onHideBackupsRequest();
     void onOpacityAnimChange(const QVariant& value);
     void onOpacityAnimFinish();
+    void onUpdateAvailable();
     void showUpdateDialog();
 private:
     QString m_saveId;
