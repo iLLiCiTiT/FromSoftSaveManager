@@ -103,6 +103,8 @@ public:
 
     QString getLastSelectedSaveId() const;
     void setCurrentTabId(const QString& saveId);
+    QString getSkippedUpdateVersion() const;
+    void setSkippedUpdateVersion(const QString& version);
     ConfigSettingsData getConfigSettingsData() const;
     ConfigHotkeys getHotkeysConfig() const;
     void saveConfigData(const ConfigConfirmData& confirmData);

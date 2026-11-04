@@ -266,6 +266,15 @@ void ConfigModel::setLastSelectedSaveId(const QString &saveId) {
         m_configData.lastSaveId = saveId;
 }
 
+QString ConfigModel::getSkippedUpdateVersion() const {
+    return m_configData.skippedUpdateVersion;
+}
+
+void ConfigModel::setSkippedUpdateVersion(const QString& version) {
+    m_configData.skippedUpdateVersion = version;
+    saveConfig();
+}
+
 ConfigGameSavePaths ConfigModel::getSaveFilesConfig() const {
     return m_configData.gameSaveFiles;
 }
@@ -390,6 +399,10 @@ void ConfigModel::p_loadConfig() {
     auto lastIdIt = data.find("last_selected_save_id");
     if (lastIdIt != data.end() && lastIdIt->is_string())
         m_configData.lastSaveId = QString::fromStdString(lastIdIt.value());
+
+    auto skippedUpdateIt = data.find("skipped_update_version");
+    if (skippedUpdateIt != data.end() && skippedUpdateIt->is_string())
+        m_configData.skippedUpdateVersion = QString::fromStdString(skippedUpdateIt.value());
 }
 
 json ConfigModel::p_configToJson() {
@@ -416,6 +429,7 @@ json ConfigModel::p_configToJson() {
     data["hotkeys"] = hotkeys;
     data["autobackup"] = autobackup;
     data["last_selected_save_id"] = m_configData.lastSaveId.toStdString();
+    data["skipped_update_version"] = m_configData.skippedUpdateVersion.toStdString();
     return data;
 }
 
