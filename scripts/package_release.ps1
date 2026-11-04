@@ -27,6 +27,7 @@ try {
         'libgcc_s_seh-1.dll',
         'libstdc++-6.dll',
         'libwinpthread-1.dll',
+        'plugins/imageformats/qwebp.dll',
         'plugins/platforms/qwindows.dll',
         'plugins/sqldrivers/qsqlite.dll',
         'plugins/tls/qschannelbackend.dll'
