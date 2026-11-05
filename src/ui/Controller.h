@@ -51,6 +51,8 @@ private:
     bool m_isRunning = false;
     std::unordered_map<QString, std::filesystem::path> m_saveFilesBySaveId;
     std::unordered_map<QString, std::filesystem::file_time_type> m_lastChangedById;
+    // Saves whose modification time changed but haven't been stable for a full poll yet
+    std::unordered_set<QString> m_pendingIds;
 };
 
 // Result to receive characters of DSR save file

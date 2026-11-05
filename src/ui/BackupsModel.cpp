@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include "Utils.h"
+#include "../parse/SL2File.h"
 
 
 static std::string filenameByGame(const fssm::Game& game) {
@@ -124,10 +125,16 @@ std::optional<BackupMetadata> BackupsModel::createBackup(const QString& savePath
     if (savePath.isEmpty() || !std::filesystem::exists(savePath.toStdString()))
         return std::nullopt;
 
-    std::ifstream ifs(savePath.toStdString(), std::ios::binary);
-    if (!ifs) return std::nullopt;
-    std::vector<char> buf(std::istreambuf_iterator<char>(ifs), {});
-    QByteArray saveData(buf.data(), static_cast<qsizetype>(buf.size()));
+    // The file handle is closed before anything else happens (DB insert etc.) so the
+    // game is never blocked from writing its save for longer than the read itself.
+    QByteArray saveData;
+    try {
+        std::vector<uint8_t> buf = fssm::parse::read_save_file(savePath.toStdString());
+        saveData = QByteArray(reinterpret_cast<const char*>(buf.data()), static_cast<qsizetype>(buf.size()));
+    } catch (const std::exception& e) {
+        std::cerr << "BackupsModel: failed to read save file: " << e.what() << std::endl;
+        return std::nullopt;
+    }
 
     std::string filename = filenameByGame(game);
     std::string labelStd = label.toStdString();
