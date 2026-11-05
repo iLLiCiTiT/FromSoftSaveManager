@@ -151,9 +151,13 @@ void CharacterInfoWidget::paintEvent(QPaintEvent* event) {
     };
     // Attunement slots: one cell per slot with the attuned spell's icon. The save's use
     // counts don't match what the game shows (three times as many), so they're left out.
+    // Without bundled item images each slot is a full-width row with the spell's name.
+    const bool slotIcons = inventoryResourcesAvailable();
     const int cellW = px(92);
-    const int cellH = px(76);
-    const auto slotColumns = [&](int panelW) { return std::max(1, (panelW - 2 * pad) / cellW); };
+    const int cellH = slotIcons ? px(76) : px(44);
+    const auto slotColumns = [&](int panelW) {
+        return slotIcons ? std::max(1, (panelW - 2 * pad) / cellW) : 1;
+    };
     const auto slotsHeight = [&](int panelW) {
         const int rows = slotCount > 0 ? (slotCount + slotColumns(panelW) - 1) / slotColumns(panelW) : 0;
         return lineH + px(6) + rows * cellH;
@@ -258,11 +262,12 @@ void CharacterInfoWidget::paintEvent(QPaintEvent* event) {
         drawShadowText(painter, line, Qt::AlignRight | Qt::AlignVCenter, QString::number(slotCount));
         y += lineH + px(6);
         const int cols = slotColumns(vitalsPanel.width());
-        const int gridLeft = x + (w - cols * cellW) / 2;
+        const int slotW = slotIcons ? cellW : w;
+        const int gridLeft = x + (w - cols * slotW) / 2;
         const int spellIcon = px(64);
         int slot = 0;
         for (int i = 0; i < slotCount; ++i) {
-            const QRect cell(gridLeft + (i % cols) * cellW, y + (i / cols) * cellH, cellW, cellH);
+            const QRect cell(gridLeft + (i % cols) * slotW, y + (i / cols) * cellH, slotW, cellH);
             const QRect iconRect(cell.center().x() - spellIcon / 2, cell.top(), spellIcon, spellIcon);
             // Spells fill the slots in order; a spell may take more than one slot.
             const AttunementSlot* attuned = nullptr;
@@ -274,23 +279,27 @@ void CharacterInfoWidget::paintEvent(QPaintEvent* event) {
                 }
             }
             const BaseItem* spell = attuned != nullptr ? findSpell(attuned->spellId) : nullptr;
-            QPixmap spellPix;
-            if (spell != nullptr && inventoryResourcesAvailable()) {
-                spellPix = icon(":/dsr_inv_images/" + fromView(spell->image), spellIcon);
+            if (!slotIcons) {
+                const QRect box = cell.adjusted(0, px(4), 0, -px(4));
+                painter.setPen(QPen(QColor(FRAME_COLOR.red(), FRAME_COLOR.green(), FRAME_COLOR.blue(), 120), 1));
+                painter.setBrush(QColor(0, 0, 0, 50));
+                painter.drawRect(QRectF(box).adjusted(0.5, 0.5, -0.5, -0.5));
+                if (spell != nullptr) {
+                    const QRect textRect = box.adjusted(px(14), 0, -px(14), 0);
+                    const QString name = QFontMetrics(painter.font()).elidedText(
+                        fromView(spell->label), Qt::ElideRight, textRect.width());
+                    drawShadowText(painter, textRect, Qt::AlignLeft | Qt::AlignVCenter, name);
+                }
+                continue;
             }
+            QPixmap spellPix;
+            if (spell != nullptr) spellPix = icon(":/dsr_inv_images/" + fromView(spell->image), spellIcon);
             if (!spellPix.isNull()) {
                 painter.drawPixmap(iconRect, spellPix);
             } else {
-                // Empty slot, or the spell's name when item images aren't bundled.
                 painter.setPen(QPen(QColor(FRAME_COLOR.red(), FRAME_COLOR.green(), FRAME_COLOR.blue(), 120), 1));
                 painter.setBrush(QColor(0, 0, 0, 50));
                 painter.drawRect(QRectF(iconRect).adjusted(px(8) + 0.5, px(4) + 0.5, -px(8) - 0.5, -px(4) - 0.5));
-                if (spell != nullptr) {
-                    painter.setFont(serifFont(px(18)));
-                    drawShadowText(painter, iconRect.adjusted(px(10), px(6), -px(10), -px(6)),
-                                   Qt::AlignCenter | Qt::TextWordWrap, fromView(spell->label));
-                    painter.setFont(textFont);
-                }
             }
         }
     }
