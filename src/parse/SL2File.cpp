@@ -90,64 +90,67 @@ std::vector<uint8_t> decrypt_entry_content(
 }
 
 #ifdef _WIN32
-    static std::vector<uint8_t> read_file_shared(const std::string& pathUtf8) {
+// The games open the save with exclusive access (share mode 0) when writing it, so
+// any handle we hold at that moment makes the game's save fail. Share flags can't
+// prevent that; the only defence is to keep the handle open as briefly as possible.
+std::vector<uint8_t> read_save_file(const std::string& pathUtf8) {
     // Convert UTF-8 path to UTF-16 for CreateFileW
     int wlen = MultiByteToWideChar(CP_UTF8, 0, pathUtf8.c_str(), -1, nullptr, 0);
     if (wlen <= 0) throw std::runtime_error("Failed to convert path to UTF-16");
     std::wstring wpath(static_cast<size_t>(wlen - 1), L'\0');
     MultiByteToWideChar(CP_UTF8, 0, pathUtf8.c_str(), -1, wpath.data(), wlen);
 
-    HANDLE h = CreateFileW(
-        wpath.c_str(),
-        GENERIC_READ,
-        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, // key: don't block the writer/maintainer
-        nullptr,
-        OPEN_EXISTING,
-        FILE_ATTRIBUTE_NORMAL,
-        nullptr
-    );
+    // The game may be writing the file right now; wait for it instead of failing.
+    HANDLE h = INVALID_HANDLE_VALUE;
+    for (int attempt = 0; attempt < 20; ++attempt) {
+        h = CreateFileW(
+            wpath.c_str(),
+            GENERIC_READ,
+            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+            nullptr,
+            OPEN_EXISTING,
+            FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN,
+            nullptr
+        );
+        if (h != INVALID_HANDLE_VALUE) break;
+        DWORD err = GetLastError();
+        if (err != ERROR_SHARING_VIOLATION && err != ERROR_LOCK_VIOLATION) break;
+        Sleep(50);
+    }
     if (h == INVALID_HANDLE_VALUE) {
-        throw std::runtime_error("Failed to open file for shared read");
+        throw std::runtime_error("Failed to open save file for reading");
     }
 
     LARGE_INTEGER size{};
-    if (!GetFileSizeEx(h, &size) || size.QuadPart < 0) {
+    if (!GetFileSizeEx(h, &size) || size.QuadPart < 0 || size.QuadPart > MAXDWORD) {
         CloseHandle(h);
-        throw std::runtime_error("Failed to get file size");
-    }
-    if (size.QuadPart > static_cast<uint64_t>(std::numeric_limits<size_t>::max())) {
-        CloseHandle(h);
-        throw std::runtime_error("File too large to read into memory");
+        throw std::runtime_error("Failed to get save file size");
     }
 
+    // Read everything with a single call, then release the handle immediately.
     std::vector<uint8_t> content(static_cast<size_t>(size.QuadPart));
-    size_t totalRead = 0;
-    while (totalRead < content.size()) {
-        DWORD chunk = 0;
-        DWORD toRead = static_cast<DWORD>(std::min<size_t>(content.size() - totalRead, 1u << 20)); // 1 MiB chunks
-        if (!ReadFile(h, content.data() + totalRead, toRead, &chunk, nullptr)) {
-            CloseHandle(h);
-            throw std::runtime_error("ReadFile failed");
-        }
-        if (chunk == 0) break;
-        totalRead += static_cast<size_t>(chunk);
-    }
+    DWORD read = 0;
+    BOOL ok = content.empty() || ReadFile(h, content.data(), static_cast<DWORD>(content.size()), &read, nullptr);
     CloseHandle(h);
+    if (!ok) throw std::runtime_error("Failed to read save file");
 
-    content.resize(totalRead);
+    content.resize(read);
+    return content;
+}
+#else
+std::vector<uint8_t> read_save_file(const std::string& path) {
+    std::ifstream f(path, std::ios::binary | std::ios::ate);
+    if (!f) throw std::runtime_error("Failed to open file");
+    std::vector<uint8_t> content(static_cast<size_t>(f.tellg()));
+    f.seekg(0);
+    f.read(reinterpret_cast<char*>(content.data()), static_cast<std::streamsize>(content.size()));
+    content.resize(static_cast<size_t>(f.gcount()));
     return content;
 }
 #endif
 
 SL2File parse_sl2_file(const std::string& input_sl2_file) {
-#ifdef _WIN32
-    std::vector<uint8_t> content = read_file_shared(input_sl2_file);
-#else
-    std::ifstream f(input_sl2_file, std::ios::binary);
-    if (!f) throw std::runtime_error("Failed to open file");
-    std::vector<uint8_t> content((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
-    f.close();
-#endif
+    std::vector<uint8_t> content = read_save_file(input_sl2_file);
 
     if (content.size() < 64) {
         throw std::runtime_error("File too small to be a valid BND4 container");

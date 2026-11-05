@@ -80,6 +80,7 @@ void SaveChangesThread::updatePaths(const std::vector<SaveFileItem>& saveItems) 
     for (auto& saveId: currentIds) {
         m_saveFilesBySaveId.erase(saveId);
         m_lastChangedById.erase(saveId);
+        m_pendingIds.erase(saveId);
     }
 }
 
@@ -94,9 +95,16 @@ void SaveChangesThread::run() {
         for (auto& [saveId, path]: m_saveFilesBySaveId) {
             std::filesystem::file_time_type& oldMod = m_lastChangedById[saveId];
             std::filesystem::file_time_type newMod = getFileModificationTime(path);
-            if (oldMod == newMod) continue;
-            m_lastChangedById[saveId] = newMod;
-            emit saveFileChanged(saveId);
+            if (oldMod != newMod) {
+                // The game may still be writing (it often saves several times in a
+                // row). Wait until the file stops changing before reacting.
+                oldMod = newMod;
+                m_pendingIds.insert(saveId);
+                continue;
+            }
+            if (m_pendingIds.erase(saveId) > 0) {
+                emit saveFileChanged(saveId);
+            }
         }
         msleep(1000);
     }

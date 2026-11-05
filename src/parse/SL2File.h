@@ -43,6 +43,10 @@ namespace fssm::parse {
     };
 
 
+    // Read a whole save file and close it right away. Retries briefly while the game
+    // holds it open for writing. Throws std::runtime_error on failure.
+    std::vector<uint8_t> read_save_file(const std::string& path);
+
     // Parse the .sl2 container and detect the game. Does not decrypt inner files yet.
     SL2File parse_sl2_file(const std::string& input_sl2_file);
 }
