@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.11)
-project(FromSoftSaveManager VERSION 0.6.2.1)
+project(FromSoftSaveManager VERSION 0.7.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_AUTOMOC ON)
