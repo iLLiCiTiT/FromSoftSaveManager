@@ -114,6 +114,7 @@ jobs:
           host: windows
           target: desktop
           arch: win64_mingw
+          modules: 'qtimageformats'
           tools: tools_mingw1310,qt.tools.win64_mingw1310 tools_ninja,qt.tools.ninja
           cache: true
 
