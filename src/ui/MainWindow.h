@@ -29,6 +29,7 @@ private slots:
     void onOpacityAnimChange(const QVariant& value);
     void onOpacityAnimFinish();
     void onUpdateAvailable();
+    void onSkipUpdateVersion(const QString& version);
     void showUpdateDialog();
 private:
     QString m_saveId;

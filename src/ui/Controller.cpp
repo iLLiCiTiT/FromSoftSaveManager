@@ -161,6 +161,14 @@ QString Controller::getLastSelectedSaveId() const {
     return m_configModel->getLastSelectedSaveId();
 }
 
+QString Controller::getSkippedUpdateVersion() const {
+    return m_configModel->getSkippedUpdateVersion();
+}
+
+void Controller::setSkippedUpdateVersion(const QString& version) {
+    m_configModel->setSkippedUpdateVersion(version);
+}
+
 void Controller::setCurrentTabId(const QString& saveId) {
     m_currentSaveId = saveId;
     m_configModel->setLastSelectedSaveId(saveId);

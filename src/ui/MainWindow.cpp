@@ -66,12 +66,20 @@ void MainWindow::onUpdateAvailable() {
     const auto info = m_controller->getUpdatesModel()->getUpdateInfo();
     if (!info) return;
     m_sideBar->showUpdateTab("Update to " + info->version);
+    // User does not want to be bothered about this version, it is still available from the sidebar
+    if (info->version == m_controller->getSkippedUpdateVersion()) return;
     showUpdateDialog();
 }
 
+void MainWindow::onSkipUpdateVersion(const QString& version) {
+    m_controller->setSkippedUpdateVersion(version);
+}
+
 void MainWindow::showUpdateDialog() {
-    if (m_updateDialog == nullptr)
+    if (m_updateDialog == nullptr) {
         m_updateDialog = new UpdateDialog(m_controller->getUpdatesModel(), this);
+        connect(m_updateDialog, SIGNAL(skipVersionRequested(QString)), this, SLOT(onSkipUpdateVersion(QString)));
+    }
     m_updateDialog->refresh();
     m_updateDialog->open();
 }

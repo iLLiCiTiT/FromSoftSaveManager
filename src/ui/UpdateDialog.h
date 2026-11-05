@@ -11,6 +11,9 @@
 
 class UpdateDialog: public QDialog {
     Q_OBJECT
+signals:
+    void skipVersionRequested(const QString& version);
+
 public:
     explicit UpdateDialog(UpdatesModel* updatesModel, QWidget* parent);
     void refresh();
@@ -21,6 +24,7 @@ public slots:
 private slots:
     void onUpdateClick();
     void onReleasePageClick();
+    void onSkipClick();
     void onDownloadProgress(qint64 received, qint64 total);
     void onInstallStart();
     void onUpdateFail(const QString& message);
@@ -35,5 +39,6 @@ private:
     QProgressBar* m_progressBar;
     QPushButton* m_updateBtn;
     QPushButton* m_releasePageBtn;
+    QPushButton* m_skipBtn;
     QPushButton* m_closeBtn;
 };

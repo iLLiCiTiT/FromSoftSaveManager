@@ -51,6 +51,8 @@ struct ConfigAutobackup {
 struct ConfigData {
     bool isLoaded = false;
     QString lastSaveId = "";
+    // Release tag the user chose to skip, the update dialog is not shown for it
+    QString skippedUpdateVersion = "";
     ConfigGameSavePaths gameSaveFiles {};
     ConfigHotkeys hotkeys {};
     ConfigAutobackup autobackup {};
@@ -111,6 +113,9 @@ public:
 
     QString getLastSelectedSaveId() const;
     void setLastSelectedSaveId(const QString& saveId);
+
+    QString getSkippedUpdateVersion() const;
+    void setSkippedUpdateVersion(const QString& version);
 
     std::vector<SaveFileItem> getSaveFileItems();
     std::optional<SaveFileItem> getSaveItem(const QString& saveId);

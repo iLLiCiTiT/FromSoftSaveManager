@@ -48,13 +48,16 @@ UpdateDialog::UpdateDialog(UpdatesModel* updatesModel, QWidget* parent): QDialog
     m_updateBtn = new QPushButton("Update", btnsWidget);
     m_updateBtn->setObjectName("save_btn");
     m_releasePageBtn = new QPushButton("Open release page", btnsWidget);
+    m_skipBtn = new QPushButton("Skip version", btnsWidget);
+    m_skipBtn->setToolTip("Don't show this dialog for this version again.\nIt is still possible to update from the sidebar.");
     m_closeBtn = new QPushButton("Later", btnsWidget);
 
     QHBoxLayout* btnsLayout = new QHBoxLayout(btnsWidget);
     btnsLayout->setContentsMargins(0, 0, 0, 0);
+    btnsLayout->addWidget(m_releasePageBtn, 0);
     btnsLayout->addStretch(1);
     btnsLayout->addWidget(m_updateBtn, 0);
-    btnsLayout->addWidget(m_releasePageBtn, 0);
+    btnsLayout->addWidget(m_skipBtn, 0);
     btnsLayout->addWidget(m_closeBtn, 0);
 
     QVBoxLayout* layout = new QVBoxLayout(this);
@@ -67,6 +70,7 @@ UpdateDialog::UpdateDialog(UpdatesModel* updatesModel, QWidget* parent): QDialog
 
     connect(m_updateBtn, SIGNAL(clicked()), this, SLOT(onUpdateClick()));
     connect(m_releasePageBtn, SIGNAL(clicked()), this, SLOT(onReleasePageClick()));
+    connect(m_skipBtn, SIGNAL(clicked()), this, SLOT(onSkipClick()));
     connect(m_closeBtn, SIGNAL(clicked()), this, SLOT(reject()));
     connect(m_updatesModel, SIGNAL(downloadProgressChanged(qint64, qint64)), this, SLOT(onDownloadProgress(qint64, qint64)));
     connect(m_updatesModel, SIGNAL(installStarted()), this, SLOT(onInstallStart()));
@@ -94,6 +98,7 @@ void UpdateDialog::reject() {
         m_statusLabel->setVisible(false);
         m_progressBar->setVisible(false);
         m_updateBtn->setEnabled(true);
+        m_skipBtn->setEnabled(true);
         m_closeBtn->setText("Later");
         return;
     }
@@ -103,6 +108,7 @@ void UpdateDialog::reject() {
 void UpdateDialog::onUpdateClick() {
     m_isUpdating = true;
     m_updateBtn->setEnabled(false);
+    m_skipBtn->setEnabled(false);
     m_closeBtn->setText("Cancel");
     m_statusLabel->setText("Downloading...");
     m_statusLabel->setVisible(true);
@@ -115,6 +121,12 @@ void UpdateDialog::onUpdateClick() {
 void UpdateDialog::onReleasePageClick() {
     const auto info = m_updatesModel->getUpdateInfo();
     if (info) QDesktopServices::openUrl(info->releaseUrl);
+}
+
+void UpdateDialog::onSkipClick() {
+    const auto info = m_updatesModel->getUpdateInfo();
+    if (info) emit skipVersionRequested(info->version);
+    QDialog::reject();
 }
 
 void UpdateDialog::onDownloadProgress(qint64 received, qint64 total) {
@@ -137,5 +149,6 @@ void UpdateDialog::onUpdateFail(const QString& message) {
     m_statusLabel->setText(message + " You can download the update from the release page.");
     m_statusLabel->setVisible(true);
     m_updateBtn->setEnabled(true);
+    m_skipBtn->setEnabled(true);
     m_closeBtn->setText("Later");
 }
