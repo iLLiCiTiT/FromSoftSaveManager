@@ -49,7 +49,9 @@ private:
         int tabWidth = 0;
         int visibleTabs = 5;
         std::array<QRect, 2> caption;     // "Inventory" / "Storage Box" above each grid
-        std::array<QRect, 2> gridFrame;
+        QRect gridFrame;                  // one ornate frame around both grids
+        int dividerX = 0;                 // the line between the two grids
+        std::array<QRect, 2> half;        // each grid's part of the frame
         std::array<QRect, 2> grid;
         std::array<QRect, 2> scrollTrack; // fixed at each frame's right edge
         std::array<int, 2> columns {5, 5};

@@ -159,6 +159,7 @@ InventoryWidget::Layout InventoryWidget::computeLayout() const {
     const int halfW = (l.content.width() - gap) / 2;
     // Each scroll bar keeps to its half's right edge; the grid is centered in the rest.
     const int barW = std::max(3, int(4 * s));
+    l.dividerX = l.content.left() + halfW + gap / 2;
     for (int p = 0; p < 2; ++p) {
         const int left = p == HELD_PANE ? l.content.left() : l.content.right() + 1 - halfW;
         l.caption[p] = QRect(left + int(6 * s), captionTop, halfW - int(12 * s), captionH);
@@ -222,6 +223,8 @@ void InventoryWidget::paintEvent(QPaintEvent* event) {
         return;
     }
     drawCategories(painter);
+    drawVerticalDivider(painter, m_layout.dividerX, m_layout.caption[HELD_PANE].top(),
+                        m_layout.grid[HELD_PANE].bottom(), QColor(150, 132, 96, 170));
     drawGrid(painter, HELD_PANE);
     drawGrid(painter, STORAGE_PANE);
     drawNameBar(painter);

@@ -331,6 +331,7 @@ InventoryWidget::Layout InventoryWidget::computeLayout() const {
     l.rowHeight = l.cellWidth;
     l.separatorGap = px(8);
     const int barW = std::max(3, px(5));
+    l.dividerX = inner.left() + halfW + gap / 2;
     for (int p = 0; p < 2; ++p) {
         const int left = p == HELD_PANE ? inner.left() : inner.right() + 1 - halfW;
         l.caption[p] = QRect(left + px(4), captionTop, halfW - px(8), captionH);
@@ -430,6 +431,10 @@ void InventoryWidget::paintEvent(QPaintEvent* event) {
         return;
     }
     drawTabs(painter);
+    QColor dividerColor = GOLD_COLOR;
+    dividerColor.setAlpha(130);
+    drawVerticalDivider(painter, m_layout.dividerX, m_layout.caption[HELD_PANE].top(),
+                        m_layout.grid[HELD_PANE].bottom(), dividerColor);
     drawGrid(painter, HELD_PANE);
     drawGrid(painter, STORAGE_PANE);
     drawDetail(painter);

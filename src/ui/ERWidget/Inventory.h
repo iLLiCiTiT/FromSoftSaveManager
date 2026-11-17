@@ -58,6 +58,7 @@ private:
         QRect rightButton;
         std::array<QRect, 2> caption;     // "Inventory" / "Sort Chest" above each grid
         std::array<QRect, 2> grid;
+        int dividerX = 0;                 // the line between the two grids
         std::array<QRect, 2> scrollTrack; // fixed at each grid's right edge
         std::array<int, 2> columns {5, 5};
         int cellWidth = 0;

@@ -300,27 +300,31 @@ InventoryWidget::Layout InventoryWidget::computeLayout() const {
     const int detailHeight = px(92);
     l.detail = QRect(inner.left(), inner.bottom() - detailHeight + 1, inner.width(), detailHeight);
 
-    // Two frames side by side, each with its caption: carried items, then the storage box.
+    // One frame split down the middle: carried items left, the storage box right,
+    // each half with its caption above the frame.
     const int captionTop = l.tabs.bottom() + 1 + px(6);
     const int captionH = px(24);
     const int frameTop = captionTop + captionH + px(2);
-    const int gap = px(12);
-    const int frameW = (inner.width() - gap) / 2;
+    l.gridFrame = QRect(inner.left(), frameTop, inner.width(), l.detail.top() - px(8) - frameTop);
+    const QRect frameInner = l.gridFrame.adjusted(px(12), px(10), -px(12), -px(10));
+    l.dividerX = frameInner.center().x();
     // Tiles keep one size; resizing the window adds or removes columns.
     l.cellWidth = TILE_SIZE;
     // The game's item cells are about 100x110 px: slightly taller than wide.
     l.rowHeight = TILE_SIZE * 11 / 10;
+    const int barW = std::max(2, px(3));
     for (int p = 0; p < 2; ++p) {
-        const int left = p == HELD_PANE ? inner.left() : inner.right() + 1 - frameW;
-        l.caption[p] = QRect(left + px(4), captionTop, frameW - px(8), captionH);
-        l.gridFrame[p] = QRect(left, frameTop, frameW, l.detail.top() - px(8) - frameTop);
-        const QRect frameInner = l.gridFrame[p].adjusted(px(12), px(10), -px(16), -px(10));
-        l.columns[p] = std::max(1, frameInner.width() / TILE_SIZE);
-        l.grid[p] = QRect(frameInner.left() + (frameInner.width() - l.cellWidth * l.columns[p]) / 2, frameInner.top(),
-                          l.cellWidth * l.columns[p], std::max(0, frameInner.height()));
-        // In the frame's right margin, so it doesn't move when columns come and go.
-        const int barW = std::max(2, px(3));
-        l.scrollTrack[p] = QRect(frameInner.right() + px(7), frameInner.top(), barW, l.grid[p].height());
+        l.half[p] = p == HELD_PANE
+            ? QRect(frameInner.left(), frameInner.top(), l.dividerX - px(6) - frameInner.left(), frameInner.height())
+            : QRect(l.dividerX + px(8), frameInner.top(), frameInner.right() - l.dividerX - px(7), frameInner.height());
+        l.caption[p] = QRect(l.half[p].left() + px(4), captionTop, l.half[p].width() - px(8), captionH);
+        // The scroll bar keeps to the half's right edge, so it doesn't move when columns
+        // come and go; the grid is centred in the rest.
+        const int gridArea = l.half[p].width() - barW - px(8);
+        l.columns[p] = std::max(1, gridArea / TILE_SIZE);
+        l.grid[p] = QRect(l.half[p].left() + (gridArea - l.cellWidth * l.columns[p]) / 2, l.half[p].top(),
+                          l.cellWidth * l.columns[p], std::max(0, l.half[p].height()));
+        l.scrollTrack[p] = QRect(l.half[p].right() + 1 - barW, l.half[p].top(), barW, l.grid[p].height());
     }
     return l;
 }
@@ -394,6 +398,9 @@ void InventoryWidget::paintEvent(QPaintEvent* event) {
         return;
     }
     drawCategories(painter);
+    drawOrnateFrame(painter, m_layout.gridFrame, m_layout.scale);
+    drawVerticalDivider(painter, m_layout.dividerX, m_layout.gridFrame.top() + int(6 * m_layout.scale),
+                        m_layout.gridFrame.bottom() - int(6 * m_layout.scale), GOLD_COLOR);
     drawGrid(painter, HELD_PANE);
     drawGrid(painter, STORAGE_PANE);
     drawDetail(painter);
@@ -452,7 +459,6 @@ void InventoryWidget::drawGrid(QPainter& painter, int p) {
     drawShadowText(painter, caption, Qt::AlignRight | Qt::AlignVCenter, QString::number(pane.visible.size()),
                    DIM_TEXT_COLOR);
 
-    drawOrnateFrame(painter, l.gridFrame[p], s);
 
     painter.save();
     painter.setClipRect(grid, Qt::IntersectClip);
@@ -743,7 +749,7 @@ void InventoryWidget::wheelEvent(QWheelEvent* event) {
     } else {
         // The pane under the pointer scrolls.
         for (int p = 0; p < 2; ++p) {
-            if (m_layout.gridFrame[p].contains(pos)) m_panes[p].scroll.wheel(event, true);
+            if (m_layout.half[p].contains(pos)) m_panes[p].scroll.wheel(event, true);
         }
         setHover(pos);
         update();

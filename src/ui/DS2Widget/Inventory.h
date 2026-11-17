@@ -41,6 +41,7 @@ private:
         int visibleCategories = 1;
         std::array<QRect, 2> caption;     // "Held" / "Item Box" above each grid
         std::array<QRect, 2> grid;
+        int dividerX = 0;                 // the line between the two grids
         std::array<QRect, 2> scrollTrack; // fixed at each grid's right edge
         int tileSize = 0;
         std::array<int, 2> columns {1, 1};

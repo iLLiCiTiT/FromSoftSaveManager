@@ -2,9 +2,28 @@
 
 #include <algorithm>
 
+#include <QLinearGradient>
 #include <QPainter>
 #include <QPainterPath>
 #include <QStyle>
+
+void drawVerticalDivider(QPainter& painter, int x, int y1, int y2, const QColor& color) {
+    if (y2 <= y1) return;
+    QLinearGradient gradient(0, y1, 0, y2);
+    QColor clear = color;
+    clear.setAlpha(0);
+    gradient.setColorAt(0.0, clear);
+    gradient.setColorAt(0.08, color);
+    gradient.setColorAt(0.92, color);
+    gradient.setColorAt(1.0, clear);
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing, false);
+    painter.setPen(QPen(QBrush(gradient), 1));
+    painter.drawLine(x, y1, x, y2);
+    painter.setPen(QPen(QColor(0, 0, 0, color.alpha() / 2), 1));
+    painter.drawLine(x + 1, y1, x + 1, y2);
+    painter.restore();
+}
 
 void drawStorageMarker(QPainter& painter, const QRectF& rect) {
     const double w = std::min(rect.width(), rect.height() * 4.0 / 3.0);
