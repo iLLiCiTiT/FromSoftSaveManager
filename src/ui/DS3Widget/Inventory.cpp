@@ -47,6 +47,9 @@ namespace {
     // Item tile pitch in pixels, independent of the widget size (same as the
     // Elden Ring inventory); resizing the window adds or removes columns.
     constexpr int TILE_SIZE = 60;
+    // Smallest tile the grid uses to fit one more column (both grids at the default
+    // window size fit four).
+    constexpr int MIN_TILE_SIZE = 54;
     // Items that never show in the game's inventory.
     constexpr uint32_t HIDDEN_ITEM_ID = 1073741918;
     constexpr uint32_t ESTUS_FLASK_ID = 1073741974;
@@ -305,25 +308,36 @@ InventoryWidget::Layout InventoryWidget::computeLayout() const {
     const int captionTop = l.tabs.bottom() + 1 + px(6);
     const int captionH = px(24);
     const int frameTop = captionTop + captionH + px(2);
-    l.gridFrame = QRect(inner.left(), frameTop, inner.width(), l.detail.top() - px(8) - frameTop);
-    // Only top and bottom rules (drawFrameRules), so the grids use the full width.
-    const QRect frameInner = l.gridFrame.adjusted(px(2), px(10), -px(2), -px(10));
+    // The grids reach closer to the panel edge than the tabs and details (the frame
+    // only has rules above and below), so each half fits one more column.
+    const QRect gridArea = r.adjusted(px(6), 0, -px(6), 0);
+    l.gridFrame = QRect(gridArea.left(), frameTop, gridArea.width(), l.detail.top() - px(8) - frameTop);
+    const QRect frameInner = l.gridFrame.adjusted(0, px(10), 0, -px(10));
     l.dividerX = frameInner.center().x();
-    // Tiles keep one size; resizing the window adds or removes columns.
-    l.cellWidth = TILE_SIZE;
-    // The game's item cells are about 100x110 px: slightly taller than wide.
-    l.rowHeight = TILE_SIZE * 11 / 10;
     const int barW = std::max(2, px(3));
+    const int barGap = px(3);                       // between the grid and its scroll bar
+    const int dividerGap = px(4);                   // each side of the middle line
     for (int p = 0; p < 2; ++p) {
         l.half[p] = p == HELD_PANE
-            ? QRect(frameInner.left(), frameInner.top(), l.dividerX - px(6) - frameInner.left(), frameInner.height())
-            : QRect(l.dividerX + px(8), frameInner.top(), frameInner.right() - l.dividerX - px(7), frameInner.height());
+            ? QRect(frameInner.left(), frameInner.top(), l.dividerX - dividerGap - frameInner.left(),
+                    frameInner.height())
+            : QRect(l.dividerX + 1 + dividerGap, frameInner.top(), frameInner.right() - l.dividerX - dividerGap,
+                    frameInner.height());
         l.caption[p] = QRect(l.half[p].left() + px(4), captionTop, l.half[p].width() - px(8), captionH);
+    }
+    // Tiles keep about one size; resizing the window adds or removes columns. A tile
+    // may shrink a little (to MIN_TILE_SIZE) when that fits one more column.
+    const int usable = std::min(l.half[HELD_PANE].width(), l.half[STORAGE_PANE].width()) - barW - barGap;
+    const int columns = std::max(1, usable / MIN_TILE_SIZE);
+    l.cellWidth = std::max(1, std::min(TILE_SIZE, usable / columns));
+    // The game's item cells are about 100x110 px: slightly taller than wide.
+    l.rowHeight = l.cellWidth * 11 / 10;
+    for (int p = 0; p < 2; ++p) {
         // The scroll bar keeps to the half's right edge, so it doesn't move when columns
         // come and go; the grid is centred in the rest.
-        const int gridArea = l.half[p].width() - barW - px(8);
-        l.columns[p] = std::max(1, gridArea / TILE_SIZE);
-        l.grid[p] = QRect(l.half[p].left() + (gridArea - l.cellWidth * l.columns[p]) / 2, l.half[p].top(),
+        const int area = l.half[p].width() - barW - barGap;
+        l.columns[p] = std::max(1, area / l.cellWidth);
+        l.grid[p] = QRect(l.half[p].left() + (area - l.cellWidth * l.columns[p]) / 2, l.half[p].top(),
                           l.cellWidth * l.columns[p], std::max(0, l.half[p].height()));
         l.scrollTrack[p] = QRect(l.half[p].right() + 1 - barW, l.half[p].top(), barW, l.grid[p].height());
     }
