@@ -47,12 +47,21 @@ namespace fssm::parse::sekiro {
     }
 
     std::vector<InventoryItem> decode_inventory(const ItemList& held, const ItemList& storage) {
-        std::unordered_map<uint32_t, uint32_t> stored;
-        for (const auto& entry : storage.normalItems) if (!entry.empty()) stored[entry.itemId] += entry.quantity;
-        for (const auto& entry : storage.keyItems) if (!entry.empty()) stored[entry.itemId] += entry.quantity;
         std::vector<InventoryItem> out = decode_inventory(held);
-        for (auto& item : out) {
-            if (auto it = stored.find(item.itemId); it != stored.end()) item.storageQuantity = it->second;
+        std::unordered_map<uint32_t, size_t> rows;
+        for (size_t i = 0; i < out.size(); ++i) rows.emplace(out[i].itemId, i);
+        // Storage adds its count to the held row; an item kept only in storage gets
+        // its own row with nothing held.
+        for (const auto& item : decode_inventory(storage)) {
+            if (auto it = rows.find(item.itemId); it != rows.end()) {
+                out[it->second].storageQuantity += item.quantity;
+                continue;
+            }
+            InventoryItem storedOnly = item;
+            storedOnly.storageQuantity = item.quantity;
+            storedOnly.quantity = 0;
+            rows.emplace(item.itemId, out.size());
+            out.push_back(storedOnly);
         }
         return out;
     }

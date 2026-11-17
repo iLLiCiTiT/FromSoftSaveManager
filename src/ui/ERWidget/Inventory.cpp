@@ -147,12 +147,10 @@ void InventoryWidget::setCharacter(const fssm::parse::er::ERCharacterInfo* charI
     m_entries.clear();
     m_hasCharacter = charInfo != nullptr;
     if (charInfo != nullptr) {
-        std::unordered_map<uint32_t, uint32_t> stored;
-        for (const auto& item : charInfo->storageItems) {
-            if ((item.itemId >> 28) == 0x4) stored[item.itemId] += item.quantity;
-        }
-        for (const auto& item : charInfo->inventoryItems) {
-            if (item.baseItem.id == 0) continue;
+        // Stacks (goods, arrows and bolts) held and stored are one entry; gear and
+        // items kept only in the storage chest get their own entry.
+        std::unordered_map<uint32_t, size_t> stackRows;
+        const auto makeEntry = [](const InventoryItem& item) {
             Entry entry;
             entry.item = item;
             entry.title = fromView(item.baseItem.label);
@@ -160,7 +158,29 @@ void InventoryWidget::setCharacter(const fssm::parse::er::ERCharacterInfo* charI
                 entry.upgradeLevel = int(item.itemId % 100);
                 if (entry.upgradeLevel > 0) entry.title += QString(" +%1").arg(entry.upgradeLevel);
             }
-            if (auto it = stored.find(item.itemId); it != stored.end()) entry.stored = it->second;
+            return entry;
+        };
+        for (const auto& item : charInfo->inventoryItems) {
+            if (item.baseItem.id == 0) continue;
+            if (item.baseItem.maxHeld > 0) stackRows.emplace(item.itemId, m_entries.size());
+            m_entries.push_back(makeEntry(item));
+        }
+        for (const auto& item : charInfo->storageItems) {
+            if (item.baseItem.id == 0) continue;
+            const bool stack = item.baseItem.maxHeld > 0;
+            if (stack) {
+                if (auto it = stackRows.find(item.itemId); it != stackRows.end()) {
+                    m_entries[it->second].stored += item.quantity;
+                    continue;
+                }
+            }
+            Entry entry = makeEntry(item);
+            entry.held = false;
+            entry.stored = item.quantity;
+            if (stack) {
+                entry.item.quantity = 0;
+                stackRows.emplace(item.itemId, m_entries.size());
+            }
             m_entries.push_back(std::move(entry));
         }
     }
@@ -490,9 +510,14 @@ void InventoryWidget::drawGrid(QPainter& painter) {
             } else if (entry.item.equipped) {
                 painter.drawPixmap(cell.left() + int(cw * 0.06), cell.top() + int(cw * 0.06), equipMark);
             }
+            if (!entry.held) {
+                // Kept only in the storage chest.
+                const double badge = cw * 0.3;
+                drawStorageMarker(painter, QRectF(cell.left() + cw * 0.07, cell.top() + cw * 0.07, badge, badge));
+            }
             if (showsCount(entry.item)) {
                 drawText(painter, cell.adjusted(0, 0, -int(cw * 0.1), -int(cw * 0.06)), Qt::AlignRight | Qt::AlignBottom,
-                         QString::number(entry.item.quantity));
+                         QString::number(entry.held ? entry.item.quantity : entry.stored));
             }
         }
     }
@@ -555,13 +580,19 @@ void InventoryWidget::drawDetail(QPainter& painter) {
     }
 
     // Counts.
-    QString held = "1 /  1";
-    QString stored = "- /  -";
+    QString held = entry->held ? "1 /  1" : "0 /  1";
+    QString stored = entry->held ? "- /  -" : "1";
     if (item.baseItem.maxHeld > 0) {
         const uint32_t maxHeld = std::max<uint32_t>(item.baseItem.maxHeld, item.quantity);
         held = QString("%1 /  %2").arg(item.quantity).arg(maxHeld);
         // Flasks and unique items can't go into the chest (stack size 1 there).
-        if (item.baseItem.maxStored > 1) stored = QString("%1 /  %2").arg(entry->stored).arg(item.baseItem.maxStored);
+        if (item.baseItem.maxStored > 1) {
+            stored = QString("%1 /  %2").arg(entry->stored).arg(item.baseItem.maxStored);
+        } else if (entry->stored > 0) {
+            stored = QString::number(entry->stored);
+        } else {
+            stored = "- /  -";
+        }
     }
     valueRow(col2, 0, "No. Held", held);
     valueRow(col2, 1, "Stored", stored);

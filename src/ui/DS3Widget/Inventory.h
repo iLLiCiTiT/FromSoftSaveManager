@@ -32,6 +32,7 @@ private:
     struct Entry {
         fssm::parse::ds3::InventoryItem item;
         uint32_t stored = 0;        // same item in the storage box
+        bool held = true;           // false when kept only in the storage box
         uint32_t maxHeld = 0;       // 0 for items that don't stack
         QString title;
         QString image;

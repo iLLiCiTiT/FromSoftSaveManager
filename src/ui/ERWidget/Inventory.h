@@ -32,7 +32,8 @@ protected:
 private:
     struct Entry {
         fssm::parse::er::InventoryItem item;
-        uint32_t stored = 0;        // same item in the storage chest (goods only)
+        uint32_t stored = 0;        // same item in the storage chest (stacks), or this piece
+        bool held = true;           // false when kept only in the storage chest
         int upgradeLevel = 0;       // weapons
         QString title;
     };

@@ -87,8 +87,14 @@ namespace fssm::parse::ds2 {
         uint8_t upgradeLevel = 0;
         Infusion infusion = Infusion::None;
         bool knownItem = false;
+        bool inItemBox = false;         // kept in the bonfire Item Box, not held
         BaseItem baseItem;
     };
+
+    // Held items and the Item Box share SaveDataItemInventory2; box entries have
+    // this bit in InventoryEntry::flags (a stack can be both held and boxed, as
+    // two entries).
+    constexpr uint32_t ITEM_BOX_FLAG = 0x100;
 
     std::vector<InventoryItem> decode_inventory(const InventoryData& inventory);
 }

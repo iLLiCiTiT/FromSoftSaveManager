@@ -174,9 +174,9 @@ void InventoryWidget::setCharacter(const fssm::parse::ds3::DS3CharacterInfo* cha
     m_entries.clear();
     m_hasCharacter = charInfo != nullptr;
     if (charInfo != nullptr) {
-        std::unordered_map<uint32_t, uint32_t> stored;
-        for (const auto& item : charInfo->storageBoxItems) stored[item.itemId] += item.amount;
-
+        // Stacks held and stored are one entry; gear and items kept only in the
+        // storage box get their own entry.
+        std::unordered_map<uint32_t, size_t> stackRows;
         const auto addItems = [&](const std::vector<InventoryItem>& items) {
             for (const auto& item : items) {
                 if (item.itemId == HIDDEN_ITEM_ID) continue;
@@ -184,7 +184,6 @@ void InventoryWidget::setCharacter(const fssm::parse::ds3::DS3CharacterInfo* cha
                 entry.item = item;
                 entry.title = itemTitle(item);
                 entry.image = fromView(item.baseItem.image);
-                if (auto it = stored.find(item.itemId); it != stored.end()) entry.stored = it->second;
                 if (item.itemId == ESTUS_FLASK_ID) {
                     entry.maxHeld = charInfo->estusMax;
                     entry.image = flaskImage("estus_flask", charInfo->estusMax, item.amount);
@@ -193,12 +192,35 @@ void InventoryWidget::setCharacter(const fssm::parse::ds3::DS3CharacterInfo* cha
                     entry.image = flaskImage("ashen_estus_flask", charInfo->ashenEstusMax, item.amount);
                 } else if (item.baseItem.max_inventory > 1) {
                     entry.maxHeld = item.baseItem.max_inventory;
+                    stackRows.emplace(item.itemId, m_entries.size());
                 }
                 m_entries.push_back(std::move(entry));
             }
         };
         addItems(charInfo->inventoryItems);
         addItems(charInfo->keyItems);
+        for (const auto& item : charInfo->storageBoxItems) {
+            if (item.itemId == HIDDEN_ITEM_ID) continue;
+            const bool stack = item.baseItem.max_inventory > 1;
+            if (stack) {
+                if (auto it = stackRows.find(item.itemId); it != stackRows.end()) {
+                    m_entries[it->second].stored += item.amount;
+                    continue;
+                }
+            }
+            Entry entry;
+            entry.item = item;
+            entry.title = itemTitle(item);
+            entry.image = fromView(item.baseItem.image);
+            entry.held = false;
+            entry.stored = item.amount;
+            if (stack) {
+                entry.maxHeld = item.baseItem.max_inventory;
+                entry.item.amount = 0;
+                stackRows.emplace(item.itemId, m_entries.size());
+            }
+            m_entries.push_back(std::move(entry));
+        }
         std::stable_sort(m_entries.begin(), m_entries.end(), [](const Entry& a, const Entry& b) {
             if (a.item.baseItem.order != b.item.baseItem.order) return a.item.baseItem.order < b.item.baseItem.order;
             if (a.item.itemId != b.item.itemId) return a.item.itemId < b.item.itemId;
@@ -469,10 +491,19 @@ void InventoryWidget::drawGrid(QPainter& painter) {
                                    scaled(":/ds3_inv_images/" + infusionIcon, QSize(sz, sz)));
             }
 
+            if (!entry.held) {
+                // Kept only in the storage box.
+                const int sz = int(cw * 0.26);
+                painter.drawPixmap(tile.left() + int(cw * 0.04), tile.top() + int(cw * 0.04),
+                                   scaled(":/ds3_images/menu_storage_box", QSize(sz, sz)));
+            }
+
             QString label;
             if (isFlask(entry.item)) {
                 // A flask shows its charges; one without any allocated shows no number.
                 if (entry.maxHeld > 0) label = QString::number(entry.item.amount);
+            } else if (!entry.held && entry.maxHeld > 0) {
+                label = QString::number(entry.stored);
             } else if (showsCount(entry.item, entry.maxHeld)) {
                 label = QString::number(entry.item.amount);
             } else if (entry.item.upgradeLevel > 0) {
@@ -581,9 +612,9 @@ void InventoryWidget::drawDetail(QPainter& painter) {
         valueRow(col2, 1, boxIcon, "Stored",
                  maxStored > 0 ? QString("%1/ %2").arg(entry->stored).arg(maxStored) : "-/  -");
     } else {
-        valueRow(col2, 0, bagIcon, "No. Held", QString::number(entry->item.amount));
-        // Gear in the box can't be told apart from the held piece by id alone.
-        valueRow(col2, 1, boxIcon, "Stored", "-");
+        // Gear is one entry per piece, held or in the storage box.
+        valueRow(col2, 0, bagIcon, "No. Held", entry->held ? QString::number(entry->item.amount) : "0");
+        valueRow(col2, 1, boxIcon, "Stored", entry->held ? "0" : QString::number(entry->stored));
     }
     if (wide) drawGearRows(col3);
 }

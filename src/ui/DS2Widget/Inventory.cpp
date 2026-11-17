@@ -99,7 +99,8 @@ void InventoryWidget::setCharacter(const fssm::parse::ds2::DS2CharacterInfo* cha
         if (a.baseItem.category != b.baseItem.category) return a.baseItem.category < b.baseItem.category;
         if (a.baseItem.category == ItemCategory::Gestures) return a.slot < b.slot;
         if (a.baseItem.order != b.baseItem.order) return a.baseItem.order < b.baseItem.order;
-        return a.itemId < b.itemId;
+        if (a.itemId != b.itemId) return a.itemId < b.itemId;
+        return !a.inItemBox && b.inItemBox;     // the held stack before the boxed one
     });
     m_selectedItem = -1;
     m_hoverItem = -1;
@@ -344,6 +345,10 @@ void InventoryWidget::drawGrid(QPainter& painter) {
                 drawOutlinedText(painter, inner.adjusted(0, 0, -int(tile * 0.06), -int(tile * 0.02)),
                                  Qt::AlignRight | Qt::AlignBottom, label, TEXT_COLOR);
             }
+            if (item.inItemBox) {
+                const double badge = tile * 0.3;
+                drawStorageMarker(painter, QRectF(inner.left() + tile * 0.05, inner.top() + tile * 0.05, badge, badge));
+            }
         }
     }
     painter.restore();
@@ -392,6 +397,7 @@ void InventoryWidget::drawNameBar(QPainter& painter) {
     } else if (showsCount(item)) {
         detail = QString("x %1").arg(item.amount);
     }
+    if (item.inItemBox) detail = detail.isEmpty() ? QString("Item Box") : QString("Item Box   %1").arg(detail);
     drawOutlinedText(painter, text, Qt::AlignRight | Qt::AlignVCenter, detail, DIM_TEXT_COLOR);
 }
 

@@ -48,6 +48,7 @@ namespace fssm::parse::sekiro {
 
     // Items the game shows: entries with a known, named item that has an icon and a description.
     std::vector<InventoryItem> decode_inventory(const ItemList& list);
-    // Held items with storageQuantity filled from `storage`.
+    // Held items with storageQuantity filled from `storage`, then the items kept only
+    // in storage (quantity 0).
     std::vector<InventoryItem> decode_inventory(const ItemList& held, const ItemList& storage);
 }

@@ -135,7 +135,7 @@ void InventoryWidget::setCharacter(const fssm::parse::sekiro::SekiroCharacterInf
     m_heldItems.clear();
     m_spiritEmblems.reset();
     for (const auto& item : m_allItems) {
-        m_heldItems.insert(item.itemId);
+        if (item.quantity > 0) m_heldItems.insert(item.itemId);
         if (item.itemId == SPIRIT_EMBLEM_ID) m_spiritEmblems = item;
     }
     std::stable_sort(m_allItems.begin(), m_allItems.end(), [](const InventoryItem& a, const InventoryItem& b) {
@@ -440,10 +440,16 @@ void InventoryWidget::drawList(QPainter& painter) {
         if (!icon.isNull()) {
             painter.drawPixmap(iconBox.center().x() - icon.width() / 2 + 1, iconBox.center().y() - icon.height() / 2 + 1, icon);
         }
+        // Items kept only in storage show the stored count and a chest badge.
+        const bool storedOnly = item.quantity == 0 && item.storageQuantity > 0;
         if (showsCount(item)) {
             painter.setFont(countFont);
             drawShadowText(painter, iconBox.adjusted(0, 0, -int(1 * s), int(1 * s)), Qt::AlignRight | Qt::AlignBottom,
-                           QString::number(item.quantity));
+                           QString::number(storedOnly ? item.storageQuantity : item.quantity));
+        }
+        if (storedOnly) {
+            const double badge = box * 0.42;
+            drawStorageMarker(painter, QRectF(iconBox.left() + 1, iconBox.top() + 1, badge, badge));
         }
 
         const int strokeH = int(rowH * 0.82);
@@ -492,7 +498,8 @@ void InventoryWidget::drawDetail(QPainter& painter) {
     const QFontMetrics statMetrics(statFont);
     const int statsNeeded = statMetrics.horizontalAdvance("Number Held") + statMetrics.horizontalAdvance("000/ 000")
                             + int(40 * s);
-    const bool showsHeld = m_page == 0 && (item.baseItem.maxNum > 1 || item.quantity > 1);
+    const bool showsHeld = m_page == 0
+        && (item.baseItem.maxNum > 1 || item.quantity > 1 || item.storageQuantity > 0);
     const int iconSize = showsHeld
         ? std::clamp(inner.width() - statsNeeded - int(12 * s), int(56 * s), int(112 * s))
         : std::min(int(112 * s), inner.width() * 34 / 100);

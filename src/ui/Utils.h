@@ -17,6 +17,12 @@
 // TODO add path related helpers
 // - e.g. join using 'std::filesystem::path'
 
+class QPainter;
+
+// Small chest badge for inventory entries kept only in storage (DS2, ER and Sekiro
+// have no menu icon for it). Drawn inside `rect`, keeping a 4:3 shape.
+void drawStorageMarker(QPainter& painter, const QRectF& rect);
+
 inline std::string generateUUID() {
     QUuid uuid = QUuid::createUuid();
     QString s = uuid.toString(QUuid::Id128);
