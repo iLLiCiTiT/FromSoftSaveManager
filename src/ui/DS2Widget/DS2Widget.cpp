@@ -99,11 +99,20 @@ DS2Widget::DS2Widget(Controller* controller, const QString& saveId, QWidget* par
     using fssm::ui::ds2::HeaderTabs;
     m_charTabs = new HeaderTabs(this);
     m_statusWidget = new fssm::ui::ds2::PlayerStatusWidget(m_charTabs);
-    m_inventoryWidget = new fssm::ui::ds2::InventoryWidget(m_charTabs);
+    // Carried items on the left, the Item Box on the right, like the game's storage screen.
+    QWidget* inventoryPage = new QWidget(m_charTabs);
+    inventoryPage->setAttribute(Qt::WA_TranslucentBackground, true);
+    m_inventoryWidget = new fssm::ui::ds2::InventoryWidget(inventoryPage);
+    m_storageWidget = new fssm::ui::ds2::InventoryWidget(inventoryPage, InventoryView::Storage);
+    QHBoxLayout* inventoryLayout = new QHBoxLayout(inventoryPage);
+    inventoryLayout->setContentsMargins(0, 0, 0, 0);
+    inventoryLayout->setSpacing(8);
+    inventoryLayout->addWidget(m_inventoryWidget, 1);
+    inventoryLayout->addWidget(m_storageWidget, 1);
     m_worldWidget = new fssm::ui::ds2::WorldProgressWidget(fssm::ui::ds2::WorldPage::Progress, m_charTabs);
     m_bonfiresWidget = new fssm::ui::ds2::WorldProgressWidget(fssm::ui::ds2::WorldPage::Bonfires, m_charTabs);
     m_charTabs->addTab("Character", HeaderTabs::Medallion::Status, m_statusWidget);
-    m_charTabs->addTab("Inventory", HeaderTabs::Medallion::Inventory, m_inventoryWidget);
+    m_charTabs->addTab("Inventory", HeaderTabs::Medallion::Inventory, inventoryPage);
     m_charTabs->addTab("Progress", HeaderTabs::Medallion::Scroll, m_worldWidget);
     // The game's bonfire is a coiled sword in the ashes.
     m_charTabs->addTab("Bonfires", HeaderTabs::Medallion::Equipment, m_bonfiresWidget);
@@ -129,6 +138,7 @@ void DS2Widget::showCharacter(const QModelIndex& index) {
     if (charId.isValid() && !charId.isNull()) charInfo = m_model->getCharByIdx(charId.toInt());
     m_statusWidget->setCharacter(charInfo);
     m_inventoryWidget->setCharacter(charInfo);
+    m_storageWidget->setCharacter(charInfo);
     m_worldWidget->setCharacter(charInfo);
     m_bonfiresWidget->setCharacter(charInfo);
 }
@@ -157,6 +167,7 @@ void DS2Widget::onRefresh() {
     }
     m_statusWidget->setCharacter(nullptr);
     m_inventoryWidget->setCharacter(nullptr);
+    m_storageWidget->setCharacter(nullptr);
     m_worldWidget->setCharacter(nullptr);
     m_bonfiresWidget->setCharacter(nullptr);
 }
@@ -166,6 +177,7 @@ void DS2Widget::onSelectionChange(const QItemSelection& selected, const QItemSel
     if (indexes.isEmpty()) {
         m_statusWidget->setCharacter(nullptr);
         m_inventoryWidget->setCharacter(nullptr);
+        m_storageWidget->setCharacter(nullptr);
         m_worldWidget->setCharacter(nullptr);
         m_bonfiresWidget->setCharacter(nullptr);
     m_bonfiresWidget->setCharacter(nullptr);

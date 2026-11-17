@@ -47,6 +47,7 @@ private:
     QListView* m_view;
     fssm::ui::ds3::HeaderTabs* m_charTabs;
     fssm::ui::ds3::InventoryWidget* m_inventoryWidget;
+    fssm::ui::ds3::InventoryWidget* m_storageWidget;
     fssm::ui::ds3::CharacterInfoWidget* m_charInfoWidget;
     fssm::ui::ds3::WorldProgressWidget* m_worldWidget;
     fssm::ui::ds3::WorldProgressWidget* m_bonfiresWidget;

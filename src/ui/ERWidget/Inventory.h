@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "../ScrollHelper.h"
+#include "../Utils.h"
 #include "../../parse/EldenRing/SaveFile.h"
 
 namespace fssm::ui::er {
@@ -15,7 +16,7 @@ namespace fssm::ui::er {
 class InventoryWidget: public QWidget {
     Q_OBJECT
 public:
-    explicit InventoryWidget(QWidget* parent = nullptr);
+    explicit InventoryWidget(QWidget* parent = nullptr, InventoryView view = InventoryView::Held);
     void setCharacter(const fssm::parse::er::ERCharacterInfo* charInfo);
     QSize sizeHint() const override;
 
@@ -85,6 +86,7 @@ private:
     std::vector<const Entry*> m_visible;
     std::vector<Row> m_rows;
     bool m_hasCharacter = false;
+    InventoryView m_view = InventoryView::Held;
     int m_category = 0;             // index into the tab list
     int m_tabOffset = 0;            // first visible tab
     fssm::ui::PaintedScroll m_scroll {this};    // item grid; range kept by updateScrollRange()

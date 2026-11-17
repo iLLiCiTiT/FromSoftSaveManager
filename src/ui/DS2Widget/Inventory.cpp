@@ -80,7 +80,7 @@ namespace {
 
 }
 
-InventoryWidget::InventoryWidget(QWidget* parent): QWidget(parent) {
+InventoryWidget::InventoryWidget(QWidget* parent, InventoryView view): QWidget(parent), m_view(view) {
     setAttribute(Qt::WA_TranslucentBackground, true);
     setMouseTracking(true);
     m_window = QPixmap(":/ds2_images/ui_window");
@@ -92,15 +92,21 @@ QSize InventoryWidget::sizeHint() const {
 
 void InventoryWidget::setCharacter(const fssm::parse::ds2::DS2CharacterInfo* charInfo) {
     m_hasCharacter = charInfo != nullptr;
-    m_allItems = charInfo != nullptr ? charInfo->inventoryItems : std::vector<InventoryItem>{};
+    m_allItems.clear();
+    if (charInfo != nullptr) {
+        // This panel's half: what is carried, or what is in the Item Box.
+        const bool box = m_view == InventoryView::Storage;
+        for (const auto& item : charInfo->inventoryItems) {
+            if (item.inItemBox == box) m_allItems.push_back(item);
+        }
+    }
     std::stable_sort(m_allItems.begin(), m_allItems.end(), [](const InventoryItem& a, const InventoryItem& b) {
         // Each tab shows one category. Gestures are listed in the order they were
         // learned (their slot order), everything else by the game's sort id.
         if (a.baseItem.category != b.baseItem.category) return a.baseItem.category < b.baseItem.category;
         if (a.baseItem.category == ItemCategory::Gestures) return a.slot < b.slot;
         if (a.baseItem.order != b.baseItem.order) return a.baseItem.order < b.baseItem.order;
-        if (a.itemId != b.itemId) return a.itemId < b.itemId;
-        return !a.inItemBox && b.inItemBox;     // the held stack before the boxed one
+        return a.itemId < b.itemId;
     });
     m_selectedItem = -1;
     m_hoverItem = -1;
@@ -217,7 +223,8 @@ void InventoryWidget::drawFrame(QPainter& painter) {
     }
     const QRect title = m_layout.titleBar.adjusted(int(14 * m_layout.scale), 0, 0, 0);
     painter.setFont(serifFont(std::max(15, int(m_layout.titleBar.height() * 0.68))));
-    drawOutlinedText(painter, title, Qt::AlignLeft | Qt::AlignVCenter, "Inventory", TEXT_COLOR);
+    drawOutlinedText(painter, title, Qt::AlignLeft | Qt::AlignVCenter,
+                     m_view == InventoryView::Storage ? "Item Box" : "Inventory", TEXT_COLOR);
 }
 
 void InventoryWidget::drawCategories(QPainter& painter) {
@@ -345,10 +352,6 @@ void InventoryWidget::drawGrid(QPainter& painter) {
                 drawOutlinedText(painter, inner.adjusted(0, 0, -int(tile * 0.06), -int(tile * 0.02)),
                                  Qt::AlignRight | Qt::AlignBottom, label, TEXT_COLOR);
             }
-            if (item.inItemBox) {
-                const double badge = tile * 0.3;
-                drawStorageMarker(painter, QRectF(inner.left() + tile * 0.05, inner.top() + tile * 0.05, badge, badge));
-            }
         }
     }
     painter.restore();
@@ -397,7 +400,6 @@ void InventoryWidget::drawNameBar(QPainter& painter) {
     } else if (showsCount(item)) {
         detail = QString("x %1").arg(item.amount);
     }
-    if (item.inItemBox) detail = detail.isEmpty() ? QString("Item Box") : QString("Item Box   %1").arg(detail);
     drawOutlinedText(painter, text, Qt::AlignRight | Qt::AlignVCenter, detail, DIM_TEXT_COLOR);
 }
 

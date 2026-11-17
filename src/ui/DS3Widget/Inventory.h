@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "../ScrollHelper.h"
+#include "../Utils.h"
 #include "../../parse/DS3/SaveFile.h"
 
 namespace fssm::ui::ds3 {
@@ -15,7 +16,7 @@ namespace fssm::ui::ds3 {
 class InventoryWidget: public QWidget {
     Q_OBJECT
 public:
-    explicit InventoryWidget(QWidget* parent = nullptr);
+    explicit InventoryWidget(QWidget* parent = nullptr, InventoryView view = InventoryView::Held);
     void setCharacter(const fssm::parse::ds3::DS3CharacterInfo* charInfo);
     QSize sizeHint() const override;
 
@@ -72,6 +73,7 @@ private:
     std::vector<Entry> m_entries;
     std::vector<const Entry*> m_visible;
     bool m_hasCharacter = false;
+    InventoryView m_view = InventoryView::Held;
     int m_category = 0;             // index into CATEGORY_ORDER
     int m_tabOffset = 0;            // first visible tab
     fssm::ui::PaintedScroll m_scroll {this};    // item grid; range kept by updateScrollRange()

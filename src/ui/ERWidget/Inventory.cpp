@@ -133,7 +133,7 @@ namespace {
     }
 }
 
-InventoryWidget::InventoryWidget(QWidget* parent): QWidget(parent) {
+InventoryWidget::InventoryWidget(QWidget* parent, InventoryView view): QWidget(parent), m_view(view) {
     setAttribute(Qt::WA_TranslucentBackground, true);
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
@@ -183,6 +183,11 @@ void InventoryWidget::setCharacter(const fssm::parse::er::ERCharacterInfo* charI
             }
             m_entries.push_back(std::move(entry));
         }
+        // This panel's half: what is carried, or what is in the storage chest.
+        const bool storage = m_view == InventoryView::Storage;
+        m_entries.erase(std::remove_if(m_entries.begin(), m_entries.end(), [storage](const Entry& e) {
+            return storage ? e.held && e.stored == 0 : !e.held;
+        }), m_entries.end());
     }
     m_selectedItem = 0;
     m_hoverItem = -1;
@@ -510,14 +515,9 @@ void InventoryWidget::drawGrid(QPainter& painter) {
             } else if (entry.item.equipped) {
                 painter.drawPixmap(cell.left() + int(cw * 0.06), cell.top() + int(cw * 0.06), equipMark);
             }
-            if (!entry.held) {
-                // Kept only in the storage chest.
-                const double badge = cw * 0.3;
-                drawStorageMarker(painter, QRectF(cell.left() + cw * 0.07, cell.top() + cw * 0.07, badge, badge));
-            }
             if (showsCount(entry.item)) {
                 drawText(painter, cell.adjusted(0, 0, -int(cw * 0.1), -int(cw * 0.06)), Qt::AlignRight | Qt::AlignBottom,
-                         QString::number(entry.held ? entry.item.quantity : entry.stored));
+                         QString::number(m_view == InventoryView::Storage ? entry.stored : entry.item.quantity));
             }
         }
     }

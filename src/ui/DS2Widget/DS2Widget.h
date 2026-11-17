@@ -48,6 +48,7 @@ private:
     fssm::ui::ds2::HeaderTabs* m_charTabs;
     fssm::ui::ds2::PlayerStatusWidget* m_statusWidget;
     fssm::ui::ds2::InventoryWidget* m_inventoryWidget;
+    fssm::ui::ds2::InventoryWidget* m_storageWidget;
     fssm::ui::ds2::WorldProgressWidget* m_worldWidget;
     fssm::ui::ds2::WorldProgressWidget* m_bonfiresWidget;
 };

@@ -160,7 +160,7 @@ namespace {
     }
 }
 
-InventoryWidget::InventoryWidget(QWidget* parent): QWidget(parent) {
+InventoryWidget::InventoryWidget(QWidget* parent, InventoryView view): QWidget(parent), m_view(view) {
     setAttribute(Qt::WA_TranslucentBackground, true);
     setMouseTracking(true);
     m_tabBackground = QPixmap(":/ds3_images/inv_bg_1");
@@ -221,6 +221,11 @@ void InventoryWidget::setCharacter(const fssm::parse::ds3::DS3CharacterInfo* cha
             }
             m_entries.push_back(std::move(entry));
         }
+        // This panel's half: what is carried, or what is in the storage box.
+        const bool storage = m_view == InventoryView::Storage;
+        m_entries.erase(std::remove_if(m_entries.begin(), m_entries.end(), [storage](const Entry& e) {
+            return storage ? e.held && e.stored == 0 : !e.held;
+        }), m_entries.end());
         std::stable_sort(m_entries.begin(), m_entries.end(), [](const Entry& a, const Entry& b) {
             if (a.item.baseItem.order != b.item.baseItem.order) return a.item.baseItem.order < b.item.baseItem.order;
             if (a.item.itemId != b.item.itemId) return a.item.itemId < b.item.itemId;
@@ -491,18 +496,11 @@ void InventoryWidget::drawGrid(QPainter& painter) {
                                    scaled(":/ds3_inv_images/" + infusionIcon, QSize(sz, sz)));
             }
 
-            if (!entry.held) {
-                // Kept only in the storage box.
-                const int sz = int(cw * 0.26);
-                painter.drawPixmap(tile.left() + int(cw * 0.04), tile.top() + int(cw * 0.04),
-                                   scaled(":/ds3_images/menu_storage_box", QSize(sz, sz)));
-            }
-
             QString label;
             if (isFlask(entry.item)) {
                 // A flask shows its charges; one without any allocated shows no number.
                 if (entry.maxHeld > 0) label = QString::number(entry.item.amount);
-            } else if (!entry.held && entry.maxHeld > 0) {
+            } else if (m_view == InventoryView::Storage && entry.maxHeld > 0) {
                 label = QString::number(entry.stored);
             } else if (showsCount(entry.item, entry.maxHeld)) {
                 label = QString::number(entry.item.amount);
