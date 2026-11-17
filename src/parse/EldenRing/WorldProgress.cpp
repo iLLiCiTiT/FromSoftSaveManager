@@ -1,7 +1,7 @@
 #include "WorldProgress.h"
 
 namespace fssm::parse::er {
-    const std::array<FlagBlock, 950> FLAG_BLOCKS = {{
+    const std::array<FlagBlock, 951> FLAG_BLOCKS = {{
         {0, 0}, {1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5},
         {6, 6}, {7, 7}, {8, 8}, {9, 9}, {60, 10}, {61, 11},
         {62, 12}, {63, 13}, {64, 14}, {65, 15}, {66, 16}, {67, 17},
@@ -161,6 +161,9 @@ namespace fssm::parse::er {
         {1060442, 10354}, {1060447, 10357}, {1060448, 10358}, {1060449, 10359}, {1242330, 12903}, {1242332, 12904},
         {1242337, 12907}, {1242338, 12908}, {1242339, 12909}, {1248550, 14019}, {1248552, 14020}, {1248557, 14023},
         {1248558, 14024}, {1248559, 14025},
+        // Not in ER-Save-Editor's table: Borealis' defeat flag 1254560800. Found from the saves:
+        // the bit flips together with the boss's reward lot flag 530510 and is the only one set.
+        {1254560, 13974},
     }};
 
     const std::array<std::string_view, 36> GRACE_AREAS = {
@@ -665,7 +668,7 @@ namespace fssm::parse::er {
         Boss{30090800, 10, "Red Wolf of the Champion (Gelmir Hero's Grave)"},
         Boss{1037540810, 10, "Ulcerated Tree Spirit (Mt. Gelmir)"},
         Boss{30170800, 11, "Ancient Hero of Zamor (Giant-Conquring Hero's Grave)"},
-        Boss{1054560800, 11, "Borealis the Freezing Fog (Freezing Lake)"},
+        Boss{1254560800, 11, "Borealis the Freezing Fog (Freezing Lake)"},
         Boss{1051570800, 11, "Commander Niall (Castle Sol)"},
         Boss{1050570800, 11, "Death Rite Bird (Mountaintops of the Giants)"},
         Boss{1050570800, 11, "Erdtree Avatar (Mountaintops of the Giants)"},
