@@ -49,7 +49,7 @@ private:
         int tabWidth = 0;
         int visibleTabs = 5;
         std::array<QRect, 2> caption;     // "Inventory" / "Storage Box" above each grid
-        QRect gridFrame;                  // one ornate frame around both grids
+        QRect gridFrame;                  // area of both grids, ruled above and below
         int dividerX = 0;                 // the line between the two grids
         std::array<QRect, 2> half;        // each grid's part of the frame
         std::array<QRect, 2> grid;
@@ -73,6 +73,7 @@ private:
     QPixmap scaled(const QString& resource, const QSize& size);
     QPixmap itemIcon(const Entry& entry, const QSize& size);
     void drawCategories(QPainter& painter);
+    void drawFrameRules(QPainter& painter);
     void drawGrid(QPainter& painter, int pane);
     void drawDetail(QPainter& painter);
 

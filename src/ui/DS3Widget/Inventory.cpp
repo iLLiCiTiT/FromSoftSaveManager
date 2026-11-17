@@ -306,7 +306,8 @@ InventoryWidget::Layout InventoryWidget::computeLayout() const {
     const int captionH = px(24);
     const int frameTop = captionTop + captionH + px(2);
     l.gridFrame = QRect(inner.left(), frameTop, inner.width(), l.detail.top() - px(8) - frameTop);
-    const QRect frameInner = l.gridFrame.adjusted(px(12), px(10), -px(12), -px(10));
+    // Only top and bottom rules (drawFrameRules), so the grids use the full width.
+    const QRect frameInner = l.gridFrame.adjusted(px(2), px(10), -px(2), -px(10));
     l.dividerX = frameInner.center().x();
     // Tiles keep one size; resizing the window adds or removes columns.
     l.cellWidth = TILE_SIZE;
@@ -398,12 +399,29 @@ void InventoryWidget::paintEvent(QPaintEvent* event) {
         return;
     }
     drawCategories(painter);
-    drawOrnateFrame(painter, m_layout.gridFrame, m_layout.scale);
+    drawFrameRules(painter);
     drawVerticalDivider(painter, m_layout.dividerX, m_layout.gridFrame.top() + int(6 * m_layout.scale),
                         m_layout.gridFrame.bottom() - int(6 * m_layout.scale), GOLD_COLOR);
     drawGrid(painter, HELD_PANE);
     drawGrid(painter, STORAGE_PANE);
     drawDetail(painter);
+}
+
+void InventoryWidget::drawFrameRules(QPainter& painter) {
+    // The ornate frame's double gold lines above and below the grids, without its
+    // sides and corners.
+    const QRect& frame = m_layout.gridFrame;
+    const int gap = std::max(3, int(6 * m_layout.scale));
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing, false);
+    for (const int y : {frame.top(), frame.bottom()}) {
+        const int inner = y == frame.top() ? y + gap : y - gap;
+        painter.setPen(QPen(QColor(150, 124, 72, 200), 1));
+        painter.drawLine(frame.left(), y, frame.right(), y);
+        painter.setPen(QPen(QColor(110, 92, 58, 160), 1));
+        painter.drawLine(frame.left(), inner, frame.right(), inner);
+    }
+    painter.restore();
 }
 
 void InventoryWidget::drawCategories(QPainter& painter) {

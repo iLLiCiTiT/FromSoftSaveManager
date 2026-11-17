@@ -59,29 +59,6 @@ namespace fssm::ui::ds3 {
         painter.restore();
     }
 
-    // Ornamental double gold border with small square corners (item grid frame).
-    inline void drawOrnateFrame(QPainter& painter, const QRect& rect, double scale) {
-        painter.save();
-        painter.setRenderHint(QPainter::Antialiasing, false);
-        painter.setBrush(Qt::NoBrush);
-        const int gap = std::max(3, int(6 * scale));
-        painter.setPen(QPen(QColor(150, 124, 72, 200), 1));
-        painter.drawRect(rect.adjusted(0, 0, -1, -1));
-        painter.setPen(QPen(QColor(110, 92, 58, 160), 1));
-        painter.drawRect(rect.adjusted(gap, gap, -gap - 1, -gap - 1));
-        const int c = std::max(5, int(12 * scale));
-        for (const QPoint& p : {rect.topLeft(), QPoint(rect.right() - c + 1, rect.top()),
-                                QPoint(rect.left(), rect.bottom() - c + 1),
-                                QPoint(rect.right() - c + 1, rect.bottom() - c + 1)}) {
-            const QRect corner(p, QSize(c, c));
-            painter.fillRect(corner, QColor(28, 26, 24));
-            painter.setPen(QPen(QColor(176, 146, 82, 220), 1));
-            painter.drawRect(corner.adjusted(0, 0, -1, -1));
-            painter.drawRect(corner.adjusted(c / 4, c / 4, -c / 4 - 1, -c / 4 - 1));
-        }
-        painter.restore();
-    }
-
     // Draws `pix` into `target` keeping its borders (in source pixels) unstretched, scaled by `scale`.
     inline void drawNineSlice(QPainter& painter, const QPixmap& pix, const QRect& target,
                               int left, int top, int right, int bottom, double scale) {
