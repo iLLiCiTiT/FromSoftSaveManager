@@ -49,7 +49,7 @@ namespace {
     }};
 
     // Reference layout size; everything scales with the widget.
-    constexpr int DESIGN_W = 560;
+    constexpr int DESIGN_W = 980;
     constexpr int DESIGN_H = 470;
     // Tabs, padding, fonts and the detail panel keep one size (the look at the default
     // window size); only the item grid follows the widget size.
@@ -133,7 +133,7 @@ namespace {
     }
 }
 
-InventoryWidget::InventoryWidget(QWidget* parent, InventoryView view): QWidget(parent), m_view(view) {
+InventoryWidget::InventoryWidget(QWidget* parent): QWidget(parent) {
     setAttribute(Qt::WA_TranslucentBackground, true);
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
@@ -183,67 +183,74 @@ void InventoryWidget::setCharacter(const fssm::parse::er::ERCharacterInfo* charI
             }
             m_entries.push_back(std::move(entry));
         }
-        // This panel's half: what is carried, or what is in the storage chest.
-        const bool storage = m_view == InventoryView::Storage;
-        m_entries.erase(std::remove_if(m_entries.begin(), m_entries.end(), [storage](const Entry& e) {
-            return storage ? e.held && e.stored == 0 : !e.held;
-        }), m_entries.end());
     }
-    m_selectedItem = 0;
-    m_hoverItem = -1;
-    m_scroll.reset();
+    for (auto& pane : m_panes) {
+        pane.selected = 0;
+        pane.hover = -1;
+        pane.scroll.reset();
+    }
     rebuildVisibleItems();
     update();
 }
 
 void InventoryWidget::rebuildVisibleItems() {
-    m_visible.clear();
     const Tab& tab = TABS[m_category];
-    if (tab.categories.empty()) {
-        for (const auto& entry : m_entries) m_visible.push_back(&entry);
-        // Newest first: the acquisition index grows with every pickup.
-        std::stable_sort(m_visible.begin(), m_visible.end(), [](const Entry* a, const Entry* b) {
-            return a->item.acquisitionIndex > b->item.acquisitionIndex;
-        });
-    } else {
+    for (int p = 0; p < 2; ++p) {
+        Pane& pane = m_panes[p];
+        pane.visible.clear();
         for (const auto& entry : m_entries) {
-            if (std::find(tab.categories.begin(), tab.categories.end(), entry.item.baseItem.category)
-                != tab.categories.end()) {
-                m_visible.push_back(&entry);
+            // Carried items left; stored stacks and pieces kept in the chest right.
+            const bool inPane = p == HELD_PANE ? entry.held : (!entry.held || entry.stored > 0);
+            if (!inPane) continue;
+            if (tab.categories.empty()
+                || std::find(tab.categories.begin(), tab.categories.end(), entry.item.baseItem.category)
+                   != tab.categories.end()) {
+                pane.visible.push_back(&entry);
             }
         }
-        std::stable_sort(m_visible.begin(), m_visible.end(), [](const Entry* a, const Entry* b) {
-            if (a->item.baseItem.sortId != b->item.baseItem.sortId) {
-                return a->item.baseItem.sortId < b->item.baseItem.sortId;
-            }
-            if (a->item.itemId != b->item.itemId) return a->item.itemId < b->item.itemId;
-            return a->item.acquisitionIndex > b->item.acquisitionIndex;
-        });
+        if (tab.categories.empty()) {
+            // Newest first: the acquisition index grows with every pickup.
+            std::stable_sort(pane.visible.begin(), pane.visible.end(), [](const Entry* a, const Entry* b) {
+                return a->item.acquisitionIndex > b->item.acquisitionIndex;
+            });
+        } else {
+            std::stable_sort(pane.visible.begin(), pane.visible.end(), [](const Entry* a, const Entry* b) {
+                if (a->item.baseItem.sortId != b->item.baseItem.sortId) {
+                    return a->item.baseItem.sortId < b->item.baseItem.sortId;
+                }
+                if (a->item.itemId != b->item.itemId) return a->item.itemId < b->item.itemId;
+                return a->item.acquisitionIndex > b->item.acquisitionIndex;
+            });
+        }
+        pane.selected = pane.visible.empty() ? -1 : std::clamp(pane.selected, 0, int(pane.visible.size()) - 1);
     }
     layoutRows();
-    m_selectedItem = m_visible.empty() ? -1 : std::clamp(m_selectedItem, 0, int(m_visible.size()) - 1);
     updateScrollRange();
 }
 
 void InventoryWidget::layoutRows() {
-    m_rows.clear();
     const bool grouped = !TABS[m_category].categories.empty();
-    int y = 0;
-    for (int i = 0; i < int(m_visible.size());) {
-        Row row;
-        row.first = i;
-        row.groupStart = grouped && i > 0
-            && m_visible[i]->item.baseItem.sortGroup != m_visible[i - 1]->item.baseItem.sortGroup;
-        if (row.groupStart) y += m_layout.separatorGap;
-        row.top = y;
-        const uint8_t group = m_visible[i]->item.baseItem.sortGroup;
-        while (i < int(m_visible.size()) && row.count < m_layout.columns
-               && (!grouped || m_visible[i]->item.baseItem.sortGroup == group)) {
-            ++row.count;
-            ++i;
+    for (int p = 0; p < 2; ++p) {
+        Pane& pane = m_panes[p];
+        const auto& visible = pane.visible;
+        pane.rows.clear();
+        int y = 0;
+        for (int i = 0; i < int(visible.size());) {
+            Row row;
+            row.first = i;
+            row.groupStart = grouped && i > 0
+                && visible[i]->item.baseItem.sortGroup != visible[i - 1]->item.baseItem.sortGroup;
+            if (row.groupStart) y += m_layout.separatorGap;
+            row.top = y;
+            const uint8_t group = visible[i]->item.baseItem.sortGroup;
+            while (i < int(visible.size()) && row.count < m_layout.columns[p]
+                   && (!grouped || visible[i]->item.baseItem.sortGroup == group)) {
+                ++row.count;
+                ++i;
+            }
+            y += m_layout.rowHeight;
+            pane.rows.push_back(row);
         }
-        y += m_layout.rowHeight;
-        m_rows.push_back(row);
     }
 }
 
@@ -259,23 +266,26 @@ void InventoryWidget::selectCategory(int category) {
     if (category == m_category) return;
     m_category = category;
     keepCategoryVisible();
-    m_scroll.reset();
-    m_selectedItem = 0;
-    m_hoverItem = -1;
+    for (auto& pane : m_panes) {
+        pane.selected = 0;
+        pane.hover = -1;
+        pane.scroll.reset();
+    }
     rebuildVisibleItems();
     update();
 }
 
 void InventoryWidget::selectItem(int index) {
-    if (m_visible.empty()) return;
-    m_selectedItem = std::clamp(index, 0, int(m_visible.size()) - 1);
+    Pane& pane = m_panes[m_activePane];
+    const QRect& grid = m_layout.grid[m_activePane];
+    if (pane.visible.empty()) return;
+    pane.selected = std::clamp(index, 0, int(pane.visible.size()) - 1);
     // Scroll the selected row into view.
-    for (int r = 0; r < int(m_rows.size()); ++r) {
-        const Row& row = m_rows[r];
-        if (m_selectedItem < row.first || m_selectedItem >= row.first + row.count) continue;
-        if (row.top < m_scroll.value()) m_scroll.setValue(row.top);
-        if (row.top + m_layout.rowHeight > m_scroll.value() + m_layout.grid.height()) {
-            m_scroll.setValue(row.top + m_layout.rowHeight - m_layout.grid.height());
+    for (const Row& row : pane.rows) {
+        if (pane.selected < row.first || pane.selected >= row.first + row.count) continue;
+        if (row.top < pane.scroll.value()) pane.scroll.setValue(row.top);
+        if (row.top + m_layout.rowHeight > pane.scroll.value() + grid.height()) {
+            pane.scroll.setValue(row.top + m_layout.rowHeight - grid.height());
         }
         break;
     }
@@ -309,30 +319,41 @@ InventoryWidget::Layout InventoryWidget::computeLayout() const {
     const int detailHeight = px(104);
     l.detail = QRect(inner.left(), inner.bottom() - detailHeight + 1, inner.width(), detailHeight);
 
+    // Two grids side by side, each with its caption: carried items, then the sort chest.
     // Tiles keep one size; resizing the window adds or removes columns.
-    const int gridTop = l.tabs.bottom() + 1 + px(10);
+    const int captionTop = l.tabs.bottom() + 1 + px(6);
+    const int captionH = px(24);
+    const int gridTop = captionTop + captionH + px(4);
+    const int gap = px(16);
+    const int halfW = (inner.width() - gap) / 2;
     const int scrollW = px(14);
-    const int gridWidth = inner.width() - px(8) - scrollW;
     l.cellWidth = TILE_SIZE;
-    l.columns = std::max(1, gridWidth / TILE_SIZE);
     l.rowHeight = l.cellWidth;
     l.separatorGap = px(8);
-    l.grid = QRect(inner.left() + px(4), gridTop, l.cellWidth * l.columns,
-                   std::max(0, l.detail.top() - px(10) - gridTop));
-    // At the panel's right edge, so it doesn't move when columns come and go.
     const int barW = std::max(3, px(5));
-    l.scrollTrack = QRect(inner.right() + 1 - px(4) - barW, gridTop, barW, l.grid.height());
+    for (int p = 0; p < 2; ++p) {
+        const int left = p == HELD_PANE ? inner.left() : inner.right() + 1 - halfW;
+        l.caption[p] = QRect(left + px(4), captionTop, halfW - px(8), captionH);
+        l.columns[p] = std::max(1, (halfW - px(8) - scrollW) / TILE_SIZE);
+        l.grid[p] = QRect(left + px(4), gridTop, l.cellWidth * l.columns[p],
+                          std::max(0, l.detail.top() - px(10) - gridTop));
+        // At the half's right edge, so it doesn't move when columns come and go.
+        l.scrollTrack[p] = QRect(left + halfW - px(4) - barW, gridTop, barW, l.grid[p].height());
+    }
     return l;
 }
 
-int InventoryWidget::contentHeight() const {
-    if (m_rows.empty()) return 0;
-    return m_rows.back().top + m_layout.rowHeight;
+int InventoryWidget::contentHeight(int pane) const {
+    const auto& rows = m_panes[pane].rows;
+    if (rows.empty()) return 0;
+    return rows.back().top + m_layout.rowHeight;
 }
 
 void InventoryWidget::updateScrollRange() {
-    m_scroll.setGeometry(m_layout.grid, m_layout.scrollTrack, contentHeight());
-    m_scroll.setStep(m_layout.rowHeight);
+    for (int p = 0; p < 2; ++p) {
+        m_panes[p].scroll.setGeometry(m_layout.grid[p], m_layout.scrollTrack[p], contentHeight(p));
+        m_panes[p].scroll.setStep(m_layout.rowHeight);
+    }
 }
 
 void InventoryWidget::resizeEvent(QResizeEvent* event) {
@@ -375,14 +396,19 @@ QPixmap InventoryWidget::itemIcon(const Entry& entry, const QSize& size) {
 }
 
 const InventoryWidget::Entry* InventoryWidget::currentEntry() const {
-    const int idx = m_hoverItem >= 0 ? m_hoverItem : m_selectedItem;
-    if (idx < 0 || idx >= int(m_visible.size())) return nullptr;
-    return m_visible[idx];
+    // The hovered item, else the selection of the pane clicked last.
+    for (const Pane& pane : m_panes) {
+        if (pane.hover >= 0 && pane.hover < int(pane.visible.size())) return pane.visible[pane.hover];
+    }
+    const Pane& pane = m_panes[m_activePane];
+    if (pane.selected < 0 || pane.selected >= int(pane.visible.size())) return nullptr;
+    return pane.visible[pane.selected];
 }
 
-QRect InventoryWidget::cellRect(int row, int column) const {
+QRect InventoryWidget::cellRect(int pane, int row, int column) const {
     const Layout& l = m_layout;
-    return QRect(l.grid.left() + column * l.cellWidth, l.grid.top() + m_rows[row].top - m_scroll.value(),
+    return QRect(l.grid[pane].left() + column * l.cellWidth,
+                 l.grid[pane].top() + m_panes[pane].rows[row].top - m_panes[pane].scroll.value(),
                  l.cellWidth, l.rowHeight);
 }
 
@@ -404,7 +430,8 @@ void InventoryWidget::paintEvent(QPaintEvent* event) {
         return;
     }
     drawTabs(painter);
-    drawGrid(painter);
+    drawGrid(painter, HELD_PANE);
+    drawGrid(painter, STORAGE_PANE);
     drawDetail(painter);
 }
 
@@ -457,38 +484,47 @@ void InventoryWidget::drawTabs(QPainter& painter) {
     painter.setOpacity(1.0);
 }
 
-void InventoryWidget::drawGrid(QPainter& painter) {
+void InventoryWidget::drawGrid(QPainter& painter, int p) {
     const Layout& l = m_layout;
     const double s = l.scale;
+    const Pane& pane = m_panes[p];
+    const QRect& grid = l.grid[p];
+
+    // Caption: the pane's name over a rule, with its item count.
+    const QRect caption = l.caption[p];
+    painter.setFont(serifFont(int(17 * s)));
+    drawText(painter, caption, Qt::AlignLeft | Qt::AlignVCenter, p == HELD_PANE ? "Inventory" : "Sort Chest");
+    drawText(painter, caption, Qt::AlignRight | Qt::AlignVCenter, QString::number(pane.visible.size()), DIM_TEXT_COLOR);
+    drawRule(painter, caption.left(), caption.right(), caption.bottom(), 110);
 
     painter.save();
-    painter.setClipRect(l.grid.adjusted(0, 0, 0, 1), Qt::IntersectClip);
+    painter.setClipRect(grid.adjusted(0, 0, 0, 1), Qt::IntersectClip);
     const int cw = l.cellWidth;
     const int rh = l.rowHeight;
     const QSize slotSize(int(cw * SLOT_FILL / SLOT_SPRITE_OPAQUE), int(rh * SLOT_FILL / SLOT_SPRITE_OPAQUE));
     const QPixmap slot = scaled(":/er_images/slot_base", slotSize).scaled(slotSize);
     const QSize cursorSize(int(cw * SLOT_FILL / CURSOR_SPRITE_OPAQUE), int(rh * SLOT_FILL / CURSOR_SPRITE_OPAQUE));
     const QPixmap cursor = scaled(":/er_images/slot_cursor", cursorSize).scaled(cursorSize);
-    const QPixmap separator = scaled(":/er_images/group_line", QSize(l.grid.width(), int(4 * s) + 2))
-        .scaled(QSize(l.grid.width(), std::max(1, int(2 * s))));
+    const QPixmap separator = scaled(":/er_images/group_line", QSize(grid.width(), int(4 * s) + 2))
+        .scaled(QSize(grid.width(), std::max(1, int(2 * s))));
     const int markSize = int(cw * 0.2);
     const QPixmap pouchMark = scaled(":/er_images/pouch_mark", QSize(markSize, markSize));
     const QPixmap equipMark = scaled(":/er_images/equip_mark", QSize(markSize, markSize));
     const int iconSize = int(cw * 1.0);
     painter.setFont(serifFont(std::max(10, int(cw * 0.21))));
 
-    for (int r = 0; r < int(m_rows.size()); ++r) {
-        const Row& row = m_rows[r];
-        const int top = l.grid.top() + row.top - m_scroll.value();
-        if (top > l.grid.bottom()) break;
+    for (int r = 0; r < int(pane.rows.size()); ++r) {
+        const Row& row = pane.rows[r];
+        const int top = grid.top() + row.top - pane.scroll.value();
+        if (top > grid.bottom()) break;
         if (row.groupStart) {
             painter.setOpacity(0.55);
-            painter.drawPixmap(l.grid.left(), top - l.separatorGap / 2 - separator.height() / 2, separator);
+            painter.drawPixmap(grid.left(), top - l.separatorGap / 2 - separator.height() / 2, separator);
             painter.setOpacity(1.0);
         }
-        if (top + rh < l.grid.top()) continue;
-        for (int col = 0; col < l.columns; ++col) {
-            const QRect cell = cellRect(r, col);
+        if (top + rh < grid.top()) continue;
+        for (int col = 0; col < l.columns[p]; ++col) {
+            const QRect cell = cellRect(p, r, col);
             const QPoint slotPos(cell.center().x() - slot.width() / 2, cell.center().y() - slot.height() / 2);
             if (col >= row.count) {
                 // Rows of a group end with empty, darker slots.
@@ -498,11 +534,11 @@ void InventoryWidget::drawGrid(QPainter& painter) {
                 continue;
             }
             const int idx = row.first + col;
-            const Entry& entry = *m_visible[idx];
+            const Entry& entry = *pane.visible[idx];
             painter.drawPixmap(slotPos, slot);
-            if (idx == m_selectedItem) {
+            if (p == m_activePane && idx == pane.selected) {
                 painter.drawPixmap(cell.center().x() - cursor.width() / 2, cell.center().y() - cursor.height() / 2, cursor);
-            } else if (idx == m_hoverItem) {
+            } else if (idx == pane.hover) {
                 painter.setOpacity(0.4);
                 painter.drawPixmap(cell.center().x() - cursor.width() / 2, cell.center().y() - cursor.height() / 2, cursor);
                 painter.setOpacity(1.0);
@@ -517,14 +553,14 @@ void InventoryWidget::drawGrid(QPainter& painter) {
             }
             if (showsCount(entry.item)) {
                 drawText(painter, cell.adjusted(0, 0, -int(cw * 0.1), -int(cw * 0.06)), Qt::AlignRight | Qt::AlignBottom,
-                         QString::number(m_view == InventoryView::Storage ? entry.stored : entry.item.quantity));
+                         QString::number(p == STORAGE_PANE ? entry.stored : entry.item.quantity));
             }
         }
     }
     painter.restore();
 
     // Scroll bar at the panel's right edge.
-    m_scroll.paint(painter, QColor(0, 0, 0, 140), QColor(196, 160, 96), -(l.scrollTrack.width() / 4));
+    pane.scroll.paint(painter, QColor(0, 0, 0, 140), QColor(196, 160, 96), -(l.scrollTrack[p].width() / 4));
 }
 
 void InventoryWidget::drawDetail(QPainter& painter) {
@@ -613,16 +649,33 @@ void InventoryWidget::drawDetail(QPainter& painter) {
     }
 }
 
-int InventoryWidget::itemIndexAt(const QPoint& pos) const {
+int InventoryWidget::itemIndexAt(const QPoint& pos, int* pane) const {
     const Layout& l = m_layout;
-    if (!l.grid.contains(pos) || l.cellWidth <= 0) return -1;
-    const int col = (pos.x() - l.grid.left()) / l.cellWidth;
-    const int y = pos.y() - l.grid.top() + m_scroll.value();
-    for (const Row& row : m_rows) {
-        if (y < row.top || y >= row.top + l.rowHeight) continue;
-        return col < row.count ? row.first + col : -1;
+    for (int p = 0; p < 2; ++p) {
+        if (!l.grid[p].contains(pos) || l.cellWidth <= 0) continue;
+        const int col = (pos.x() - l.grid[p].left()) / l.cellWidth;
+        const int y = pos.y() - l.grid[p].top() + m_panes[p].scroll.value();
+        for (const Row& row : m_panes[p].rows) {
+            if (y < row.top || y >= row.top + l.rowHeight) continue;
+            if (col >= row.count) return -1;
+            if (pane != nullptr) *pane = p;
+            return row.first + col;
+        }
+        return -1;
     }
     return -1;
+}
+
+void InventoryWidget::setHover(const QPoint& pos) {
+    int hoverPane = -1;
+    const int hover = m_hasCharacter ? itemIndexAt(pos, &hoverPane) : -1;
+    for (int p = 0; p < 2; ++p) {
+        const int value = p == hoverPane ? hover : -1;
+        if (m_panes[p].hover != value) {
+            m_panes[p].hover = value;
+            update();
+        }
+    }
 }
 
 int InventoryWidget::tabIndexAt(const QPoint& pos) const {
@@ -633,12 +686,10 @@ int InventoryWidget::tabIndexAt(const QPoint& pos) const {
 }
 
 void InventoryWidget::mouseMoveEvent(QMouseEvent* event) {
-    if (m_scroll.mouseMove(event)) return;
-    const int hover = m_hasCharacter ? itemIndexAt(event->pos()) : -1;
-    if (hover != m_hoverItem) {
-        m_hoverItem = hover;
-        update();
+    for (auto& pane : m_panes) {
+        if (pane.scroll.mouseMove(event)) return;
     }
+    setHover(event->pos());
     const int tab = m_hasCharacter ? tabIndexAt(event->pos()) : -1;
     if (tab != m_hoverTab) {
         m_hoverTab = tab;
@@ -649,7 +700,11 @@ void InventoryWidget::mouseMoveEvent(QMouseEvent* event) {
 }
 
 void InventoryWidget::mousePressEvent(QMouseEvent* event) {
-    if (m_hasCharacter && m_scroll.mousePress(event)) return;
+    if (m_hasCharacter) {
+        for (auto& pane : m_panes) {
+            if (pane.scroll.mousePress(event)) return;
+        }
+    }
     if (!m_hasCharacter || event->button() != Qt::LeftButton) {
         QWidget::mousePressEvent(event);
         return;
@@ -661,14 +716,18 @@ void InventoryWidget::mousePressEvent(QMouseEvent* event) {
         selectCategory(m_category + 1);
     } else if (const int tab = tabIndexAt(pos); tab >= 0) {
         selectCategory(tab);
-    } else if (const int item = itemIndexAt(pos); item >= 0) {
-        m_selectedItem = item;
+    } else if (int pane = 0, item = itemIndexAt(pos, &pane); item >= 0) {
+        m_activePane = pane;
+        m_panes[pane].selected = item;
         update();
     }
 }
 
 void InventoryWidget::mouseReleaseEvent(QMouseEvent* event) {
-    if (!m_scroll.mouseRelease(event)) QWidget::mouseReleaseEvent(event);
+    for (auto& pane : m_panes) {
+        if (pane.scroll.mouseRelease(event)) return;
+    }
+    QWidget::mouseReleaseEvent(event);
 }
 
 void InventoryWidget::wheelEvent(QWheelEvent* event) {
@@ -678,8 +737,10 @@ void InventoryWidget::wheelEvent(QWheelEvent* event) {
     if (m_layout.tabs.adjusted(-m_layout.leftButton.width(), 0, m_layout.rightButton.width(), 0).contains(pos)) {
         selectCategory(m_category - steps);
     } else {
-        m_scroll.wheel(event, true);
-        m_hoverItem = itemIndexAt(pos);
+        // The half under the pointer scrolls.
+        const int p = pos.x() < width() / 2 ? HELD_PANE : STORAGE_PANE;
+        m_panes[p].scroll.wheel(event, true);
+        setHover(pos);
         update();
     }
     event->accept();
@@ -690,29 +751,35 @@ void InventoryWidget::keyPressEvent(QKeyEvent* event) {
     switch (event->key()) {
         case Qt::Key_Q: selectCategory(m_category - 1); break;
         case Qt::Key_E: selectCategory(m_category + 1); break;
-        case Qt::Key_Left: selectItem(m_selectedItem - 1); break;
-        case Qt::Key_Right: selectItem(m_selectedItem + 1); break;
+        // Tab moves the selection to the other grid.
+        case Qt::Key_Tab: m_activePane = 1 - m_activePane; update(); break;
+        case Qt::Key_Left: selectItem(m_panes[m_activePane].selected - 1); break;
+        case Qt::Key_Right: selectItem(m_panes[m_activePane].selected + 1); break;
         case Qt::Key_Up:
         case Qt::Key_Down: {
             // Same column in the previous / next row (rows can be short at group ends).
+            const Pane& pane = m_panes[m_activePane];
+            if (pane.rows.empty()) break;
             int rowIdx = 0;
-            for (int r = 0; r < int(m_rows.size()); ++r) {
-                if (m_selectedItem >= m_rows[r].first) rowIdx = r;
+            for (int r = 0; r < int(pane.rows.size()); ++r) {
+                if (pane.selected >= pane.rows[r].first) rowIdx = r;
             }
-            const int col = m_selectedItem - m_rows[rowIdx].first;
+            const int col = pane.selected - pane.rows[rowIdx].first;
             const int target = rowIdx + (event->key() == Qt::Key_Up ? -1 : 1);
-            if (target < 0 || target >= int(m_rows.size())) break;
-            selectItem(m_rows[target].first + std::min(col, m_rows[target].count - 1));
+            if (target < 0 || target >= int(pane.rows.size())) break;
+            selectItem(pane.rows[target].first + std::min(col, pane.rows[target].count - 1));
             break;
         }
         default: return QWidget::keyPressEvent(event);
     }
-    m_hoverItem = -1;
+    for (auto& pane : m_panes) pane.hover = -1;
 }
 
 void InventoryWidget::leaveEvent(QEvent* event) {
-    m_scroll.leave();
-    m_hoverItem = -1;
+    for (auto& pane : m_panes) {
+        pane.scroll.leave();
+        pane.hover = -1;
+    }
     m_hoverTab = -1;
     update();
     QWidget::leaveEvent(event);

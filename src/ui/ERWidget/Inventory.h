@@ -1,12 +1,13 @@
 #pragma once
 
+#include <array>
+
 #include <QHash>
 #include <QPixmap>
 #include <QWidget>
 #include <vector>
 
 #include "../ScrollHelper.h"
-#include "../Utils.h"
 #include "../../parse/EldenRing/SaveFile.h"
 
 namespace fssm::ui::er {
@@ -16,7 +17,7 @@ namespace fssm::ui::er {
 class InventoryWidget: public QWidget {
     Q_OBJECT
 public:
-    explicit InventoryWidget(QWidget* parent = nullptr, InventoryView view = InventoryView::Held);
+    explicit InventoryWidget(QWidget* parent = nullptr);
     void setCharacter(const fssm::parse::er::ERCharacterInfo* charInfo);
     QSize sizeHint() const override;
 
@@ -41,7 +42,7 @@ private:
 
     // A grid row; a new sort group always starts on a new row.
     struct Row {
-        int first = 0;              // index into m_visible
+        int first = 0;              // index into Pane::visible
         int count = 0;
         bool groupStart = false;    // separator line above (not on the first row)
         int top = 0;                // y offset inside the grid content
@@ -55,9 +56,10 @@ private:
         int visibleTabs = 5;
         QRect leftButton;
         QRect rightButton;
-        QRect grid;
-        QRect scrollTrack;          // fixed at the panel's right edge
-        int columns = 5;
+        std::array<QRect, 2> caption;     // "Inventory" / "Sort Chest" above each grid
+        std::array<QRect, 2> grid;
+        std::array<QRect, 2> scrollTrack; // fixed at each grid's right edge
+        std::array<int, 2> columns {5, 5};
         int cellWidth = 0;
         int rowHeight = 0;
         int separatorGap = 0;
@@ -66,33 +68,43 @@ private:
 
     Layout computeLayout() const;
     void rebuildVisibleItems();
-    void layoutRows();
+    void layoutRows();              // both panes
     void selectCategory(int category);
     void keepCategoryVisible();
-    void selectItem(int index);
-    int contentHeight() const;
+    void selectItem(int index);     // in the active pane
+    int contentHeight(int pane) const;
     void updateScrollRange();
-    int itemIndexAt(const QPoint& pos) const;
+    // Item under pos and its pane, or -1.
+    int itemIndexAt(const QPoint& pos, int* pane) const;
+    void setHover(const QPoint& pos);
     int tabIndexAt(const QPoint& pos) const;
-    QRect cellRect(int row, int column) const;
+    QRect cellRect(int pane, int row, int column) const;
     const Entry* currentEntry() const;
     QPixmap scaled(const QString& resource, const QSize& size);
     QPixmap itemIcon(const Entry& entry, const QSize& size);
     void drawTabs(QPainter& painter);
-    void drawGrid(QPainter& painter);
+    void drawGrid(QPainter& painter, int pane);
     void drawDetail(QPainter& painter);
 
+    // One item grid: HELD_PANE (carried) or STORAGE_PANE (the sort chest).
+    struct Pane {
+        explicit Pane(QWidget* owner): scroll(owner) {}
+        std::vector<const Entry*> visible;
+        std::vector<Row> rows;
+        fssm::ui::PaintedScroll scroll;     // range kept by updateScrollRange()
+        int hover = -1;
+        int selected = 0;
+    };
+    static constexpr int HELD_PANE = 0;
+    static constexpr int STORAGE_PANE = 1;
+
     std::vector<Entry> m_entries;
-    std::vector<const Entry*> m_visible;
-    std::vector<Row> m_rows;
     bool m_hasCharacter = false;
-    InventoryView m_view = InventoryView::Held;
     int m_category = 0;             // index into the tab list
     int m_tabOffset = 0;            // first visible tab
-    fssm::ui::PaintedScroll m_scroll {this};    // item grid; range kept by updateScrollRange()
-    int m_hoverItem = -1;
+    std::array<Pane, 2> m_panes {Pane(this), Pane(this)};
+    int m_activePane = HELD_PANE;   // where the last click selected an item
     int m_hoverTab = -1;            // index into the tab list
-    int m_selectedItem = 0;
 
     Layout m_layout;
     QHash<QString, QPixmap> m_scaledCache;

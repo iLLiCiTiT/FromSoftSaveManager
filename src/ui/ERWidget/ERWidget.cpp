@@ -118,20 +118,11 @@ ERWidget::ERWidget(Controller* controller, const QString& saveId, QWidget* paren
 
     m_charTabs = new fssm::ui::er::HeaderTabs(this);
     m_charInfoWidget = new fssm::ui::er::CharacterInfoWidget(m_charTabs);
-    // Carried items on the left, the storage chest on the right, like the game's storage screen.
-    QWidget* inventoryPage = new QWidget(m_charTabs);
-    inventoryPage->setAttribute(Qt::WA_TranslucentBackground, true);
-    m_inventoryWidget = new fssm::ui::er::InventoryWidget(inventoryPage);
-    m_storageWidget = new fssm::ui::er::InventoryWidget(inventoryPage, InventoryView::Storage);
-    QHBoxLayout* inventoryLayout = new QHBoxLayout(inventoryPage);
-    inventoryLayout->setContentsMargins(0, 0, 0, 0);
-    inventoryLayout->setSpacing(8);
-    inventoryLayout->addWidget(m_inventoryWidget, 1);
-    inventoryLayout->addWidget(m_storageWidget, 1);
+    m_inventoryWidget = new fssm::ui::er::InventoryWidget(m_charTabs);
     m_worldWidget = new fssm::ui::er::WorldProgressWidget(fssm::ui::er::WorldPage::Progress, m_charTabs);
     m_gracesWidget = new fssm::ui::er::WorldProgressWidget(fssm::ui::er::WorldPage::Graces, m_charTabs);
     m_charTabs->addTab("Character", "attrs_icon", m_charInfoWidget);
-    m_charTabs->addTab("Inventory", "inventory_icon", inventoryPage);
+    m_charTabs->addTab("Inventory", "inventory_icon", m_inventoryWidget);
     m_charTabs->addTab("Progress", worldProgressIcon(), m_worldWidget);
     m_charTabs->addTab("Sites of Grace", graceIcon(), m_gracesWidget);
 
@@ -165,7 +156,6 @@ void ERWidget::onRefresh() {
         const fssm::parse::er::ERCharacterInfo* charInfo = m_model->getCharByIdx(charId.toInt());
         m_charInfoWidget->setCharacter(charInfo);
         m_inventoryWidget->setCharacter(charInfo);
-        m_storageWidget->setCharacter(charInfo);
         m_worldWidget->setCharacter(charInfo);
         m_gracesWidget->setCharacter(charInfo);
         return;
@@ -188,14 +178,12 @@ void ERWidget::onSelectionChange(const QItemSelection& selected, const QItemSele
 
         m_charInfoWidget->setCharacter(charInfo);
         m_inventoryWidget->setCharacter(charInfo);
-        m_storageWidget->setCharacter(charInfo);
         m_worldWidget->setCharacter(charInfo);
         m_gracesWidget->setCharacter(charInfo);
         return;
     }
     m_charInfoWidget->setCharacter(nullptr);
     m_inventoryWidget->setCharacter(nullptr);
-    m_storageWidget->setCharacter(nullptr);
     m_worldWidget->setCharacter(nullptr);
     m_gracesWidget->setCharacter(nullptr);
 

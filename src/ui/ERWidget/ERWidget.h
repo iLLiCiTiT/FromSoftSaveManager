@@ -42,7 +42,6 @@ private:
     fssm::ui::er::CharsListModel* m_model = nullptr;
     fssm::ui::er::CharacterInfoWidget* m_charInfoWidget = nullptr;
     fssm::ui::er::InventoryWidget* m_inventoryWidget = nullptr;
-    fssm::ui::er::InventoryWidget* m_storageWidget = nullptr;
     fssm::ui::er::WorldProgressWidget* m_worldWidget = nullptr;
     fssm::ui::er::WorldProgressWidget* m_gracesWidget = nullptr;
 };

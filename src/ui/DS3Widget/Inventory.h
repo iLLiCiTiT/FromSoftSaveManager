@@ -1,22 +1,23 @@
 #pragma once
 
+#include <array>
+
 #include <QHash>
 #include <QPixmap>
 #include <QWidget>
 #include <vector>
 
 #include "../ScrollHelper.h"
-#include "../Utils.h"
 #include "../../parse/DS3/SaveFile.h"
 
 namespace fssm::ui::ds3 {
-// Inventory screen drawn like the game's: category tabs above a grid of items
-// standing on dishes (counts, red seals on equipped items), with the selected
-// item's details below.
+// Inventory screen drawn like the game's storage screen: category tabs above two
+// grids of items standing on dishes (carried items left, the storage box right;
+// counts, red seals on equipped items), with the selected item's details below.
 class InventoryWidget: public QWidget {
     Q_OBJECT
 public:
-    explicit InventoryWidget(QWidget* parent = nullptr, InventoryView view = InventoryView::Held);
+    explicit InventoryWidget(QWidget* parent = nullptr);
     void setCharacter(const fssm::parse::ds3::DS3CharacterInfo* charInfo);
     QSize sizeHint() const override;
 
@@ -47,10 +48,11 @@ private:
         QRect tabs;
         int tabWidth = 0;
         int visibleTabs = 5;
-        QRect gridFrame;
-        QRect grid;
-        QRect scrollTrack;          // fixed at the panel's right edge
-        int columns = 5;
+        std::array<QRect, 2> caption;     // "Inventory" / "Storage Box" above each grid
+        std::array<QRect, 2> gridFrame;
+        std::array<QRect, 2> grid;
+        std::array<QRect, 2> scrollTrack; // fixed at each frame's right edge
+        std::array<int, 2> columns {5, 5};
         int cellWidth = 0;
         int rowHeight = 0;
         QRect detail;               // selected item, below the grid
@@ -61,25 +63,35 @@ private:
     void selectCategory(int category);
     void keepCategoryVisible();
     void updateScrollRange();
-    int itemIndexAt(const QPoint& pos) const;
+    // Item under pos and its pane, or -1.
+    int itemIndexAt(const QPoint& pos, int* pane) const;
     int tabIndexAt(const QPoint& pos) const;
+    void setHover(const QPoint& pos);
     const Entry* currentEntry() const;
     QPixmap scaled(const QString& resource, const QSize& size);
     QPixmap itemIcon(const Entry& entry, const QSize& size);
     void drawCategories(QPainter& painter);
-    void drawGrid(QPainter& painter);
+    void drawGrid(QPainter& painter, int pane);
     void drawDetail(QPainter& painter);
 
+    // One item grid: HELD_PANE (carried) or STORAGE_PANE (the storage box).
+    struct Pane {
+        explicit Pane(QWidget* owner): scroll(owner) {}
+        std::vector<const Entry*> visible;
+        fssm::ui::PaintedScroll scroll;     // range kept by updateScrollRange()
+        int hover = -1;
+        int selected = 0;
+    };
+    static constexpr int HELD_PANE = 0;
+    static constexpr int STORAGE_PANE = 1;
+
     std::vector<Entry> m_entries;
-    std::vector<const Entry*> m_visible;
     bool m_hasCharacter = false;
-    InventoryView m_view = InventoryView::Held;
     int m_category = 0;             // index into CATEGORY_ORDER
     int m_tabOffset = 0;            // first visible tab
-    fssm::ui::PaintedScroll m_scroll {this};    // item grid; range kept by updateScrollRange()
-    int m_hoverItem = -1;
+    std::array<Pane, 2> m_panes {Pane(this), Pane(this)};
+    int m_activePane = HELD_PANE;   // where the last click selected an item
     int m_hoverTab = -1;            // index into CATEGORY_ORDER
-    int m_selectedItem = 0;
 
     Layout m_layout;
     QHash<QString, QPixmap> m_scaledCache;

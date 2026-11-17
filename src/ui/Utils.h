@@ -19,10 +19,6 @@
 
 class QPainter;
 
-// Which items an inventory panel lists: the ones carried, or the storage box
-// (shown side by side, like the game's storage screen).
-enum class InventoryView { Held, Storage };
-
 // Small chest badge for inventory entries kept only in storage (Sekiro, which
 // has no menu icon for it). Drawn inside `rect`, keeping a 4:3 shape.
 void drawStorageMarker(QPainter& painter, const QRectF& rect);

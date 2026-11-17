@@ -129,20 +129,11 @@ DS3Widget::DS3Widget(Controller* controller, const QString& saveId, QWidget* par
 
     m_charTabs = new fssm::ui::ds3::HeaderTabs(this);
     m_charInfoWidget = new fssm::ui::ds3::CharacterInfoWidget(m_charTabs);
-    // Carried items on the left, the storage box on the right, like the game's storage screen.
-    QWidget* inventoryPage = new QWidget(m_charTabs);
-    inventoryPage->setAttribute(Qt::WA_TranslucentBackground, true);
-    m_inventoryWidget = new fssm::ui::ds3::InventoryWidget(inventoryPage);
-    m_storageWidget = new fssm::ui::ds3::InventoryWidget(inventoryPage, InventoryView::Storage);
-    QHBoxLayout* inventoryLayout = new QHBoxLayout(inventoryPage);
-    inventoryLayout->setContentsMargins(0, 0, 0, 0);
-    inventoryLayout->setSpacing(8);
-    inventoryLayout->addWidget(m_inventoryWidget, 1);
-    inventoryLayout->addWidget(m_storageWidget, 1);
+    m_inventoryWidget = new fssm::ui::ds3::InventoryWidget(m_charTabs);
     m_worldWidget = new fssm::ui::ds3::WorldProgressWidget(fssm::ui::ds3::WorldPage::Progress, m_charTabs);
     m_bonfiresWidget = new fssm::ui::ds3::WorldProgressWidget(fssm::ui::ds3::WorldPage::Bonfires, m_charTabs);
     m_charTabs->addTab("Character", "menu_status", m_charInfoWidget);
-    m_charTabs->addTab("Inventory", "menu_invetory", inventoryPage);
+    m_charTabs->addTab("Inventory", "menu_invetory", m_inventoryWidget);
     m_charTabs->addTab("Progress", worldProgressIcon(), m_worldWidget);
     m_charTabs->addTab("Bonfires", bonfireIcon(), m_bonfiresWidget);
 
@@ -166,7 +157,6 @@ void DS3Widget::showCharacter(const QModelIndex& index) {
     const fssm::parse::ds3::DS3CharacterInfo* charInfo = nullptr;
     if (charId.isValid() && !charId.isNull()) charInfo = m_model->getCharByIdx(charId.toInt());
     m_inventoryWidget->setCharacter(charInfo);
-    m_storageWidget->setCharacter(charInfo);
     m_charInfoWidget->setCharacter(charInfo);
     m_worldWidget->setCharacter(charInfo);
     m_bonfiresWidget->setCharacter(charInfo);
@@ -195,7 +185,6 @@ void DS3Widget::onRefresh() {
         }
     }
     m_inventoryWidget->setCharacter(nullptr);
-    m_storageWidget->setCharacter(nullptr);
     m_charInfoWidget->setCharacter(nullptr);
     m_worldWidget->setCharacter(nullptr);
     m_bonfiresWidget->setCharacter(nullptr);
@@ -205,7 +194,6 @@ void DS3Widget::onSelectionChange(const QItemSelection& selected, const QItemSel
     const auto indexes = selected.indexes();
     if (indexes.isEmpty()) {
         m_inventoryWidget->setCharacter(nullptr);
-        m_storageWidget->setCharacter(nullptr);
         m_charInfoWidget->setCharacter(nullptr);
         m_worldWidget->setCharacter(nullptr);
         m_bonfiresWidget->setCharacter(nullptr);
