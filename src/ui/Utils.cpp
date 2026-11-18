@@ -1,10 +1,7 @@
 #include "Utils.h"
 
-#include <algorithm>
-
 #include <QLinearGradient>
 #include <QPainter>
-#include <QPainterPath>
 #include <QStyle>
 
 void drawVerticalDivider(QPainter& painter, int x, int y1, int y2, const QColor& color) {
@@ -22,38 +19,6 @@ void drawVerticalDivider(QPainter& painter, int x, int y1, int y2, const QColor&
     painter.drawLine(x, y1, x, y2);
     painter.setPen(QPen(QColor(0, 0, 0, color.alpha() / 2), 1));
     painter.drawLine(x + 1, y1, x + 1, y2);
-    painter.restore();
-}
-
-void drawStorageMarker(QPainter& painter, const QRectF& rect) {
-    const double w = std::min(rect.width(), rect.height() * 4.0 / 3.0);
-    const double h = w * 3.0 / 4.0;
-    const QRectF box(rect.center().x() - w / 2, rect.center().y() - h / 2, w, h);
-    const double pen = std::max(1.0, w / 14.0);
-    painter.save();
-    painter.setRenderHint(QPainter::Antialiasing, true);
-    // Dark plate behind it keeps the badge readable over item icons.
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(QColor(0, 0, 0, 150));
-    painter.drawRoundedRect(box.adjusted(-pen, -pen, pen, pen), pen * 2, pen * 2);
-
-    const QColor gold(214, 180, 112);
-    const QRectF body = box.adjusted(pen, h * 0.38, -pen, -pen);
-    const QRectF lid = box.adjusted(pen, pen, -pen, -(h - h * 0.38));
-    painter.setPen(QPen(gold, pen));
-    painter.setBrush(QColor(92, 62, 34));
-    QPainterPath lidPath;
-    lidPath.moveTo(lid.bottomLeft());
-    lidPath.lineTo(lid.left(), lid.top() + lid.height() * 0.45);
-    lidPath.quadTo(lid.center().x(), lid.top() - lid.height() * 0.35, lid.right(), lid.top() + lid.height() * 0.45);
-    lidPath.lineTo(lid.bottomRight());
-    lidPath.closeSubpath();
-    painter.drawPath(lidPath);
-    painter.drawRect(body);
-    // Clasp across the lid seam.
-    const double claspW = w * 0.18;
-    painter.setBrush(gold);
-    painter.drawRect(QRectF(box.center().x() - claspW / 2, body.top() - h * 0.08, claspW, h * 0.24));
     painter.restore();
 }
 

@@ -19,10 +19,6 @@
 
 class QPainter;
 
-// Small chest badge for inventory entries kept only in storage (Sekiro, which
-// has no menu icon for it). Drawn inside `rect`, keeping a 4:3 shape.
-void drawStorageMarker(QPainter& painter, const QRectF& rect);
-
 // Vertical line splitting two side-by-side panels, fading out at both ends,
 // with a dark line beside it so it reads on light and dark backgrounds.
 void drawVerticalDivider(QPainter& painter, int x, int y1, int y2, const QColor& color);
