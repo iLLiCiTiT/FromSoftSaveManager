@@ -64,6 +64,7 @@ namespace fssm::parse::ds2 {
             InventoryItem item;
             item.slot = slot;
             item.itemId = entry.itemId;
+            item.inItemBox = (entry.flags & ITEM_BOX_FLAG) != 0;
             item.upgradeLevel = static_cast<uint8_t>(entry.reinforcement & 0xff);
             const auto infusion = static_cast<uint8_t>((entry.reinforcement >> 8) & 0xff);
             if (infusion <= static_cast<uint8_t>(Infusion::Mundane)) item.infusion = static_cast<Infusion>(infusion);

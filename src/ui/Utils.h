@@ -17,6 +17,12 @@
 // TODO add path related helpers
 // - e.g. join using 'std::filesystem::path'
 
+class QPainter;
+
+// Vertical line splitting two side-by-side panels, fading out at both ends,
+// with a dark line beside it so it reads on light and dark backgrounds.
+void drawVerticalDivider(QPainter& painter, int x, int y1, int y2, const QColor& color);
+
 inline std::string generateUUID() {
     QUuid uuid = QUuid::createUuid();
     QString s = uuid.toString(QUuid::Id128);
